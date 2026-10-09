@@ -1,12 +1,13 @@
 import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { createHash, type Hash } from "node:crypto";
 import type { AdapterExecutionContext } from "@taskcore/adapter-utils";
-import { ensureTaskcoreSkillSymlink, type TaskcoreSkillEntry } from "@taskcore/adapter-utils/server-utils";
-
-const DEFAULT_TASKCORE_INSTANCE_ID = "default";
+import {
+  ensureTaskcoreSkillSymlink,
+  resolveTaskcoreInstanceRootForAdapter,
+  type TaskcoreSkillEntry,
+} from "@taskcore/adapter-utils/server-utils";
 
 type SkillEntry = TaskcoreSkillEntry;
 
@@ -25,12 +26,13 @@ function resolveManagedClaudePromptCacheRoot(
   env: NodeJS.ProcessEnv,
   companyId: string,
 ): string {
-  const taskcoreHome = nonEmpty(env.TASKCORE_HOME) ?? path.resolve(os.homedir(), ".taskcore");
-  const instanceId = nonEmpty(env.TASKCORE_INSTANCE_ID) ?? DEFAULT_TASKCORE_INSTANCE_ID;
+  const instanceRoot = resolveTaskcoreInstanceRootForAdapter({
+    homeDir: nonEmpty(env.TASKCORE_HOME) ?? undefined,
+    instanceId: nonEmpty(env.TASKCORE_INSTANCE_ID) ?? undefined,
+    env,
+  });
   return path.resolve(
-    taskcoreHome,
-    "instances",
-    instanceId,
+    instanceRoot,
     "companies",
     companyId,
     "claude-prompt-cache",

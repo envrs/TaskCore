@@ -3,6 +3,7 @@ import { ApiConnectionError, ApiRequestError, TaskcoreApiClient } from "../clien
 
 describe("TaskcoreApiClient", () => {
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -78,7 +79,7 @@ describe("TaskcoreApiClient", () => {
       /curl http:\/\/localhost:3100\/api\/health/,
     );
     await expect(client.post("/api/companies/import/preview", {})).rejects.toThrow(
-      /pnpm dev|pnpm taskcore run/,
+      /pnpm dev|npx taskcore run/,
     );
   });
 

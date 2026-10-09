@@ -18,12 +18,14 @@ describe("resolveInlineSourceFromPath", () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-company-import-zip-"));
     tempDirs.push(tempDir);
 
+    const blobBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff]);
     const archivePath = path.join(tempDir, "taskcore-demo.zip");
     const archive = createStoredZipArchive(
       {
         "COMPANY.md": "# Company\n",
         ".taskcore.yaml": "schema: taskcore/v1\n",
         "agents/ceo/AGENT.md": "# CEO\n",
+        "blobs/4f2d1c9a": blobBytes,
         "notes/todo.txt": "ignore me\n",
       },
       "taskcore-demo",
@@ -38,6 +40,11 @@ describe("resolveInlineSourceFromPath", () => {
         "COMPANY.md": "# Company\n",
         ".taskcore.yaml": "schema: taskcore/v1\n",
         "agents/ceo/AGENT.md": "# CEO\n",
+        "blobs/4f2d1c9a": {
+          encoding: "base64",
+          data: Buffer.from(blobBytes).toString("base64"),
+          contentType: "application/octet-stream",
+        },
       },
     });
   });
