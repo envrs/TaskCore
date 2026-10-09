@@ -18,6 +18,10 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss(), serviceWorkerBuildIdPlugin()],
   build: {
     minify: "esbuild",
+    target: mode === "production" ? "esnext" : undefined,
+    cssMinify: "esbuild",
+    assetsInlineLimit: 4096,
+    chunkSizeWarningLimit: 1000,
   },
   esbuild:
     mode === "production"
