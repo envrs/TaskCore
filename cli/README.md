@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="https://github.com/khulnasoft/taskcore/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" /></a>
-  <a href="https://github.com/khulnasoft/taskcore/stargazers"><img src="https://img.shields.io/github/stars/taskcore/taskcore?style=flat" alt="Stars" /></a>
+  <a href="https://github.com/khulnasoft/taskcore/stargazers"><img src="https://img.shields.io/github/stars/khulnasoft/taskcore?style=flat" alt="Stars" /></a>
   <a href="https://discord.gg/m4HZY7xNG3"><img src="https://img.shields.io/discord/000000000?label=discord" alt="Discord" /></a>
 </p>
 
@@ -431,7 +431,7 @@ MIT &copy; 2026 [Taskcore Labs, Inc](https://taskcore.ing)
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/image?repos=taskcore/taskcore&type=date&legend=top-left)](https://www.star-history.com/?repos=taskcore%2Ftaskcore&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/image?repos=khulnasoft/taskcore&type=date&legend=top-left)](https://www.star-history.com/?repos=taskcore%2Ftaskcore&type=date&legend=top-left)
 
 <br/>
 

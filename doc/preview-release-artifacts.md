@@ -20,7 +20,7 @@ definitions that do not run from `master`.
 
 ## Outputs and reuse
 
-The image uses `ghcr.io/taskcore/taskcore:sha-<FULL_SHA>-cloud`.
+The image uses `ghcr.io/khulnasoft/taskcore:sha-<FULL_SHA>-cloud`.
 This explicit operator path is retained after retirement of the recurring public
 `-cloud` publisher. Existing images remain reusable; missing images still build
 the `cloud` Dockerfile target. It is separate from private image composition.
@@ -152,7 +152,7 @@ sufficient provenance.
 The build job has no AWS credential. The publish job downloads only the four
 fixed files, validates them, and uploads them without executing their code.
 The dedicated `taskcore-cloud-migrator-github` OIDC role trusts only
-`repo:taskcore/taskcore:ref:refs/heads/master`. Its policy permits prefix
+`repo:khulnasoft/taskcore:ref:refs/heads/master`. Its policy permits prefix
 listing and conditional `PutObject` calls in this one prefix. It permits no
 object deletion or overwrite. PRs, including allowlisted PRs, cannot assume it.
 

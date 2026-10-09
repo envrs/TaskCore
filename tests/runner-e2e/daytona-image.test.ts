@@ -129,7 +129,7 @@ describe("runner E2E Daytona image contract", () => {
       ),
     );
     expect(workflow).toContain(
-      "IMAGE_CACHE: ghcr.io/taskcore/taskcore-daytona-runner:e2e-buildcache-amd64",
+      "IMAGE_CACHE: ghcr.io/khulnasoft/taskcore-daytona-runner:e2e-buildcache-amd64",
     );
     expect(workflow).toContain(
       '--cache-from "type=registry,ref=${IMAGE_CACHE}"',

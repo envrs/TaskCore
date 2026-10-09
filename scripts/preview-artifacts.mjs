@@ -36,7 +36,7 @@ export function previewManifest(pkg, sha) {
 
 export function assertMetadata(pkg, name, sha) {
   if (pkg?.publishConfig !== undefined || pkg?.name !== name || pkg.version !== versionFor(sha) || pkg.gitHead !== sha || pkg.taskcorePreviewCommit !== sha ||
-      (name === "@taskcore/db" && pkg.dependencies?.["@taskcore/shared"] !== versionFor(sha))) {
+    (name === "@taskcore/db" && pkg.dependencies?.["@taskcore/shared"] !== versionFor(sha))) {
     throw new Error("Preview package identity or dependency pin mismatch.");
   }
 }
@@ -123,12 +123,12 @@ export async function imageExists(sha, fetchImpl = fetch) {
 /** Publication loads image data, but never runs a container or source scripts. */
 export async function publishImage(file, sha, { exec = execFileSync, fetchImpl = fetch } = {}) {
   versionFor(sha);
-  const image = `ghcr.io/taskcore/taskcore:sha-${sha}-cloud`;
+  const image = `ghcr.io/khulnasoft/taskcore:sha-${sha}-cloud`;
   if (await imageExists(sha, fetchImpl)) { console.log("Reusing the verified SHA cloud image."); return; }
   exec("docker", ["load", "--input", path.resolve(file)], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 });
   const [metadata] = JSON.parse(exec("docker", ["image", "inspect", image], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }));
   if (metadata?.Config?.Labels?.["org.opencontainers.image.revision"] !== sha || metadata.Os !== "linux" || metadata.Architecture !== "amd64" ||
-      !/^sha256:[0-9a-f]{64}$/.test(metadata.Id ?? "")) throw new Error("Built image identity or platform does not match the request.");
+    !/^sha256:[0-9a-f]{64}$/.test(metadata.Id ?? "")) throw new Error("Built image identity or platform does not match the request.");
   // Push only this verified image ID under the one permitted tag, regardless
   // of any additional tag names present in the untrusted Docker archive.
   exec("docker", ["tag", metadata.Id, image], { stdio: "inherit" });

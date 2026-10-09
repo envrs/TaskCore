@@ -39,7 +39,7 @@ else if (args.slice(0, 3).join(" ") !== "buildx imagetools create") process.exit
       const result = spawnSync("bash", ["-e", "-o", "pipefail", "-c", script], {
         encoding: "utf8", env: {
           ...process.env, PATH: `${dir}${path.delimiter}${process.env.PATH}`,
-          IMAGE: "ghcr.io/taskcore/taskcore", GITHUB_repository: "khulnasoft/taskcore",
+          IMAGE: "ghcr.io/khulnasoft/taskcore", GITHUB_repository: "khulnasoft/taskcore",
           TEST_CALLS: log, TEST_SHA: sha, COMMIT_PRESENT: String(commitPresent), IMAGE_PRESENT: String(imagePresent),
         },
       });
@@ -48,8 +48,8 @@ else if (args.slice(0, 3).join(" ") !== "buildx imagetools create") process.exit
       assert.ok(calls.find(call => call.command === "gh").args.some(arg => arg.includes("canary%2Fv2026.922.0-canary.1")));
       const docker = calls.filter(call => call.command === "docker").map(call => call.args);
       assert.deepEqual(docker, [
-        ...(commitPresent ? [["buildx", "imagetools", "inspect", "ghcr.io/taskcore/taskcore:sha-aaaaaaa"]] : []),
-        ...(commitPresent && imagePresent ? [["buildx", "imagetools", "create", "-t", "ghcr.io/taskcore/taskcore:canary", "ghcr.io/taskcore/taskcore:sha-aaaaaaa"]] : []),
+        ...(commitPresent ? [["buildx", "imagetools", "inspect", "ghcr.io/khulnasoft/taskcore:sha-aaaaaaa"]] : []),
+        ...(commitPresent && imagePresent ? [["buildx", "imagetools", "create", "-t", "ghcr.io/khulnasoft/taskcore:canary", "ghcr.io/khulnasoft/taskcore:sha-aaaaaaa"]] : []),
       ]);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });

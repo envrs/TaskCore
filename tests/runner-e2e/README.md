@@ -618,7 +618,7 @@ or publish the current source locally:
 ```bash
 content_id="$(pnpm --silent test:e2e:runner:image-id)"
 source_revision="$(git rev-parse HEAD)"
-image="ghcr.io/taskcore/taskcore-daytona-runner:e2e-content-${content_id}"
+image="ghcr.io/khulnasoft/taskcore-daytona-runner:e2e-content-${content_id}"
 if ! docker buildx imagetools inspect "$image" >/dev/null 2>&1; then
   docker buildx build \
     --platform linux/amd64 \
@@ -641,7 +641,7 @@ reused image when it builds the controller-side provider pack, preserving the
 exact manifest match required to avoid restaging the pack into Daytona.
 
 Resolve the manifest digest and set `TASKCORE_E2E_DAYTONA_IMAGE` to
-`ghcr.io/taskcore/taskcore-daytona-runner@sha256:...`. The repository
+`ghcr.io/khulnasoft/taskcore-daytona-runner@sha256:...`. The repository
 workflow signs that digest with Cosign/OIDC and verifies that it is publicly
 pullable, includes the provider pack, and advertises `dial_ws_loopback`,
 `dial_wss`, and `listen_ws`. The GHCR package must be configured as public;
@@ -827,7 +827,7 @@ public structured evidence files. The Pages artifact has already had private
 visual and generated report evidence removed:
 
 ```bash
-gh run download <run-id> --repo taskcore/taskcore --name github-pages --dir /tmp/runner-e2e-pages
+gh run download <run-id> --repo khulnasoft/taskcore --name github-pages --dir /tmp/runner-e2e-pages
 mkdir /tmp/runner-e2e-site
 tar -xf /tmp/runner-e2e-pages/artifact.tar -C /tmp/runner-e2e-site
 pnpm test:e2e:runner:dashboard -- /tmp/runner-e2e-site
@@ -960,7 +960,7 @@ administrators, then configure these repository variables:
 
 The job exchanges GitHub OIDC for short-lived AWS credentials; never add AWS
 access-key secrets. Its IAM role must trust only
-`repo:taskcore/taskcore:environment:runner-e2e-history`, and permit only
+`repo:khulnasoft/taskcore:environment:runner-e2e-history`, and permit only
 Get/List/Put under the configured prefix—never Delete. Enable S3 versioning and
 Block Public Access. CloudFront reads the private bucket through Origin Access
 Control. Immutable campaign bundles live under `campaigns/<run-id>-<attempt>/`;

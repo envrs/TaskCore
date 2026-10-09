@@ -449,7 +449,7 @@ pnpm --filter @taskcore/taskcore-runner aws-agentcore:provision -- \
   --github-oidc-provider-arn arn:aws:iam::<account-id>:oidc-provider/token.actions.githubusercontent.com
 ```
 
-This adds only `repo:taskcore/taskcore:environment:runner-e2e-paid` as a
+This adds only `repo:khulnasoft/taskcore:environment:runner-e2e-paid` as a
 web-identity subject on the scoped invocation role. The generated nonsecret
 profile records that role as both the local invocation role and the hosted
 execution role.

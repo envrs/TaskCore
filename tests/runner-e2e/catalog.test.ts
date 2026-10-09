@@ -99,7 +99,7 @@ describe("runner E2E catalog", () => {
       const signals = normalizePrpResultSignals({ attentionRequests: JSON.parse(match![1]) });
       expect(signals.ignoredAttentionRequests).toEqual([]);
       expect(signals.actionableAttentionRequests).toHaveLength(index === 2 ? 0 : 1);
-      if (index < 2) expect(signals.actionableAttentionRequests[0]).toMatchObject({kind:"review", ownerClass:"human"});
+      if (index < 2) expect(signals.actionableAttentionRequests[0]).toMatchObject({ kind: "review", ownerClass: "human" });
       expect(prompt).not.toContain("call request_human_input");
     }
   });
@@ -633,17 +633,17 @@ describe("runner E2E catalog", () => {
   it("accepts only complete immutable Daytona digests", () => {
     expect(
       isImmutableDaytonaImage(
-        `ghcr.io/taskcore/taskcore-daytona-runner@sha256:${"a".repeat(64)}`,
+        `ghcr.io/khulnasoft/taskcore-daytona-runner@sha256:${"a".repeat(64)}`,
       ),
     ).toBe(true);
     expect(
       isImmutableDaytonaImage(
-        "ghcr.io/taskcore/taskcore-daytona-runner@sha256:REPLACE_ME",
+        "ghcr.io/khulnasoft/taskcore-daytona-runner@sha256:REPLACE_ME",
       ),
     ).toBe(false);
     expect(
       isImmutableDaytonaImage(
-        "ghcr.io/taskcore/taskcore-daytona-runner:e2e-latest",
+        "ghcr.io/khulnasoft/taskcore-daytona-runner:e2e-latest",
       ),
     ).toBe(false);
   });

@@ -195,7 +195,7 @@ publishing environment subject:
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:taskcore/taskcore:environment:runner-e2e-history"
+          "token.actions.githubusercontent.com:sub": "repo:khulnasoft/taskcore:environment:runner-e2e-history"
         }
       }
     }

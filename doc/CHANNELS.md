@@ -6,10 +6,10 @@ install.
 
 | Channel | What it is | Updates | npm | Docker |
 | --- | --- | --- | --- | --- |
-| `stable` | The recommended release | every week or two | `taskcore@latest` | `ghcr.io/taskcore/taskcore:latest` |
-| `beta` | Release candidates soaking before stable | when promoted | `taskcore@beta` | `ghcr.io/taskcore/taskcore:beta` |
-| `nightly` | Yesterday's merges, smoke-tested as a unit | once a night | `taskcore@nightly` | `ghcr.io/taskcore/taskcore:nightly` |
-| `canary` | Every merge to `master`, as it happens | many times a day | `taskcore@canary` | `ghcr.io/taskcore/taskcore:canary` |
+| `stable` | The recommended release | every week or two | `taskcore@latest` | `ghcr.io/khulnasoft/taskcore:latest` |
+| `beta` | Release candidates soaking before stable | when promoted | `taskcore@beta` | `ghcr.io/khulnasoft/taskcore:beta` |
+| `nightly` | Yesterday's merges, smoke-tested as a unit | once a night | `taskcore@nightly` | `ghcr.io/khulnasoft/taskcore:nightly` |
+| `canary` | Every merge to `master`, as it happens | many times a day | `taskcore@canary` | `ghcr.io/khulnasoft/taskcore:canary` |
 
 ## Choosing a channel
 
@@ -47,10 +47,10 @@ npx taskcore@canary onboard
 Docker:
 
 ```bash
-docker pull ghcr.io/taskcore/taskcore:latest    # stable
-docker pull ghcr.io/taskcore/taskcore:beta
-docker pull ghcr.io/taskcore/taskcore:nightly
-docker pull ghcr.io/taskcore/taskcore:canary
+docker pull ghcr.io/khulnasoft/taskcore:latest    # stable
+docker pull ghcr.io/khulnasoft/taskcore:beta
+docker pull ghcr.io/khulnasoft/taskcore:nightly
+docker pull ghcr.io/khulnasoft/taskcore:canary
 ```
 
 Every image is also published as `:sha-<short-sha>` for exact pinning, and

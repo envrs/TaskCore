@@ -25,17 +25,19 @@ function fixture(t) {
     const padded = Buffer.alloc(Math.ceil(bytes.length / 512) * 512); bytes.copy(padded);
     writeFileSync(path.join(dir, `${name}.tgz`), gzipSync(Buffer.concat([header, padded, Buffer.alloc(1024)])));
   }
-  const manifest = buildBundle(dir, sha, { exec: (cmd, args, options) => {
-    assert.equal(cmd, "npm"); assert.ok(args.includes("--ignore-scripts"));
-    const localRoot = JSON.parse(readFileSync(path.join(options.cwd, "package.json")));
-    assert.deepEqual(localRoot.dependencies, { "@taskcore/db": "file:db.tgz", "@taskcore/shared": "file:shared.tgz" });
-    const packages = { "": localRoot };
-    for (const name of ["db", "shared"]) packages[`node_modules/@taskcore/${name}`] = {
-      version: versionFor(sha), integrity: descriptor(readFileSync(path.join(dir, `${name}.tgz`)), "tgz").integrity,
-      resolved: `file:${name}.tgz`, ...(name === "db" ? { dependencies: { "@taskcore/shared": versionFor(sha) } } : {}),
-    };
-    writeFileSync(path.join(options.cwd, "package-lock.json"), JSON.stringify({ lockfileVersion: 3, packages }));
-  } });
+  const manifest = buildBundle(dir, sha, {
+    exec: (cmd, args, options) => {
+      assert.equal(cmd, "npm"); assert.ok(args.includes("--ignore-scripts"));
+      const localRoot = JSON.parse(readFileSync(path.join(options.cwd, "package.json")));
+      assert.deepEqual(localRoot.dependencies, { "@taskcore/db": "file:db.tgz", "@taskcore/shared": "file:shared.tgz" });
+      const packages = { "": localRoot };
+      for (const name of ["db", "shared"]) packages[`node_modules/@taskcore/${name}`] = {
+        version: versionFor(sha), integrity: descriptor(readFileSync(path.join(dir, `${name}.tgz`)), "tgz").integrity,
+        resolved: `file:${name}.tgz`, ...(name === "db" ? { dependencies: { "@taskcore/shared": versionFor(sha) } } : {}),
+      };
+      writeFileSync(path.join(options.cwd, "package-lock.json"), JSON.stringify({ lockfileVersion: 3, packages }));
+    }
+  });
   const files = new Map([[`${artifactBase}/${sha}/manifest.json`, readFileSync(path.join(dir, "manifest.json"))]]);
   for (const name of ["db", "shared"]) files.set(manifest.packages[name].url, readFileSync(path.join(dir, `${name}.tgz`)));
   files.set(manifest.lockfile.url, readFileSync(path.join(dir, "package-lock.json")));
@@ -130,7 +132,7 @@ test("real npm ci installs the new pair from pinned archives with an empty cache
 
 test("AWS trust is master-only and publication policy cannot overwrite objects", () => {
   const read = (name) => JSON.parse(readFileSync(new URL(`../.github/cloud-migrator-deploy/${name}.json`, import.meta.url)));
-  assert.equal(read("trust-policy").Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"], "repo:taskcore/taskcore:ref:refs/heads/master");
+  assert.equal(read("trust-policy").Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"], "repo:khulnasoft/taskcore:ref:refs/heads/master");
   const policy = read("upload-policy").Statement;
   assert.deepEqual(policy.map((s) => s.Action), ["s3:PutObject", "s3:ListBucket"]);
   assert.equal(policy[0].Condition.StringEquals["s3:if-none-match"], "*");

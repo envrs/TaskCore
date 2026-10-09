@@ -1,7 +1,7 @@
 # Standard production image provenance
 
 Canonical `master` pushes publish the standard multi-platform `production`
-image at `ghcr.io/taskcore/taskcore:sha-<full-40-character-SHA>`.
+image at `ghcr.io/khulnasoft/taskcore:sha-<full-40-character-SHA>`.
 Existing short-SHA, version and channel tags continue to work. Other refs and
 manual dispatches do not write the canonical full-SHA tag.
 

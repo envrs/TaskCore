@@ -27,12 +27,14 @@ test("preview request requires immutable SHA and correlation UUID", () => {
 test("migrator-only planning never waits for GHCR and reuses complete exact-source packages", async () => {
   for (const available of [[], ["@taskcore/shared"], ["@taskcore/shared", "@taskcore/db"]]) {
     const calls = [];
-    const result = await planArtifacts(sha, { image: false, migrator: true, fetchImpl: async (url) => {
-      assert.equal(new URL(url).hostname, "registry.npmjs.org");
-      const name = decodeURIComponent(new URL(url).pathname.split("/")[1]);
-      calls.push(name);
-      return available.includes(name) ? json({ ...manifest(name), dist: { integrity: "test-integrity", tarball: "https://registry.npmjs.org/package.tgz" } }) : json({}, 404);
-    } });
+    const result = await planArtifacts(sha, {
+      image: false, migrator: true, fetchImpl: async (url) => {
+        assert.equal(new URL(url).hostname, "registry.npmjs.org");
+        const name = decodeURIComponent(new URL(url).pathname.split("/")[1]);
+        calls.push(name);
+        return available.includes(name) ? json({ ...manifest(name), dist: { integrity: "test-integrity", tarball: "https://registry.npmjs.org/package.tgz" } }) : json({}, 404);
+      }
+    });
     assert.deepEqual(result, { image: false, packages: available.length !== 2 });
     assert.ok(calls.includes("@taskcore/shared"));
     if (available.length) assert.ok(calls.includes("@taskcore/db"));
@@ -46,10 +48,12 @@ test("migrator-only planning rejects registry outages and mismatched source iden
 });
 
 test("ordinary preview planning still requests a missing image without publishing unsolicited packages", async () => {
-  const result = await planArtifacts(sha, { fetchImpl: async (url) => {
-    assert.equal(new URL(url).hostname, "ghcr.io");
-    return url.includes("/token?") ? json({ token: "test-pull-token" }) : json({}, 404);
-  } });
+  const result = await planArtifacts(sha, {
+    fetchImpl: async (url) => {
+      assert.equal(new URL(url).hostname, "ghcr.io");
+      return url.includes("/token?") ? json({ token: "test-pull-token" }) : json({}, 404);
+    }
+  });
   assert.deepEqual(result, { image: true, packages: false });
 });
 
@@ -85,7 +89,7 @@ test("publishing reuses existing previews and never executes package lifecycle h
         return published.has(name) ? json({ ...manifest(name), dist: { integrity: "test-integrity", tarball: "https://registry.npmjs.org/package.tgz" } }) : json({}, 404);
       },
       exec: (command, args) => { calls.push({ command, args }); published.add("@taskcore/db"); },
-      sleep: async () => {},
+      sleep: async () => { },
     });
     assert.equal(calls.length, 1);
     assert.equal(calls[0].command, "npm");
@@ -130,7 +134,7 @@ test("a visibility timeout identifies the missing package after both were submit
           ? json({ ...manifest(name), dist: { integrity: "test-integrity", tarball: "https://registry.npmjs.org/package.tgz" } })
           : json({}, 404);
       },
-      sleep: async () => {},
+      sleep: async () => { },
     }), /not yet visible: @taskcore\/shared\./);
     assert.deepEqual(submitted, ["shared", "db"]);
   } finally { rmSync(dir, { recursive: true, force: true }); }
@@ -185,7 +189,7 @@ test("existing image reuse verifies the full revision behind the immutable tag",
   for (const revision of [sha, "c".repeat(40)]) {
     const fetchImpl = async (url) => url.includes("/token?") ? json({ token: "test-pull-token" }) :
       url.includes("/blobs/") ? json({ config: { Labels: { "org.opencontainers.image.revision": revision } } }) :
-      url.endsWith(digest) ? json({ config: { digest } }) : json({ manifests: [{ digest, platform: { os: "linux", architecture: "amd64" } }] });
+        url.endsWith(digest) ? json({ config: { digest } }) : json({ manifests: [{ digest, platform: { os: "linux", architecture: "amd64" } }] });
     if (revision === sha) assert.equal(await imageExists(sha, fetchImpl), true);
     else await assert.rejects(imageExists(sha, fetchImpl), /full commit/);
   }
@@ -205,7 +209,7 @@ test("image publisher verifies source and platform before pushing exactly one im
     });
     if (revision === sha) {
       await operation;
-      assert.deepEqual(calls.filter((call) => call.args[0] === "push").map((call) => call.args), [["push", `ghcr.io/taskcore/taskcore:sha-${sha}-cloud`]]);
+      assert.deepEqual(calls.filter((call) => call.args[0] === "push").map((call) => call.args), [["push", `ghcr.io/khulnasoft/taskcore:sha-${sha}-cloud`]]);
     } else { await assert.rejects(operation, /identity/); assert.ok(!calls.some((call) => call.args[0] === "push")); }
     assert.ok(!calls.some((call) => ["run", "build"].includes(call.args[0])));
   }

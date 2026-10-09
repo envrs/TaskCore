@@ -429,7 +429,7 @@ describe("public repository paid workflow security", () => {
     expect(daytonaImageJob).toContain('echo "source_revision="');
     expect(daytonaImageJob).toContain('echo "content_id="');
     expect(daytonaImageJob).toContain(
-      "IMAGE_CACHE: ghcr.io/taskcore/taskcore-daytona-runner:e2e-buildcache-amd64",
+      "IMAGE_CACHE: ghcr.io/khulnasoft/taskcore-daytona-runner:e2e-buildcache-amd64",
     );
     expect(daytonaImageJob).toContain(
       "TARGET_REF: ${{ needs.authorize.outputs.target_ref }}",

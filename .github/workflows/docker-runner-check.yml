@@ -58,7 +58,7 @@ jobs:
       # Compile the real target, then change source in a disposable context.
       # A fresh builder must import dependencies and produce changed binary metadata.
       # The baseline build anonymously seeds from the public BuildKit cache at
-      # ghcr.io/taskcore/taskcore:buildcache-{amd64,arm64}; the verification
+      # ghcr.io/khulnasoft/taskcore:buildcache-{amd64,arm64}; the verification
       # build imports only this run's locally exported cache on a fresh builder.
       # No registry credentials or image publication.
       - name: Verify native build and dependency cache reuse
@@ -153,14 +153,14 @@ jobs:
           SOURCE_SHA: ${{ needs.authorize_manual.outputs.target_sha }}
         run: |
           set -euo pipefail
-          image="ghcr.io/taskcore/taskcore-daytona-runner:qualification-${SOURCE_SHA}-${GITHUB_RUN_ID}"
+          image="ghcr.io/khulnasoft/taskcore-daytona-runner:qualification-${SOURCE_SHA}-${GITHUB_RUN_ID}"
           lock_sha="$(sha256sum pnpm-lock.yaml | cut -d ' ' -f 1)"
           docker buildx build --platform linux/amd64 \
             --file docker/daytona-runner/Dockerfile \
             --build-arg "TASKCORE_RUNNER_SOURCE_REVISION=$SOURCE_SHA" \
             --build-arg "TASKCORE_RUNNER_CONTENT_ID=qualification-$SOURCE_SHA" \
             --build-arg "TASKCORE_RUNNER_LOCK_SHA256=$lock_sha" \
-            --cache-from type=registry,ref=ghcr.io/taskcore/taskcore-daytona-runner:e2e-buildcache-amd64 \
+            --cache-from type=registry,ref=ghcr.io/khulnasoft/taskcore-daytona-runner:e2e-buildcache-amd64 \
             --tag "$image" --metadata-file remote-verification/image.json --push .
           digest="$(jq -r '."containerimage.digest"' remote-verification/image.json)"
           [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]

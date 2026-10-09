@@ -377,12 +377,12 @@ jobs:
         if: steps.standard.outputs.digest != ''
         env:
           IMAGE_DIGEST: ${{ steps.standard.outputs.digest }}
-        run: docker run --rm -i --pull always "ghcr.io/taskcore/taskcore@$IMAGE_DIGEST" sh -s < scripts/assert-orphan-reaping.sh
+        run: docker run --rm -i --pull always "ghcr.io/khulnasoft/taskcore@$IMAGE_DIGEST" sh -s < scripts/assert-orphan-reaping.sh
       - name: Attest the standard production image
         if: steps.standard.outputs.digest != ''
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
-          subject-name: ghcr.io/taskcore/taskcore
+          subject-name: ghcr.io/khulnasoft/taskcore
           subject-digest: ${{ steps.standard.outputs.digest }}
           push-to-registry: true
 
