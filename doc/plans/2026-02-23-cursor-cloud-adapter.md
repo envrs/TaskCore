@@ -164,7 +164,7 @@ Use `adapterConfig.env` so secret references are supported by existing secret-re
 
 ---
 
-## Taskcore Callback + Auth Flow (V1)
+## TaskCore Callback + Auth Flow (V1)
 
 Cursor agents run remotely, so we cannot inject local env like `TASKCORE_API_KEY`.
 

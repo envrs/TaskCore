@@ -94,7 +94,7 @@ Expected: `ok: true` with three green checks: `allow_read_tool`, `deny_write_too
 
 If the smoke fails, fix the failing check before introducing any production connection. The bundled fixture only depends on local code, so any failure is a control-plane problem rather than an upstream MCP issue.
 
-## Taskcore as MCP endpoint vs MCP gateway
+## TaskCore as MCP endpoint vs MCP gateway
 
 Taskcore plays two roles in the MCP graph, and confusing them is the most common operator error.
 

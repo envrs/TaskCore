@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "packageName": "@taskcore/skills-catalog",
   "packageVersion": "0.3.1",
-  "generatedAt": "2026-10-06T01:21:47.421Z",
+  "generatedAt": "2026-10-09T03:47:30.536Z",
   "skills": [
     {
       "id": "taskcore:bundled:docs:doc-maintenance",
@@ -32,186 +32,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 4478,
-          "sha256": "fb0353386c5e5e5e13bcbb3233f044e3dccecf371f429d6328f26c26d7cb6169"
+          "sizeBytes": 4475,
+          "sha256": "5b406bcb70e819b2b33acefeb660c47fa7002f3c55c925b36a8ab39fd47019bb"
         }
       ],
-      "contentHash": "sha256:2e02299210fd17c1fe1867b4ee8c144a11b6fe1fe481f83b8268cfbaaf10f9aa"
-    },
-    {
-      "id": "taskcore:bundled:taskcore-operations:issue-triage",
-      "key": "taskcore/bundled/taskcore-operations/issue-triage",
-      "kind": "bundled",
-      "category": "taskcore-operations",
-      "slug": "issue-triage",
-      "name": "issue-triage",
-      "description": "Triage Taskcore inbox issues that are stale, blocked, in-review, or assigned-but-not-progressing, and decide a single next action per issue (resume, reassign, unblock, escalate, or close).",
-      "path": "catalog/bundled/taskcore-operations/issue-triage",
-      "entrypoint": "SKILL.md",
-      "trustLevel": "markdown_only",
-      "compatibility": "compatible",
-      "defaultInstall": false,
-      "recommendedForRoles": [
-        "manager",
-        "ceo",
-        "engineer"
-      ],
-      "requires": [],
-      "tags": [
-        "taskcore",
-        "triage",
-        "inbox",
-        "workflow"
-      ],
-      "files": [
-        {
-          "path": "SKILL.md",
-          "kind": "skill",
-          "sizeBytes": 4042,
-          "sha256": "df5bdc8bf5e017b7ba5f70a4b5323fad51d0c323278f386580f26cf43ad09160"
-        }
-      ],
-      "contentHash": "sha256:88dc13560371fb364963782cb4f6eeb4090fcde92ee3774479428ed6b90e11c1"
-    },
-    {
-      "id": "taskcore:bundled:taskcore-operations:reflection-coach",
-      "key": "taskcore/bundled/taskcore-operations/reflection-coach",
-      "kind": "bundled",
-      "category": "taskcore-operations",
-      "slug": "reflection-coach",
-      "name": "reflection-coach",
-      "description": "Reflect on another agent's recent execution record and propose the smallest durable instruction, skill, or tool-description change. Use for evidence-backed coaching proposals, never hot-swaps.",
-      "path": "catalog/bundled/taskcore-operations/reflection-coach",
-      "entrypoint": "SKILL.md",
-      "trustLevel": "markdown_only",
-      "compatibility": "compatible",
-      "defaultInstall": false,
-      "recommendedForRoles": [
-        "manager",
-        "general"
-      ],
-      "requires": [],
-      "tags": [
-        "taskcore",
-        "reflection",
-        "coaching",
-        "agents",
-        "skills"
-      ],
-      "files": [
-        {
-          "path": "SKILL.md",
-          "kind": "skill",
-          "sizeBytes": 12028,
-          "sha256": "083d5fa8dc43c3ce7747e89c1afb6f6f42d0603a31808bffc5f8e56735f2d865"
-        }
-      ],
-      "contentHash": "sha256:f2592d81f616628a3eba92636616424f2eed82ec22bb504240a58f6be115e407"
-    },
-    {
-      "id": "taskcore:bundled:taskcore-operations:status-card-query",
-      "key": "taskcore/bundled/taskcore-operations/status-card-query",
-      "kind": "bundled",
-      "category": "taskcore-operations",
-      "slug": "status-card-query",
-      "name": "status-card-query",
-      "description": "Create and maintain agent-authored Taskcore status cards, or compile a prose interest prompt into bounded CompanySearchQuery objects and write the first summary from the assigned Summarizer run.",
-      "path": "catalog/bundled/taskcore-operations/status-card-query",
-      "entrypoint": "SKILL.md",
-      "trustLevel": "markdown_only",
-      "compatibility": "compatible",
-      "defaultInstall": false,
-      "recommendedForRoles": [
-        "general",
-        "manager"
-      ],
-      "requires": [],
-      "tags": [
-        "taskcore",
-        "status",
-        "search",
-        "reporting",
-        "operations"
-      ],
-      "files": [
-        {
-          "path": "SKILL.md",
-          "kind": "skill",
-          "sizeBytes": 6368,
-          "sha256": "0c6140f51d503cbadc98723ce54c0def48e7e31ea159b0935b8ad6369291498a"
-        }
-      ],
-      "contentHash": "sha256:2b6e53bf8491f027afdbd6961ad84f677cfd385a0a6a73616ea84111ca8886ed"
-    },
-    {
-      "id": "taskcore:bundled:taskcore-operations:summarize-status",
-      "key": "taskcore/bundled/taskcore-operations/summarize-status",
-      "kind": "bundled",
-      "category": "taskcore-operations",
-      "slug": "summarize-status",
-      "name": "summarize-status",
-      "description": "Write a short, colloquial summary for a Taskcore summary slot: open with the 1–3 specific, concrete actions the reader needs to take right now to unblock the work, then a brief plain-language status, streaming progress as it works.",
-      "path": "catalog/bundled/taskcore-operations/summarize-status",
-      "entrypoint": "SKILL.md",
-      "trustLevel": "markdown_only",
-      "compatibility": "compatible",
-      "defaultInstall": false,
-      "recommendedForRoles": [
-        "general",
-        "manager"
-      ],
-      "requires": [],
-      "tags": [
-        "taskcore",
-        "summary",
-        "status",
-        "reporting",
-        "operations"
-      ],
-      "files": [
-        {
-          "path": "SKILL.md",
-          "kind": "skill",
-          "sizeBytes": 8877,
-          "sha256": "4cb3d177f5d16e3cc2052d2f80e7fb245ab95e79c1e947abdc84cd4ee3d8c61e"
-        }
-      ],
-      "contentHash": "sha256:3e49ee2b8d83d1371fb0f59197bb96c46b64f722540405f46d4a5a756fbe1b89"
-    },
-    {
-      "id": "taskcore:bundled:taskcore-operations:task-planning",
-      "key": "taskcore/bundled/taskcore-operations/task-planning",
-      "kind": "bundled",
-      "category": "taskcore-operations",
-      "slug": "task-planning",
-      "name": "task-planning",
-      "description": "Write or revise a useful Taskcore plan with a clear outcome and verification. Use when a plan is requested or uncertainty needs resolving before execution.",
-      "path": "catalog/bundled/taskcore-operations/task-planning",
-      "entrypoint": "SKILL.md",
-      "trustLevel": "markdown_only",
-      "compatibility": "compatible",
-      "defaultInstall": false,
-      "recommendedForRoles": [
-        "manager",
-        "engineer",
-        "product"
-      ],
-      "requires": [],
-      "tags": [
-        "taskcore",
-        "planning",
-        "issues",
-        "delegation"
-      ],
-      "files": [
-        {
-          "path": "SKILL.md",
-          "kind": "skill",
-          "sizeBytes": 1517,
-          "sha256": "48d6501d6ef481d5b19d0e0cd1507436d1cee1acf155e5038e1f0b2f0230d9e1"
-        }
-      ],
-      "contentHash": "sha256:a1724bde58be85c445590aeaa2f5f2f1de2bee24fe62f07fa3b579c6e4b28e6d"
+      "contentHash": "sha256:b3ee35b6c5f2235cae27f99e516b6dab28be87a8983e4244d3d6a99663a845ab"
     },
     {
       "id": "taskcore:bundled:product:taskcore-capsules",
@@ -245,35 +70,35 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 5831,
-          "sha256": "dd659ccb46e105336eb00fbe689b1d5531347fc69493c3156390d40ee413c93e"
+          "sizeBytes": 5817,
+          "sha256": "a1e36998217fe09d7efdf17fb9c698604cba9ed2ef850c2b8046f19ed01b988e"
         },
         {
           "path": "references/generator-workflows.md",
           "kind": "reference",
-          "sizeBytes": 4356,
-          "sha256": "b5f72e5b6683e8f93f2d852e84c2cc19e6ab438b250bf777dfb2480dd4f6e1b6"
+          "sizeBytes": 4345,
+          "sha256": "6b565f78069172cc5261f925340318275c4c6a6686caeaefa5580779e853fe4f"
         },
         {
           "path": "references/hero-capsule-bank.md",
           "kind": "reference",
-          "sizeBytes": 5981,
-          "sha256": "ec3d34113aa7bb527560d1eb4d8ab7667c73e18284c85a2019122743a767525a"
+          "sizeBytes": 5977,
+          "sha256": "b5269d2acf5c8d48ba67662c697c2c7e458aacf7975e3267daf59cc34d383927"
         },
         {
           "path": "references/identicon-prototyper.md",
           "kind": "reference",
-          "sizeBytes": 6669,
-          "sha256": "0b19419efa1396a402097decabe24ea9ae649678569449c8ce855e0678df6bfe"
+          "sizeBytes": 6660,
+          "sha256": "b251c4344b708a2f41289fbffda64247d87c6c4c0988136b682a88f66c5a88fb"
         },
         {
           "path": "references/individual-status-capsules.md",
           "kind": "reference",
-          "sizeBytes": 5031,
-          "sha256": "be1f2eccf96b4d2deefe45b3bc1dd0a3597278472c2ffedadc43c57161e9103d"
+          "sizeBytes": 5029,
+          "sha256": "c33fdd675fa4c6b4db0b7009871c09b67777bf1269386855ab1e3b52adf1de24"
         }
       ],
-      "contentHash": "sha256:a2b26cf6895affeeb70c85567a061094450a59bd3c4fdcf28ee65858599ac12c"
+      "contentHash": "sha256:c3ca723c1efd9e3c0a1d1ef2c97f068b74401d4c266175ba2ee81024c186c680"
     },
     {
       "id": "taskcore:bundled:product:wireframe",
@@ -305,8 +130,8 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 11509,
-          "sha256": "6992047cc97b67211cc8c1183718ab9aa26b8afc34c70d54d20558c215daaf48"
+          "sizeBytes": 11506,
+          "sha256": "d8221f855f662b3c69b00eee39575f77a0fc14397b3ec9db5df1bd1b35576bdc"
         },
         {
           "path": "assets/site-template.html",
@@ -345,7 +170,7 @@
           "sha256": "017260d2216859d57e5fa869e0efc6b88c7ed4d8a8a4f5af04fe89a3ef2445bd"
         }
       ],
-      "contentHash": "sha256:7106d84fc9db2053090f692706e41cfc586e7dd85a44f568e3319c4eefbdde46"
+      "contentHash": "sha256:28068a847dca92cfc0defda7100ef161e97c7a8f238834b61c71185296949abc"
     },
     {
       "id": "taskcore:bundled:quality:qa-acceptance",
@@ -376,11 +201,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 3861,
-          "sha256": "c631b437ab26d104af6cdb963d8f679a9341439041b3cb3ec8835f4ff551b378"
+          "sizeBytes": 3858,
+          "sha256": "8c6961e475b65004a17c00b395d1625e4c7fdef2e6251d96506048528a82052b"
         }
       ],
-      "contentHash": "sha256:32372dacaf62e93454b9855968c4eec96456ba78b509f450b3dfaa48e31ef356"
+      "contentHash": "sha256:4840857390e133970688a3f7d769de65638966953a00622054e5be6560f95c6e"
     },
     {
       "id": "taskcore:bundled:software-development:github-pr-workflow",
@@ -409,11 +234,186 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 3970,
-          "sha256": "f498ec4ebb1779dea37adeb1db8a8b22316282798e35ee02e2fc5ff627d7e261"
+          "sizeBytes": 3967,
+          "sha256": "9e59c010dadfa7412786d5e78b9d2dffadde7844abd856b8369299e2e50d9cec"
         }
       ],
-      "contentHash": "sha256:90f278c89aa0711be150c1cd2456ca25620d02f36995b113ca9837d756a37f6c"
+      "contentHash": "sha256:2fc2584d8734675886c74c7d7bb90ba83951e52cf06d4e2442acdb38bc93bfca"
+    },
+    {
+      "id": "taskcore:bundled:taskcore-operations:issue-triage",
+      "key": "taskcore/bundled/taskcore-operations/issue-triage",
+      "kind": "bundled",
+      "category": "taskcore-operations",
+      "slug": "issue-triage",
+      "name": "issue-triage",
+      "description": "Triage Taskcore inbox issues that are stale, blocked, in-review, or assigned-but-not-progressing, and decide a single next action per issue (resume, reassign, unblock, escalate, or close).",
+      "path": "catalog/bundled/taskcore-operations/issue-triage",
+      "entrypoint": "SKILL.md",
+      "trustLevel": "markdown_only",
+      "compatibility": "compatible",
+      "defaultInstall": false,
+      "recommendedForRoles": [
+        "manager",
+        "ceo",
+        "engineer"
+      ],
+      "requires": [],
+      "tags": [
+        "taskcore",
+        "triage",
+        "inbox",
+        "workflow"
+      ],
+      "files": [
+        {
+          "path": "SKILL.md",
+          "kind": "skill",
+          "sizeBytes": 4036,
+          "sha256": "e5ed35967ad2f01748ef5671992b855b601ebe5d4e7b1bf4b7fc4883d28031df"
+        }
+      ],
+      "contentHash": "sha256:20733ad002f9c7f418ddca2093c33c85989903975733b296937cc092b7bb147b"
+    },
+    {
+      "id": "taskcore:bundled:taskcore-operations:reflection-coach",
+      "key": "taskcore/bundled/taskcore-operations/reflection-coach",
+      "kind": "bundled",
+      "category": "taskcore-operations",
+      "slug": "reflection-coach",
+      "name": "reflection-coach",
+      "description": "Reflect on another agent's recent execution record and propose the smallest durable instruction, skill, or tool-description change. Use for evidence-backed coaching proposals, never hot-swaps.",
+      "path": "catalog/bundled/taskcore-operations/reflection-coach",
+      "entrypoint": "SKILL.md",
+      "trustLevel": "markdown_only",
+      "compatibility": "compatible",
+      "defaultInstall": false,
+      "recommendedForRoles": [
+        "manager",
+        "general"
+      ],
+      "requires": [],
+      "tags": [
+        "taskcore",
+        "reflection",
+        "coaching",
+        "agents",
+        "skills"
+      ],
+      "files": [
+        {
+          "path": "SKILL.md",
+          "kind": "skill",
+          "sizeBytes": 12010,
+          "sha256": "47667b6f16b05bfcd694185aa7205c5208914bc19b73d978581a0c9346af21c3"
+        }
+      ],
+      "contentHash": "sha256:5e751b11d9d71ee438f4013b4f18426e206f8649338cd18df55ed5a2c18053fb"
+    },
+    {
+      "id": "taskcore:bundled:taskcore-operations:status-card-query",
+      "key": "taskcore/bundled/taskcore-operations/status-card-query",
+      "kind": "bundled",
+      "category": "taskcore-operations",
+      "slug": "status-card-query",
+      "name": "status-card-query",
+      "description": "Create and maintain agent-authored Taskcore status cards, or compile a prose interest prompt into bounded CompanySearchQuery objects and write the first summary from the assigned Summarizer run.",
+      "path": "catalog/bundled/taskcore-operations/status-card-query",
+      "entrypoint": "SKILL.md",
+      "trustLevel": "markdown_only",
+      "compatibility": "compatible",
+      "defaultInstall": false,
+      "recommendedForRoles": [
+        "general",
+        "manager"
+      ],
+      "requires": [],
+      "tags": [
+        "taskcore",
+        "status",
+        "search",
+        "reporting",
+        "operations"
+      ],
+      "files": [
+        {
+          "path": "SKILL.md",
+          "kind": "skill",
+          "sizeBytes": 6350,
+          "sha256": "c9190db5cb944b22602fc6de95bd0811d613d62b8123ee9ff6e4f4e4c83f57ff"
+        }
+      ],
+      "contentHash": "sha256:db00db17b37d3f42dfb1584c58e0c60f00f0b1ced088ad2b9fe8bab05c59173e"
+    },
+    {
+      "id": "taskcore:bundled:taskcore-operations:summarize-status",
+      "key": "taskcore/bundled/taskcore-operations/summarize-status",
+      "kind": "bundled",
+      "category": "taskcore-operations",
+      "slug": "summarize-status",
+      "name": "summarize-status",
+      "description": "Write a short, colloquial summary for a Taskcore summary slot: open with the 1–3 specific, concrete actions the reader needs to take right now to unblock the work, then a brief plain-language status, streaming progress as it works.",
+      "path": "catalog/bundled/taskcore-operations/summarize-status",
+      "entrypoint": "SKILL.md",
+      "trustLevel": "markdown_only",
+      "compatibility": "compatible",
+      "defaultInstall": false,
+      "recommendedForRoles": [
+        "general",
+        "manager"
+      ],
+      "requires": [],
+      "tags": [
+        "taskcore",
+        "summary",
+        "status",
+        "reporting",
+        "operations"
+      ],
+      "files": [
+        {
+          "path": "SKILL.md",
+          "kind": "skill",
+          "sizeBytes": 8866,
+          "sha256": "e147be4a6505768e12ab114a3d90e467c25867830a4a70d50b0cea8bb368a02b"
+        }
+      ],
+      "contentHash": "sha256:5bf5db582aa314737fdbc77df82d0869ca0664ad9f1a510a9224c7b97d5b20c0"
+    },
+    {
+      "id": "taskcore:bundled:taskcore-operations:task-planning",
+      "key": "taskcore/bundled/taskcore-operations/task-planning",
+      "kind": "bundled",
+      "category": "taskcore-operations",
+      "slug": "task-planning",
+      "name": "task-planning",
+      "description": "Write or revise a useful Taskcore plan with a clear outcome and verification. Use when a plan is requested or uncertainty needs resolving before execution.",
+      "path": "catalog/bundled/taskcore-operations/task-planning",
+      "entrypoint": "SKILL.md",
+      "trustLevel": "markdown_only",
+      "compatibility": "compatible",
+      "defaultInstall": false,
+      "recommendedForRoles": [
+        "manager",
+        "engineer",
+        "product"
+      ],
+      "requires": [],
+      "tags": [
+        "taskcore",
+        "planning",
+        "issues",
+        "delegation"
+      ],
+      "files": [
+        {
+          "path": "SKILL.md",
+          "kind": "skill",
+          "sizeBytes": 1509,
+          "sha256": "4deacee197a861aca364042f68ffbded2569f884485780ba1374c62e8b3f7562"
+        }
+      ],
+      "contentHash": "sha256:ac8517ba5393ed42510e5e36fb1592828de517dd8063568a1a0de2a55132a10a"
     },
     {
       "id": "taskcore:optional:browser:agent-browser",
@@ -444,11 +444,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 5133,
-          "sha256": "362f7b9d02297782bc6f0c093f495b8a0304a75bcf4b42e5c280a42b1f757b7d"
+          "sizeBytes": 5130,
+          "sha256": "41fc9b79aa146bd6fa806295918a61e6f6e32176155a8bde1d934e9c44b36142"
         }
       ],
-      "contentHash": "sha256:eabb2c9f7b5e1a27ebb1e05a711d61433a266478154cd671a685e99e67aadea2"
+      "contentHash": "sha256:a9ef18d64c9bca05802a7daa5e9a66a84e43cdaeb4e19d183cab931b4245e39d"
     },
     {
       "id": "taskcore:optional:content:release-announcement",
@@ -479,11 +479,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 6945,
-          "sha256": "d745cca96350518fabae14f5c407d779e1df2c5d091b5b4a5c55bb888b569e5f"
+          "sizeBytes": 6930,
+          "sha256": "88cea0f1fae27c875b8354cb2888e723556abd1ce1c0c506179f092034b1a147"
         }
       ],
-      "contentHash": "sha256:efe8ea89b552df95222609867c9c75f1b40e16f457d34e7e4a124f54daa33efa"
+      "contentHash": "sha256:af99843f6442bc1016b19609541688506c065715ccaf40efb7320d577cd193e7"
     },
     {
       "id": "taskcore:optional:content:simplified-english",
@@ -515,11 +515,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 1578,
-          "sha256": "a0f7385599873910e2fabf400346016a07dacbc7ece27c0e3616ae8fd94ebfbb"
+          "sizeBytes": 1575,
+          "sha256": "6d9c4fa41eb30b185e43ebf566bf607b1417fe54b8ad7bcf6649acaf586bc50f"
         }
       ],
-      "contentHash": "sha256:642321f40d51e0125df05c6fbace49aeb07ec30392058756909c259c9c5eac6a"
+      "contentHash": "sha256:83c28e8100bd7c3965c5e0e93a6d9f49451c68115b78b21da3f7095a671ffe07"
     },
     {
       "id": "taskcore:optional:finance:ramp",
@@ -552,11 +552,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 7016,
-          "sha256": "698cd69ebf2f2481ed83c8e9477b56ae78288cc4c751d7d35f649ff2483802a3"
+          "sizeBytes": 6996,
+          "sha256": "2e528e9936ea638b79fda6eead3a791feb4aa2b372dc90a2ed7495ffb12b25b0"
         }
       ],
-      "contentHash": "sha256:276d85e98a4732f278204e26438aa95fde158dd2d15c1e427c4c7c7d492e769d"
+      "contentHash": "sha256:14adc8942fcb0a9921853c8524e302493e2c24d5df0b21ee55f144e35894332f"
     },
     {
       "id": "taskcore:optional:product:design-critique",
@@ -587,11 +587,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 4851,
-          "sha256": "022e619baf6cc25725946279cb8052d22af090dd6cd6dc8c20f17867f71a5d8e"
+          "sizeBytes": 4848,
+          "sha256": "d2cb785b381d8aa0d9bea490ca9e21475273e4870fec1481313aa5da8d65a0b4"
         }
       ],
-      "contentHash": "sha256:429f94df398a0697042b5bbe4755b1ff1a230aa5f41d99118ad37493ac65d21c"
+      "contentHash": "sha256:b8d237df8e264bb032187b2e1b292c2a16ea84c6d76b598d1ad8b59ccefeb7cd"
     },
     {
       "id": "taskcore:optional:research:last30days",
@@ -1149,17 +1149,17 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 12409,
-          "sha256": "5278d288a0cbfe10fdda4ef3d99cf61e6ed068f4b6c1282406b0e001c9f45253"
+          "sizeBytes": 12384,
+          "sha256": "d644f6e3312413dbf969f41b0c7118afff690cd30c469ca9abeab37e03f9f37b"
         },
         {
           "path": "examples/notion-mcp-research-gate.md",
           "kind": "markdown",
-          "sizeBytes": 1900,
-          "sha256": "944b13ac67c06c65643eb236e856f1479106749861535648d29334f84cf1b50b"
+          "sizeBytes": 1893,
+          "sha256": "bcddb63475d3370de78b4821a0f13fa392c8921cec9e6cadbaeda3b6693b82b2"
         }
       ],
-      "contentHash": "sha256:84f2a28d7d004393719684f2b435e5ee01ddc58591e0dfeb73d72c7605db7f49"
+      "contentHash": "sha256:92f8422fb4eff46029b1661b3508a4d2a77dcd78e16fc19943abee14b28bae52"
     }
   ]
 }

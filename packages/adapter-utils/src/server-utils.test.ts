@@ -1475,7 +1475,7 @@ describe("renderTaskcoreWakePrompt", () => {
       fallbackFetchNeeded: false,
     });
 
-    expect(prompt).toContain("## Taskcore Wake Payload");
+    expect(prompt).toContain("## TaskCore Wake Payload");
     expect(prompt).not.toContain("Execution contract:");
     expect(DEFAULT_TASKCORE_AGENT_PROMPT_TEMPLATE).not.toContain(
       "Execution contract:",
@@ -1505,7 +1505,7 @@ describe("renderTaskcoreWakePrompt", () => {
         const prompt = renderTaskcoreWakePrompt(payload, {
           resumedSession, includeExecutionContract,
         });
-        expect(prompt).toContain(resumedSession ? "## Taskcore Resume Delta" : "## Taskcore Wake Payload");
+        expect(prompt).toContain(resumedSession ? "## TaskCore Resume Delta" : "## TaskCore Wake Payload");
         expect(prompt).toContain("- reason: issue_assigned");
         expect(prompt).toContain("- issue: PAP-1580 Update prompts");
         expect(prompt).toContain("- issue status: in_progress");
@@ -2044,7 +2044,7 @@ describe("renderTaskcoreWakePrompt", () => {
     const resumedPrompt = renderTaskcoreWakePrompt(payload, {
       resumedSession: true,
     });
-    expect(resumedPrompt).toContain("## Taskcore Resume Delta");
+    expect(resumedPrompt).toContain("## TaskCore Resume Delta");
     expect(resumedPrompt).not.toContain("execution workspace branch");
 
     expect(

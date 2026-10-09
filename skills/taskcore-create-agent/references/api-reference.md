@@ -1,4 +1,4 @@
-# Taskcore Create Agent API Reference
+# TaskCore Create Agent API Reference
 
 ## Core Endpoints
 

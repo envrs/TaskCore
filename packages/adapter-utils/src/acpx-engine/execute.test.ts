@@ -717,7 +717,7 @@ describe("shared ACPX engine runtime behavior", () => {
     expect(prompt).toContain("TASKCORE_AGENT_ID");
     expect(prompt).toContain("TASKCORE_API_KEY");
     expect(prompt).not.toContain("TASKCORE_WAKE_PAYLOAD_JSON");
-    expect(prompt).toContain("## Taskcore Wake Payload");
+    expect(prompt).toContain("## TaskCore Wake Payload");
     expect(prompt).toContain("TEST-1");
     expect(prompt).toContain("Taskcore API access note:");
     expect(prompt).toContain('TASKCORE_API_BASE="${TASKCORE_API_URL%/}"; TASKCORE_API_BASE="${TASKCORE_API_BASE%/api}"');

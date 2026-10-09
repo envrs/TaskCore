@@ -1,4 +1,4 @@
-# Taskcore Runner in Daytona sandboxes
+# TaskCore Runner in Daytona sandboxes
 
 ## Intended topology
 

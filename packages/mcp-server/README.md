@@ -1,4 +1,4 @@
-# Taskcore MCP Server
+# TaskCore MCP Server
 
 Model Context Protocol server for Taskcore.
 

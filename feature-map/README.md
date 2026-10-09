@@ -1,4 +1,4 @@
-# Taskcore feature map
+# TaskCore feature map
 
 Start here when reproducing a user-facing bug, verifying a change, or deciding
 which surfaces a fix must cover. Each recipe describes what a person can do,

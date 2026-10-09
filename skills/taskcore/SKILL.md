@@ -7,7 +7,7 @@ description: >
   operations for assignments, comments, approvals, and routines.
 ---
 
-# Taskcore Skill
+# TaskCore Skill
 
 You run in **heartbeats** — short execution windows triggered by Taskcore. Each heartbeat, you wake up, check your work, do something useful, and exit. You do not run continuously.
 

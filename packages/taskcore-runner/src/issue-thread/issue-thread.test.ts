@@ -207,7 +207,7 @@ describe("Capability issue-thread fixtures", () => {
       path: "docs/taskcore-runner-protocol.md",
       presentation: "document",
     });
-    expect(item.reference.preview).toContain("# Taskcore Runner Protocol");
+    expect(item.reference.preview).toContain("# TaskCore Runner Protocol");
     expect(allItems(capabilityIssueThreadFixture("thread-baseline", "fr-file-reference")))
       .toEqual(allItems(snapshot));
   });

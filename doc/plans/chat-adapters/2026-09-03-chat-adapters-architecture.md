@@ -1,4 +1,4 @@
-# Taskcore Chat Adapters Architecture
+# TaskCore Chat Adapters Architecture
 
 **Status:** decision-complete implementation plan
 **Date:** 2026-09-03

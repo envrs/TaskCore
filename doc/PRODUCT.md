@@ -1,4 +1,4 @@
-# Taskcore — Product Definition
+# TaskCore — Product Definition
 
 ## What It Is
 

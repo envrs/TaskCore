@@ -1,4 +1,4 @@
-# Taskcore assistant plugins
+# TaskCore assistant plugins
 
 One shared set of workflows, with packages for OpenAI (ChatGPT/Codex) and Claude.
 The packages use only individually exposed first-party Taskcore tools. Agent

@@ -6,7 +6,7 @@ description: >
   draft a new agent prompt/config, and submit a hire request.
 ---
 
-# Taskcore Create Agent Skill
+# TaskCore Create Agent Skill
 
 Use this skill when you are asked to hire/create an agent.
 

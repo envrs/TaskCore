@@ -1,4 +1,4 @@
-# Taskcore Daytona runner image
+# TaskCore Daytona runner image
 
 Ordinary provider packs now include pinned Cursor assets for Linux x64; no
 `--candidate-providers=cursor` flag is needed. Cursor admission is enabled after

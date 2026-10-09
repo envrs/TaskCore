@@ -644,7 +644,7 @@ describe("codex execute", () => {
       expect(capture.taskcoreWakePayloadJson).toBeNull();
       expect(capture.prompt).toContain(description);
       expect(capture.prompt).toContain("- reason: issue_commented");
-      expect(capture.prompt).toContain("## Taskcore Wake Payload");
+      expect(capture.prompt).toContain("## TaskCore Wake Payload");
       expect(capture.prompt).toContain("Use this wake to continue the task, applying new user direction and preserving its approval gates.");
       expect(capture.prompt).toContain("Do not switch to another issue until you have handled this wake.");
       expect(capture.prompt).toContain(
@@ -1307,7 +1307,7 @@ process.exit(1);
       const capture = JSON.parse(await fs.readFile(capturePath, "utf8")) as CapturePayload;
       expect(capture.taskcoreEnvKeys).not.toContain("TASKCORE_WAKE_PAYLOAD_JSON");
       expect(capture.taskcoreWakePayloadJson).toBeNull();
-      expect(capture.prompt).toContain("## Taskcore Wake Payload");
+      expect(capture.prompt).toContain("## TaskCore Wake Payload");
       expect(capture.prompt).toContain("Do not switch to another issue until you have handled this wake.");
       expect(capture.prompt).toContain("- issue: PAP-1201 Fix gallery opening for inline images");
       expect(capture.prompt).not.toContain("- pending comments:");
@@ -1430,7 +1430,7 @@ process.exit(1);
       const capture = JSON.parse(await fs.readFile(capturePath, "utf8")) as CapturePayload;
       if (resumedSession) expect(capture.argv).toEqual(expect.arrayContaining(["resume", "codex-session-1", "-"]));
       else expect(capture.argv).not.toContain("resume");
-      expect(capture.prompt).toContain(resumedSession ? "## Taskcore Resume Delta" : "## Taskcore Wake Payload");
+      expect(capture.prompt).toContain(resumedSession ? "## TaskCore Resume Delta" : "## TaskCore Wake Payload");
       expect(capture.prompt).toContain("Do not switch to another issue until you have handled this wake.");
       expect(capture.prompt).toContain("Second comment");
       expect(capture.prompt).toContain(policy);
@@ -1448,7 +1448,7 @@ process.exit(1);
       expect(capture.prompt).not.toContain("Follow the taskcore heartbeat.");
       if (resumedSession) {
         expect(capture.prompt).not.toContain("You are managed instructions.");
-        expect(invocationPrompt).toContain("## Taskcore Resume Delta");
+        expect(invocationPrompt).toContain("## TaskCore Resume Delta");
         expect(invocationNotes).toContain("Skipped stdin instruction reinjection because an existing Codex session is being resumed with a wake delta.");
         expect(promptMetrics.instructionsChars).toBe(0);
         expect(promptMetrics.heartbeatPromptChars).toBe(0);

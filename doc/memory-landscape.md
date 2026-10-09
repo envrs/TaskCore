@@ -114,7 +114,7 @@ Taskcore needs both direct request/response operations and background maintenanc
 
 ## Taskcore-Specific Takeaways
 
-### Taskcore should own these concerns
+### TaskCore should own these concerns
 
 - binding a provider to a company and optionally overriding it per agent
 - mapping Taskcore entities into provider scopes

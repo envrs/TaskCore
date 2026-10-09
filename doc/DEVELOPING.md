@@ -1291,7 +1291,7 @@ Legacy CLI paths that put prompts in command-line arguments (Gemini, Grok, Kimi,
 Pi, and Hermes) still have argument-size limits. ACP turns, SDK requests, and
 CLI paths that use stdin avoid that separate limit for the wake prompt.
 
-## Taskcore Runner Adapter Conversion
+## TaskCore Runner Adapter Conversion
 
 The experimental Taskcore Runner offers native Codex, OpenCode, and **ACPX
 Claude**. Converting an existing Claude, Codex, or OpenCode agent selects its

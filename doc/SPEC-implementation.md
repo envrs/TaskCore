@@ -1,4 +1,4 @@
-# Taskcore V1 Implementation Spec
+# TaskCore V1 Implementation Spec
 
 Status: Implementation contract for first release (V1)
 Date: 2026-04-28

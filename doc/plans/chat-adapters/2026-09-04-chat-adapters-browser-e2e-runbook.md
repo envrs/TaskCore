@@ -1,4 +1,4 @@
-# Taskcore Chat Adapters — Live Browser E2E Runbook
+# TaskCore Chat Adapters — Live Browser E2E Runbook
 
 **Status:** executable implementation and release acceptance contract
 

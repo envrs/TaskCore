@@ -3,7 +3,7 @@ name: taskcore-task-bridge
 description: Create, comment on, update, and list Taskcore tasks from Hermes using scoped Taskcore API credentials.
 ---
 
-# Taskcore Task Bridge
+# TaskCore Task Bridge
 
 Use this skill when a Hermes-originated request needs to create or update Taskcore work directly. This is the Hermes-to-Taskcore direction, separate from Taskcore waking Hermes through the `hermes_local` or `hermes_gateway` adapter.
 

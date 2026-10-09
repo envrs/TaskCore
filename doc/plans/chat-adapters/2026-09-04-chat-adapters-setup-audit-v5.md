@@ -1,4 +1,4 @@
-# Taskcore Chat Adapters — Setup Audit v5
+# TaskCore Chat Adapters — Setup Audit v5
 
 Status: historical snapshot; current setup specification is [`2026-09-04-chat-adapters-minimum-setup-v6.md`](./2026-09-04-chat-adapters-minimum-setup-v6.md)
 Date: 2026-09-04

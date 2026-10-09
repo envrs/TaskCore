@@ -1,4 +1,4 @@
-# Taskcore Chat Adapters UI Surfaces — v6
+# TaskCore Chat Adapters UI Surfaces — v6
 
 > Historical revision. The current review is [`2026-09-04-chat-adapters-ui-surfaces-v8.md`](./2026-09-04-chat-adapters-ui-surfaces-v8.md). Managed-install and helper-first concepts below are not shipped requirements.
 

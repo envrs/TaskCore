@@ -1,4 +1,4 @@
-# Taskcore External Task Protocol Specification
+# TaskCore External Task Protocol Specification
 
 Status: Draft v1 (provider-agnostic)
 

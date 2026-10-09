@@ -16,7 +16,7 @@ function recording(generation: "legacy" | "native" = "legacy"): StockHarnessEvid
     runIds: ["fresh", "resumed"],
     invocations: generation === "native" ? [] : [
       { runId: "fresh", conversationMode: false, prompt: "You are agent agent (QA).\nConnection tools:\nUse connections_search.\nCurrent assignment.", promptMetrics: { heartbeatPromptChars: 113 } },
-      { runId: "resumed", conversationMode: false, prompt: "## Taskcore Resume Delta\nCurrent ordered comments.", promptMetrics: { heartbeatPromptChars: 0 } },
+      { runId: "resumed", conversationMode: false, prompt: "## TaskCore Resume Delta\nCurrent ordered comments.", promptMetrics: { heartbeatPromptChars: 0 } },
     ],
   };
 }

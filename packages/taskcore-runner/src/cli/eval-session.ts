@@ -98,7 +98,7 @@ async function sha256(path: string): Promise<string> {
 }
 
 const EVAL_RUNTIME_INSTRUCTIONS = [
-  "# Taskcore direct live evaluation",
+  "# TaskCore direct live evaluation",
   "",
   "Use the provided Taskcore semantic tools to inspect and act on the assigned task.",
   "Treat the seeded control-plane state as authoritative and keep every action within the requested scope.",

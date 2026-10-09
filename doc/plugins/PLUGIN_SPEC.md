@@ -1,4 +1,4 @@
-# Taskcore Plugin System Specification
+# TaskCore Plugin System Specification
 
 Status: proposed complete spec for the post-V1 plugin system
 

@@ -974,7 +974,7 @@ Keep issue-level overrides possible through the existing `assigneeAdapterOverrid
 
 ## Responsibilities by Layer
 
-### Taskcore Core
+### TaskCore Core
 
 Taskcore core should:
 

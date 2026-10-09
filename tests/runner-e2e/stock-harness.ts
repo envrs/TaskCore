@@ -94,7 +94,7 @@ export function gradeStockHarness(evidence: StockHarnessEvidence, instructionVar
         : String(row.prompt).includes("Execution contract:") && String(row.prompt).includes("Final disposition checklist:")),
       `Check each of ${fresh.length} fresh invocations against its historical task or conversation template.`);
       check("historical-continuation-contract", classified && resumed.every(row =>
-        String(row.prompt).includes("## Taskcore Resume Delta") && (row.conversationMode
+        String(row.prompt).includes("## TaskCore Resume Delta") && (row.conversationMode
           ? !String(row.prompt).includes("Execution contract:")
           : String(row.prompt).includes("Execution contract: take concrete action") &&
             String(row.prompt).includes("a successful process exit or final response is not sufficient"))),

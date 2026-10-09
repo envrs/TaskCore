@@ -10,7 +10,7 @@
 
 How should Taskcore place its existing agents inside Slack and other external communication systems while preserving Taskcore tasks, runs, permissions, and governance as the source of truth?
 
-## Taskcore baseline
+## TaskCore baseline
 
 Taskcore is already task/comment-centric rather than a generic chatbot. It has:
 

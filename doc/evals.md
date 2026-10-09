@@ -1,4 +1,4 @@
-# Taskcore evaluation guide
+# TaskCore evaluation guide
 
 The [Slack connector probe catalog](../server/src/services/connectors/slack/evals/README.md)
 organizes eleven manual model acceptance probes and a selector for existing

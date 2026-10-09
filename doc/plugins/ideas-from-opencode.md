@@ -376,7 +376,7 @@ The products are solving different problems.
 
 That means Taskcore should borrow the good ideas from `opencode` but use a stricter architecture.
 
-## Taskcore Already Has Useful Pre-Plugin Seams
+## TaskCore Already Has Useful Pre-Plugin Seams
 
 Taskcore has several extension-like seams already:
 

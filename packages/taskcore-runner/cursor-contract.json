@@ -5,7 +5,7 @@
   "base": "dd868ed125cd709506dd9b29fca640a44d580501",
   "vendor": "2026.09.26-dd393fe",
   "nativePatch": "taskcore-cursor-usage-v4",
-  "acpxPatchSha256": "fedf1e498c1e19daf9c973d475234488aa9acabbf1b9de890245bfac7a534483",
+  "acpxPatchSha256": "72f2d860bd78f888ede1c21a89bd48d1ad7198da2f581eafc47d1b3fe445bbb2",
   "publicSetup": "taskcore runtime setup cursor",
   "assets": "public-server-and-provider-pack",
   "modes": [
@@ -19,5 +19,5 @@
   "planAcceptance": "successful-run-open-task-explicit-continuation",
   "otherProviders": "mainline-gated",
   "modelSelection": "explicit-provider-verified-startup-and-reconnect",
-  "commandDigest": "sha256:a5e70580e4933a1a9248cd3c1b16500c6c93e1e14913e0a98cd5ef878bd53d39"
+  "commandDigest": "sha256:5b439b2079078067b86955d8046bfaa436f34611f965a41c93d5f845e2b31a8d"
 }

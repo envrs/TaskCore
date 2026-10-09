@@ -1,4 +1,4 @@
-# Taskcore Runner compatibility and rollout
+# TaskCore Runner compatibility and rollout
 
 - Status: Proposed
 - Date: 2026-08-24

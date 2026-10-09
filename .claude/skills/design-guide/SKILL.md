@@ -11,7 +11,7 @@ description: >
   web-design-guidelines skill (for web best practices).
 ---
 
-# Taskcore Design Guide
+# TaskCore Design Guide
 
 Taskcore's UI is a professional-grade control plane — dense, keyboard-driven, dark-themed by default. Every pixel earns its place.
 

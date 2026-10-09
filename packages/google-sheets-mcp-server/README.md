@@ -29,7 +29,7 @@ taskcore-google-sheets-mcp-server \
 
 Share each allowed spreadsheet with the service account's `client_email`.
 
-## Taskcore `local_stdio` Test Path
+## TaskCore `local_stdio` Test Path
 
 Use the Google Sheets gallery app when you want Taskcore to supervise the
 server as a stdio MCP process:
@@ -52,7 +52,7 @@ In this path, the spreadsheet allowlist comes from the gallery wizard. Every
 tool call is still checked against the server-side allowlist before the server
 calls Google.
 
-## Taskcore `remote_http` Test Path
+## TaskCore `remote_http` Test Path
 
 Use the HTTP binary when you want to exercise the same tools through
 Taskcore's `remote_http` gateway:

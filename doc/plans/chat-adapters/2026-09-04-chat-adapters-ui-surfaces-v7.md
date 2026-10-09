@@ -1,4 +1,4 @@
-# Taskcore Chat Adapters UI Surfaces — v7
+# TaskCore Chat Adapters UI Surfaces — v7
 
 > Historical snapshot. The current permission, Access, and Conversations design is [v8](./2026-09-04-chat-adapters-ui-surfaces-v8.md). Generated wireframes are in the [Git archive](./wireframes-archive.md). Managed-install and helper-first concepts below are not shipped requirements.
 

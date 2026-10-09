@@ -630,7 +630,7 @@ packages/taskcore-runner/docs/architecture.md
 packages/taskcore-runner/.taskcore-local/log.md
 ```
 
-### Taskcore storage, adapter, finalizer, and read seam
+### TaskCore storage, adapter, finalizer, and read seam
 
 ```text
 server/package.json

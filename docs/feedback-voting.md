@@ -100,7 +100,7 @@ feedback-export-20260331T120000Z/
   votes/
     PAP-123-a1b2c3d4.json      # vote metadata (one per vote)
   traces/
-    PAP-123-e5f6g7h8.json      # Taskcore feedback envelope (one per trace)
+    PAP-123-e5f6g7h8.json      # TaskCore feedback envelope (one per trace)
   full-traces/
     PAP-123-e5f6g7h8/
       bundle.json              # full export manifest for the trace

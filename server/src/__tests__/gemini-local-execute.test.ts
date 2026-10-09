@@ -490,7 +490,7 @@ describe("gemini execute", () => {
       const promptArg = promptFlagIndex >= 0 ? capture.argv[promptFlagIndex + 1] : "";
       expect(capture.argv).toContain("--resume");
       expect(capture.argv).toContain("gemini-session-1");
-      expect(promptArg).toContain("## Taskcore Resume Delta");
+      expect(promptArg).toContain("## TaskCore Resume Delta");
       expect(promptArg).toContain("Do not switch to another issue until you have handled this wake.");
       expect(promptArg).toContain("Second comment");
       expect(promptArg).not.toContain("Follow the taskcore heartbeat.");

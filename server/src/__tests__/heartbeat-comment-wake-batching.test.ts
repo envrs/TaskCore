@@ -3201,7 +3201,7 @@ describeEmbeddedPostgres("heartbeat comment wake batching", () => {
       const firstPayload = gateway.getAgentPayloads()[0] ?? {};
       expect(firstPayload.taskcore).toBeUndefined();
       expect(String(firstPayload.message ?? "")).toContain(
-        "## Taskcore Wake Payload",
+        "## TaskCore Wake Payload",
       );
       expect(String(firstPayload.message ?? "")).toContain(
         "Do not switch to another issue until you have handled this wake.",

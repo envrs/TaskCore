@@ -1,4 +1,4 @@
-# Taskcore API Reference
+# TaskCore API Reference
 
 Detailed reference for the Taskcore control plane API. For the core heartbeat procedure and critical rules, see the main `SKILL.md`.
 

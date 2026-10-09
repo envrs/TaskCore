@@ -1,4 +1,4 @@
-# Taskcore Evals Integration Contract
+# TaskCore Evals Integration Contract
 
 ## Stable consumer inputs
 

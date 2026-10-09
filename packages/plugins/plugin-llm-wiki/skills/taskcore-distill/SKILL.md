@@ -3,7 +3,7 @@ name: taskcore-distill
 description: Use when an operation issue is a Taskcore cursor-window, distill, or backfill. Turn source-bundled Taskcore activity into wiki-insightful project standups, durable project pages, decisions, and history without asset dereferencing.
 ---
 
-# Taskcore Distill
+# TaskCore Distill
 
 Distill Taskcore project, issue, comment, and document activity into durable wiki pages. The success criterion is **wiki-insightful, not procedural**: a reader who has never seen Taskcore should learn what the project is, what was decided, what is at risk, and what the current state is — without scanning a list of `## [YYYY-MM-DD]` headers.
 
@@ -34,7 +34,7 @@ the destination.
 - The operation issue's target `wikiId`, `spaceSlug`, space root, and the target space's `AGENTS.md` for page conventions.
 - The current `wiki/projects/<slug>/standup.md`, `wiki/projects/<slug>/index.md`, `decisions.md`, and `history.md` if they already exist (so you write a *patch*, not a rewrite).
 
-## Taskcore Asset Gate
+## TaskCore Asset Gate
 
 Do not treat Taskcore assets/attachments or issue work products as source text for this skill.
 

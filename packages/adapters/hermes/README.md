@@ -1,4 +1,4 @@
-# Taskcore Adapters for Hermes Agent
+# TaskCore Adapters for Hermes Agent
 
 A [Taskcore](https://taskcore.ing) adapter package that lets you run [Hermes Agent](https://github.com/NousResearch/hermes-agent) as a managed employee in a Taskcore company.
 

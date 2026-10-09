@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Taskcore, Radio } from "lucide-react";
+import { ExternalLink, Radio } from "lucide-react";
+import { TaskcoreIcon } from "../icons/taskcore-icon";
 import type {
   ChatPublicationState,
   ChatFileTransferPhase,
@@ -574,7 +575,7 @@ function ConnectedTaskComposer({
               disabled={uploadDisabled}
               onClick={() => fileInput.current?.click()}
             >
-              <Taskcore />
+              <TaskcoreIcon />
               {uploading ? "Uploading…" : "Attach file"}
             </Button>
             <p className="text-xs text-muted-foreground">

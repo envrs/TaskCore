@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT. Run `pnpm --filter @taskcore/taskcore-runner exec tsx scripts/generate-operation-groups.ts`. -->
 
-# Taskcore agent operation groups
+# TaskCore agent operation groups
 
 Status: canonical explanatory contract for the Taskcore runner V1 surface.
 

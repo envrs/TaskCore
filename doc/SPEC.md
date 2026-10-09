@@ -1,4 +1,4 @@
-# Taskcore Specification
+# TaskCore Specification
 
 Target specification for the Taskcore control plane. Living document — updated incrementally during spec interviews.
 
@@ -119,7 +119,7 @@ Taskcore doesn't prescribe how an agent defines its identity or behavior. It pro
 
 Each agent has an **adapter type** and an **adapter-specific configuration blob**. The adapter defines what config fields exist.
 
-#### Taskcore Protocol (What Taskcore Knows)
+#### TaskCore Protocol (What Taskcore Knows)
 
 At the protocol level, Taskcore tracks:
 
@@ -413,7 +413,7 @@ The default agent's loop is **config-driven**. The adapter config contains the i
 
 This means the default CEO config tells the CEO to review strategy, check on reports, etc. The default engineer config tells the engineer to check assigned tasks, pick the highest priority, and work it. But these are config choices, not protocol requirements.
 
-### Taskcore Skill (SKILL.md)
+### TaskCore Skill (SKILL.md)
 
 A skill definition that teaches agents how to interact with Taskcore. Provides:
 

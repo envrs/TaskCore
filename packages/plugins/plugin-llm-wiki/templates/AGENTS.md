@@ -15,7 +15,7 @@ The underlying pattern is described in `IDEA.md` (Karpathy's "LLM Wiki" gist). R
     ├── index.md      # catalog of all pages
     ├── log.md        # append-only timeline of operations
     ├── sources/      # one summary page per source
-    ├── projects/     # Taskcore project overviews, standups, decisions, and history
+    ├── projects/     # TaskCore project overviews, standups, decisions, and history
     │   └── <slug>/
     │       ├── index.md
     │       ├── standup.md

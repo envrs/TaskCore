@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, Taskcore } from "lucide-react";
+import { Mail } from "lucide-react";
+import { TaskcoreIcon } from "./icons/taskcore-icon";
 import type {
   EmailMessage,
   EmailPublicationSummary,
@@ -102,7 +103,7 @@ export function EmailMessageCard({
                 rel="noreferrer"
                 className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs"
               >
-                <Taskcore className="size-3.5" />
+                <TaskcoreIcon className="size-3.5" />
                 {attachment?.originalFilename ?? "Open attachment"}
               </a>
             );

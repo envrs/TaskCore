@@ -1,4 +1,4 @@
-# Taskcore Eval Kernel
+# TaskCore Eval Kernel
 
 `@taskcore/taskcore-eval-kernel` is the workspace-private, provider-neutral
 matrix orchestrator owned by Taskcore Evals. It contains no Taskcore scenario

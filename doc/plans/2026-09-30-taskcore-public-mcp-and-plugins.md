@@ -1,4 +1,4 @@
-# Taskcore as the persistent team behind your assistant
+# TaskCore as the persistent team behind your assistant
 
 Date: 2026-09-30
 Status: First-release implementation in review; local paid acceptance verified across three models; deployment and hosted/store acceptance remain release gates

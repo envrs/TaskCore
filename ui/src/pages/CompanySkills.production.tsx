@@ -146,9 +146,8 @@ import {
   Link2,
   Lock,
   ExternalLink,
-  FlaskConical,
-  MoreHorizontal,
-  Taskcore,
+FlaskConical,
+MoreHorizontal,
   Pause,
   Pencil,
   Pin,
@@ -168,6 +167,7 @@ import {
   XOctagon,
 } from "lucide-react";
 import { GithubIcon } from "../components/icons/github-icon";
+import { TaskcoreIcon } from "../components/icons/taskcore-icon";
 import type { FolderListItem, FolderListResult } from "@taskcore/shared";
 
 type SkillTreeNode = {
@@ -275,7 +275,7 @@ function sourceMeta(sourceBadge: CompanySkillSourceBadge, sourceLabel: string | 
     case "local":
       return { icon: Folder, label: sourceLabel ?? "Folder", managedLabel: "Folder managed" };
     case "taskcore":
-      return { icon: Taskcore, label: sourceLabel ?? "Taskcore", managedLabel: "Taskcore managed" };
+      return { icon: TaskcoreIcon, label: sourceLabel ?? "Taskcore", managedLabel: "Taskcore managed" };
     default:
       return { icon: Boxes, label: sourceLabel ?? "Catalog", managedLabel: "Catalog managed" };
   }

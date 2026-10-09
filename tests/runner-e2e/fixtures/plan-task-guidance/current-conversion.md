@@ -6,7 +6,7 @@ description: >
   fit, dependencies, blockers, and parallelization.
 ---
 
-# Taskcore — Converting Plans to Tasks
+# TaskCore — Converting Plans to Tasks
 
 A companion skill for turning a plan into executable Taskcore work. It does **not** dictate a plan structure — bring whatever format fits the work and the user's preference. It tells you _how_ to translate that plan into issues so that the rest of Taskcore works for you.
 

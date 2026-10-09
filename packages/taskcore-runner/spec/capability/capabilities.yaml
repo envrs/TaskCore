@@ -18,8 +18,8 @@
       "id": "skill:skills/taskcore/SKILL.md:taskcore-skill:10",
       "sourceKind": "skill_heading",
       "sourceAnchor": "skills/taskcore/SKILL.md:10",
-      "title": "Taskcore Skill",
-      "expectedSemantics": "Skill guidance headed “Taskcore Skill”.",
+      "title": "TaskCore Skill",
+      "expectedSemantics": "Skill guidance headed “TaskCore Skill”.",
       "primaryDisposition": "optional_agent_tool",
       "requiredGrants": [],
       "assertionClasses": [
@@ -513,8 +513,8 @@
       "id": "skill:skills/taskcore/references/api-reference.md:taskcore-api-reference:1",
       "sourceKind": "skill_heading",
       "sourceAnchor": "skills/taskcore/references/api-reference.md:1",
-      "title": "Taskcore API Reference",
-      "expectedSemantics": "Skill guidance headed “Taskcore API Reference”.",
+      "title": "TaskCore API Reference",
+      "expectedSemantics": "Skill guidance headed “TaskCore API Reference”.",
       "primaryDisposition": "optional_agent_tool",
       "requiredGrants": [],
       "assertionClasses": [
@@ -2133,8 +2133,8 @@
       "id": "skill:skills/taskcore/references/routines.md:taskcore-routines:1",
       "sourceKind": "skill_heading",
       "sourceAnchor": "skills/taskcore/references/routines.md:1",
-      "title": "Taskcore Routines",
-      "expectedSemantics": "Skill guidance headed “Taskcore Routines”.",
+      "title": "TaskCore Routines",
+      "expectedSemantics": "Skill guidance headed “TaskCore Routines”.",
       "primaryDisposition": "optional_agent_tool",
       "requiredGrants": [],
       "assertionClasses": [
@@ -2358,8 +2358,8 @@
       "id": "skill:skills/taskcore/references/workflows.md:taskcore-workflow-playbooks:1",
       "sourceKind": "skill_heading",
       "sourceAnchor": "skills/taskcore/references/workflows.md:1",
-      "title": "Taskcore Workflow Playbooks",
-      "expectedSemantics": "Skill guidance headed “Taskcore Workflow Playbooks”.",
+      "title": "TaskCore Workflow Playbooks",
+      "expectedSemantics": "Skill guidance headed “TaskCore Workflow Playbooks”.",
       "primaryDisposition": "optional_agent_tool",
       "requiredGrants": [],
       "assertionClasses": [

@@ -1,4 +1,4 @@
-# Taskcore Evals
+# TaskCore Evals
 
 Eval framework for testing Taskcore agent behaviors across models and prompt versions.
 

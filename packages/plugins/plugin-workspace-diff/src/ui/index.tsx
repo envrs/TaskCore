@@ -28,7 +28,7 @@ import {
 import type { WorkspaceDiffResponse } from "../contracts.js";
 
 type WorkspaceDiffData = WorkspaceDiffResponse;
-type WorkspacePatchDiffOptions = PatchDiffProps<undefined>["options"];
+type WorkspacePatchDiffOptions = PatchDiffProps<undefined, undefined>["options"];
 type DiffViewMode = "working-tree" | "head";
 
 type LucideIconProps = { size?: number };
@@ -257,6 +257,7 @@ function WorkspacePatchDiff({
     options,
     // This tab only shows a diff; it does not open an edit session.
     edit: false,
+    editStateKey: undefined,
     editorOptions: undefined,
     metrics: undefined,
     lineAnnotations: undefined,

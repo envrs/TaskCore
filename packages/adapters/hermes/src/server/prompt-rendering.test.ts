@@ -75,7 +75,7 @@ test("renders standard assignment wake with task authority and no backlog discov
     ].join("\n"),
   }), {});
 
-  expect(prompt).toContain("## Taskcore Wake Payload");
+  expect(prompt).toContain("## TaskCore Wake Payload");
   expect(prompt).toContain("- reason: issue_assigned");
   expect(prompt).toContain("- issue: PAP-11750 Add Hermes prompt rendering regression tests");
   expect(prompt).toContain("- issue work mode: standard");
@@ -124,7 +124,7 @@ test("renders scoped planning wake authority before the Hermes default workflow"
     taskcoreApiUrl: "http://127.0.0.1:3101/api",
   });
 
-  expect(prompt).toContain("## Taskcore Wake Payload");
+  expect(prompt).toContain("## TaskCore Wake Payload");
   expect(prompt).toContain("- issue: PAP-3404 Plan the Hermes prompt update");
   expect(prompt).toContain("- planning directive: Make the plan only. Do not write code or perform implementation work.");
   expect(prompt).toContain("- checkout: already claimed by the harness for this run");
@@ -155,7 +155,7 @@ test("renders resume deltas instead of full scoped-wake boilerplate when continu
     },
   }), {}, { resumedSession: true });
 
-  expect(prompt).toContain("## Taskcore Resume Delta");
+  expect(prompt).toContain("## TaskCore Resume Delta");
   expect(prompt).toContain("You are resuming an existing Taskcore session.");
   expect(prompt).toContain("Focus on the new wake delta below");
   expect(prompt).toContain("Please add the resume-delta case.");
@@ -267,11 +267,11 @@ test("preserves custom prompt templates while exposing runtime and wake variable
   expect(prompt).toContain("api=http://taskcore.local/api");
   expect(prompt).toContain("keyEnv=TASKCORE_API_KEY");
   expect(prompt).toContain("runEnv=TASKCORE_RUN_ID");
-  expect(prompt).toContain("wakePrompt=## Taskcore Wake Payload");
+  expect(prompt).toContain("wakePrompt=## TaskCore Wake Payload");
   expect(prompt).toContain("task=Taskcore task context:");
   expect(prompt).toContain("wakeJson={\"reason\":\"issue_assigned\"");
   expect(prompt).toContain('"reason":"issue_assigned"');
-  expect(prompt).toContain("## Taskcore Wake Payload");
+  expect(prompt).toContain("## TaskCore Wake Payload");
   expect(prompt).toContain("Issue description:\n```text\nUse the wake payload as runtime authority.\n```");
   expect(prompt).toContain("Taskcore runtime identity:");
 });

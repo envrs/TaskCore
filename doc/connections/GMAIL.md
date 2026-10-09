@@ -297,7 +297,7 @@ client credentials. An instance with only those legacy values fails with
 each legacy Google grant. Cloud-hosted fleets must deliver the new enrollment
 keys before they deploy a binary that enables the Cloud connector.
 
-## Taskcore access defaults
+## TaskCore access defaults
 
 Gmail uses the same credential ownership choice as the rest of the Apps setup:
 

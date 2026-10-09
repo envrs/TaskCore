@@ -2463,7 +2463,7 @@ function renderTaskcoreWakePromptBody(
       : [];
   const lines = resumedSession
     ? [
-        "## Taskcore Resume Delta",
+        "## TaskCore Resume Delta",
         "",
         "You are resuming an existing Taskcore session.",
         "This heartbeat is scoped to the issue below. Do not switch to another issue until you have handled this wake.",
@@ -2479,7 +2479,7 @@ function renderTaskcoreWakePromptBody(
         ...wakeSummaryLines,
       ]
     : [
-        "## Taskcore Wake Payload",
+        "## TaskCore Wake Payload",
         "",
         "Use this wake to continue the task, applying new user direction and preserving its approval gates.",
         "This heartbeat is scoped to the issue below. Do not switch to another issue until you have handled this wake.",

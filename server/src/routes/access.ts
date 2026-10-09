@@ -1869,7 +1869,7 @@ export function buildInviteOnboardingTextDocument(
   };
 
   appendBlock(`
-    # Taskcore Agent Onboarding
+    # TaskCore Agent Onboarding
 
     This document is meant to be readable by both humans and agents.
 

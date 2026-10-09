@@ -39,7 +39,7 @@ Do not ask operators to paste AWS root credentials or long-lived IAM user access
 keys into the Taskcore board UI. Do not store those bootstrap keys in
 `company_secrets`.
 
-## Taskcore Cloud Bootstrap
+## TaskCore Cloud Bootstrap
 
 Taskcore Cloud must provision the AWS backing resources before any board user
 can create AWS-backed company secrets:

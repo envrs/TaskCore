@@ -1,4 +1,4 @@
-# Taskcore Module System
+# TaskCore Module System
 
 > Supersession note: the company-template/package-format direction in this document is no longer current. For the current markdown-first company import/export plan, see `doc/plans/2026-03-13-company-import-export-v2.md` and `docs/companies/companies-spec.md`.
 

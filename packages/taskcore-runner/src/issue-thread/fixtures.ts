@@ -1055,7 +1055,7 @@ const BUILDERS: Partial<Record<CapabilityUiShotSlug, () => CapabilityIssueThread
         mediaType: "text/markdown",
         presentation: "document",
         line: null,
-        preview: "# Taskcore Runner Protocol\n\nThe runner projects provider activity into durable, provider-neutral events.\n\n## Workspace references\n\nA local Markdown link becomes a `workspace.file.referenced` event only after the runner verifies that the target stays inside the authorized workspace.\n",
+        preview: "# TaskCore Runner Protocol\n\nThe runner projects provider activity into durable, provider-neutral events.\n\n## Workspace references\n\nA local Markdown link becomes a `workspace.file.referenced` event only after the runner verifies that the target stays inside the authorized workspace.\n",
         previewTruncated: false,
         contentDigest: "sha256:2e7d2c03a9507ae265ecf5b5356885a53393a2029d241e48b76e557868953c97",
       },

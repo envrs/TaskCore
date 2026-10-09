@@ -1352,7 +1352,7 @@ describe("claude execute", () => {
         expect(capture2.mcpConfigContents).not.toContain('"run-jwt-token"');
         if (change === "added") expect(capture2.mcpConfigContents).toContain("fresh-github-token");
       }
-      expect(capture2.prompt).toContain("## Taskcore Resume Delta");
+      expect(capture2.prompt).toContain("## TaskCore Resume Delta");
       expect(capture2.prompt).not.toContain("Follow the taskcore heartbeat.");
     } finally {
       if (previousHome === undefined) delete process.env.HOME;

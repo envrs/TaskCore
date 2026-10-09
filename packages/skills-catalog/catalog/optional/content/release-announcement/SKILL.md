@@ -28,7 +28,7 @@ Write the channel-appropriate announcement for a release without churn. Differen
 - An internal-only change with no user impact. Update internal docs; do not announce.
 - The release is incomplete (still in active development). Wait until it ships, even if marketing wants the post.
 
-## Taskcore Cases output
+## TaskCore Cases output
 
 When this skill runs inside Taskcore and `experimental.enableCases` is enabled,
 emit durable release-content cases before handing off the copy. Cases preserve

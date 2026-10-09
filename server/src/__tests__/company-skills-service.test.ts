@@ -1283,7 +1283,7 @@ describeEmbeddedPostgres("companySkillService.list", () => {
     const skill = await svc.createLocalSkill(companyId, {
       name: "Taskcore Blog Cover Image",
       slug: "taskcore-blog-cover-image",
-      markdown: "# Taskcore Blog Cover Image\n",
+      markdown: "# TaskCore Blog Cover Image\n",
     });
 
     await expect(svc.detail(companyId, "taskcore-blog-cover-image")).resolves.toMatchObject({

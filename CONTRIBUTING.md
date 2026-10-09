@@ -31,8 +31,8 @@ These almost always get merged quickly when they're clean.
 
 ### Path 2: Bigger or Impactful Changes
 
-- **First** talk about it in Discord → #dev channel  
-  → Describe what you're trying to solve  
+- **First** talk about it in Discord → #dev channel
+  → Describe what you're trying to solve
   → Share rough ideas / approach
 - Once there's rough agreement, build it
 - In your PR include:
@@ -108,7 +108,7 @@ This repo has three separate data paths: Telemetry, Observability, and the run l
 
 If your change adds, removes, or modifies emitted telemetry events, update the [Telemetry Data Contract](packages/shared/src/telemetry/README.md) in the same PR. Keep clients emitting raw dimension values and avoid documenting or relying on private delivery details. If your change adds, removes, or modifies an OpenTelemetry span or span attribute, keep the change inside the closed span-attribute allowlist in `packages/adapter-utils/src/acpx-engine/startup-timing.ts`. If your change adds or modifies a run-log event, update `doc/run-log-events.md` in the same PR.
 
-### Taskcore Gates Must Pass
+### TaskCore Gates Must Pass
 
 All Taskcore CI gates (lint, typecheck, tests, build, and any other required checks) must be satisfied before a PR can be merged. Don't ask for a merge while gates are red — fix them first.
 

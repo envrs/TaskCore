@@ -1,4 +1,4 @@
-# Taskcore UI Spec
+# TaskCore UI Spec
 
 Status: Draft
 Date: 2026-02-17

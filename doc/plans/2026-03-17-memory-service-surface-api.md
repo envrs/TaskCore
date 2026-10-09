@@ -1,4 +1,4 @@
-# Taskcore Memory Service Plan
+# TaskCore Memory Service Plan
 
 ## Goal
 

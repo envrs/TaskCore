@@ -28,7 +28,7 @@
       "agentServerVersion": "2026.09.26-dd393fe",
       "agentRuntimePackage": null,
       "agentRuntimeVersion": null,
-      "commandDigest": "sha256:a5e70580e4933a1a9248cd3c1b16500c6c93e1e14913e0a98cd5ef878bd53d39",
+      "commandDigest": "sha256:5b439b2079078067b86955d8046bfaa436f34611f965a41c93d5f845e2b31a8d",
       "requiresProviderPolicy": true
     },
     "copilot": {

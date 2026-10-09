@@ -181,7 +181,7 @@ Process that original event through normal admission and deduplication; do not
 scan history and turn arbitrary old mentions into new work. Historical messages
 already filtered under the old disabled default are not automatically replayed.
 
-## Taskcore messages and scheduled delivery
+## TaskCore messages and scheduled delivery
 
 Authenticated human messages submitted on a Slack-linked task are also queued to
 its original thread, labeled with the author's display name and “via Taskcore.”

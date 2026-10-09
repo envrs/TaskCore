@@ -1,5 +1,6 @@
-import { Boxes, Folder, Link2, Taskcore, type LucideIcon } from "lucide-react";
+import { Boxes, Folder, Link2, type LucideIcon } from "lucide-react";
 import { GithubIcon } from "@/components/icons/github-icon";
+import { TaskcoreIcon } from "@/components/icons/taskcore-icon";
 import type { CompanySkillListItem } from "@taskcore/shared";
 
 export interface AgentSkillSourceMeta {
@@ -104,7 +105,7 @@ export function buildAgentSkillSourceMeta(skill: SourceSkill): AgentSkillSourceM
   }
 
   if (skill.sourceBadge === "taskcore") {
-    return { icon: Taskcore, label: skill.sourceLabel?.trim() || "Taskcore managed" };
+    return { icon: TaskcoreIcon, label: skill.sourceLabel?.trim() || "Taskcore managed" };
   }
 
   if (skill.sourceBadge === "catalog" || skill.sourceType === "catalog") {

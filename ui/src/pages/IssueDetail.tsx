@@ -333,13 +333,13 @@ import {
   ListTree,
   MessageSquare,
   MoreHorizontal,
-  MoreVertical,
-  Taskcore,
-  Plus,
+MoreVertical,
+Plus,
   Repeat,
   SlidersHorizontal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { TaskcoreIcon } from "@/components/icons/taskcore-icon";
 import { IssuePrivacyActions } from "@/components/IssuePrivacyActions";
 import type { ShareSheetImplicitPrincipal } from "@/components/IssueShareSheet";
 import {
@@ -6998,7 +6998,7 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
           attachmentDragActive && "border-primary bg-primary/5",
         )}
       >
-        <Taskcore className="h-3.5 w-3.5 mr-1.5" />
+        <TaskcoreIcon className="h-3.5 w-3.5 mr-1.5" />
         {uploadAttachment.isPending || importMarkdownDocument.isPending ? (
           "Uploading..."
         ) : (

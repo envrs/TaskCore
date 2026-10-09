@@ -7,7 +7,7 @@ FROM taskcore/agent-runtime-base:${BASE_TAG}
 # packages/adapter-utils/src/session-compaction.ts vs the absent
 # packages/adapters/hermes-local/). This stub image preserves a cloud
 # runtime slot for hermes_local; whoever ports the hermes binary to
-# Taskcore locally adds the `npm install -g <pkg>` and the PATH check
+# TaskCore locally adds the `npm install -g <pkg>` and the PATH check
 # to this Dockerfile.
 #
 # Until then, runs targeting hermes_local on the cloud adapter will boot

@@ -16,7 +16,7 @@ tags:
   - hyperframes
 ---
 
-# Taskcore Capsules
+# TaskCore Capsules
 
 Use this skill when creating or checking Taskcore capsule visuals. The central rule is simple: **the capsule is the agent**. A capsule is not generic chrome, a button shape, a random status pill, or background decoration.
 

@@ -25,7 +25,7 @@
 
 <br/>
 
-# Taskcore is the app people use to manage AI agents for work.
+# TaskCore is the app people use to manage AI agents for work.
 
 Open-source orchestration for teams of AI agents.
 
@@ -64,7 +64,7 @@ It looks like a task manager. Under the hood: org charts, budgets, governance, g
 
 <br/>
 
-## Taskcore is right for you if
+## TaskCore is right for you if
 
 - ✅ You want to build **autonomous AI companies**
 - ✅ You **coordinate many different agents** (OpenClaw, Codex, Claude, Cursor) toward a common goal

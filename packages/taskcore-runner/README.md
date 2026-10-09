@@ -1,4 +1,4 @@
-# Taskcore Native Runner
+# TaskCore Native Runner
 
 This package is the standalone development boundary for Taskcore's native
 runner protocol, process supervision, durable transport, provider drivers, and

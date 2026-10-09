@@ -2620,7 +2620,7 @@ export async function assembleTaskcoreSourceBundle(ctx: PluginContext, input: Ta
   const sourceRefs: TaskcoreSourceRef[] = [];
   const warnings: string[] = [];
   const lines = [
-    `# Taskcore source bundle`,
+    `# TaskCore source bundle`,
     "",
     "## Bundle Metadata",
     "",
@@ -3566,7 +3566,7 @@ function rawPathForTaskcoreEvent(input: {
 
 function formatIssueEventSource(issue: Issue, event: PluginEvent, maxCharacters: number): string {
   return truncateEventSource([
-    `# Taskcore issue: ${sourceTitleForIssue(issue)}`,
+    `# TaskCore issue: ${sourceTitleForIssue(issue)}`,
     "",
     "## Provenance",
     "",
@@ -3587,7 +3587,7 @@ function formatIssueEventSource(issue: Issue, event: PluginEvent, maxCharacters:
 
 function formatCommentEventSource(issue: Issue, comment: IssueComment, event: PluginEvent, maxCharacters: number): string {
   return truncateEventSource([
-    `# Taskcore comment on ${sourceTitleForIssue(issue)}`,
+    `# TaskCore comment on ${sourceTitleForIssue(issue)}`,
     "",
     "## Provenance",
     "",
@@ -3607,7 +3607,7 @@ function formatCommentEventSource(issue: Issue, comment: IssueComment, event: Pl
 
 function formatDocumentEventSource(issue: Issue, document: IssueDocument, event: PluginEvent, maxCharacters: number): string {
   return truncateEventSource([
-    `# Taskcore document: ${document.title ?? document.key}`,
+    `# TaskCore document: ${document.title ?? document.key}`,
     "",
     "## Provenance",
     "",

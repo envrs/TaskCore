@@ -1,9 +1,9 @@
 # Deployment Modes
 
-Status: Canonical deployment and auth mode model  
+Status: Canonical deployment and auth mode model
 Date: 2026-02-23
 
-### Taskcore Cloud sign-in
+### TaskCore Cloud sign-in
 
 Cloud-managed instances use Cloud for human sign-in. The instance `/auth`
 route waits for deployment metadata before rendering; it never renders the
@@ -85,7 +85,7 @@ Taskcore now treats **bind** as a separate concern from auth:
 - recommended bind is `loopback` behind a reverse proxy; direct `lan/custom` is advanced
 - local stdio MCP runtime slots fail closed by default; set `TASKCORE_TRUSTED_MCP_RUNTIME_HOST` only when a trusted worker/runtime host is configured to supervise those processes. Remote HTTP MCP remains the preferred public-hosted path.
 
-### Taskcore Cloud warm-pool identity
+### TaskCore Cloud warm-pool identity
 
 A Cloud-managed warm-pool process initially boots under a `pool-*` origin. It
 receives only Cloud's public verification set in

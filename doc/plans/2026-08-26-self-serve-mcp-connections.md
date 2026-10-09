@@ -165,7 +165,7 @@ Summary counts:
 
 The evidence supports arbitrary HTTPS callbacks through DCR for the 13 passing apps. Jira is the only automatic-OAuth app in this run that produced direct callback-domain allowlist evidence. The five inconclusive automatic-OAuth results are resource- or sign-in/provider-path blockers, not evidence that they require a shared stable callback. The 12 customer-client apps already require preregistration by design and are not newly discovered stable-callback candidates.
 
-## Taskcore Cloud managed OAuth broker — 2026-08-31
+## TaskCore Cloud managed OAuth broker — 2026-08-31
 
 The managed-callback P2 is part of the existing Taskcore Cloud application at
 `my.taskcore.app`. It does not add a service, hostname, repository, login

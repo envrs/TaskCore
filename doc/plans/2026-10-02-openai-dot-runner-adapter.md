@@ -114,7 +114,7 @@ OAuth state. A stable deployment and a real readiness check are essential.
 
 ## 2. Product contract
 
-### Taskcore initiates work
+### TaskCore initiates work
 
 A user selects **Taskcore Runner → OpenAI Dot**, connects their Dot, and assigns
 it an ordinary task. Existing scheduling admits the task. Taskcore sends a

@@ -1,4 +1,4 @@
-# Taskcore Tailscale HTTPS broker
+# TaskCore Tailscale HTTPS broker
 
 Least-privilege host broker that manages **only** Taskcore-owned, tailnet-only,
 same-number HTTPS-to-loopback listeners for managed branch runtimes.

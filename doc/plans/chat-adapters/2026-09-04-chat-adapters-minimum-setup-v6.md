@@ -1,4 +1,4 @@
-# Taskcore Chat Adapters — Minimum Setup v6
+# TaskCore Chat Adapters — Minimum Setup v6
 
 Date: 2026-09-04
 Taskcore base: `8430bd897f01dd4b91e0970efffb71b97e5a2685`
