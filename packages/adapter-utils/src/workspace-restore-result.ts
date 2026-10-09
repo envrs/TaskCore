@@ -1,16 +1,33 @@
-import { hasWorkspaceRestoreFailure, safeWorkspaceRestorePath } from "@taskcore/shared";
+import {
+  hasWorkspaceRestoreFailure,
+  safeWorkspaceRestorePath,
+} from "@taskcore/shared";
 import type { AdapterExecutionResult } from "./types.js";
 import { classifyWorkspaceRestoreFailure } from "./workspace-restore-merge.js";
-import { getWorkspaceRestoreDiagnostic, withWorkspaceRestoreDiagnosticCapture } from "./workspace-restore-diagnostics.js";
+import {
+  getWorkspaceRestoreDiagnostic,
+  withWorkspaceRestoreDiagnosticCapture,
+} from "./workspace-restore-diagnostics.js";
 
 /** A completed model turn does not imply that required workspace files arrived. */
-export function applyWorkspaceRestoreFailure(result: AdapterExecutionResult): AdapterExecutionResult {
-  if (!hasWorkspaceRestoreFailure(result.resultJson) || result.errorCode === "workspace_restore_failed") return result;
+export function applyWorkspaceRestoreFailure(
+  result: AdapterExecutionResult,
+): AdapterExecutionResult {
+  if (
+    !hasWorkspaceRestoreFailure(result.resultJson) ||
+    result.errorCode === "workspace_restore_failed"
+  )
+    return result;
   return {
     ...result,
     timedOut: false,
     errorCode: "workspace_restore_failed",
-    errorMessage: [result.errorMessage, "Workspace restore failed. Workspace files need recovery."].filter(Boolean).join(" "),
+    errorMessage: [
+      result.errorMessage,
+      "Workspace restore failed. Workspace files need recovery.",
+    ]
+      .filter(Boolean)
+      .join(" "),
     resultJson: {
       ...result.resultJson,
       executionBeforeRestore: {
@@ -19,8 +36,10 @@ export function applyWorkspaceRestoreFailure(result: AdapterExecutionResult): Ad
         signal: result.signal,
         timedOut: result.timedOut,
       },
-      finalResponseRecorded: typeof result.resultJson?.finalResponseRecorded === "boolean"
-        ? result.resultJson.finalResponseRecorded : Boolean(result.summary?.trim()),
+      finalResponseRecorded:
+        typeof result.resultJson?.finalResponseRecorded === "boolean"
+          ? result.resultJson.finalResponseRecorded
+          : Boolean(result.summary?.trim()),
     },
   };
 }
@@ -46,9 +65,12 @@ export async function withWorkspaceRestore(
       const code = classifyWorkspaceRestoreFailure(error);
       const diagnostic = getWorkspaceRestoreDiagnostic(error);
       // Parse the archive member only. Never expose the unsafe link target.
-      const member = error instanceof Error
-        ? /Daytona syncOut refusing tarball link whose target escapes the extraction dir: (.+?) -> /.exec(error.message)?.[1]
-        : null;
+      const member =
+        error instanceof Error
+          ? /Daytona syncOut refusing tarball link whose target escapes the extraction dir: (.+?) -> /.exec(
+              error.message,
+            )?.[1]
+          : null;
       const relativePath = safeWorkspaceRestorePath(member);
       return applyWorkspaceRestoreFailure({
         ...(result ?? {
@@ -57,7 +79,10 @@ export async function withWorkspaceRestore(
           timedOut: false,
           errorCode: "adapter_failed",
           // The server applies its ordinary execution-error redaction to this field.
-          errorMessage: executionError instanceof Error ? executionError.message : "Adapter execution failed.",
+          errorMessage:
+            executionError instanceof Error
+              ? executionError.message
+              : "Adapter execution failed.",
         }),
         resultJson: {
           ...result?.resultJson,

@@ -39,13 +39,13 @@ sequenceDiagram
     T-->>P: Tool result
 ```
 
-| Purpose | Endpoint |
-| --- | --- |
-| MCP resource | `https://mcp.telem.ai/mcp` |
-| API keys | `https://app.telem.ai` |
-| Documentation | `https://docs.telem.ai` |
-| Authorize, token, registration | none (API key only) |
-| Taskcore callback | n/a |
+| Purpose                        | Endpoint                   |
+| ------------------------------ | -------------------------- |
+| MCP resource                   | `https://mcp.telem.ai/mcp` |
+| API keys                       | `https://app.telem.ai`     |
+| Documentation                  | `https://docs.telem.ai`    |
+| Authorize, token, registration | none (API key only)        |
+| Taskcore callback              | n/a                        |
 
 ## Administrator setup
 
@@ -65,12 +65,12 @@ All settings are optional and apply to every agent that uses this connection.
 Taskcore sends each one as a request header. It leaves a header out when its
 setting is empty.
 
-| Setting | Values | Header |
-| --- | --- | --- |
-| Auto routing | Off, Accuracy | `X-Telem-Auto-Routing` |
-| Tier | Minimalist, Default, Extended, Max | `X-Telem-Tier` |
-| Providers to include | comma-separated provider names | `X-Telem-Providers-Include` |
-| Providers to exclude | comma-separated provider names | `X-Telem-Providers-Exclude` |
+| Setting              | Values                             | Header                      |
+| -------------------- | ---------------------------------- | --------------------------- |
+| Auto routing         | Off, Accuracy                      | `X-Telem-Auto-Routing`      |
+| Tier                 | Minimalist, Default, Extended, Max | `X-Telem-Tier`              |
+| Providers to include | comma-separated provider names     | `X-Telem-Providers-Include` |
+| Providers to exclude | comma-separated provider names     | `X-Telem-Providers-Exclude` |
 
 The setup form cannot clear a select after a value is chosen. To turn auto
 routing off again, select **Off**. **Default** is the server's default tier.
@@ -82,11 +82,11 @@ resources.
 
 ## Actions
 
-| Tool | Risk | Purpose |
-| --- | --- | --- |
-| `telem_search` | read | Search the web across providers |
-| `telem_fetch` | read | Read the content of known URLs |
-| `telem_providers` | read | List the available search providers |
+| Tool                    | Risk | Purpose                                  |
+| ----------------------- | ---- | ---------------------------------------- |
+| `telem_search`          | read | Search the web across providers          |
+| `telem_fetch`           | read | Read the content of known URLs           |
+| `telem_providers`       | read | List the available search providers      |
 | `telem_session_history` | read | Read earlier results of a search session |
 
 Usage is billed to the Telem account that owns the API key.

@@ -18,11 +18,16 @@ function createProgram(): Command {
 }
 
 async function run(args: string[]): Promise<void> {
-  await createProgram().parseAsync([
-    ...args,
-    "--api-base", "http://localhost:3100",
-    "--api-key", "board-token",
-  ], { from: "user" });
+  await createProgram().parseAsync(
+    [
+      ...args,
+      "--api-base",
+      "http://localhost:3100",
+      "--api-key",
+      "board-token",
+    ],
+    { from: "user" },
+  );
 }
 
 describe("agent lifecycle commands", () => {
@@ -38,16 +43,34 @@ describe("agent lifecycle commands", () => {
   });
 
   it("wraps agent lifecycle and state endpoints", async () => {
-    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(jsonResponse()));
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse()));
     vi.stubGlobal("fetch", fetchMock);
 
     await run([
-      "agent", "create",
-      "--company-id", COMPANY_ID,
-      "--payload-json", JSON.stringify({ name: "Builder", adapterType: "codex_local" }),
+      "agent",
+      "create",
+      "--company-id",
+      COMPANY_ID,
+      "--payload-json",
+      JSON.stringify({ name: "Builder", adapterType: "codex_local" }),
     ]);
-    await run(["agent", "hire", "--company-id", COMPANY_ID, "--payload-json", "{}"]);
-    await run(["agent", "update", AGENT_ID, "--payload-json", JSON.stringify({ title: "Senior Builder" })]);
+    await run([
+      "agent",
+      "hire",
+      "--company-id",
+      COMPANY_ID,
+      "--payload-json",
+      "{}",
+    ]);
+    await run([
+      "agent",
+      "update",
+      AGENT_ID,
+      "--payload-json",
+      JSON.stringify({ title: "Senior Builder" }),
+    ]);
     await run(["agent", "pause", AGENT_ID]);
     await run(["agent", "resume", AGENT_ID]);
     await run(["agent", "approve", AGENT_ID]);
@@ -56,7 +79,9 @@ describe("agent lifecycle commands", () => {
     await run(["agent", "claude-login", AGENT_ID]);
     await run(["agent", "delete", AGENT_ID, "--yes"]);
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
       ["POST", `http://localhost:3100/api/companies/${COMPANY_ID}/agents`],
       ["POST", `http://localhost:3100/api/companies/${COMPANY_ID}/agent-hires`],
       ["PATCH", `http://localhost:3100/api/agents/${AGENT_ID}`],
@@ -71,16 +96,30 @@ describe("agent lifecycle commands", () => {
   });
 
   it("wraps configuration, runtime, skills, and instructions endpoints", async () => {
-    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(jsonResponse()));
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse()));
     vi.stubGlobal("fetch", fetchMock);
 
-    await run(["agent", "permissions:update", AGENT_ID, "--payload-json", JSON.stringify({ canCreateAgents: true, canAssignTasks: true })]);
+    await run([
+      "agent",
+      "permissions:update",
+      AGENT_ID,
+      "--payload-json",
+      JSON.stringify({ canCreateAgents: true, canAssignTasks: true }),
+    ]);
     await run(["agent", "configuration", AGENT_ID]);
     await run(["agent", "config-revisions", AGENT_ID]);
     await run(["agent", "config-revision:get", AGENT_ID, REVISION_ID]);
     await run(["agent", "config-revision:rollback", AGENT_ID, REVISION_ID]);
     await run(["agent", "runtime-state", AGENT_ID]);
-    await run(["agent", "runtime-state:reset-session", AGENT_ID, "--task-key", "task-1"]);
+    await run([
+      "agent",
+      "runtime-state:reset-session",
+      AGENT_ID,
+      "--task-key",
+      "task-1",
+    ]);
     await run(["agent", "task-sessions", AGENT_ID]);
     await run(["agent", "skills", AGENT_ID]);
     await run([
@@ -92,34 +131,98 @@ describe("agent lifecycle commands", () => {
       "--mode",
       "replace",
     ]);
-    await run(["agent", "instructions-path:update", AGENT_ID, "--payload-json", JSON.stringify({ path: "/tmp/AGENTS.md" })]);
+    await run([
+      "agent",
+      "instructions-path:update",
+      AGENT_ID,
+      "--payload-json",
+      JSON.stringify({ path: "/tmp/AGENTS.md" }),
+    ]);
     await run(["agent", "instructions-bundle", AGENT_ID]);
-    await run(["agent", "instructions-bundle:update", AGENT_ID, "--payload-json", JSON.stringify({ mode: "managed" })]);
-    await run(["agent", "instructions-file:get", AGENT_ID, "--path", "AGENTS.md"]);
-    await run(["agent", "instructions-file:put", AGENT_ID, "--path", "AGENTS.md", "--content", "hello"]);
-    await run(["agent", "instructions-file:delete", AGENT_ID, "--path", "AGENTS.md"]);
+    await run([
+      "agent",
+      "instructions-bundle:update",
+      AGENT_ID,
+      "--payload-json",
+      JSON.stringify({ mode: "managed" }),
+    ]);
+    await run([
+      "agent",
+      "instructions-file:get",
+      AGENT_ID,
+      "--path",
+      "AGENTS.md",
+    ]);
+    await run([
+      "agent",
+      "instructions-file:put",
+      AGENT_ID,
+      "--path",
+      "AGENTS.md",
+      "--content",
+      "hello",
+    ]);
+    await run([
+      "agent",
+      "instructions-file:delete",
+      AGENT_ID,
+      "--path",
+      "AGENTS.md",
+    ]);
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
       ["PATCH", `http://localhost:3100/api/agents/${AGENT_ID}/permissions`],
       ["GET", `http://localhost:3100/api/agents/${AGENT_ID}/configuration`],
       ["GET", `http://localhost:3100/api/agents/${AGENT_ID}/config-revisions`],
-      ["GET", `http://localhost:3100/api/agents/${AGENT_ID}/config-revisions/${REVISION_ID}`],
-      ["POST", `http://localhost:3100/api/agents/${AGENT_ID}/config-revisions/${REVISION_ID}/rollback`],
+      [
+        "GET",
+        `http://localhost:3100/api/agents/${AGENT_ID}/config-revisions/${REVISION_ID}`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/agents/${AGENT_ID}/config-revisions/${REVISION_ID}/rollback`,
+      ],
       ["GET", `http://localhost:3100/api/agents/${AGENT_ID}/runtime-state`],
-      ["POST", `http://localhost:3100/api/agents/${AGENT_ID}/runtime-state/reset-session`],
+      [
+        "POST",
+        `http://localhost:3100/api/agents/${AGENT_ID}/runtime-state/reset-session`,
+      ],
       ["GET", `http://localhost:3100/api/agents/${AGENT_ID}/task-sessions`],
       ["GET", `http://localhost:3100/api/agents/${AGENT_ID}/skills`],
       ["POST", `http://localhost:3100/api/agents/${AGENT_ID}/skills/sync`],
-      ["PATCH", `http://localhost:3100/api/agents/${AGENT_ID}/instructions-path`],
-      ["GET", `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle`],
-      ["PATCH", `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle`],
-      ["GET", `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle/file?path=AGENTS.md`],
-      ["PUT", `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle/file`],
-      ["DELETE", `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle/file?path=AGENTS.md`],
+      [
+        "PATCH",
+        `http://localhost:3100/api/agents/${AGENT_ID}/instructions-path`,
+      ],
+      [
+        "GET",
+        `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle`,
+      ],
+      [
+        "PATCH",
+        `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle`,
+      ],
+      [
+        "GET",
+        `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle/file?path=AGENTS.md`,
+      ],
+      [
+        "PUT",
+        `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle/file`,
+      ],
+      [
+        "DELETE",
+        `http://localhost:3100/api/agents/${AGENT_ID}/instructions-bundle/file?path=AGENTS.md`,
+      ],
     ]);
   });
 });
 
-function jsonResponse(body: unknown = { ok: true }, init: ResponseInit = { status: 200 }): Response {
+function jsonResponse(
+  body: unknown = { ok: true },
+  init: ResponseInit = { status: 200 },
+): Response {
   return new Response(JSON.stringify(body), init);
 }

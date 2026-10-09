@@ -112,12 +112,14 @@ describe("runAdapterExecutionTargetShellCommand", () => {
   });
 
   it("returns a timedOut result when the SSH shell command times out", async () => {
-    vi.spyOn(ssh, "runSshCommand").mockRejectedValue(Object.assign(new Error("timed out"), {
-      code: "ETIMEDOUT",
-      stdout: "partial stdout",
-      stderr: "partial stderr",
-      signal: "SIGTERM",
-    }));
+    vi.spyOn(ssh, "runSshCommand").mockRejectedValue(
+      Object.assign(new Error("timed out"), {
+        code: "ETIMEDOUT",
+        stdout: "partial stdout",
+        stderr: "partial stderr",
+        signal: "SIGTERM",
+      }),
+    );
     const onLog = vi.fn(async () => {});
 
     const result = await runAdapterExecutionTargetShellCommand(
@@ -157,12 +159,14 @@ describe("runAdapterExecutionTargetShellCommand", () => {
   });
 
   it("returns the SSH process exit code for non-zero remote command failures", async () => {
-    vi.spyOn(ssh, "runSshCommand").mockRejectedValue(Object.assign(new Error("non-zero exit"), {
-      code: 17,
-      stdout: "partial stdout",
-      stderr: "partial stderr",
-      signal: null,
-    }));
+    vi.spyOn(ssh, "runSshCommand").mockRejectedValue(
+      Object.assign(new Error("non-zero exit"), {
+        code: 17,
+        stdout: "partial stdout",
+        stderr: "partial stderr",
+        signal: null,
+      }),
+    );
     const onLog = vi.fn(async () => {});
 
     const result = await runAdapterExecutionTargetShellCommand(
@@ -203,21 +207,23 @@ describe("runAdapterExecutionTargetShellCommand", () => {
 
   it("keeps managed homes disabled for both local and SSH targets", () => {
     expect(adapterExecutionTargetUsesManagedHome(null)).toBe(false);
-    expect(adapterExecutionTargetUsesManagedHome({
-      kind: "remote",
-      transport: "ssh",
-      remoteCwd: "/srv/taskcore/workspace",
-      spec: {
-        host: "ssh.example.test",
-        port: 22,
-        username: "ssh-user",
+    expect(
+      adapterExecutionTargetUsesManagedHome({
+        kind: "remote",
+        transport: "ssh",
         remoteCwd: "/srv/taskcore/workspace",
-        remoteWorkspacePath: "/srv/taskcore/workspace",
-        privateKey: null,
-        knownHosts: null,
-        strictHostKeyChecking: true,
-      },
-    })).toBe(false);
+        spec: {
+          host: "ssh.example.test",
+          port: 22,
+          username: "ssh-user",
+          remoteCwd: "/srv/taskcore/workspace",
+          remoteWorkspacePath: "/srv/taskcore/workspace",
+          privateKey: null,
+          knownHosts: null,
+          strictHostKeyChecking: true,
+        },
+      }),
+    ).toBe(false);
   });
 });
 
@@ -231,15 +237,17 @@ describe("runAdapterExecutionTargetProcess", () => {
     vi.stubEnv("PATH", "/host/bin:/usr/bin");
     vi.stubEnv("HOME", "/Users/local");
 
-    const runChildProcessSpy = vi.spyOn(serverUtils, "runChildProcess").mockResolvedValue({
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      stdout: "",
-      stderr: "",
-      pid: null,
-      startedAt: new Date().toISOString(),
-    });
+    const runChildProcessSpy = vi
+      .spyOn(serverUtils, "runChildProcess")
+      .mockResolvedValue({
+        exitCode: 0,
+        signal: null,
+        timedOut: false,
+        stdout: "",
+        stderr: "",
+        pid: null,
+        startedAt: new Date().toISOString(),
+      });
 
     await runAdapterExecutionTargetProcess(
       "run-ssh-process",
@@ -319,13 +327,15 @@ describe("ensureAdapterExecutionTargetRuntimeCommandInstalled", () => {
       timeoutSec: 30,
     });
 
-    expect(runner.execute).toHaveBeenCalledWith(expect.objectContaining({
-      command: "sh",
-      args: ["-c", "npm install -g @google/gemini-cli"],
-      cwd: "/remote/workspace",
-      env: { PATH: "/usr/bin" },
-      timeoutMs: 30_000,
-    }));
+    expect(runner.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "sh",
+        args: ["-c", "npm install -g @google/gemini-cli"],
+        cwd: "/remote/workspace",
+        env: { PATH: "/usr/bin" },
+        timeoutMs: 30_000,
+      }),
+    );
   });
 
   it("skips install commands for SSH targets", async () => {
@@ -378,15 +388,27 @@ describe("resolveAdapterExecutionTargetCwd", () => {
   };
 
   it("falls back to the remote cwd when no adapter cwd is configured", () => {
-    expect(resolveAdapterExecutionTargetCwd(sshTarget, "", "/Users/host/repo/server")).toBe(
-      "/srv/taskcore/workspace",
-    );
-    expect(resolveAdapterExecutionTargetCwd(sshTarget, "   ", "/Users/host/repo/server")).toBe(
-      "/srv/taskcore/workspace",
-    );
-    expect(resolveAdapterExecutionTargetCwd(sshTarget, null, "/Users/host/repo/server")).toBe(
-      "/srv/taskcore/workspace",
-    );
+    expect(
+      resolveAdapterExecutionTargetCwd(
+        sshTarget,
+        "",
+        "/Users/host/repo/server",
+      ),
+    ).toBe("/srv/taskcore/workspace");
+    expect(
+      resolveAdapterExecutionTargetCwd(
+        sshTarget,
+        "   ",
+        "/Users/host/repo/server",
+      ),
+    ).toBe("/srv/taskcore/workspace");
+    expect(
+      resolveAdapterExecutionTargetCwd(
+        sshTarget,
+        null,
+        "/Users/host/repo/server",
+      ),
+    ).toBe("/srv/taskcore/workspace");
   });
 
   it("preserves an explicit adapter cwd when one is configured", () => {
@@ -400,23 +422,34 @@ describe("resolveAdapterExecutionTargetCwd", () => {
   });
 
   it("keeps the local fallback cwd for local targets", () => {
-    expect(resolveAdapterExecutionTargetCwd(null, "", "/Users/host/repo/server")).toBe(
-      "/Users/host/repo/server",
-    );
+    expect(
+      resolveAdapterExecutionTargetCwd(null, "", "/Users/host/repo/server"),
+    ).toBe("/Users/host/repo/server");
   });
 });
-
 
 describe("GitHub launcher lifecycle", () => {
   it("removes only the completed run's launchers and leaves concurrent runs usable", async () => {
     const first = { runId: randomUUID(), target: null };
     const second = { runId: randomUUID(), target: null };
     try {
-      const a = await prepareGitHubOperationLaunchers({ ...first, cwd: "/tmp", env: {} });
-      const b = await prepareGitHubOperationLaunchers({ ...second, cwd: "/tmp", env: {} });
+      const a = await prepareGitHubOperationLaunchers({
+        ...first,
+        cwd: "/tmp",
+        env: {},
+      });
+      const b = await prepareGitHubOperationLaunchers({
+        ...second,
+        cwd: "/tmp",
+        env: {},
+      });
       await cleanupGitHubOperationLaunchers(first);
-      await expect(access(a.TASKCORE_GITHUB_LAUNCHER_DIR)).rejects.toMatchObject({ code: "ENOENT" });
-      expect(await readFile(`${b.TASKCORE_GITHUB_LAUNCHER_DIR}/git`, "utf8")).toContain("TASKCORE_GITHUB_BROKER_URL");
+      await expect(
+        access(a.TASKCORE_GITHUB_LAUNCHER_DIR),
+      ).rejects.toMatchObject({ code: "ENOENT" });
+      expect(
+        await readFile(`${b.TASKCORE_GITHUB_LAUNCHER_DIR}/git`, "utf8"),
+      ).toContain("TASKCORE_GITHUB_BROKER_URL");
       await cleanupGitHubOperationLaunchers(first); // teardown replay is harmless
     } finally {
       await cleanupGitHubOperationLaunchers(first);
@@ -425,15 +458,37 @@ describe("GitHub launcher lifecycle", () => {
   });
 
   it("bounds remote cleanup to one run and rejects traversal", async () => {
-    const runner = { execute: vi.fn(async () => ({ exitCode: 0, signal: null, timedOut: false,
-      stdout: "", stderr: "", pid: null, startedAt: new Date().toISOString() })) };
-    const target = { kind: "remote" as const, transport: "sandbox" as const,
-      providerKey: "e2b", remoteCwd: "/remote/workspace", runner };
+    const runner = {
+      execute: vi.fn(async () => ({
+        exitCode: 0,
+        signal: null,
+        timedOut: false,
+        stdout: "",
+        stderr: "",
+        pid: null,
+        startedAt: new Date().toISOString(),
+      })),
+    };
+    const target = {
+      kind: "remote" as const,
+      transport: "sandbox" as const,
+      providerKey: "e2b",
+      remoteCwd: "/remote/workspace",
+      runner,
+    };
     await cleanupGitHubOperationLaunchers({ runId: "finished-run", target });
-    expect(runner.execute).toHaveBeenCalledWith({ command: "sh",
-      args: ["-c", "rm -rf -- '/remote/workspace/.taskcore-runtime/github/finished-run'"],
-      cwd: "/remote/workspace", timeoutMs: 5_000 });
-    await expect(cleanupGitHubOperationLaunchers({ runId: "../other", target })).rejects.toThrow("Invalid GitHub launcher run ID");
+    expect(runner.execute).toHaveBeenCalledWith({
+      command: "sh",
+      args: [
+        "-c",
+        "rm -rf -- '/remote/workspace/.taskcore-runtime/github/finished-run'",
+      ],
+      cwd: "/remote/workspace",
+      timeoutMs: 5_000,
+    });
+    await expect(
+      cleanupGitHubOperationLaunchers({ runId: "../other", target }),
+    ).rejects.toThrow("Invalid GitHub launcher run ID");
     expect(runner.execute).toHaveBeenCalledTimes(1);
   });
 });

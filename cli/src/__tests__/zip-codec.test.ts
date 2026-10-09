@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { bytesToPortableFileEntry, isBlobStorePath, readZipArchive } from "../commands/client/zip.js";
+import {
+  bytesToPortableFileEntry,
+  isBlobStorePath,
+  readZipArchive,
+} from "../commands/client/zip.js";
 import { createStoredZipArchive } from "./helpers/zip.js";
 
 describe("isBlobStorePath", () => {
@@ -23,7 +27,9 @@ describe("bytesToPortableFileEntry", () => {
 
   it("falls back to base64 when bytes are not valid UTF-8", () => {
     const invalidUtf8 = new Uint8Array([0x68, 0x69, 0xff, 0xfe, 0xc0]);
-    expect(bytesToPortableFileEntry("tasks/pap-1/raw-notes", invalidUtf8)).toEqual({
+    expect(
+      bytesToPortableFileEntry("tasks/pap-1/raw-notes", invalidUtf8),
+    ).toEqual({
       encoding: "base64",
       data: Buffer.from(invalidUtf8).toString("base64"),
       contentType: "application/octet-stream",
@@ -32,7 +38,9 @@ describe("bytesToPortableFileEntry", () => {
 
   it("decodes valid UTF-8 entries to text", () => {
     const bytes = new TextEncoder().encode("# Notes\n\ncafé ✅\n");
-    expect(bytesToPortableFileEntry("tasks/pap-1/TASK.md", bytes)).toBe("# Notes\n\ncafé ✅\n");
+    expect(bytesToPortableFileEntry("tasks/pap-1/TASK.md", bytes)).toBe(
+      "# Notes\n\ncafé ✅\n",
+    );
   });
 });
 

@@ -130,11 +130,11 @@ proof that Dot started work.
 
 Preserve both directions and make the acting identity explicit:
 
-| Context | Authority | Supported behavior |
-| --- | --- | --- |
-| User asks their Dot to use Taskcore | Existing personal MCP connection | Read company work, create/delegate tasks, add feedback, retrieve results; actor is the consenting person. |
-| Dot executes an assigned Runner turn | Dedicated agent connection plus admitted assignment | Invoke the same authorized semantic tools as another Runner provider; actor is the assigned agent and run. |
-| Dot wants to start work while idle as the agent | Dedicated connection's `request_work` operation | Submit a bounded wake request referencing an authorized task and intent. Normal scheduling decides whether to admit a run before exposing its mutation tools. |
+| Context                                         | Authority                                           | Supported behavior                                                                                                                                            |
+| ----------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| User asks their Dot to use Taskcore             | Existing personal MCP connection                    | Read company work, create/delegate tasks, add feedback, retrieve results; actor is the consenting person.                                                     |
+| Dot executes an assigned Runner turn            | Dedicated agent connection plus admitted assignment | Invoke the same authorized semantic tools as another Runner provider; actor is the assigned agent and run.                                                    |
+| Dot wants to start work while idle as the agent | Dedicated connection's `request_work` operation     | Submit a bounded wake request referencing an authorized task and intent. Normal scheduling decides whether to admit a run before exposing its mutation tools. |
 
 Idle `request_work` must support a company-scoped planning/intake task for
 agent-initiated ideas, so proactive work does not depend on an already assigned
@@ -204,13 +204,13 @@ second tool dispatcher or finalizer hidden in the MCP route.
 
 ### Component responsibilities
 
-| Component | Owns | Must not own |
-| --- | --- | --- |
-| Public MCP/OAuth | Authenticate each call, resource/scope checks, bounded input, callback verification | Creating an admitted run from supplied IDs; arbitrary agent impersonation |
-| Dot broker in server | Pairing, bindings, mailbox, delivery state, request deduplication, routing to the current controller | Domain effects or provider terminal decisions |
-| Rust Dot provider | Turn acceptance, provider command ordering, projected-call mapping, durable provider receipts, PRP events and checkpoints | DB access, company policy, OAuth secrets, issue status writes |
-| Existing native controller | Admission, PRP ownership/leases, semantic dispatch, governed waits and finalization | Pretending a webhook receipt proves execution |
-| Dot | Retrieve work, perform reasoning, invoke exposed tools, propose result | Selecting its company/agent/run authority or bypassing finalization |
+| Component                  | Owns                                                                                                                      | Must not own                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Public MCP/OAuth           | Authenticate each call, resource/scope checks, bounded input, callback verification                                       | Creating an admitted run from supplied IDs; arbitrary agent impersonation |
+| Dot broker in server       | Pairing, bindings, mailbox, delivery state, request deduplication, routing to the current controller                      | Domain effects or provider terminal decisions                             |
+| Rust Dot provider          | Turn acceptance, provider command ordering, projected-call mapping, durable provider receipts, PRP events and checkpoints | DB access, company policy, OAuth secrets, issue status writes             |
+| Existing native controller | Admission, PRP ownership/leases, semantic dispatch, governed waits and finalization                                       | Pretending a webhook receipt proves execution                             |
+| Dot                        | Retrieve work, perform reasoning, invoke exposed tools, propose result                                                    | Selecting its company/agent/run authority or bypassing finalization       |
 
 Runner receives no ChatGPT credential, MCP OAuth token, webhook URL/signing key,
 or unrestricted Taskcore API key. Reuse the authenticated PRP connection for
@@ -261,11 +261,11 @@ checkout being mounted into this provider.
 Add a small, versioned external-provider transport extension over PRP. Proposed
 logical messages, with final names fixed in the contract PR:
 
-| Direction | Message | Meaning |
-| --- | --- | --- |
-| Runner → controller | `external_provider.dispatch_requested` | Persist a particular assignment/mailbox revision and notify its bound connection. |
-| Controller → Runner | `external_provider.operation` | Deliver a validated accept/tool/progress/finish/control-ack operation with its stable request identity. |
-| Runner → controller | `external_provider.operation_settled` | Persist the exact accepted/rejected/pending/unknown/result receipt for that operation. |
+| Direction           | Message                                | Meaning                                                                                                 |
+| ------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Runner → controller | `external_provider.dispatch_requested` | Persist a particular assignment/mailbox revision and notify its bound connection.                       |
+| Controller → Runner | `external_provider.operation`          | Deliver a validated accept/tool/progress/finish/control-ack operation with its stable request identity. |
+| Runner → controller | `external_provider.operation_settled`  | Persist the exact accepted/rejected/pending/unknown/result receipt for that operation.                  |
 
 These are closed provider-neutral transport envelopes, not raw OpenAI messages.
 Bind every envelope to company, agent, run, session, turn, binding generation,
@@ -309,19 +309,19 @@ Settlement is a separate correlated event, preserved across reconnects.
 
 ### Capabilities reported to Taskcore
 
-| Capability | v1 behavior |
-| --- | --- |
-| Typed events / structured result | Supported for bridge-observed actions and validated results. |
-| Dynamic tools | Supported through current run-owned projection and normal dispatch. |
-| Read / reconciliation | Supported for durable mailbox, operation and Runner state. |
-| Native provider session resume | Unsupported; no documented Dot thread/session API. |
-| Bridge recovery after restart | Required; recover the same assignment and receipts, not a new Dot conversation. |
-| Steering / immediate interruption | Unsupported. |
-| Queued follow-up | App queue supported; do not advertise provider-native steering/follow-up guarantees. |
-| Usage / cost / model controls | Unknown or unavailable; never zero-filled or inferred from elapsed time. |
-| Native skills/MCP injection | Unsupported; expose assigned knowledge/tools through authenticated reads and projection. |
-| Native runtime permission/input control | Unsupported; use Taskcore's durable task interactions and response wakes. |
-| Goals / child-thread lineage | Unsupported. |
+| Capability                              | v1 behavior                                                                              |
+| --------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Typed events / structured result        | Supported for bridge-observed actions and validated results.                             |
+| Dynamic tools                           | Supported through current run-owned projection and normal dispatch.                      |
+| Read / reconciliation                   | Supported for durable mailbox, operation and Runner state.                               |
+| Native provider session resume          | Unsupported; no documented Dot thread/session API.                                       |
+| Bridge recovery after restart           | Required; recover the same assignment and receipts, not a new Dot conversation.          |
+| Steering / immediate interruption       | Unsupported.                                                                             |
+| Queued follow-up                        | App queue supported; do not advertise provider-native steering/follow-up guarantees.     |
+| Usage / cost / model controls           | Unknown or unavailable; never zero-filled or inferred from elapsed time.                 |
+| Native skills/MCP injection             | Unsupported; expose assigned knowledge/tools through authenticated reads and projection. |
+| Native runtime permission/input control | Unsupported; use Taskcore's durable task interactions and response wakes.                |
+| Goals / child-thread lineage            | Unsupported.                                                                             |
 
 The capability model must distinguish recovering our bridge from resuming an
 OpenAI session. Add an explicit recovery/stop description if the current booleans
@@ -391,12 +391,12 @@ adopts active work from an older connection.
 Use additive, company-scoped tables. Final naming can follow existing schema
 conventions, but these ownership boundaries are required:
 
-| Record | Key data and constraints |
-| --- | --- |
-| `dot_agent_bindings` | Company, agent, consenting user, dedicated grant, generation, readiness, protocol revision, created/revoked timestamps. Unique active agent binding and active grant binding. |
+| Record                   | Key data and constraints                                                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dot_agent_bindings`     | Company, agent, consenting user, dedicated grant, generation, readiness, protocol revision, created/revoked timestamps. Unique active agent binding and active grant binding.                                                                     |
 | `dot_runner_assignments` | Immutable run/session/turn and completion-contract binding, binding generation, catalog digest, prompt/runtime-context references, status, deadlines and accepted/completed timestamps. Unique run/turn; at most one live assignment per binding. |
-| `dot_runner_operations` | Assignment, request ID, operation, canonical input digest, PRP command/call IDs, status and bounded result/reference. Unique request ID within assignment; no silent argument changes. |
-| `dot_mailbox_items` | Durable actionable item for assignment, continuation, pending tool result or control request; immutable ID, assignment revision, visibility/consumption state and stable notification identity. |
+| `dot_runner_operations`  | Assignment, request ID, operation, canonical input digest, PRP command/call IDs, status and bounded result/reference. Unique request ID within assignment; no silent argument changes.                                                            |
+| `dot_mailbox_items`      | Durable actionable item for assignment, continuation, pending tool result or control request; immutable ID, assignment revision, visibility/consumption state and stable notification identity.                                                   |
 
 Do not duplicate canonical task comments, documents, transcripts, result rows or
 finalization decisions in these tables. Store references and bounded transport
@@ -455,17 +455,17 @@ unsubscription removes transport rows; the lab demonstrated why that matters.
 Retain the prototype's conceptual operations and add pairing/status support.
 Schemas are versioned, bounded and validated before persistence.
 
-| Operation | Behavior |
-| --- | --- |
-| Connection/pairing | Read readiness or consume a one-use pairing intent; cannot create an admitted task run. |
-| Inbox/read | Return only current bound work, prompt context, tool catalog references and completion contract. |
-| Accept | Atomically claim the current assignment once; only Runner acceptance emits `turn.started`. |
-| Tool | Map a stable external operation into a normal semantic tool call. |
-| Progress | Append bounded progress through PRP; apply ordinary useful-progress/watchdog rules. |
-| Finish | Propose the canonical structured result; run normal completion feedback and finalization. |
-| Operation status | Read a durable pending/completed/rejected/unknown receipt without redispatch. |
-| Request work | Create an idempotent ordinary wake request while idle; never self-assign by accepting arbitrary IDs. |
-| Control acknowledgement | Record cooperative acknowledgement without claiming global provider shutdown. |
+| Operation               | Behavior                                                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| Connection/pairing      | Read readiness or consume a one-use pairing intent; cannot create an admitted task run.              |
+| Inbox/read              | Return only current bound work, prompt context, tool catalog references and completion contract.     |
+| Accept                  | Atomically claim the current assignment once; only Runner acceptance emits `turn.started`.           |
+| Tool                    | Map a stable external operation into a normal semantic tool call.                                    |
+| Progress                | Append bounded progress through PRP; apply ordinary useful-progress/watchdog rules.                  |
+| Finish                  | Propose the canonical structured result; run normal completion feedback and finalization.            |
+| Operation status        | Read a durable pending/completed/rejected/unknown receipt without redispatch.                        |
+| Request work            | Create an idempotent ordinary wake request while idle; never self-assign by accepting arbitrary IDs. |
+| Control acknowledgement | Record cooperative acknowledgement without claiming global provider shutdown.                        |
 
 Use `requestId` plus assignment binding as the external operation identity. The
 server reserves it before routing to the current controller. Canonical input
@@ -544,20 +544,20 @@ the existing bounded delivery retry policy.
 
 ### Crash matrix
 
-| Failure point | Required recovery |
-| --- | --- |
-| Before assignment commit | No event exists; ordinary admission can retry its stable intent. |
-| After commit, before send | Event worker finds the durable notification. |
-| After webhook receipt, before accept | Same assignment remains offered; do not synthesize a started turn. |
-| During accept / response lost | Same request returns the accepted receipt; one `turn.started`. |
-| Tool committed, response lost | Reconcile existing semantic receipt; never repeat the effect with a fresh ID. |
-| Taskcore controller restarts | Restore current lease/generation, route persisted operations, replay PRP acknowledgements. |
-| runnerd restarts | Restore exact Dot provider checkpoint; verify binding/catalog/assignment identities before replay. |
-| Both restart | Reconcile server records and Runner checkpoint by identity/digest; unresolved divergence becomes operator-visible, not a new assignment. |
-| Subscription expires | Preserve pending work; mark delivery unavailable; wake actionable items after verified reconnection. |
-| OAuth/binding revoked | Reject callbacks and cached-result access; retain authorized audit/reconciliation state. |
-| Old Dot continues after replacement | Reject all old-generation mutations and results. |
-| Storage/replay limit exceeded | Stop accepting new operations, retain uncertainty, surface actionable recovery. |
+| Failure point                        | Required recovery                                                                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Before assignment commit             | No event exists; ordinary admission can retry its stable intent.                                                                         |
+| After commit, before send            | Event worker finds the durable notification.                                                                                             |
+| After webhook receipt, before accept | Same assignment remains offered; do not synthesize a started turn.                                                                       |
+| During accept / response lost        | Same request returns the accepted receipt; one `turn.started`.                                                                           |
+| Tool committed, response lost        | Reconcile existing semantic receipt; never repeat the effect with a fresh ID.                                                            |
+| Taskcore controller restarts         | Restore current lease/generation, route persisted operations, replay PRP acknowledgements.                                               |
+| runnerd restarts                     | Restore exact Dot provider checkpoint; verify binding/catalog/assignment identities before replay.                                       |
+| Both restart                         | Reconcile server records and Runner checkpoint by identity/digest; unresolved divergence becomes operator-visible, not a new assignment. |
+| Subscription expires                 | Preserve pending work; mark delivery unavailable; wake actionable items after verified reconnection.                                     |
+| OAuth/binding revoked                | Reject callbacks and cached-result access; retain authorized audit/reconciliation state.                                                 |
+| Old Dot continues after replacement  | Reject all old-generation mutations and results.                                                                                         |
+| Storage/replay limit exceeded        | Stop accepting new operations, retain uncertainty, surface actionable recovery.                                                          |
 
 The existing controller generation and provider-attempt counter stay distinct
 from the Dot binding generation. A server failover does not automatically
@@ -932,7 +932,6 @@ Taskcore issue or authenticated issue-artifact context in this Codex chat, so
 it is a repository plan rather than an uploaded issue artifact. When execution
 is assigned in Taskcore, link this plan as its plan document/work product.
 
-
 ## 15. First-time onboarding checkpoint — 2026-10-07
 
 The live onboarding attempt found and fixed two authorization problems. ChatGPT’s client metadata prefers `private_key_jwt` while also publishing `none` as a supported method; Taskcore now negotiates the supported public-client method while retaining S256 PKCE. Dot’s browser blocks the temporary Cloudflare hostname even though ChatGPT’s MCP discovery service reaches it. An optional `TASKCORE_MCP_AUTHORIZATION_ORIGIN` separates the browser authorization ingress from the MCP resource, issuer, and token ingress. Both routes use existing operator-approved tunnels; no new hosted infrastructure was created.
@@ -945,13 +944,11 @@ Verification: the focused OAuth/onboarding API suite passed 11 cases, the affect
 
 During deployment, macOS exhausted its PostgreSQL shared-memory IDs. One confirmed unused PostgreSQL interlock with zero attachments and an exited creator was reclaimed; no running database was stopped. Another development instance had occupied the old API port during the outage, so this test-drive and its existing public tunnels were moved to port 3109. The temporary MCP tunnel hostname consequently changed; fresh plugin onboarding must use the current runtime prompt rather than an old copied URL or expired pairing code.
 
-
 ## 2026-10-07 full Runner capability extension
 
 User authorized implementation and live qualification of all six expansion areas. Delivery scope: idle request admission with normal run ownership; human assignees and person discovery; authorized cross-task tools; pinned skill reads and assigned MCP gateway relay; explicitly enabled host workspace tools and verified artifacts; truthful capability discovery; rolling lease renewal, pagination and follow-up input. Preserve provider limits for model choice, usage, cost, and unconfirmed global external stopping.
 
 Acceptance: an idle Dot creates a hello task assigned to the responsible person; an assigned Dot reads a pinned skill, uses an authorized assigned gateway tool, produces a verified downloadable file, handles follow-up input, renews its lease, and cannot continue mutations after fencing. Verify replay, company isolation, budget stops and permission denials. Do not reseed the synthetic test-drive from production.
-
 
 ### Full Runner acceptance checkpoint
 

@@ -2,8 +2,16 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createRuntimeStore, type AcpRuntimeOptions, type AcpSessionRecord, type AcpSessionStore } from "acpx/runtime";
-import type { AdapterExecutionContext, AdapterRuntimeMcpAccess } from "@taskcore/adapter-utils";
+import {
+  createRuntimeStore,
+  type AcpRuntimeOptions,
+  type AcpSessionRecord,
+  type AcpSessionStore,
+} from "acpx/runtime";
+import type {
+  AdapterExecutionContext,
+  AdapterRuntimeMcpAccess,
+} from "@taskcore/adapter-utils";
 import {
   DEFAULT_REMOTE_SANDBOX_ADAPTER_TIMEOUT_SEC,
   prepareAdapterExecutionTargetRuntime,
@@ -17,12 +25,21 @@ import {
 // tests assert the exact `runtimeRootDir`/`workspaceLocalDir`/`assets` the
 // engine threads without changing any real behavior for the other tests.
 vi.mock("@taskcore/adapter-utils/execution-target", async (importActual) => {
-  const actual = await importActual<typeof import("@taskcore/adapter-utils/execution-target")>();
+  const actual =
+    await importActual<
+      typeof import("@taskcore/adapter-utils/execution-target")
+    >();
   return {
     ...actual,
-    prepareAdapterExecutionTargetRuntime: vi.fn(actual.prepareAdapterExecutionTargetRuntime),
-    startAdapterExecutionTargetTaskcoreBridge: vi.fn(actual.startAdapterExecutionTargetTaskcoreBridge),
-    startAdapterExecutionTargetProcessSessionBridge: vi.fn(actual.startAdapterExecutionTargetProcessSessionBridge),
+    prepareAdapterExecutionTargetRuntime: vi.fn(
+      actual.prepareAdapterExecutionTargetRuntime,
+    ),
+    startAdapterExecutionTargetTaskcoreBridge: vi.fn(
+      actual.startAdapterExecutionTargetTaskcoreBridge,
+    ),
+    startAdapterExecutionTargetProcessSessionBridge: vi.fn(
+      actual.startAdapterExecutionTargetProcessSessionBridge,
+    ),
   };
 });
 import {
@@ -42,7 +59,10 @@ import { runChildProcess } from "../server-utils.js";
 import { createPromptContextFixture } from "../test-fixtures/prompt-context.js";
 import { setExpensiveWorkspaceGitExecutor } from "../git-workspace-sync.js";
 import { createWorkspaceRestoreTeardown } from "../workspace-restore-teardown.js";
-import { withWorkspaceRestoreDiagnostics, withWorkspaceRestoreStep } from "../workspace-restore-diagnostics.js";
+import {
+  withWorkspaceRestoreDiagnostics,
+  withWorkspaceRestoreStep,
+} from "../workspace-restore-diagnostics.js";
 import { resolveReferencedSourceIgnore } from "../sandbox-managed-runtime.js";
 import {
   getActiveStepContext,
@@ -50,12 +70,13 @@ import {
   SANDBOX_STARTUP_SPAN_ATTRS,
 } from "./startup-timing.js";
 
-
 const tempRoots: string[] = [];
 let defaultGeminiTestHome: string | undefined;
 
 async function makeTempRoot() {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-acpx-skills-"));
+  const root = await fs.mkdtemp(
+    path.join(os.tmpdir(), "taskcore-acpx-skills-"),
+  );
   tempRoots.push(root);
   return root;
 }
@@ -70,14 +91,24 @@ afterEach(async () => {
   // `ENOTEMPTY`. `maxRetries`/`retryDelay` make the cleanup ride out that window the
   // same way production tolerates it, instead of failing the just-passed test.
   await Promise.all(
-    tempRoots.splice(0).map((root) =>
-      fs.rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }),
-    ),
+    tempRoots
+      .splice(0)
+      .map((root) =>
+        fs.rm(root, {
+          recursive: true,
+          force: true,
+          maxRetries: 5,
+          retryDelay: 50,
+        }),
+      ),
   );
 });
 
 async function pathExists(candidate: string): Promise<boolean> {
-  return fs.access(candidate).then(() => true).catch(() => false);
+  return fs
+    .access(candidate)
+    .then(() => true)
+    .catch(() => false);
 }
 
 async function onlyChildDir(parent: string): Promise<string> {
@@ -86,7 +117,11 @@ async function onlyChildDir(parent: string): Promise<string> {
   return path.join(parent, entries[0]!);
 }
 
-async function createSkill(root: string, name: string, body = `---\nrequired: false\n---\n# ${name}\n`) {
+async function createSkill(
+  root: string,
+  name: string,
+  body = `---\nrequired: false\n---\n# ${name}\n`,
+) {
   const skillDir = path.join(root, name);
   await fs.mkdir(skillDir, { recursive: true });
   await fs.writeFile(path.join(skillDir, "SKILL.md"), body, "utf8");
@@ -121,17 +156,26 @@ function createLocalSandboxRunner(
       counter += 1;
       onExecute?.(input);
       const command = input.command === "bash" ? "/bin/bash" : input.command;
-      return await runChildProcess(`acpx-sandbox-run-${counter}`, command, input.args ?? [], {
-        cwd: input.cwd ?? process.cwd(),
-        env: input.env ?? {},
-        stdin: input.stdin,
-        timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-        graceSec: 5,
-        onLog: input.onLog ?? (async () => {}),
-        onSpawn: input.onSpawn
-          ? async (meta) => input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
-          : undefined,
-      });
+      return await runChildProcess(
+        `acpx-sandbox-run-${counter}`,
+        command,
+        input.args ?? [],
+        {
+          cwd: input.cwd ?? process.cwd(),
+          env: input.env ?? {},
+          stdin: input.stdin,
+          timeoutSec: Math.max(
+            1,
+            Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+          ),
+          graceSec: 5,
+          onLog: input.onLog ?? (async () => {}),
+          onSpawn: input.onSpawn
+            ? async (meta) =>
+                input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
+            : undefined,
+        },
+      );
     },
   };
 }
@@ -144,11 +188,11 @@ function buildRuntime(
   return {
     ensureSession: async (input: Record<string, unknown>) => {
       onEnsureSession?.(input);
-      return ({
-      backendSessionId: "backend-session",
-      agentSessionId: "agent-session",
-      runtimeSessionName: "runtime-session",
-      });
+      return {
+        backendSessionId: "backend-session",
+        agentSessionId: "agent-session",
+        runtimeSessionName: "runtime-session",
+      };
     },
     startTurn: (input: Record<string, unknown>) => {
       onStartTurn?.(input);
@@ -156,7 +200,10 @@ function buildRuntime(
         events: (async function* () {
           yield { type: "done", stopReason: "end_turn" };
         })(),
-        result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+        result: Promise.resolve({
+          status: "completed",
+          stopReason: "end_turn",
+        }),
         cancel: async () => {},
       };
     },
@@ -184,9 +231,15 @@ async function runExecutor(
   // Skill reconciliation must never inspect or modify the developer's real
   // Gemini home. Keep one private home across this test's resumed turns.
   const configuredEnv = config.env as Record<string, unknown> | undefined;
-  if (config.agent === "gemini" && !(typeof configuredEnv?.HOME === "string" && configuredEnv.HOME.trim())) {
+  if (
+    config.agent === "gemini" &&
+    !(typeof configuredEnv?.HOME === "string" && configuredEnv.HOME.trim())
+  ) {
     defaultGeminiTestHome ??= await makeTempRoot();
-    config = { ...config, env: { ...configuredEnv, HOME: defaultGeminiTestHome } };
+    config = {
+      ...config,
+      env: { ...configuredEnv, HOME: defaultGeminiTestHome },
+    };
   }
   const runtimeOptions: Record<string, unknown>[] = [];
   const configOptions: Array<{ key: string; value: string }> = [];
@@ -194,7 +247,10 @@ async function runExecutor(
   const turnInputs: Record<string, unknown>[] = [];
   const meta: Record<string, unknown>[] = [];
   const logs: Array<{ stream: string; text: string }> = [];
-  const events: Array<{ eventType: string; payload?: Record<string, unknown> }> = [];
+  const events: Array<{
+    eventType: string;
+    payload?: Record<string, unknown>;
+  }> = [];
   const receipts: unknown[] = [];
   const execute = createAcpxEngineExecutor({
     ...(options.prepareRemoteManagedHome
@@ -216,29 +272,44 @@ async function runExecutor(
       id: "agent-1",
       companyId: "company-1",
     },
-      runtime: options.runtime ?? {},
-      config,
-      context: options.context ?? {},
-      executionTransport: options.executionTransport,
-      authToken: options.authToken,
-      agentIdentity: options.agentIdentity,
-      executionTarget: options.executionTarget,
-      runtimeMcp: options.runtimeMcp,
-      startupTraceContext: options.startupTraceContext,
-      onLog: async (stream: "stdout" | "stderr", text: string) => {
-        logs.push({ stream, text });
-      },
+    runtime: options.runtime ?? {},
+    config,
+    context: options.context ?? {},
+    executionTransport: options.executionTransport,
+    authToken: options.authToken,
+    agentIdentity: options.agentIdentity,
+    executionTarget: options.executionTarget,
+    runtimeMcp: options.runtimeMcp,
+    startupTraceContext: options.startupTraceContext,
+    onLog: async (stream: "stdout" | "stderr", text: string) => {
+      logs.push({ stream, text });
+    },
     onMeta: async (payload: unknown) => {
       meta.push(payload as Record<string, unknown>);
     },
-    onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
+    onEvent: async (event: {
+      eventType: string;
+      payload?: Record<string, unknown>;
+    }) => {
       events.push(event);
     },
-    onUsage: async (receipt: unknown) => { receipts.push(receipt); },
+    onUsage: async (receipt: unknown) => {
+      receipts.push(receipt);
+    },
   } as never);
 
   expect(result.exitCode).toBe(0);
-  return { logs, meta, events, receipts, runtimeOptions, configOptions, sessionInputs, turnInputs, result };
+  return {
+    logs,
+    meta,
+    events,
+    receipts,
+    runtimeOptions,
+    configOptions,
+    sessionInputs,
+    turnInputs,
+    result,
+  };
 }
 
 // Under `vi.useFakeTimers()`, setup before `ensureSession` still performs real
@@ -263,7 +334,10 @@ function trackEnsureSessionCall<T>(call: () => Promise<T>): {
   };
 }
 
-async function advanceHandshakeGuardAfterStart(started: Promise<void>, ms: number): Promise<void> {
+async function advanceHandshakeGuardAfterStart(
+  started: Promise<void>,
+  ms: number,
+): Promise<void> {
   await started;
   await vi.advanceTimersByTimeAsync(ms);
 }
@@ -348,7 +422,11 @@ function issueSandboxExecFromStore(
   tracing: NonNullable<AdapterExecutionContext["startupTraceContext"]>,
 ): void {
   const activeStep = getActiveStepContext();
-  tracing.tracer.startSpan("sandbox.exec", undefined, activeStep?.parentContext);
+  tracing.tracer.startSpan(
+    "sandbox.exec",
+    undefined,
+    activeStep?.parentContext,
+  );
 }
 
 // The closed span-attribute allowlist for a sandbox-start span. A test asserts
@@ -395,61 +473,135 @@ describe("shared ACPX engine runtime behavior", () => {
   it("integrates the env-free store while delivering current credentials and options to the provider", async () => {
     const root = await makeTempRoot();
     const stateDir = path.join(root, "state");
-    const first = await runExecutor({ agent: "claude", agentCommand: "node ./fake-acp.js", cwd: root, stateDir,
-      env: { ANTHROPIC_API_KEY: "first-fixture-credential" } });
-    const liveEnvironment = (first.sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env;
+    const first = await runExecutor({
+      agent: "claude",
+      agentCommand: "node ./fake-acp.js",
+      cwd: root,
+      stateDir,
+      env: { ANTHROPIC_API_KEY: "first-fixture-credential" },
+    });
+    const liveEnvironment = (
+      first.sessionInputs[0]!.sessionOptions as { env: Record<string, string> }
+    ).env;
     expect(liveEnvironment.ANTHROPIC_API_KEY).toBe("first-fixture-credential");
     const store = first.runtimeOptions[0]!.sessionStore as AcpSessionStore;
     const record: AcpSessionRecord = {
-      schema: "acpx.session.v1", acpxRecordId: "integration-record", acpSessionId: "integration-session",
-      agentCommand: "fixture-provider", cwd: root, name: "fixture", createdAt: "2026-10-03T00:00:00.000Z",
-      lastUsedAt: "2026-10-03T00:00:01.000Z", lastSeq: 0,
-      eventLog: { active_path: path.join(stateDir, "fixture.jsonl"), segment_count: 1, max_segment_bytes: 1024, max_segments: 2 },
-      messages: [], updated_at: "2026-10-03T00:00:01.000Z", cumulative_token_usage: {}, request_token_usage: {},
-      acpx: { session_options: { env: { ...liveEnvironment }, model: "retained-model", max_turns: 4 } },
+      schema: "acpx.session.v1",
+      acpxRecordId: "integration-record",
+      acpSessionId: "integration-session",
+      agentCommand: "fixture-provider",
+      cwd: root,
+      name: "fixture",
+      createdAt: "2026-10-03T00:00:00.000Z",
+      lastUsedAt: "2026-10-03T00:00:01.000Z",
+      lastSeq: 0,
+      eventLog: {
+        active_path: path.join(stateDir, "fixture.jsonl"),
+        segment_count: 1,
+        max_segment_bytes: 1024,
+        max_segments: 2,
+      },
+      messages: [],
+      updated_at: "2026-10-03T00:00:01.000Z",
+      cumulative_token_usage: {},
+      request_token_usage: {},
+      acpx: {
+        session_options: {
+          env: { ...liveEnvironment },
+          model: "retained-model",
+          max_turns: 4,
+        },
+      },
     };
     await store.save(record);
     const file = path.join(stateDir, "sessions", "integration-record.json");
     const saved = await fs.readFile(file, "utf8");
     expect(saved).not.toContain("first-fixture-credential");
-    expect(JSON.parse(saved).acpx.session_options).toEqual({ model: "retained-model", max_turns: 4 });
+    expect(JSON.parse(saved).acpx.session_options).toEqual({
+      model: "retained-model",
+      max_turns: 4,
+    });
     expect(record.acpx?.session_options?.env).toEqual(liveEnvironment);
     // A file written by the prior engine is loaded with the current run's env,
     // without altering the provider launch or deleting unrelated options.
-    record.acpx!.session_options!.env = { ANTHROPIC_API_KEY: "legacy-fixture-credential" };
+    record.acpx!.session_options!.env = {
+      ANTHROPIC_API_KEY: "legacy-fixture-credential",
+    };
     await createRuntimeStore({ stateDir }).save(record);
-    const second = await runExecutor({ agent: "claude", agentCommand: "node ./fake-acp.js", cwd: root, stateDir,
-      env: { ANTHROPIC_API_KEY: "rotated-fixture-credential" } }, { runtime: { sessionParams: first.result.sessionParams } });
-    expect((second.sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env.ANTHROPIC_API_KEY).toBe("rotated-fixture-credential");
-    const rotatedStore = second.runtimeOptions[0]!.sessionStore as AcpSessionStore;
+    const second = await runExecutor(
+      {
+        agent: "claude",
+        agentCommand: "node ./fake-acp.js",
+        cwd: root,
+        stateDir,
+        env: { ANTHROPIC_API_KEY: "rotated-fixture-credential" },
+      },
+      { runtime: { sessionParams: first.result.sessionParams } },
+    );
+    expect(
+      (
+        second.sessionInputs[0]!.sessionOptions as {
+          env: Record<string, string>;
+        }
+      ).env.ANTHROPIC_API_KEY,
+    ).toBe("rotated-fixture-credential");
+    const rotatedStore = second.runtimeOptions[0]!
+      .sessionStore as AcpSessionStore;
     const loaded = await rotatedStore.load(record.acpxRecordId);
-    expect(loaded?.acpx?.session_options).toMatchObject({ env: { ANTHROPIC_API_KEY: "rotated-fixture-credential" }, model: "retained-model", max_turns: 4 });
+    expect(loaded?.acpx?.session_options).toMatchObject({
+      env: { ANTHROPIC_API_KEY: "rotated-fixture-credential" },
+      model: "retained-model",
+      max_turns: 4,
+    });
     await rotatedStore.save(loaded!);
     const resaved = await fs.readFile(file, "utf8");
-    for (const value of ["first-fixture-credential", "legacy-fixture-credential", "rotated-fixture-credential"]) expect(resaved).not.toContain(value);
+    for (const value of [
+      "first-fixture-credential",
+      "legacy-fixture-credential",
+      "rotated-fixture-credential",
+    ])
+      expect(resaved).not.toContain(value);
   });
-  it.each(["claude", "codex", "gemini", "kimi", "custom"])("defaults the legacy %s engine to full auto on fresh and resumed runs", async (agent) => {
-    const root = await makeTempRoot();
-    const config = {
-      agent, cwd: root, stateDir: path.join(root, "state"),
-      ...(agent === "custom" ? { agentCommand: "node ./fake-acp.js" } : {}),
-    };
-    const first = await runExecutor(config);
-    const resumed = await runExecutor(config, { runtime: { sessionParams: first.result.sessionParams } });
-    for (const run of [first, resumed]) {
-      expect(run.runtimeOptions[0]?.permissionMode).toBe("approve-all");
-      expect(run.result.resultJson?.permissionMode).toBe("approve-all");
-    }
-  });
+  it.each(["claude", "codex", "gemini", "kimi", "custom"])(
+    "defaults the legacy %s engine to full auto on fresh and resumed runs",
+    async (agent) => {
+      const root = await makeTempRoot();
+      const config = {
+        agent,
+        cwd: root,
+        stateDir: path.join(root, "state"),
+        ...(agent === "custom" ? { agentCommand: "node ./fake-acp.js" } : {}),
+      };
+      const first = await runExecutor(config);
+      const resumed = await runExecutor(config, {
+        runtime: { sessionParams: first.result.sessionParams },
+      });
+      for (const run of [first, resumed]) {
+        expect(run.runtimeOptions[0]?.permissionMode).toBe("approve-all");
+        expect(run.result.resultJson?.permissionMode).toBe("approve-all");
+      }
+    },
+  );
 
   it.each([
-    ["default", "approve-all"], ["", "approve-all"],
-    ["approve-reads", "approve-reads"], ["deny-all", "deny-all"],
-  ])("resolves the legacy %j permission setting to %s", async (permissionMode, expected) => {
-    const root = await makeTempRoot();
-    const run = await runExecutor({ agent: "custom", agentCommand: "node ./fake-acp.js", cwd: root, stateDir: path.join(root, "state"), permissionMode });
-    expect(run.runtimeOptions[0]?.permissionMode).toBe(expected);
-  });
+    ["default", "approve-all"],
+    ["", "approve-all"],
+    ["approve-reads", "approve-reads"],
+    ["deny-all", "deny-all"],
+  ])(
+    "resolves the legacy %j permission setting to %s",
+    async (permissionMode, expected) => {
+      const root = await makeTempRoot();
+      const run = await runExecutor({
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        cwd: root,
+        stateDir: path.join(root, "state"),
+        permissionMode,
+      });
+      expect(run.runtimeOptions[0]?.permissionMode).toBe(expected);
+    },
+  );
 
   it("persists ACP agent process identity before prompting on each run (host lane re-creates, no warm reuse)", async () => {
     const root = await makeTempRoot();
@@ -464,7 +616,10 @@ describe("shared ACPX engine runtime behavior", () => {
       createRuntime: (options) => {
         runtimeCreateCount += 1;
         const patchedOptions = options as AcpRuntimeOptions & {
-          onAgentSpawn?: (meta: { pid: number; startedAt: string }) => Promise<void>;
+          onAgentSpawn?: (meta: {
+            pid: number;
+            startedAt: string;
+          }) => Promise<void>;
         };
         return {
           ensureSession: async () => {
@@ -479,7 +634,10 @@ describe("shared ACPX engine runtime behavior", () => {
             turnStartedBeforeProcessIdentity = !processIdentityPersisted;
             return {
               events: (async function* () {})(),
-              result: Promise.resolve({ status: "completed" as const, stopReason: "end_turn" }),
+              result: Promise.resolve({
+                status: "completed" as const,
+                stopReason: "end_turn",
+              }),
               cancel: async () => {},
             };
           },
@@ -498,7 +656,11 @@ describe("shared ACPX engine runtime behavior", () => {
       taskcoreWorkspace: { cwd: root },
     };
     const firstOnSpawn = vi.fn(async (meta: unknown) => {
-      expect(meta).toEqual({ pid: processPid, processGroupId: null, startedAt });
+      expect(meta).toEqual({
+        pid: processPid,
+        processGroupId: null,
+        startedAt,
+      });
       processIdentityPersisted = true;
     });
     const first = await execute({
@@ -519,7 +681,11 @@ describe("shared ACPX engine runtime behavior", () => {
     processIdentityPersisted = false;
     turnStartedBeforeProcessIdentity = false;
     const secondOnSpawn = vi.fn(async (meta: unknown) => {
-      expect(meta).toEqual({ pid: processPid, processGroupId: null, startedAt });
+      expect(meta).toEqual({
+        pid: processPid,
+        processGroupId: null,
+        startedAt,
+      });
       processIdentityPersisted = true;
     });
     const second = await execute({
@@ -549,7 +715,9 @@ describe("shared ACPX engine runtime behavior", () => {
       fastMode: true,
     });
 
-    expect(JSON.parse(String((meta[0]?.env as Record<string, string>).CODEX_CONFIG))).toEqual({
+    expect(
+      JSON.parse(String((meta[0]?.env as Record<string, string>).CODEX_CONFIG)),
+    ).toEqual({
       model: "gpt-5.6-sol",
       model_reasoning_effort: "high",
       service_tier: "fast",
@@ -557,22 +725,41 @@ describe("shared ACPX engine runtime behavior", () => {
     });
     expect(configOptions).toEqual([]);
     expect(result.pricingContext).toEqual({ serviceTier: "fast" });
-    expect(receipts).toContainEqual(expect.objectContaining({ pricingContext: { serviceTier: "fast" }, complete: true }));
+    expect(receipts).toContainEqual(
+      expect.objectContaining({
+        pricingContext: { serviceTier: "fast" },
+        complete: true,
+      }),
+    );
     expect(meta[0]?.commandNotes).toContain(
       "Requested ACPX model: gpt-5.6-sol (set via CODEX_CONFIG at startup).",
     );
   });
 
   it("keeps identity and scoped API access without exposing configured service tokens to Codex shells", async () => {
-    const { meta } = await runExecutor({ agent: "codex", env: { MY_SERVICE_TOKEN: "assigned-tool-token" } }, {
-      authToken: "assigned-run-token",
-      agentIdentity: { keyId: "sha256:test", publicKeyPem: "public", privateKeyPem: "private" },
-    });
-    const config = JSON.parse(String((meta[0]?.env as Record<string, string>).CODEX_CONFIG));
-    expect(config.shell_environment_policy.include_only).toEqual(expect.arrayContaining([
-      "TASKCORE_API_KEY", "TASKCORE_AGENT_PRIVATE_KEY",
-    ]));
-    expect(config.shell_environment_policy.include_only).not.toContain("MY_SERVICE_TOKEN");
+    const { meta } = await runExecutor(
+      { agent: "codex", env: { MY_SERVICE_TOKEN: "assigned-tool-token" } },
+      {
+        authToken: "assigned-run-token",
+        agentIdentity: {
+          keyId: "sha256:test",
+          publicKeyPem: "public",
+          privateKeyPem: "private",
+        },
+      },
+    );
+    const config = JSON.parse(
+      String((meta[0]?.env as Record<string, string>).CODEX_CONFIG),
+    );
+    expect(config.shell_environment_policy.include_only).toEqual(
+      expect.arrayContaining([
+        "TASKCORE_API_KEY",
+        "TASKCORE_AGENT_PRIVATE_KEY",
+      ]),
+    );
+    expect(config.shell_environment_policy.include_only).not.toContain(
+      "MY_SERVICE_TOKEN",
+    );
     expect(JSON.stringify(config)).not.toContain("assigned-run-token");
     expect(JSON.stringify(config)).not.toContain("assigned-tool-token");
   });
@@ -608,7 +795,9 @@ describe("shared ACPX engine runtime behavior", () => {
       },
     });
 
-    expect(JSON.parse(String((meta[0]?.env as Record<string, string>).CODEX_CONFIG))).toEqual({
+    expect(
+      JSON.parse(String((meta[0]?.env as Record<string, string>).CODEX_CONFIG)),
+    ).toEqual({
       model: "gpt-runtime",
       approval_policy: "never",
       service_tier: "fast",
@@ -623,7 +812,9 @@ describe("shared ACPX engine runtime behavior", () => {
       env: { CODEX_CONFIG: "not-json" },
     });
 
-    expect(JSON.parse(String((meta[0]?.env as Record<string, string>).CODEX_CONFIG))).toEqual({
+    expect(
+      JSON.parse(String((meta[0]?.env as Record<string, string>).CODEX_CONFIG)),
+    ).toEqual({
       model: "gpt-runtime",
     });
     expect(logs).toContainEqual({
@@ -633,10 +824,13 @@ describe("shared ACPX engine runtime behavior", () => {
   });
 
   it("sets Claude and Gemini models at startup without unsupported picker calls", async () => {
-    const claude = await runExecutor({ agent: "claude", model: "claude-opus-4-7" });
-    expect((claude.meta[0]?.env as Record<string, string>).ANTHROPIC_MODEL).toBe(
-      "claude-opus-4-7",
-    );
+    const claude = await runExecutor({
+      agent: "claude",
+      model: "claude-opus-4-7",
+    });
+    expect(
+      (claude.meta[0]?.env as Record<string, string>).ANTHROPIC_MODEL,
+    ).toBe("claude-opus-4-7");
     expect(claude.configOptions).toEqual([]);
 
     const gemini = await runExecutor({
@@ -645,55 +839,77 @@ describe("shared ACPX engine runtime behavior", () => {
       thinkingEffort: "high",
       env: { GEMINI_MODEL: "stale-model" },
     });
-    expect((gemini.meta[0]?.env as Record<string, string>).GEMINI_MODEL).toBe("gemini-2.5-pro");
-    expect(gemini.configOptions).toEqual([
-      { key: "effort", value: "high" },
-    ]);
+    expect((gemini.meta[0]?.env as Record<string, string>).GEMINI_MODEL).toBe(
+      "gemini-2.5-pro",
+    );
+    expect(gemini.configOptions).toEqual([{ key: "effort", value: "high" }]);
   });
 
   it("does not inject CODEX_CONFIG or session config when Codex overrides are absent", async () => {
     const { configOptions, meta } = await runExecutor({ agent: "codex" });
 
-    expect((meta[0]?.env as Record<string, string>).CODEX_CONFIG).toBeUndefined();
+    expect(
+      (meta[0]?.env as Record<string, string>).CODEX_CONFIG,
+    ).toBeUndefined();
     expect(configOptions).toEqual([]);
   });
 
-  it.each(["claude", "codex", "gemini", "kimi", "custom"])("delivers the shared owned sections at the %s ACP turn boundary", async (agent) => {
-    const root = await makeTempRoot();
-    const context = createPromptContextFixture();
-    const config = { agent, agentCommand: "node ./fixture-acp.js", cwd: root, stateDir: path.join(root, "state"), mode: "persistent" };
-    const fresh = await runExecutor(config, { context });
-    expect(fresh.turnInputs).toHaveLength(1);
-    const prompt = String(fresh.turnInputs[0]?.text ?? "");
-    expect(prompt).toContain("You are agent agent-1");
-    expect(prompt).toContain("Connection tools:");
-    expect(prompt).not.toContain("Execution contract:");
-    expect(prompt).toContain(context.taskcoreTaskMarkdownAssignment);
-    expect(prompt).toContain(context.taskcoreTaskCommunicationGuidance);
-    expect(prompt).not.toContain('"objective":');
-    expect(prompt).not.toContain("### Issue description");
-    expect(prompt).toContain('"id":"comment-first"');
-    expect(prompt).toContain('"id":"comment-second"');
-    expect(prompt).toContain('"id":"comment-scope"');
-    expect(prompt.indexOf('"id":"comment-first"')).toBeLessThan(prompt.indexOf('"id":"comment-second"'));
-    expect(prompt).toContain("Untrusted continuation evidence");
-    expect(prompt).toContain("receipt-1");
-    const resumed = await runExecutor(config, { context, runtime: { sessionParams: fresh.result.sessionParams } });
-    expect(resumed.sessionInputs[0]?.resumeSessionId).toBe(fresh.result.sessionId);
-    const resumedPrompt = String(resumed.turnInputs[0]?.text ?? "");
-    expect(resumedPrompt).not.toContain("Execution contract:");
-    expect(resumedPrompt).toContain(context.taskcoreTaskMarkdownAssignmentCompact);
-    expect(resumedPrompt).not.toContain(context.taskcoreTaskCommunicationGuidance);
-    expect(resumedPrompt).not.toContain('"id":"comment-first"');
-    expect(resumedPrompt).toContain('"id":"comment-second"');
-    const reset = await runExecutor(config, { context });
-    expect(reset.sessionInputs[0]?.resumeSessionId).toBeUndefined();
-    const resetPrompt = String(reset.turnInputs[0]?.text ?? "");
-    expect(resetPrompt).toContain("You are agent agent-1");
-    expect(resetPrompt).toContain("Connection tools:");
-    expect(resetPrompt).toContain(context.taskcoreTaskMarkdownAssignment);
-    expect(resetPrompt).not.toContain("Execution contract:");
-  });
+  it.each(["claude", "codex", "gemini", "kimi", "custom"])(
+    "delivers the shared owned sections at the %s ACP turn boundary",
+    async (agent) => {
+      const root = await makeTempRoot();
+      const context = createPromptContextFixture();
+      const config = {
+        agent,
+        agentCommand: "node ./fixture-acp.js",
+        cwd: root,
+        stateDir: path.join(root, "state"),
+        mode: "persistent",
+      };
+      const fresh = await runExecutor(config, { context });
+      expect(fresh.turnInputs).toHaveLength(1);
+      const prompt = String(fresh.turnInputs[0]?.text ?? "");
+      expect(prompt).toContain("You are agent agent-1");
+      expect(prompt).toContain("Connection tools:");
+      expect(prompt).not.toContain("Execution contract:");
+      expect(prompt).toContain(context.taskcoreTaskMarkdownAssignment);
+      expect(prompt).toContain(context.taskcoreTaskCommunicationGuidance);
+      expect(prompt).not.toContain('"objective":');
+      expect(prompt).not.toContain("### Issue description");
+      expect(prompt).toContain('"id":"comment-first"');
+      expect(prompt).toContain('"id":"comment-second"');
+      expect(prompt).toContain('"id":"comment-scope"');
+      expect(prompt.indexOf('"id":"comment-first"')).toBeLessThan(
+        prompt.indexOf('"id":"comment-second"'),
+      );
+      expect(prompt).toContain("Untrusted continuation evidence");
+      expect(prompt).toContain("receipt-1");
+      const resumed = await runExecutor(config, {
+        context,
+        runtime: { sessionParams: fresh.result.sessionParams },
+      });
+      expect(resumed.sessionInputs[0]?.resumeSessionId).toBe(
+        fresh.result.sessionId,
+      );
+      const resumedPrompt = String(resumed.turnInputs[0]?.text ?? "");
+      expect(resumedPrompt).not.toContain("Execution contract:");
+      expect(resumedPrompt).toContain(
+        context.taskcoreTaskMarkdownAssignmentCompact,
+      );
+      expect(resumedPrompt).not.toContain(
+        context.taskcoreTaskCommunicationGuidance,
+      );
+      expect(resumedPrompt).not.toContain('"id":"comment-first"');
+      expect(resumedPrompt).toContain('"id":"comment-second"');
+      const reset = await runExecutor(config, { context });
+      expect(reset.sessionInputs[0]?.resumeSessionId).toBeUndefined();
+      const resetPrompt = String(reset.turnInputs[0]?.text ?? "");
+      expect(resetPrompt).toContain("You are agent agent-1");
+      expect(resetPrompt).toContain("Connection tools:");
+      expect(resetPrompt).toContain(context.taskcoreTaskMarkdownAssignment);
+      expect(resetPrompt).not.toContain("Execution contract:");
+    },
+  );
 
   it("includes Taskcore env and API access notes in the ACPX prompt without leaking the token", async () => {
     const { meta } = await runExecutor(
@@ -712,7 +928,8 @@ describe("shared ACPX engine runtime behavior", () => {
     );
 
     const prompt = String(meta[0]?.prompt ?? "");
-    const promptMetrics = meta[0]?.promptMetrics as Record<string, number> | undefined;
+    const promptMetrics = meta[0]?.promptMetrics as
+      Record<string, number> | undefined;
     expect(prompt).toContain("Taskcore runtime note:");
     expect(prompt).toContain("TASKCORE_AGENT_ID");
     expect(prompt).toContain("TASKCORE_API_KEY");
@@ -720,7 +937,9 @@ describe("shared ACPX engine runtime behavior", () => {
     expect(prompt).toContain("## TaskCore Wake Payload");
     expect(prompt).toContain("TEST-1");
     expect(prompt).toContain("Taskcore API access note:");
-    expect(prompt).toContain('TASKCORE_API_BASE="${TASKCORE_API_URL%/}"; TASKCORE_API_BASE="${TASKCORE_API_BASE%/api}"');
+    expect(prompt).toContain(
+      'TASKCORE_API_BASE="${TASKCORE_API_URL%/}"; TASKCORE_API_BASE="${TASKCORE_API_BASE%/api}"',
+    );
     expect(prompt).toContain("$TASKCORE_API_BASE/api/agents/me");
     expect(prompt).toContain("$TASKCORE_API_BASE/api/issues/$TASKCORE_TASK_ID");
     expect(prompt).toContain("X-Taskcore-Run-Id");
@@ -734,48 +953,98 @@ describe("shared ACPX engine runtime behavior", () => {
   it("keeps large continuation history in ACP turns and preserves resume deltas", async () => {
     const root = await makeTempRoot();
     const config = {
-      agent: "claude", cwd: root, stateDir: path.join(root, "state"), mode: "persistent",
+      agent: "claude",
+      cwd: root,
+      stateDir: path.join(root, "state"),
+      mode: "persistent",
       env: { TASKCORE_WAKE_PAYLOAD_JSON: "stale configured wake" },
     };
     const messages = Array.from({ length: 50 }, (_, index) => ({
-      id: `message-${index}`, authorType: "user", authorId: "user-1",
+      id: `message-${index}`,
+      authorType: "user",
+      authorId: "user-1",
       body: `Message ${index}: ${"context ".repeat(500)} End ${index}.`,
-      createdAt: "2020-01-01T00:00:00.000Z", updatedAt: "2020-01-01T00:00:00.000Z",
-      deleted: false, sourceTrust: { kind: "authenticated_user" },
+      createdAt: "2020-01-01T00:00:00.000Z",
+      updatedAt: "2020-01-01T00:00:00.000Z",
+      deleted: false,
+      sourceTrust: { kind: "authenticated_user" },
     }));
     const completedActions = Array.from({ length: 50 }, (_, index) => ({
-      runId: "prior-run", receiptId: `receipt-${index}`, operationId: `operation-${index}`,
+      runId: "prior-run",
+      receiptId: `receipt-${index}`,
+      operationId: `operation-${index}`,
       result: { text: `Completed action ${index}` },
     }));
     const continuation = {
-      version: 1, companyId: "company-1", issueId: "issue-1",
-      trigger: { reason: "issue_commented", interactionId: null, sourceRunId: null },
-      originCommentIds: [messages[49]!.id], objective: "Preserve all context", messages,
-      interactionOutcomes: [], unresolvedInteractionIds: [], completedWork: null,
-      completedActions, coverage: { kind: "full_task_history", throughCommentId: messages[49]!.id, summaryThroughCommentId: null },
+      version: 1,
+      companyId: "company-1",
+      issueId: "issue-1",
+      trigger: {
+        reason: "issue_commented",
+        interactionId: null,
+        sourceRunId: null,
+      },
+      originCommentIds: [messages[49]!.id],
+      objective: "Preserve all context",
+      messages,
+      interactionOutcomes: [],
+      unresolvedInteractionIds: [],
+      completedWork: null,
+      completedActions,
+      coverage: {
+        kind: "full_task_history",
+        throughCommentId: messages[49]!.id,
+        summaryThroughCommentId: null,
+      },
     };
-    expect(Buffer.byteLength(JSON.stringify(continuation))).toBeGreaterThan(128 * 1024);
-    const context = { taskId: "issue-1", taskcoreWake: {
-      reason: "issue_commented", issue: { id: "issue-1" }, executionContinuation: continuation,
-    } };
+    expect(Buffer.byteLength(JSON.stringify(continuation))).toBeGreaterThan(
+      128 * 1024,
+    );
+    const context = {
+      taskId: "issue-1",
+      taskcoreWake: {
+        reason: "issue_commented",
+        issue: { id: "issue-1" },
+        executionContinuation: continuation,
+      },
+    };
     const fresh = await runExecutor(config, { context });
-    const changedMessage = { ...messages[49]!, body: "Updated direction: preserve approval gates." };
+    const changedMessage = {
+      ...messages[49]!,
+      body: "Updated direction: preserve approval gates.",
+    };
     const resumed = await runExecutor(config, {
       runtime: { sessionParams: fresh.result.sessionParams },
-      context: { ...context, taskcoreWake: { ...context.taskcoreWake, executionContinuation: {
-        ...continuation, resumeDelta: { baseRunId: "run-1", messages: [changedMessage] },
-      } } },
+      context: {
+        ...context,
+        taskcoreWake: {
+          ...context.taskcoreWake,
+          executionContinuation: {
+            ...continuation,
+            resumeDelta: { baseRunId: "run-1", messages: [changedMessage] },
+          },
+        },
+      },
     });
-    expect(resumed.sessionInputs[0]?.resumeSessionId).toBe(fresh.result.sessionId);
+    expect(resumed.sessionInputs[0]?.resumeSessionId).toBe(
+      fresh.result.sessionId,
+    );
     for (const run of [fresh, resumed]) {
-      const sessionOptions = run.sessionInputs[0]?.sessionOptions as Record<string, unknown>;
-      expect(sessionOptions.env).not.toHaveProperty("TASKCORE_WAKE_PAYLOAD_JSON");
+      const sessionOptions = run.sessionInputs[0]?.sessionOptions as Record<
+        string,
+        unknown
+      >;
+      expect(sessionOptions.env).not.toHaveProperty(
+        "TASKCORE_WAKE_PAYLOAD_JSON",
+      );
       const prompt = String(run.turnInputs[0]?.text);
       expect(prompt).not.toContain("stale configured wake");
-      for (const action of completedActions) expect(prompt).toContain(JSON.stringify(action));
+      for (const action of completedActions)
+        expect(prompt).toContain(JSON.stringify(action));
     }
     const freshPrompt = String(fresh.turnInputs[0]?.text);
-    for (const message of messages) expect(freshPrompt).toContain(JSON.stringify(message));
+    for (const message of messages)
+      expect(freshPrompt).toContain(JSON.stringify(message));
     const resumedPrompt = String(resumed.turnInputs[0]?.text);
     expect(resumedPrompt).toContain(JSON.stringify(changedMessage));
     expect(resumedPrompt).not.toContain(messages[0]!.body);
@@ -783,55 +1052,90 @@ describe("shared ACPX engine runtime behavior", () => {
   });
 
   it.each([
-    ["claude", false], ["codex", false], ["claude", true], ["codex", true],
-  ] as const)("keeps %s ACP conversation policy on fresh, resumed, and reset turns (custom=%s)", async (agent, custom) => {
-    const root = await makeTempRoot();
-    const config = { agent, cwd: root, stateDir: path.join(root, "state"), mode: "persistent",
-      ...(custom ? { promptTemplate: "Custom agent instructions." } : {}),
-    };
-    const chatDirective = "Chat mode: clarify goals and hand accepted plans off to ordinary project tasks.";
-    const context = {
-      conversationMode: true,
-      taskId: "chat-1",
-      taskcoreTaskMarkdown: chatDirective,
-      taskcoreTaskMarkdownCompact: chatDirective,
-      taskcoreTaskCommunicationGuidance: "Frozen Slack communication preference.",
-      taskcoreWake: {
-        reason: "issue_commented",
-        issue: { id: "chat-1", workMode: "planning", status: "in_progress" },
-        interactionKind: "request_confirmation",
-        interactionStatus: "accepted",
-        comments: [],
-        commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
-        fallbackFetchNeeded: false,
-      },
-    };
-    const fresh = await runExecutor(config, { context });
-    const resumed = await runExecutor(config, {
-      context,
-      runtime: { sessionParams: fresh.result.sessionParams },
-    });
-    expect(resumed.sessionInputs[0]?.resumeSessionId).toBe(fresh.result.sessionId);
-    const reset = await runExecutor(config, { context });
-    expect(reset.sessionInputs[0]?.resumeSessionId).toBeUndefined();
-    for (const run of [fresh, reset]) {
-      expect(String(run.meta[0]?.prompt).match(/Frozen Slack communication preference\./g)).toHaveLength(1);
-    }
-    expect(String(resumed.meta[0]?.prompt)).not.toContain("Frozen Slack communication preference.");
-    for (const { meta } of [fresh, resumed, reset]) {
-      const prompt = String(meta[0]?.prompt ?? "");
-      expect(prompt).toContain(chatDirective);
-      expect(prompt).not.toContain("Execution contract:");
-      expect(prompt).not.toContain("clear final disposition");
-      expect(prompt).not.toContain("Create child issues");
-      expect(prompt).not.toContain("Use child issues");
-    }
-    expect(String(fresh.meta[0]?.prompt)).toContain(custom ? "Custom agent instructions." : "You are agent agent-1");
-    expect(String(reset.meta[0]?.prompt)).toContain(custom ? "Custom agent instructions." : "You are agent agent-1");
-    const ordinary = await runExecutor({ ...config, promptTemplate: "" }, { context: { ...context, conversationMode: false } });
-    expect(String(ordinary.meta[0]?.prompt)).not.toContain("Execution contract:");
-    expect(String(ordinary.meta[0]?.prompt)).toContain("Create child issues from the approved plan");
-  });
+    ["claude", false],
+    ["codex", false],
+    ["claude", true],
+    ["codex", true],
+  ] as const)(
+    "keeps %s ACP conversation policy on fresh, resumed, and reset turns (custom=%s)",
+    async (agent, custom) => {
+      const root = await makeTempRoot();
+      const config = {
+        agent,
+        cwd: root,
+        stateDir: path.join(root, "state"),
+        mode: "persistent",
+        ...(custom ? { promptTemplate: "Custom agent instructions." } : {}),
+      };
+      const chatDirective =
+        "Chat mode: clarify goals and hand accepted plans off to ordinary project tasks.";
+      const context = {
+        conversationMode: true,
+        taskId: "chat-1",
+        taskcoreTaskMarkdown: chatDirective,
+        taskcoreTaskMarkdownCompact: chatDirective,
+        taskcoreTaskCommunicationGuidance:
+          "Frozen Slack communication preference.",
+        taskcoreWake: {
+          reason: "issue_commented",
+          issue: { id: "chat-1", workMode: "planning", status: "in_progress" },
+          interactionKind: "request_confirmation",
+          interactionStatus: "accepted",
+          comments: [],
+          commentWindow: {
+            requestedCount: 0,
+            includedCount: 0,
+            missingCount: 0,
+          },
+          fallbackFetchNeeded: false,
+        },
+      };
+      const fresh = await runExecutor(config, { context });
+      const resumed = await runExecutor(config, {
+        context,
+        runtime: { sessionParams: fresh.result.sessionParams },
+      });
+      expect(resumed.sessionInputs[0]?.resumeSessionId).toBe(
+        fresh.result.sessionId,
+      );
+      const reset = await runExecutor(config, { context });
+      expect(reset.sessionInputs[0]?.resumeSessionId).toBeUndefined();
+      for (const run of [fresh, reset]) {
+        expect(
+          String(run.meta[0]?.prompt).match(
+            /Frozen Slack communication preference\./g,
+          ),
+        ).toHaveLength(1);
+      }
+      expect(String(resumed.meta[0]?.prompt)).not.toContain(
+        "Frozen Slack communication preference.",
+      );
+      for (const { meta } of [fresh, resumed, reset]) {
+        const prompt = String(meta[0]?.prompt ?? "");
+        expect(prompt).toContain(chatDirective);
+        expect(prompt).not.toContain("Execution contract:");
+        expect(prompt).not.toContain("clear final disposition");
+        expect(prompt).not.toContain("Create child issues");
+        expect(prompt).not.toContain("Use child issues");
+      }
+      expect(String(fresh.meta[0]?.prompt)).toContain(
+        custom ? "Custom agent instructions." : "You are agent agent-1",
+      );
+      expect(String(reset.meta[0]?.prompt)).toContain(
+        custom ? "Custom agent instructions." : "You are agent agent-1",
+      );
+      const ordinary = await runExecutor(
+        { ...config, promptTemplate: "" },
+        { context: { ...context, conversationMode: false } },
+      );
+      expect(String(ordinary.meta[0]?.prompt)).not.toContain(
+        "Execution contract:",
+      );
+      expect(String(ordinary.meta[0]?.prompt)).toContain(
+        "Create child issues from the approved plan",
+      );
+    },
+  );
 
   it("uses only the guarded external-chat contract for a default ACPX prompt", async () => {
     const { meta } = await runExecutor(
@@ -875,7 +1179,8 @@ describe("shared ACPX engine runtime behavior", () => {
     );
 
     const prompt = String(meta[0]?.prompt ?? "");
-    const promptMetrics = meta[0]?.promptMetrics as Record<string, number> | undefined;
+    const promptMetrics = meta[0]?.promptMetrics as
+      Record<string, number> | undefined;
     expect(prompt).toContain("## External chat response contract");
     expect(prompt).toContain("# CHAT-1 — Answer the provider message");
     expect(prompt).toContain("Make zero Taskcore API calls");
@@ -983,8 +1288,12 @@ describe("shared ACPX engine runtime behavior", () => {
 
     const prompt = String(meta[0]?.prompt ?? "");
     expect(prompt).toContain("Taskcore API access note:");
-    expect(prompt).toContain("Use a real issue id from the current context before making issue write requests.");
-    expect(prompt).not.toContain("$TASKCORE_API_BASE/api/issues/$TASKCORE_TASK_ID");
+    expect(prompt).toContain(
+      "Use a real issue id from the current context before making issue write requests.",
+    );
+    expect(prompt).not.toContain(
+      "$TASKCORE_API_BASE/api/issues/$TASKCORE_TASK_ID",
+    );
   });
 
   it("emits ACP text deltas as stdout transcript records", async () => {
@@ -992,27 +1301,31 @@ describe("shared ACPX engine runtime behavior", () => {
     const stateDir = path.join(root, "state");
     const logs: Array<{ stream: string; text: string }> = [];
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          events: (async function* () {
-            yield {
-              type: "text_delta",
-              text: "streamed hello",
-              stream: "output",
-              tag: "agent_message_chunk",
-            };
-            yield { type: "done", stopReason: "end_turn" };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => ({
+            events: (async function* () {
+              yield {
+                type: "text_delta",
+                text: "streamed hello",
+                stream: "output",
+                tag: "agent_message_chunk",
+              };
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
     });
 
     const result = await execute({
@@ -1047,63 +1360,67 @@ describe("shared ACPX engine runtime behavior", () => {
     const stateDir = path.join(root, "state");
     const logs: Array<{ stream: string; text: string }> = [];
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          events: (async function* () {
-            yield {
-              type: "text_delta",
-              text: "Let me get oriented and inspect the PRs…",
-              stream: "output",
-              tag: "agent_message_chunk",
-            };
-            yield {
-              type: "text_delta",
-              text: "hidden chain of thought",
-              stream: "thought",
-              tag: "agent_thought_chunk",
-            };
-            yield {
-              type: "tool_call",
-              text: "Bash (pending)",
-              title: "Bash",
-              status: "pending",
-              toolCallId: "tool-1",
-              tag: "tool_call",
-            };
-            yield {
-              type: "tool_call",
-              text: 'tool call (in_progress): {"command":"',
-              title: "tool call",
-              status: "in_progress",
-              toolCallId: "tool-1",
-              tag: "tool_call_update",
-            };
-            yield {
-              type: "tool_call",
-              text: "tool call (completed): apps",
-              title: "tool call",
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => ({
+            events: (async function* () {
+              yield {
+                type: "text_delta",
+                text: "Let me get oriented and inspect the PRs…",
+                stream: "output",
+                tag: "agent_message_chunk",
+              };
+              yield {
+                type: "text_delta",
+                text: "hidden chain of thought",
+                stream: "thought",
+                tag: "agent_thought_chunk",
+              };
+              yield {
+                type: "tool_call",
+                text: "Bash (pending)",
+                title: "Bash",
+                status: "pending",
+                toolCallId: "tool-1",
+                tag: "tool_call",
+              };
+              yield {
+                type: "tool_call",
+                text: 'tool call (in_progress): {"command":"',
+                title: "tool call",
+                status: "in_progress",
+                toolCallId: "tool-1",
+                tag: "tool_call_update",
+              };
+              yield {
+                type: "tool_call",
+                text: "tool call (completed): apps",
+                title: "tool call",
+                status: "completed",
+                toolCallId: "tool-1",
+                tag: "tool_call_update",
+              };
+              yield {
+                type: "text_delta",
+                text: "## Update\n\n- Checked PR status\n- Continue burn-in",
+                stream: "output",
+                tag: "agent_message_chunk",
+              };
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
               status: "completed",
-              toolCallId: "tool-1",
-              tag: "tool_call_update",
-            };
-            yield {
-              type: "text_delta",
-              text: "## Update\n\n- Checked PR status\n- Continue burn-in",
-              stream: "output",
-              tag: "agent_message_chunk",
-            };
-            yield { type: "done", stopReason: "end_turn" };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
     });
 
     const result = await execute({
@@ -1119,7 +1436,9 @@ describe("shared ACPX engine runtime behavior", () => {
     } as never);
 
     expect(result.exitCode).toBe(0);
-    expect(result.summary).toBe("## Update\n\n- Checked PR status\n- Continue burn-in");
+    expect(result.summary).toBe(
+      "## Update\n\n- Checked PR status\n- Continue burn-in",
+    );
     expect(result.summary).not.toContain("Let me get oriented");
     expect(result.summary).not.toContain("hidden chain of thought");
     const toolCallEvents = logs
@@ -1130,7 +1449,10 @@ describe("shared ACPX engine runtime behavior", () => {
           return null;
         }
       })
-      .filter((parsed): parsed is Record<string, unknown> => parsed?.type === "acpx.tool_call");
+      .filter(
+        (parsed): parsed is Record<string, unknown> =>
+          parsed?.type === "acpx.tool_call",
+      );
     // Every tool_call update reaches the run log — including in-progress
     // updates with the unresolved placeholder title (their name is restored
     // from the pending announcement). Nothing is coalesced or dropped for
@@ -1146,63 +1468,67 @@ describe("shared ACPX engine runtime behavior", () => {
     const root = await makeTempRoot();
     const stateDir = path.join(root, "state");
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          events: (async function* () {
-            yield {
-              type: "text_delta",
-              text: "Let me get oriented and inspect the PRs…",
-              stream: "output",
-              tag: "agent_message_chunk",
-            };
-            yield {
-              type: "text_delta",
-              text: "hidden chain of thought",
-              stream: "thought",
-              tag: "agent_thought_chunk",
-            };
-            yield {
-              type: "tool_call",
-              text: "Bash (pending)",
-              title: "Bash",
-              status: "pending",
-              toolCallId: "tool-1",
-              tag: "tool_call",
-            };
-            yield {
-              type: "tool_call",
-              text: 'tool call (in_progress): {"command":"',
-              title: "tool call",
-              status: "in_progress",
-              toolCallId: "tool-1",
-              tag: "tool_call_update",
-            };
-            yield {
-              type: "tool_call",
-              text: "tool call (completed): apps",
-              title: "tool call",
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => ({
+            events: (async function* () {
+              yield {
+                type: "text_delta",
+                text: "Let me get oriented and inspect the PRs…",
+                stream: "output",
+                tag: "agent_message_chunk",
+              };
+              yield {
+                type: "text_delta",
+                text: "hidden chain of thought",
+                stream: "thought",
+                tag: "agent_thought_chunk",
+              };
+              yield {
+                type: "tool_call",
+                text: "Bash (pending)",
+                title: "Bash",
+                status: "pending",
+                toolCallId: "tool-1",
+                tag: "tool_call",
+              };
+              yield {
+                type: "tool_call",
+                text: 'tool call (in_progress): {"command":"',
+                title: "tool call",
+                status: "in_progress",
+                toolCallId: "tool-1",
+                tag: "tool_call_update",
+              };
+              yield {
+                type: "tool_call",
+                text: "tool call (completed): apps",
+                title: "tool call",
+                status: "completed",
+                toolCallId: "tool-1",
+                tag: "tool_call_update",
+              };
+              yield {
+                type: "text_delta",
+                text: "## Update\n\n- Checked PR status\n- Continue burn-in",
+                stream: "output",
+                tag: "agent_message_chunk",
+              };
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
               status: "completed",
-              toolCallId: "tool-1",
-              tag: "tool_call_update",
-            };
-            yield {
-              type: "text_delta",
-              text: "## Update\n\n- Checked PR status\n- Continue burn-in",
-              stream: "output",
-              tag: "agent_message_chunk",
-            };
-            yield { type: "done", stopReason: "end_turn" };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
     });
 
     const result = await execute({
@@ -1221,7 +1547,9 @@ describe("shared ACPX engine runtime behavior", () => {
     } as never);
 
     expect(result.exitCode).toBe(0);
-    expect(result.summary).toBe("## Update\n\n- Checked PR status\n- Continue burn-in");
+    expect(result.summary).toBe(
+      "## Update\n\n- Checked PR status\n- Continue burn-in",
+    );
     expect(result.summary).not.toContain("Let me get oriented");
     expect(result.summary).not.toContain("hidden chain of thought");
   });
@@ -1230,48 +1558,52 @@ describe("shared ACPX engine runtime behavior", () => {
     const root = await makeTempRoot();
     const stateDir = path.join(root, "state");
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          events: (async function* () {
-            yield {
-              type: "text_delta",
-              text: "Intermediate setup that must not be published",
-              stream: "output",
-              tag: "agent_message_chunk",
-            };
-            yield {
-              type: "tool_call",
-              text: "Bash",
-              title: "Bash",
-              toolCallId: "tool-without-status",
-              tag: "tool_call",
-            };
-            yield {
-              type: "tool_call",
-              text: "Bash (completed)",
-              title: "Bash",
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => ({
+            events: (async function* () {
+              yield {
+                type: "text_delta",
+                text: "Intermediate setup that must not be published",
+                stream: "output",
+                tag: "agent_message_chunk",
+              };
+              yield {
+                type: "tool_call",
+                text: "Bash",
+                title: "Bash",
+                toolCallId: "tool-without-status",
+                tag: "tool_call",
+              };
+              yield {
+                type: "tool_call",
+                text: "Bash (completed)",
+                title: "Bash",
+                status: "completed",
+                toolCallId: "tool-without-status",
+                tag: "tool_call_update",
+              };
+              yield {
+                type: "text_delta",
+                text: "## Final update\n\n- Remediation verified",
+                stream: "output",
+                tag: "agent_message_chunk",
+              };
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
               status: "completed",
-              toolCallId: "tool-without-status",
-              tag: "tool_call_update",
-            };
-            yield {
-              type: "text_delta",
-              text: "## Final update\n\n- Remediation verified",
-              stream: "output",
-              tag: "agent_message_chunk",
-            };
-            yield { type: "done", stopReason: "end_turn" };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
     });
 
     const result = await execute({
@@ -1296,7 +1628,9 @@ describe("shared ACPX engine runtime behavior", () => {
         fallback: "end_turn",
       }),
     ).toBe("final update");
-    expect(buildAcpxRunSummary({ outputSegments: ["", "  "], fallback: "end_turn" })).toBe("end_turn");
+    expect(
+      buildAcpxRunSummary({ outputSegments: ["", "  "], fallback: "end_turn" }),
+    ).toBe("end_turn");
   });
 
   it("coalesces placeholder-title tool updates when the adapter opts in", async () => {
@@ -1304,61 +1638,65 @@ describe("shared ACPX engine runtime behavior", () => {
     const stateDir = path.join(root, "state");
     const logs: Array<{ stream: string; text: string }> = [];
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          events: (async function* () {
-            yield {
-              type: "tool_call",
-              text: "Bash (pending)",
-              title: "Bash",
-              status: "pending",
-              toolCallId: "tool-1",
-              tag: "tool_call",
-            };
-            yield {
-              type: "tool_call",
-              text: 'tool call (in_progress): {"command":"',
-              title: "tool call",
-              status: "in_progress",
-              toolCallId: "tool-1",
-              tag: "tool_call_update",
-            };
-            yield {
-              type: "tool_call",
-              text: 'tool call (in_progress): {"command":"ls',
-              title: "tool call",
-              status: "in_progress",
-              toolCallId: "tool-1",
-              tag: "tool_call_update",
-            };
-            yield {
-              type: "tool_call",
-              text: "Running: ls apps (in_progress)",
-              title: "Running: ls apps",
-              status: "in_progress",
-              toolCallId: "tool-1",
-              tag: "tool_call_update",
-            };
-            yield {
-              type: "tool_call",
-              text: "tool call (completed): apps\\npackage.json",
-              title: "tool call",
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => ({
+            events: (async function* () {
+              yield {
+                type: "tool_call",
+                text: "Bash (pending)",
+                title: "Bash",
+                status: "pending",
+                toolCallId: "tool-1",
+                tag: "tool_call",
+              };
+              yield {
+                type: "tool_call",
+                text: 'tool call (in_progress): {"command":"',
+                title: "tool call",
+                status: "in_progress",
+                toolCallId: "tool-1",
+                tag: "tool_call_update",
+              };
+              yield {
+                type: "tool_call",
+                text: 'tool call (in_progress): {"command":"ls',
+                title: "tool call",
+                status: "in_progress",
+                toolCallId: "tool-1",
+                tag: "tool_call_update",
+              };
+              yield {
+                type: "tool_call",
+                text: "Running: ls apps (in_progress)",
+                title: "Running: ls apps",
+                status: "in_progress",
+                toolCallId: "tool-1",
+                tag: "tool_call_update",
+              };
+              yield {
+                type: "tool_call",
+                text: "tool call (completed): apps\\npackage.json",
+                title: "tool call",
+                status: "completed",
+                toolCallId: "tool-1",
+                tag: "tool_call_update",
+              };
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
               status: "completed",
-              toolCallId: "tool-1",
-              tag: "tool_call_update",
-            };
-            yield { type: "done", stopReason: "end_turn" };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
     });
 
     const result = await execute({
@@ -1387,7 +1725,10 @@ describe("shared ACPX engine runtime behavior", () => {
           return null;
         }
       })
-      .filter((parsed): parsed is Record<string, unknown> => parsed?.type === "acpx.tool_call");
+      .filter(
+        (parsed): parsed is Record<string, unknown> =>
+          parsed?.type === "acpx.tool_call",
+      );
     // The two placeholder-title in-progress updates are dropped; the pending
     // announcement, the resolved-title in-progress update, and the terminal
     // completed update all survive.
@@ -1404,46 +1745,54 @@ describe("shared ACPX engine runtime behavior", () => {
     const logs: Array<{ stream: string; text: string }> = [];
     let statusCalls = 0;
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        getStatus: async () => {
-          statusCalls += 1;
-          return statusCalls === 1
-            ? { usage: { cost: { amount: 0.4, currency: "USD" } } }
-            : {
-                usage: {
-                  cumulative: {
-                    inputTokens: 120,
-                    outputTokens: 4500,
-                    cachedReadTokens: 900,
-                    cachedWriteTokens: 30,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          getStatus: async () => {
+            statusCalls += 1;
+            return statusCalls === 1
+              ? { usage: { cost: { amount: 0.4, currency: "USD" } } }
+              : {
+                  usage: {
+                    cumulative: {
+                      inputTokens: 120,
+                      outputTokens: 4500,
+                      cachedReadTokens: 900,
+                      cachedWriteTokens: 30,
+                    },
+                    cost: { amount: 1.15, currency: "USD" },
                   },
-                  cost: { amount: 1.15, currency: "USD" },
-                },
+                };
+          },
+          startTurn: () => ({
+            events: (async function* () {
+              yield {
+                type: "status",
+                text: "usage",
+                tag: "usage_update",
+                used: 5550,
+                size: 200000,
+                cost: { amount: 1.1, currency: "USD" },
               };
-        },
-        startTurn: () => ({
-          events: (async function* () {
-            yield {
-              type: "status",
-              text: "usage",
-              tag: "usage_update",
-              used: 5550,
-              size: 200000,
-              cost: { amount: 1.1, currency: "USD" },
-            };
-            yield { type: "done", stopReason: "end_turn" };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
-      resolveBillingIdentity: () => ({ provider: "anthropic", biller: "anthropic", billingType: "api" }),
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
+      resolveBillingIdentity: () => ({
+        provider: "anthropic",
+        biller: "anthropic",
+        billingType: "api",
+      }),
     });
 
     const result = await execute({
@@ -1464,89 +1813,161 @@ describe("shared ACPX engine runtime behavior", () => {
     expect(result.exitCode).toBe(0);
     expect(statusCalls).toBe(2);
     // Cache-write tokens count as input tokens; cached reads stay separate.
-    expect(result.usage).toEqual({ inputTokens: 150, outputTokens: 4500, cachedInputTokens: 900 });
+    expect(result.usage).toEqual({
+      inputTokens: 150,
+      outputTokens: 4500,
+      cachedInputTokens: 900,
+    });
     expect(result.usageBasis).toBe("per_run");
     // Agent-reported cost is cumulative; this run pays the delta.
     expect(result.costUsd).toBeCloseTo(0.75);
     expect(result.provider).toBe("anthropic");
     expect(result.biller).toBe("anthropic");
     expect(result.billingType).toBe("api");
-    expect((result.resultJson as Record<string, unknown>)?.cumulativeCostUsd).toBeCloseTo(1.15);
+    expect(
+      (result.resultJson as Record<string, unknown>)?.cumulativeCostUsd,
+    ).toBeCloseTo(1.15);
     expect((result.resultJson as Record<string, unknown>)?.usage).toEqual({
       inputTokens: 120,
       outputTokens: 4500,
       cachedReadTokens: 900,
       cachedWriteTokens: 30,
     });
-    const statusLine = logs.find((entry) => entry.text.includes('"acpx.status"'));
+    const statusLine = logs.find((entry) =>
+      entry.text.includes('"acpx.status"'),
+    );
     expect(statusLine?.text).toContain('"cost"');
   });
 
-  it.each(["checkpoint", "terminal"])("returns received usage after the %s receipt sink rejects and still closes the runtime", async (failedSave) => {
-    const root = await makeTempRoot();
-    const close = vi.fn(async () => {});
-    const cancel = vi.fn(async () => {});
-    let reads = 0;
-    const execute = createAcpxEngineExecutor({
-      resolveBillingIdentity: () => ({ provider: "anthropic", biller: "anthropic", billingType: "api" }),
-      createRuntime: () => ({
-        ...buildRuntime(),
-        getStatus: async () => ++reads === 1
-          ? { usage: { cost: { amount: 0.4, currency: "USD" } } }
-          : { usage: { cumulative: { inputTokens: 120, outputTokens: 4500, cachedReadTokens: 900, cachedWriteTokens: 30 }, cost: { amount: 1.15, currency: "USD" } } },
-        startTurn: () => ({
-          events: (async function* () {
-            yield { type: "status", text: "usage", tag: "usage_update",
-              breakdown: { inputTokens: 100, outputTokens: 4000, cachedReadTokens: 800, cachedWriteTokens: 20 }, cost: { amount: 1.1, currency: "USD" } };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }), cancel,
-        }), close,
-      }) as never,
-    });
-    const onUsage = vi.fn(async (receipt: { complete: boolean }) => {
-      if (failedSave === "checkpoint" || receipt.complete) throw new Error("Receipt storage unavailable");
-    });
-    const result = await execute({ runId: `failed-${failedSave}-save`, agent: { id: "agent-1", companyId: "company-1" },
-      runtime: {}, config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
-      context: {}, onMeta: async () => {}, onLog: async () => {}, onUsage } as never);
-    expect(result).toMatchObject({ exitCode: 1, usageBasis: "per_run", usageComplete: failedSave === "terminal",
-      provider: "anthropic", biller: "anthropic", billingType: "api" });
-    expect(result.errorMessage).toContain("Receipt storage unavailable");
-    expect(result.usage).toEqual(failedSave === "terminal"
-      ? { inputTokens: 150, outputTokens: 4500, cachedInputTokens: 900 }
-      : { inputTokens: 120, outputTokens: 4000, cachedInputTokens: 800 });
-    expect(result.costUsd).toBeCloseTo(failedSave === "terminal" ? 0.75 : 0.7);
-    expect(onUsage).toHaveBeenCalledTimes(failedSave === "terminal" ? 2 : 1);
-    expect(cancel).toHaveBeenCalledTimes(1);
-    expect(close).toHaveBeenCalledTimes(1);
-  });
+  it.each(["checkpoint", "terminal"])(
+    "returns received usage after the %s receipt sink rejects and still closes the runtime",
+    async (failedSave) => {
+      const root = await makeTempRoot();
+      const close = vi.fn(async () => {});
+      const cancel = vi.fn(async () => {});
+      let reads = 0;
+      const execute = createAcpxEngineExecutor({
+        resolveBillingIdentity: () => ({
+          provider: "anthropic",
+          biller: "anthropic",
+          billingType: "api",
+        }),
+        createRuntime: () =>
+          ({
+            ...buildRuntime(),
+            getStatus: async () =>
+              ++reads === 1
+                ? { usage: { cost: { amount: 0.4, currency: "USD" } } }
+                : {
+                    usage: {
+                      cumulative: {
+                        inputTokens: 120,
+                        outputTokens: 4500,
+                        cachedReadTokens: 900,
+                        cachedWriteTokens: 30,
+                      },
+                      cost: { amount: 1.15, currency: "USD" },
+                    },
+                  },
+            startTurn: () => ({
+              events: (async function* () {
+                yield {
+                  type: "status",
+                  text: "usage",
+                  tag: "usage_update",
+                  breakdown: {
+                    inputTokens: 100,
+                    outputTokens: 4000,
+                    cachedReadTokens: 800,
+                    cachedWriteTokens: 20,
+                  },
+                  cost: { amount: 1.1, currency: "USD" },
+                };
+              })(),
+              result: Promise.resolve({
+                status: "completed",
+                stopReason: "end_turn",
+              }),
+              cancel,
+            }),
+            close,
+          }) as never,
+      });
+      const onUsage = vi.fn(async (receipt: { complete: boolean }) => {
+        if (failedSave === "checkpoint" || receipt.complete)
+          throw new Error("Receipt storage unavailable");
+      });
+      const result = await execute({
+        runId: `failed-${failedSave}-save`,
+        agent: { id: "agent-1", companyId: "company-1" },
+        runtime: {},
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+        },
+        context: {},
+        onMeta: async () => {},
+        onLog: async () => {},
+        onUsage,
+      } as never);
+      expect(result).toMatchObject({
+        exitCode: 1,
+        usageBasis: "per_run",
+        usageComplete: failedSave === "terminal",
+        provider: "anthropic",
+        biller: "anthropic",
+        billingType: "api",
+      });
+      expect(result.errorMessage).toContain("Receipt storage unavailable");
+      expect(result.usage).toEqual(
+        failedSave === "terminal"
+          ? { inputTokens: 150, outputTokens: 4500, cachedInputTokens: 900 }
+          : { inputTokens: 120, outputTokens: 4000, cachedInputTokens: 800 },
+      );
+      expect(result.costUsd).toBeCloseTo(
+        failedSave === "terminal" ? 0.75 : 0.7,
+      );
+      expect(onUsage).toHaveBeenCalledTimes(failedSave === "terminal" ? 2 : 1);
+      expect(cancel).toHaveBeenCalledTimes(1);
+      expect(close).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("falls back to usage_update events when the runtime lacks getStatus", async () => {
     const root = await makeTempRoot();
     const stateDir = path.join(root, "state");
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          events: (async function* () {
-            yield {
-              type: "status",
-              text: "usage",
-              tag: "usage_update",
-              cost: { amount: 0.31, currency: "USD" },
-              breakdown: { inputTokens: 40, outputTokens: 700, cachedReadTokens: 60 },
-            };
-            yield { type: "done", stopReason: "end_turn" };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => ({
+            events: (async function* () {
+              yield {
+                type: "status",
+                text: "usage",
+                tag: "usage_update",
+                cost: { amount: 0.31, currency: "USD" },
+                breakdown: {
+                  inputTokens: 40,
+                  outputTokens: 700,
+                  cachedReadTokens: 60,
+                },
+              };
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
     });
 
     const result = await execute({
@@ -1563,238 +1984,346 @@ describe("shared ACPX engine runtime behavior", () => {
     } as never);
 
     expect(result.exitCode).toBe(0);
-    expect(result.usage).toEqual({ inputTokens: 40, outputTokens: 700, cachedInputTokens: 60 });
+    expect(result.usage).toEqual({
+      inputTokens: 40,
+      outputTokens: 700,
+      cachedInputTokens: 60,
+    });
     expect(result.usageBasis).toBe("per_run");
     expect(result.costUsd).toBeCloseTo(0.31);
     expect(result.provider).toBe("acpx");
     expect(result.billingType).toBe("unknown");
   });
 
-  it.each(["failed", "cancelled"] as const)("keeps %s in-stream usage provisional without a final receipt", async (status) => {
-    const root = await makeTempRoot();
-    const stateDir = path.join(root, "state");
-    const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          events: (async function* () {
-            yield {
-              type: "status",
-              text: "usage",
-              tag: "usage_update",
-              cost: { amount: 0.31, currency: "USD" },
-              breakdown: { inputTokens: 40, outputTokens: 700, cachedReadTokens: 60 },
-            };
-
-          })(),
-          result: Promise.resolve({ status, error: { code: "INTERNAL", message: "fixture failure" } }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
-    });
-
-    const onUsage = vi.fn();
-    const result = await execute({
-      runId: "run-usage-event-fallback",
-      agent: {
-        id: "agent-1",
-        companyId: "company-1",
-      },
-      runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir },
-      context: {},
-      onLog: async () => {},
-      onMeta: async () => {},
-      onUsage,
-    } as never);
-
-    expect(result.exitCode).not.toBe(0);
-    expect(result.usageComplete).toBe(false);
-    expect(onUsage).toHaveBeenLastCalledWith(expect.objectContaining({ complete: false, costUsd: 0.31 }));
-    expect(result.usage).toEqual({ inputTokens: 40, outputTokens: 700, cachedInputTokens: 60 });
-    expect(result.usageBasis).toBe("per_run");
-    expect(result.costUsd).toBeCloseTo(0.31);
-    expect(result.provider).toBe("acpx");
-    expect(result.billingType).toBe("unknown");
-  });
-
-  it.skipIf(process.platform === "win32")("materializes ACPX Claude skills without symlinked descendants", async () => {
-    const root = await makeTempRoot();
-    const skillRoot = path.join(root, "skills");
-    const outsideRoot = path.join(root, "outside");
-    await fs.mkdir(outsideRoot, { recursive: true });
-    await fs.writeFile(path.join(outsideRoot, "secret.txt"), "do not expose", "utf8");
-    const skill = await createSkill(skillRoot, "danger");
-    await fs.symlink(path.join(outsideRoot, "secret.txt"), path.join(skill.source, "leak.txt"));
-    await fs.symlink(outsideRoot, path.join(skill.source, "leak-dir"));
-
-    const stateDir = path.join(root, "state");
-    const { meta } = await runExecutor({
-      agent: "claude",
-      stateDir,
-      taskcoreRuntimeSkills: [skill],
-      taskcoreSkillSync: { desiredSkills: [skill.key] },
-    });
-
-    const mountedRoot = await onlyChildDir(path.join(stateDir, "runtime-skills", "claude"));
-    const skillsHome = path.join(mountedRoot, ".claude", "skills");
-    const materializedSkill = path.join(skillsHome, skill.runtimeName);
-    expect(await fs.readFile(path.join(materializedSkill, "SKILL.md"), "utf8")).toContain("# danger");
-    expect(await pathExists(path.join(materializedSkill, "leak.txt"))).toBe(false);
-    expect(await pathExists(path.join(materializedSkill, "leak-dir"))).toBe(false);
-    expect(String(meta[0]?.prompt ?? "")).toContain(`Skill root: ${skillsHome}`);
-  });
-
-  it.skipIf(process.platform === "win32")("revokes removed ACPX Codex skills and skips symlinked descendants", async () => {
-    const root = await makeTempRoot();
-    const skillRoot = path.join(root, "skills");
-    const outsideRoot = path.join(root, "outside");
-    const codexHome = path.join(root, "codex-home");
-    await fs.mkdir(outsideRoot, { recursive: true });
-    await fs.writeFile(path.join(outsideRoot, "secret.txt"), "do not expose", "utf8");
-    const keep = await createSkill(skillRoot, "keep");
-    const remove = await createSkill(skillRoot, "remove");
-    await fs.symlink(path.join(outsideRoot, "secret.txt"), path.join(keep.source, "leak.txt"));
-    await fs.symlink(outsideRoot, path.join(keep.source, "leak-dir"));
-
-    const baseConfig = {
-      agent: "codex",
-      stateDir: path.join(root, "state"),
-      env: { CODEX_HOME: codexHome },
-      taskcoreRuntimeSkills: [keep, remove],
-    };
-
-    await runExecutor({
-      ...baseConfig,
-      taskcoreSkillSync: { desiredSkills: [keep.key, remove.key] },
-    });
-    expect(await pathExists(path.join(codexHome, "skills", remove.runtimeName, "SKILL.md"))).toBe(true);
-
-    await runExecutor({
-      ...baseConfig,
-      taskcoreSkillSync: { desiredSkills: [keep.key] },
-    });
-
-    expect(await pathExists(path.join(codexHome, "skills", keep.runtimeName, "SKILL.md"))).toBe(true);
-    expect(await pathExists(path.join(codexHome, "skills", keep.runtimeName, "leak.txt"))).toBe(false);
-    expect(await pathExists(path.join(codexHome, "skills", keep.runtimeName, "leak-dir"))).toBe(false);
-    expect(await pathExists(path.join(codexHome, "skills", remove.runtimeName))).toBe(false);
-  });
-
-  it.skipIf(process.platform === "win32")("keeps the operational skill in an ACPX Codex home after an empty replacement", async () => {
-    const root = await makeTempRoot();
-    const skillRoot = path.join(root, "skills");
-    const codexHome = path.join(root, "codex-home");
-    const operational = {
-      ...await createSkill(skillRoot, "taskcore"),
-      key: "taskcore/taskcore/taskcore",
-    };
-
-    await runExecutor({
-      agent: "codex",
-      stateDir: path.join(root, "state"),
-      env: { CODEX_HOME: codexHome },
-      taskcoreRuntimeSkills: [operational],
-      taskcoreSkillSync: { desiredSkills: [] },
-    });
-
-    expect(await pathExists(path.join(codexHome, "skills", operational.runtimeName, "SKILL.md"))).toBe(true);
-  });
-
-  it.each(["codex", "gemini"])("refreshes the %s skill root when a connection home changes between turns", async (agent) => {
-    const root = await makeTempRoot();
-    const operational = {
-      ...await createSkill(path.join(root, "skills"), "taskcore"),
-      key: "taskcore/taskcore/taskcore",
-    };
-    const homes = [path.join(root, "first-home"), path.join(root, "next-home")];
-    for (const home of homes) {
-      const { meta } = await runExecutor({
-        agent,
-        stateDir: path.join(root, "state"),
-        env: agent === "codex" ? { CODEX_HOME: home } : { HOME: home },
-        taskcoreRuntimeSkills: [operational],
-        taskcoreSkillSync: { desiredSkills: [] },
+  it.each(["failed", "cancelled"] as const)(
+    "keeps %s in-stream usage provisional without a final receipt",
+    async (status) => {
+      const root = await makeTempRoot();
+      const stateDir = path.join(root, "state");
+      const execute = createAcpxEngineExecutor({
+        createRuntime: () =>
+          ({
+            ensureSession: async () => ({
+              backendSessionId: "backend-session",
+              agentSessionId: "agent-session",
+              runtimeSessionName: "runtime-session",
+            }),
+            startTurn: () => ({
+              events: (async function* () {
+                yield {
+                  type: "status",
+                  text: "usage",
+                  tag: "usage_update",
+                  cost: { amount: 0.31, currency: "USD" },
+                  breakdown: {
+                    inputTokens: 40,
+                    outputTokens: 700,
+                    cachedReadTokens: 60,
+                  },
+                };
+              })(),
+              result: Promise.resolve({
+                status,
+                error: { code: "INTERNAL", message: "fixture failure" },
+              }),
+              cancel: async () => {},
+            }),
+            close: async () => {},
+          }) as never,
       });
-      const skillsHome = agent === "codex" ? path.join(home, "skills") : path.join(home, ".gemini", "skills");
-      expect(String(meta[0]?.prompt ?? "")).toContain(`Skill root for this run: ${skillsHome}`);
-      expect(String(meta[0]?.prompt ?? "")).toContain("Resolve referenced scripts and files relative to that skill");
-      if (home === homes[1]) expect(String(meta[0]?.prompt ?? "")).not.toContain(homes[0]!);
-      await fs.rm(home, { recursive: true, force: true });
-    }
-  });
 
-  it.skipIf(process.platform === "win32")("removes legacy ACPX Codex skill symlinks when a skill is no longer desired", async () => {
-    const root = await makeTempRoot();
-    const skillRoot = path.join(root, "skills");
-    const codexHome = path.join(root, "codex-home");
-    const legacy = await createSkill(skillRoot, "legacy");
-    const skillsHome = path.join(codexHome, "skills");
-    await fs.mkdir(skillsHome, { recursive: true });
-    await fs.symlink(legacy.source, path.join(skillsHome, legacy.runtimeName));
+      const onUsage = vi.fn();
+      const result = await execute({
+        runId: "run-usage-event-fallback",
+        agent: {
+          id: "agent-1",
+          companyId: "company-1",
+        },
+        runtime: {},
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir,
+        },
+        context: {},
+        onLog: async () => {},
+        onMeta: async () => {},
+        onUsage,
+      } as never);
 
-    await runExecutor({
-      agent: "codex",
-      stateDir: path.join(root, "state"),
-      env: { CODEX_HOME: codexHome },
-      taskcoreRuntimeSkills: [legacy],
-      taskcoreSkillSync: { desiredSkills: [] },
-    });
+      expect(result.exitCode).not.toBe(0);
+      expect(result.usageComplete).toBe(false);
+      expect(onUsage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ complete: false, costUsd: 0.31 }),
+      );
+      expect(result.usage).toEqual({
+        inputTokens: 40,
+        outputTokens: 700,
+        cachedInputTokens: 60,
+      });
+      expect(result.usageBasis).toBe("per_run");
+      expect(result.costUsd).toBeCloseTo(0.31);
+      expect(result.provider).toBe("acpx");
+      expect(result.billingType).toBe("unknown");
+    },
+  );
 
-    expect(await pathExists(path.join(skillsHome, legacy.runtimeName))).toBe(false);
-  });
+  it.skipIf(process.platform === "win32")(
+    "materializes ACPX Claude skills without symlinked descendants",
+    async () => {
+      const root = await makeTempRoot();
+      const skillRoot = path.join(root, "skills");
+      const outsideRoot = path.join(root, "outside");
+      await fs.mkdir(outsideRoot, { recursive: true });
+      await fs.writeFile(
+        path.join(outsideRoot, "secret.txt"),
+        "do not expose",
+        "utf8",
+      );
+      const skill = await createSkill(skillRoot, "danger");
+      await fs.symlink(
+        path.join(outsideRoot, "secret.txt"),
+        path.join(skill.source, "leak.txt"),
+      );
+      await fs.symlink(outsideRoot, path.join(skill.source, "leak-dir"));
 
-  it.skipIf(process.platform === "win32")("replaces stale managed Codex auth files with source symlinks", async () => {
-    const root = await makeTempRoot();
-    const sourceCodexHome = path.join(root, "source-codex-home");
-    const taskcoreHome = path.join(root, "taskcore-home");
-    const taskcoreInstanceId = "test-instance";
-    const managedCodexHome = path.join(
-      taskcoreHome,
-      "instances",
-      taskcoreInstanceId,
-      "companies",
-      "company-1",
-      "codex-home",
-    );
-    await fs.mkdir(sourceCodexHome, { recursive: true });
-    await fs.mkdir(managedCodexHome, { recursive: true });
-    const sourceAuth = path.join(sourceCodexHome, "auth.json");
-    const managedAuth = path.join(managedCodexHome, "auth.json");
-    await fs.writeFile(sourceAuth, "{\"source\":true}", "utf8");
-    await fs.writeFile(managedAuth, "{\"stale\":true}", "utf8");
+      const stateDir = path.join(root, "state");
+      const { meta } = await runExecutor({
+        agent: "claude",
+        stateDir,
+        taskcoreRuntimeSkills: [skill],
+        taskcoreSkillSync: { desiredSkills: [skill.key] },
+      });
 
-    const previousCodexHome = process.env.CODEX_HOME;
-    const previousTaskcoreHome = process.env.TASKCORE_HOME;
-    const previousTaskcoreInstanceId = process.env.TASKCORE_INSTANCE_ID;
-    try {
-      process.env.CODEX_HOME = sourceCodexHome;
-      process.env.TASKCORE_HOME = taskcoreHome;
-      process.env.TASKCORE_INSTANCE_ID = taskcoreInstanceId;
+      const mountedRoot = await onlyChildDir(
+        path.join(stateDir, "runtime-skills", "claude"),
+      );
+      const skillsHome = path.join(mountedRoot, ".claude", "skills");
+      const materializedSkill = path.join(skillsHome, skill.runtimeName);
+      expect(
+        await fs.readFile(path.join(materializedSkill, "SKILL.md"), "utf8"),
+      ).toContain("# danger");
+      expect(await pathExists(path.join(materializedSkill, "leak.txt"))).toBe(
+        false,
+      );
+      expect(await pathExists(path.join(materializedSkill, "leak-dir"))).toBe(
+        false,
+      );
+      expect(String(meta[0]?.prompt ?? "")).toContain(
+        `Skill root: ${skillsHome}`,
+      );
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "revokes removed ACPX Codex skills and skips symlinked descendants",
+    async () => {
+      const root = await makeTempRoot();
+      const skillRoot = path.join(root, "skills");
+      const outsideRoot = path.join(root, "outside");
+      const codexHome = path.join(root, "codex-home");
+      await fs.mkdir(outsideRoot, { recursive: true });
+      await fs.writeFile(
+        path.join(outsideRoot, "secret.txt"),
+        "do not expose",
+        "utf8",
+      );
+      const keep = await createSkill(skillRoot, "keep");
+      const remove = await createSkill(skillRoot, "remove");
+      await fs.symlink(
+        path.join(outsideRoot, "secret.txt"),
+        path.join(keep.source, "leak.txt"),
+      );
+      await fs.symlink(outsideRoot, path.join(keep.source, "leak-dir"));
+
+      const baseConfig = {
+        agent: "codex",
+        stateDir: path.join(root, "state"),
+        env: { CODEX_HOME: codexHome },
+        taskcoreRuntimeSkills: [keep, remove],
+      };
+
+      await runExecutor({
+        ...baseConfig,
+        taskcoreSkillSync: { desiredSkills: [keep.key, remove.key] },
+      });
+      expect(
+        await pathExists(
+          path.join(codexHome, "skills", remove.runtimeName, "SKILL.md"),
+        ),
+      ).toBe(true);
+
+      await runExecutor({
+        ...baseConfig,
+        taskcoreSkillSync: { desiredSkills: [keep.key] },
+      });
+
+      expect(
+        await pathExists(
+          path.join(codexHome, "skills", keep.runtimeName, "SKILL.md"),
+        ),
+      ).toBe(true);
+      expect(
+        await pathExists(
+          path.join(codexHome, "skills", keep.runtimeName, "leak.txt"),
+        ),
+      ).toBe(false);
+      expect(
+        await pathExists(
+          path.join(codexHome, "skills", keep.runtimeName, "leak-dir"),
+        ),
+      ).toBe(false);
+      expect(
+        await pathExists(path.join(codexHome, "skills", remove.runtimeName)),
+      ).toBe(false);
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "keeps the operational skill in an ACPX Codex home after an empty replacement",
+    async () => {
+      const root = await makeTempRoot();
+      const skillRoot = path.join(root, "skills");
+      const codexHome = path.join(root, "codex-home");
+      const operational = {
+        ...(await createSkill(skillRoot, "taskcore")),
+        key: "taskcore/taskcore/taskcore",
+      };
+
       await runExecutor({
         agent: "codex",
         stateDir: path.join(root, "state"),
-        taskcoreRuntimeSkills: [],
+        env: { CODEX_HOME: codexHome },
+        taskcoreRuntimeSkills: [operational],
         taskcoreSkillSync: { desiredSkills: [] },
       });
-    } finally {
-      if (previousCodexHome === undefined) delete process.env.CODEX_HOME;
-      else process.env.CODEX_HOME = previousCodexHome;
-      if (previousTaskcoreHome === undefined) delete process.env.TASKCORE_HOME;
-      else process.env.TASKCORE_HOME = previousTaskcoreHome;
-      if (previousTaskcoreInstanceId === undefined) delete process.env.TASKCORE_INSTANCE_ID;
-      else process.env.TASKCORE_INSTANCE_ID = previousTaskcoreInstanceId;
-    }
 
-    const authStat = await fs.lstat(managedAuth);
-    expect(authStat.isSymbolicLink()).toBe(true);
-    expect(path.resolve(path.dirname(managedAuth), await fs.readlink(managedAuth))).toBe(sourceAuth);
-  });
+      expect(
+        await pathExists(
+          path.join(codexHome, "skills", operational.runtimeName, "SKILL.md"),
+        ),
+      ).toBe(true);
+    },
+  );
+
+  it.each(["codex", "gemini"])(
+    "refreshes the %s skill root when a connection home changes between turns",
+    async (agent) => {
+      const root = await makeTempRoot();
+      const operational = {
+        ...(await createSkill(path.join(root, "skills"), "taskcore")),
+        key: "taskcore/taskcore/taskcore",
+      };
+      const homes = [
+        path.join(root, "first-home"),
+        path.join(root, "next-home"),
+      ];
+      for (const home of homes) {
+        const { meta } = await runExecutor({
+          agent,
+          stateDir: path.join(root, "state"),
+          env: agent === "codex" ? { CODEX_HOME: home } : { HOME: home },
+          taskcoreRuntimeSkills: [operational],
+          taskcoreSkillSync: { desiredSkills: [] },
+        });
+        const skillsHome =
+          agent === "codex"
+            ? path.join(home, "skills")
+            : path.join(home, ".gemini", "skills");
+        expect(String(meta[0]?.prompt ?? "")).toContain(
+          `Skill root for this run: ${skillsHome}`,
+        );
+        expect(String(meta[0]?.prompt ?? "")).toContain(
+          "Resolve referenced scripts and files relative to that skill",
+        );
+        if (home === homes[1])
+          expect(String(meta[0]?.prompt ?? "")).not.toContain(homes[0]!);
+        await fs.rm(home, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "removes legacy ACPX Codex skill symlinks when a skill is no longer desired",
+    async () => {
+      const root = await makeTempRoot();
+      const skillRoot = path.join(root, "skills");
+      const codexHome = path.join(root, "codex-home");
+      const legacy = await createSkill(skillRoot, "legacy");
+      const skillsHome = path.join(codexHome, "skills");
+      await fs.mkdir(skillsHome, { recursive: true });
+      await fs.symlink(
+        legacy.source,
+        path.join(skillsHome, legacy.runtimeName),
+      );
+
+      await runExecutor({
+        agent: "codex",
+        stateDir: path.join(root, "state"),
+        env: { CODEX_HOME: codexHome },
+        taskcoreRuntimeSkills: [legacy],
+        taskcoreSkillSync: { desiredSkills: [] },
+      });
+
+      expect(await pathExists(path.join(skillsHome, legacy.runtimeName))).toBe(
+        false,
+      );
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "replaces stale managed Codex auth files with source symlinks",
+    async () => {
+      const root = await makeTempRoot();
+      const sourceCodexHome = path.join(root, "source-codex-home");
+      const taskcoreHome = path.join(root, "taskcore-home");
+      const taskcoreInstanceId = "test-instance";
+      const managedCodexHome = path.join(
+        taskcoreHome,
+        "instances",
+        taskcoreInstanceId,
+        "companies",
+        "company-1",
+        "codex-home",
+      );
+      await fs.mkdir(sourceCodexHome, { recursive: true });
+      await fs.mkdir(managedCodexHome, { recursive: true });
+      const sourceAuth = path.join(sourceCodexHome, "auth.json");
+      const managedAuth = path.join(managedCodexHome, "auth.json");
+      await fs.writeFile(sourceAuth, '{"source":true}', "utf8");
+      await fs.writeFile(managedAuth, '{"stale":true}', "utf8");
+
+      const previousCodexHome = process.env.CODEX_HOME;
+      const previousTaskcoreHome = process.env.TASKCORE_HOME;
+      const previousTaskcoreInstanceId = process.env.TASKCORE_INSTANCE_ID;
+      try {
+        process.env.CODEX_HOME = sourceCodexHome;
+        process.env.TASKCORE_HOME = taskcoreHome;
+        process.env.TASKCORE_INSTANCE_ID = taskcoreInstanceId;
+        await runExecutor({
+          agent: "codex",
+          stateDir: path.join(root, "state"),
+          taskcoreRuntimeSkills: [],
+          taskcoreSkillSync: { desiredSkills: [] },
+        });
+      } finally {
+        if (previousCodexHome === undefined) delete process.env.CODEX_HOME;
+        else process.env.CODEX_HOME = previousCodexHome;
+        if (previousTaskcoreHome === undefined)
+          delete process.env.TASKCORE_HOME;
+        else process.env.TASKCORE_HOME = previousTaskcoreHome;
+        if (previousTaskcoreInstanceId === undefined)
+          delete process.env.TASKCORE_INSTANCE_ID;
+        else process.env.TASKCORE_INSTANCE_ID = previousTaskcoreInstanceId;
+      }
+
+      const authStat = await fs.lstat(managedAuth);
+      expect(authStat.isSymbolicLink()).toBe(true);
+      expect(
+        path.resolve(path.dirname(managedAuth), await fs.readlink(managedAuth)),
+      ).toBe(sourceAuth);
+    },
+  );
 
   it.each(["OPENAI_API_KEY", "CODEX_API_KEY"] as const)(
     "uses isolated API-key auth instead of the host ChatGPT login for %s",
@@ -1804,15 +2333,30 @@ describe("shared ACPX engine runtime behavior", () => {
       const taskcoreHome = path.join(root, "taskcore-home");
       await fs.mkdir(sourceCodexHome, { recursive: true });
       const sourceAuth = path.join(sourceCodexHome, "auth.json");
-      await fs.writeFile(sourceAuth, JSON.stringify({ tokens: "host-login" }), "utf8");
+      await fs.writeFile(
+        sourceAuth,
+        JSON.stringify({ tokens: "host-login" }),
+        "utf8",
+      );
       const managedHome = path.join(
-        taskcoreHome, "instances", "test-instance", "companies", "company-1",
-        "acp-engine", "agents", "agent-1", "codex-home",
+        taskcoreHome,
+        "instances",
+        "test-instance",
+        "companies",
+        "company-1",
+        "acp-engine",
+        "agents",
+        "agent-1",
+        "codex-home",
       );
       await fs.mkdir(managedHome, { recursive: true });
       const managedAuth = path.join(managedHome, "auth.json");
       if (process.platform === "win32") {
-        await fs.writeFile(managedAuth, JSON.stringify({ tokens: "stale-login" }), "utf8");
+        await fs.writeFile(
+          managedAuth,
+          JSON.stringify({ tokens: "stale-login" }),
+          "utf8",
+        );
       } else {
         await fs.symlink(sourceAuth, managedAuth);
       }
@@ -1830,12 +2374,20 @@ describe("shared ACPX engine runtime behavior", () => {
           taskcoreRuntimeSkills: [],
           taskcoreSkillSync: { desiredSkills: [] },
         });
-        const sessionEnv = (sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env;
+        const sessionEnv = (
+          sessionInputs[0]!.sessionOptions as { env: Record<string, string> }
+        ).env;
         expect(sessionEnv.CODEX_HOME).toBe(managedHome);
-        expect(sessionEnv.DEFAULT_AUTH_REQUEST).toBe(JSON.stringify({ methodId: "api-key" }));
+        expect(sessionEnv.DEFAULT_AUTH_REQUEST).toBe(
+          JSON.stringify({ methodId: "api-key" }),
+        );
         expect((await fs.lstat(managedAuth)).isSymbolicLink()).toBe(false);
-        expect(JSON.parse(await fs.readFile(managedAuth, "utf8"))).toEqual({ OPENAI_API_KEY: "sk-acp-test-key" });
-        expect(await fs.readFile(sourceAuth, "utf8")).toBe(JSON.stringify({ tokens: "host-login" }));
+        expect(JSON.parse(await fs.readFile(managedAuth, "utf8"))).toEqual({
+          OPENAI_API_KEY: "sk-acp-test-key",
+        });
+        expect(await fs.readFile(sourceAuth, "utf8")).toBe(
+          JSON.stringify({ tokens: "host-login" }),
+        );
         if (process.platform !== "win32") {
           expect((await fs.stat(managedAuth)).mode & 0o777).toBe(0o600);
         }
@@ -1880,14 +2432,18 @@ describe("shared ACPX engine runtime behavior", () => {
         taskcoreRuntimeSkills: [],
         taskcoreSkillSync: { desiredSkills: [] },
       });
-      const codexEnv = (codexRun.sessionInputs[0]?.sessionOptions as { env: Record<string, string> })
-        .env;
+      const codexEnv = (
+        codexRun.sessionInputs[0]?.sessionOptions as {
+          env: Record<string, string>;
+        }
+      ).env;
       expect(codexEnv.CODEX_HOME).toBe(codexHome);
       expect(codexEnv.GROK_HOME).toBeUndefined();
     } finally {
       if (previousTaskcoreHome === undefined) delete process.env.TASKCORE_HOME;
       else process.env.TASKCORE_HOME = previousTaskcoreHome;
-      if (previousTaskcoreInstanceId === undefined) delete process.env.TASKCORE_INSTANCE_ID;
+      if (previousTaskcoreInstanceId === undefined)
+        delete process.env.TASKCORE_INSTANCE_ID;
       else process.env.TASKCORE_INSTANCE_ID = previousTaskcoreInstanceId;
     }
   });
@@ -1910,13 +2466,18 @@ describe("shared ACPX engine runtime behavior", () => {
     );
 
     expect(
-      (first.runtimeOptions[0]!.agentRegistry as { resolve(name: string): string }).resolve(
-        "custom-a",
-      ),
+      (
+        first.runtimeOptions[0]!.agentRegistry as {
+          resolve(name: string): string;
+        }
+      ).resolve("custom-a"),
     ).toBe("node ./fake-acp.js");
     expect(
-      (second.sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env
-        .TASKCORE_API_KEY,
+      (
+        second.sessionInputs[0]!.sessionOptions as {
+          env: Record<string, string>;
+        }
+      ).env.TASKCORE_API_KEY,
     ).toBe("new-key");
     await expect(fs.access(path.join(stateDir, "wrappers"))).rejects.toThrow();
   });
@@ -1945,7 +2506,9 @@ describe("shared ACPX engine runtime behavior", () => {
         context: { taskId: "issue-real", wakeReason: "issue_assigned" },
       },
     );
-    const env = (sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env;
+    const env = (
+      sessionInputs[0]!.sessionOptions as { env: Record<string, string> }
+    ).env;
     expect(env.OOGA_BOOGA_123).toBe("plain-value");
     expect(env.OPENROUTER_API_KEY).toBe("resolved-secret-value");
     expect(env.TASKCORE_TASK_ID).toBe("issue-real");
@@ -1971,9 +2534,13 @@ describe("shared ACPX engine runtime behavior", () => {
         taskcoreSkillSync: { desiredSkills: [] },
       });
 
-      const env = (sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env;
+      const env = (
+        sessionInputs[0]!.sessionOptions as { env: Record<string, string> }
+      ).env;
       expect(env[apiKeyName]).toBe("sk-acp-test-key");
-      expect(env.DEFAULT_AUTH_REQUEST).toBe(JSON.stringify({ methodId: "api-key" }));
+      expect(env.DEFAULT_AUTH_REQUEST).toBe(
+        JSON.stringify({ methodId: "api-key" }),
+      );
     },
   );
 
@@ -1997,9 +2564,13 @@ describe("shared ACPX engine runtime behavior", () => {
           taskcoreSkillSync: { desiredSkills: [] },
         });
 
-        const env = (sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env;
+        const env = (
+          sessionInputs[0]!.sessionOptions as { env: Record<string, string> }
+        ).env;
         expect(env[apiKeyName]).toBe("sk-host-inherited-key");
-        expect(env.DEFAULT_AUTH_REQUEST).toBe(JSON.stringify({ methodId: "api-key" }));
+        expect(env.DEFAULT_AUTH_REQUEST).toBe(
+          JSON.stringify({ methodId: "api-key" }),
+        );
       } finally {
         vi.unstubAllEnvs();
       }
@@ -2021,11 +2592,18 @@ describe("shared ACPX engine runtime behavior", () => {
     );
     const sameEnvNewWake = await runExecutor(
       { ...baseConfig, env: { OPENROUTER_API_KEY: "value-1" } },
-      { context: { taskId: "issue-1", wakeReason: "comment", wakeCommentId: "c-9" } },
+      {
+        context: {
+          taskId: "issue-1",
+          wakeReason: "comment",
+          wakeCommentId: "c-9",
+        },
+      },
     );
 
     const fp = (r: { result: { sessionParams?: unknown } }) =>
-      (r.result.sessionParams as { configFingerprint?: string } | undefined)?.configFingerprint;
+      (r.result.sessionParams as { configFingerprint?: string } | undefined)
+        ?.configFingerprint;
 
     // A changed forwarded env value invalidates warm-handle / session reuse so
     // the next launch sources the latest env.
@@ -2038,18 +2616,48 @@ describe("shared ACPX engine runtime behavior", () => {
 
   it("keeps rotated run scratch paths out of session identity while retaining user temp overrides", async () => {
     const root = await makeTempRoot();
-    const config = { agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") };
+    const config = {
+      agentCommand: "node ./fake-acp.js",
+      stateDir: path.join(root, "state"),
+    };
     async function withScratch(dir: string, userTemp: string) {
-      return runExecutor({ ...config, env: {
-        TASKCORE_RUN_SCRATCH_DIR: dir, TASKCORE_TASK_SCRATCH_DIR: dir,
-        TASKCORE_SCRATCH_DIR: dir, TASKCORE_TMPDIR: dir, TEMP: dir, TMP: dir, TMPDIR: userTemp,
-      } }, { context: { taskId: "issue-1", taskcoreScratch: { type: "heartbeat_run", dir, tempKeysApplied: ["TEMP", "TMP"] } } });
+      return runExecutor(
+        {
+          ...config,
+          env: {
+            TASKCORE_RUN_SCRATCH_DIR: dir,
+            TASKCORE_TASK_SCRATCH_DIR: dir,
+            TASKCORE_SCRATCH_DIR: dir,
+            TASKCORE_TMPDIR: dir,
+            TEMP: dir,
+            TMP: dir,
+            TMPDIR: userTemp,
+          },
+        },
+        {
+          context: {
+            taskId: "issue-1",
+            taskcoreScratch: {
+              type: "heartbeat_run",
+              dir,
+              tempKeysApplied: ["TEMP", "TMP"],
+            },
+          },
+        },
+      );
     }
     const first = await withScratch(path.join(root, "run-1"), "/custom/tmp-1");
     const second = await withScratch(path.join(root, "run-2"), "/custom/tmp-1");
-    const changed = await withScratch(path.join(root, "run-3"), "/custom/tmp-2");
-    expect(second.result.sessionParams?.configFingerprint).toBe(first.result.sessionParams?.configFingerprint);
-    expect(changed.result.sessionParams?.configFingerprint).not.toBe(first.result.sessionParams?.configFingerprint);
+    const changed = await withScratch(
+      path.join(root, "run-3"),
+      "/custom/tmp-2",
+    );
+    expect(second.result.sessionParams?.configFingerprint).toBe(
+      first.result.sessionParams?.configFingerprint,
+    );
+    expect(changed.result.sessionParams?.configFingerprint).not.toBe(
+      first.result.sessionParams?.configFingerprint,
+    );
   });
 
   it("busts the session fingerprint when a stable configured TASKCORE_* value rotates", async () => {
@@ -2063,16 +2671,23 @@ describe("shared ACPX engine runtime behavior", () => {
     // value, even across an otherwise-identical wake context.
     const context = { taskId: "issue-1", wakeReason: "issue_assigned" };
     const withKey = await runExecutor(
-      { ...baseConfig, env: { TASKCORE_CLOUD_PROVIDER_TOKEN: "explicit-key-1" } },
+      {
+        ...baseConfig,
+        env: { TASKCORE_CLOUD_PROVIDER_TOKEN: "explicit-key-1" },
+      },
       { context },
     );
     const rotatedKey = await runExecutor(
-      { ...baseConfig, env: { TASKCORE_CLOUD_PROVIDER_TOKEN: "explicit-key-2" } },
+      {
+        ...baseConfig,
+        env: { TASKCORE_CLOUD_PROVIDER_TOKEN: "explicit-key-2" },
+      },
       { context },
     );
 
     const fp = (r: { result: { sessionParams?: unknown } }) =>
-      (r.result.sessionParams as { configFingerprint?: string } | undefined)?.configFingerprint;
+      (r.result.sessionParams as { configFingerprint?: string } | undefined)
+        ?.configFingerprint;
 
     expect(fp(withKey)).toBeDefined();
     expect(fp(rotatedKey)).not.toBe(fp(withKey));
@@ -2110,15 +2725,22 @@ describe("shared ACPX engine runtime behavior", () => {
     };
 
     const one = await runExecutor(baseConfig, withReferenced([projectA]));
-    const two = await runExecutor(baseConfig, withReferenced([projectA, projectB]));
-    const reordered = await runExecutor(baseConfig, withReferenced([projectB, projectA]));
+    const two = await runExecutor(
+      baseConfig,
+      withReferenced([projectA, projectB]),
+    );
+    const reordered = await runExecutor(
+      baseConfig,
+      withReferenced([projectB, projectA]),
+    );
     const repointed = await runExecutor(
       baseConfig,
       withReferenced([projectA, { ...projectB, repoRef: "ref-b-2" }]),
     );
 
     const fp = (r: { result: { sessionParams?: unknown } }) =>
-      (r.result.sessionParams as { configFingerprint?: string } | undefined)?.configFingerprint;
+      (r.result.sessionParams as { configFingerprint?: string } | undefined)
+        ?.configFingerprint;
 
     // Adding a referenced project changes the set identity, so the fingerprint
     // busts and the next launch stages the current set.
@@ -2138,12 +2760,18 @@ describe("shared ACPX engine runtime behavior", () => {
     const baseConfig = { agentCommand: "node ./fake-acp.js", stateDir };
     // The paths need not exist: the scheduler hook intercepts the scan before
     // any real `git` process (or even a directory-existence check) runs.
-    const projectPaths = ["/host/project-a", "/host/project-b", "/host/project-c"];
+    const projectPaths = [
+      "/host/project-a",
+      "/host/project-b",
+      "/host/project-c",
+    ];
 
     const scannedPaths: string[] = [];
     setExpensiveWorkspaceGitExecutor(async (input) => {
       scannedPaths.push(input.localDir);
-      const error = new Error("fatal: not a git repository (or any of the parent directories): .git");
+      const error = new Error(
+        "fatal: not a git repository (or any of the parent directories): .git",
+      );
       throw Object.assign(error, { stdout: "", stderr: error.message });
     });
 
@@ -2181,7 +2809,10 @@ describe("shared ACPX engine runtime behavior", () => {
     const cwd = path.join(root, "workspace");
     const projectDir = path.join(root, "project-a");
     await fs.mkdir(path.join(projectDir, "src"), { recursive: true });
-    await fs.writeFile(path.join(projectDir, "src", "index.ts"), "export const value = 1;\n");
+    await fs.writeFile(
+      path.join(projectDir, "src", "index.ts"),
+      "export const value = 1;\n",
+    );
     const baseConfig = { agentCommand: "node ./fake-acp.js", stateDir };
 
     // Same host path and same metadata across runs. Only the file bytes change,
@@ -2199,19 +2830,29 @@ describe("shared ACPX engine runtime behavior", () => {
       context: {
         taskId: "issue-1",
         wakeReason: "issue_assigned",
-        taskcoreWorkspace: { cwd, realization: { additional: [referencedProject] } },
+        taskcoreWorkspace: {
+          cwd,
+          realization: { additional: [referencedProject] },
+        },
       },
     });
     const fp = (r: { result: { sessionParams?: unknown } }) =>
-      (r.result.sessionParams as { configFingerprint?: string } | undefined)?.configFingerprint;
+      (r.result.sessionParams as { configFingerprint?: string } | undefined)
+        ?.configFingerprint;
 
     const before = await runExecutor(baseConfig, withProject());
     // Change the tree content and its size while the host path and metadata stay
     // identical.
-    await fs.writeFile(path.join(projectDir, "src", "index.ts"), "export const value = 2; // changed\n");
+    await fs.writeFile(
+      path.join(projectDir, "src", "index.ts"),
+      "export const value = 2; // changed\n",
+    );
     const afterEdit = await runExecutor(baseConfig, withProject());
     // Add a new file to the tree.
-    await fs.writeFile(path.join(projectDir, "src", "extra.ts"), "export const extra = true;\n");
+    await fs.writeFile(
+      path.join(projectDir, "src", "extra.ts"),
+      "export const extra = true;\n",
+    );
     const afterAdd = await runExecutor(baseConfig, withProject());
 
     expect(fp(before)).toBeDefined();
@@ -2251,11 +2892,15 @@ describe("shared ACPX engine runtime behavior", () => {
       context: {
         taskId: "issue-1",
         wakeReason: "issue_assigned",
-        taskcoreWorkspace: { cwd, realization: { additional: [referencedProject] } },
+        taskcoreWorkspace: {
+          cwd,
+          realization: { additional: [referencedProject] },
+        },
       },
     });
     const fp = (r: { result: { sessionParams?: unknown } }) =>
-      (r.result.sessionParams as { configFingerprint?: string } | undefined)?.configFingerprint;
+      (r.result.sessionParams as { configFingerprint?: string } | undefined)
+        ?.configFingerprint;
 
     const baseConfig = { agentCommand: "node ./fake-acp.js", stateDir };
     const before = await runExecutor(baseConfig, withProject());
@@ -2278,7 +2923,10 @@ describe("shared ACPX engine runtime behavior", () => {
       // `failed` resolution must short-circuit before any `fs.readdir` call.
       const localPath = path.join(root, "does-not-exist");
 
-      const signature = await referencedSourceContentSignature(localPath, { kind: "failed", reason: "git status timed out" });
+      const signature = await referencedSourceContentSignature(localPath, {
+        kind: "failed",
+        reason: "git status timed out",
+      });
 
       expect(signature).toBe("unreadable:git status timed out");
     });
@@ -2307,7 +2955,10 @@ describe("shared ACPX engine runtime behavior", () => {
       }
       expect(ignoreResolution.kind).toBe("failed");
 
-      const signature = await referencedSourceContentSignature(localPath, ignoreResolution);
+      const signature = await referencedSourceContentSignature(
+        localPath,
+        ignoreResolution,
+      );
 
       expect(signature).toBe("unreadable:git-toplevel-not-descendant");
       expect(signature).not.toContain(sensitivePath);
@@ -2319,14 +2970,35 @@ describe("shared ACPX engine runtime behavior", () => {
       const localPath = path.join(root, "project");
       await fs.mkdir(localPath, { recursive: true });
       await fs.writeFile(path.join(localPath, "kept.txt"), "kept\n", "utf8");
-      await fs.writeFile(path.join(localPath, "secret.env"), "TOKEN=1\n", "utf8");
+      await fs.writeFile(
+        path.join(localPath, "secret.env"),
+        "TOKEN=1\n",
+        "utf8",
+      );
 
       const resolution = { kind: "git" as const, ignoredPaths: ["secret.env"] };
-      const before = await referencedSourceContentSignature(localPath, resolution);
-      await fs.writeFile(path.join(localPath, "secret.env"), "TOKEN=2\n", "utf8");
-      const afterIgnoredEdit = await referencedSourceContentSignature(localPath, resolution);
-      await fs.writeFile(path.join(localPath, "kept.txt"), "kept, changed\n", "utf8");
-      const afterKeptEdit = await referencedSourceContentSignature(localPath, resolution);
+      const before = await referencedSourceContentSignature(
+        localPath,
+        resolution,
+      );
+      await fs.writeFile(
+        path.join(localPath, "secret.env"),
+        "TOKEN=2\n",
+        "utf8",
+      );
+      const afterIgnoredEdit = await referencedSourceContentSignature(
+        localPath,
+        resolution,
+      );
+      await fs.writeFile(
+        path.join(localPath, "kept.txt"),
+        "kept, changed\n",
+        "utf8",
+      );
+      const afterKeptEdit = await referencedSourceContentSignature(
+        localPath,
+        resolution,
+      );
 
       // Editing the ignored file never busts the signature; editing the kept file does.
       expect(afterIgnoredEdit).toBe(before);
@@ -2336,14 +3008,30 @@ describe("shared ACPX engine runtime behavior", () => {
     it("skips every file under a Git-ignored directory (prefix match)", async () => {
       const root = await makeTempRoot();
       const localPath = path.join(root, "project");
-      await fs.mkdir(path.join(localPath, "build", "nested"), { recursive: true });
+      await fs.mkdir(path.join(localPath, "build", "nested"), {
+        recursive: true,
+      });
       await fs.writeFile(path.join(localPath, "kept.txt"), "kept\n", "utf8");
-      await fs.writeFile(path.join(localPath, "build", "nested", "artifact.js"), "v1\n", "utf8");
+      await fs.writeFile(
+        path.join(localPath, "build", "nested", "artifact.js"),
+        "v1\n",
+        "utf8",
+      );
 
       const resolution = { kind: "git" as const, ignoredPaths: ["build"] };
-      const before = await referencedSourceContentSignature(localPath, resolution);
-      await fs.writeFile(path.join(localPath, "build", "nested", "artifact.js"), "v2\n", "utf8");
-      const after = await referencedSourceContentSignature(localPath, resolution);
+      const before = await referencedSourceContentSignature(
+        localPath,
+        resolution,
+      );
+      await fs.writeFile(
+        path.join(localPath, "build", "nested", "artifact.js"),
+        "v2\n",
+        "utf8",
+      );
+      const after = await referencedSourceContentSignature(
+        localPath,
+        resolution,
+      );
 
       expect(after).toBe(before);
     });
@@ -2354,10 +3042,22 @@ describe("shared ACPX engine runtime behavior", () => {
     const localCwd = path.join(root, "local");
     const remoteCwd = "/workspace/remote";
     const { sessionInputs, runtimeOptions } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", cwd: localCwd, stateDir: path.join(root, "state") },
-      { context: { taskcoreWorkspace: { cwd: localCwd, workspaceWorktreePath: localCwd } }, executionTarget: { kind: "remote", transport: "ssh", remoteCwd } },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        cwd: localCwd,
+        stateDir: path.join(root, "state"),
+      },
+      {
+        context: {
+          taskcoreWorkspace: { cwd: localCwd, workspaceWorktreePath: localCwd },
+        },
+        executionTarget: { kind: "remote", transport: "ssh", remoteCwd },
+      },
     );
-    const env = (sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env;
+    const env = (
+      sessionInputs[0]!.sessionOptions as { env: Record<string, string> }
+    ).env;
     expect(env.TASKCORE_WORKSPACE_CWD).toBe(localCwd);
     // The ssh remote transport is NOT the runner-backed process-session lane, so
     // it stays byte-identical: no host-spawn redirect. `cwd` is the host cwd and
@@ -2369,22 +3069,38 @@ describe("shared ACPX engine runtime behavior", () => {
   it("does not materialize credential wrapper scripts", async () => {
     const root = await makeTempRoot();
     const stateDir = path.join(root, "state");
-    await runExecutor({ agent: "custom", agentCommand: "node ./fake-acp.js", stateDir });
+    await runExecutor({
+      agent: "custom",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+    });
     await expect(fs.access(path.join(stateDir, "wrappers"))).rejects.toThrow();
   });
 
   it("keeps concurrent credentials isolated in their session options", async () => {
     const [first, second] = await Promise.all([
-      runExecutor({ agent: "custom", agentCommand: "node ./fake-acp.js" }, { authToken: "first" }),
-      runExecutor({ agent: "custom", agentCommand: "node ./fake-acp.js" }, { authToken: "second" }),
+      runExecutor(
+        { agent: "custom", agentCommand: "node ./fake-acp.js" },
+        { authToken: "first" },
+      ),
+      runExecutor(
+        { agent: "custom", agentCommand: "node ./fake-acp.js" },
+        { authToken: "second" },
+      ),
     ]);
     expect(
-      (first.sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env
-        .TASKCORE_API_KEY,
+      (
+        first.sessionInputs[0]!.sessionOptions as {
+          env: Record<string, string>;
+        }
+      ).env.TASKCORE_API_KEY,
     ).toBe("first");
     expect(
-      (second.sessionInputs[0]!.sessionOptions as { env: Record<string, string> }).env
-        .TASKCORE_API_KEY,
+      (
+        second.sessionInputs[0]!.sessionOptions as {
+          env: Record<string, string>;
+        }
+      ).env.TASKCORE_API_KEY,
     ).toBe("second");
   });
 
@@ -2394,7 +3110,11 @@ describe("shared ACPX engine runtime behavior", () => {
     const runStderrDir = path.join(stateDir, "run-stderr");
     await fs.mkdir(runStderrDir, { recursive: true });
     const stderrTail = "claude-agent-acp: SDK init failed (auth missing)";
-    await fs.writeFile(path.join(runStderrDir, "run-1.log"), `${stderrTail}\n`, "utf8");
+    await fs.writeFile(
+      path.join(runStderrDir, "run-1.log"),
+      `${stderrTail}\n`,
+      "utf8",
+    );
 
     class FakeAcpRuntimeError extends Error {
       readonly code = "ACP_SESSION_INIT_FAILED";
@@ -2409,20 +3129,24 @@ describe("shared ACPX engine runtime behavior", () => {
 
     const logs: Array<{ stream: string; text: string }> = [];
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => {
-          throw new FakeAcpRuntimeError(
-            "session/new failed: backend rejected initialize",
-            new Error("upstream timeout"),
-          );
-        },
-        startTurn: () => ({
-          events: (async function* () {})(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => {
+            throw new FakeAcpRuntimeError(
+              "session/new failed: backend rejected initialize",
+              new Error("upstream timeout"),
+            );
+          },
+          startTurn: () => ({
+            events: (async function* () {})(),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
     });
 
     const result = await execute({
@@ -2451,7 +3175,10 @@ describe("shared ACPX engine runtime behavior", () => {
     expect(typeof meta.stackPreview).toBe("string");
     expect(meta.phase).toBe("ensure_session");
 
-    const errorLogLine = logs.find((entry) => entry.stream === "stdout" && entry.text.includes("\"type\":\"acpx.error\""));
+    const errorLogLine = logs.find(
+      (entry) =>
+        entry.stream === "stdout" && entry.text.includes('"type":"acpx.error"'),
+    );
     expect(errorLogLine).toBeTruthy();
     const errorPayload = JSON.parse(errorLogLine!.text.trim());
     expect(errorPayload.phase).toBe("ensure_session");
@@ -2460,14 +3187,22 @@ describe("shared ACPX engine runtime behavior", () => {
     expect(errorPayload.causeMessage).toBe("upstream timeout");
     expect(errorPayload.childStderrTail).toContain("SDK init failed");
 
-    const stderrLog = logs.find((entry) => entry.stream === "stderr" && entry.text.includes("ACPX child stderr tail"));
+    const stderrLog = logs.find(
+      (entry) =>
+        entry.stream === "stderr" &&
+        entry.text.includes("ACPX child stderr tail"),
+    );
     expect(stderrLog).toBeTruthy();
     expect(stderrLog!.text).toContain(stderrTail);
   });
 
   it("configures in-process child stderr capture without forcing verbose mode", async () => {
     const root = await makeTempRoot();
-    const { runtimeOptions } = await runExecutor({ agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") });
+    const { runtimeOptions } = await runExecutor({
+      agent: "custom",
+      agentCommand: "node ./fake-acp.js",
+      stateDir: path.join(root, "state"),
+    });
     expect(runtimeOptions[0]!.verbose).toBe(false);
     expect(runtimeOptions[0]!.onAgentStderr).toBeTypeOf("function");
     // Local lane is byte-identical: no host-spawn redirect, so `spawnCwd` is
@@ -2488,16 +3223,25 @@ describe("shared ACPX engine runtime behavior", () => {
       (input: { args?: string[]; env?: Record<string, string> }) => {
         if (input.env?.TASKCORE_SANDBOX_EXEC_CHANNEL === "bridge") {
           const script = input.args?.[1] ?? "";
-          const match = script.match(/TASKCORE_PROCESS_SESSION_COMMAND_B64='([^']+)'/);
+          const match = script.match(
+            /TASKCORE_PROCESS_SESSION_COMMAND_B64='([^']+)'/,
+          );
           if (match) {
-            sessionPayload = JSON.parse(Buffer.from(match[1]!, "base64").toString("utf8")) as Record<string, unknown>;
+            sessionPayload = JSON.parse(
+              Buffer.from(match[1]!, "base64").toString("utf8"),
+            ) as Record<string, unknown>;
           }
         }
       },
     );
 
     const { runtimeOptions, sessionInputs } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       {
         authToken: "real-run-jwt",
         executionTarget: {
@@ -2526,11 +3270,18 @@ describe("shared ACPX engine runtime behavior", () => {
     expect(runtimeOptions[0]!.cwd).toBe(remoteCwd);
     expect(sessionInputs[0]!.cwd).toBe(remoteCwd);
     expect(runtimeOptions[0]!.spawnCwd).toBe(localCwd);
-    const proxyCommand = (runtimeOptions[0]!.agentRegistry as { resolve(name: string): string }).resolve("custom");
-    expect(proxyCommand.startsWith(`${JSON.stringify(process.execPath.replaceAll("\\", "/"))} `)).toBe(true);
+    const proxyCommand = (
+      runtimeOptions[0]!.agentRegistry as { resolve(name: string): string }
+    ).resolve("custom");
+    expect(
+      proxyCommand.startsWith(
+        `${JSON.stringify(process.execPath.replaceAll("\\", "/"))} `,
+      ),
+    ).toBe(true);
     expect(proxyCommand).toContain("taskcore-process-session-proxy.mjs");
     expect(runtimeOptions[0]!.spawnCwd).not.toBe(sessionInputs[0]!.cwd);
-    const payloadEnv = ((sessionPayload as Record<string, unknown> | null)?.env ?? {}) as Record<string, unknown>;
+    const payloadEnv = ((sessionPayload as Record<string, unknown> | null)
+      ?.env ?? {}) as Record<string, unknown>;
     expect(payloadEnv).toMatchObject({
       TASKCORE_API_BRIDGE_MODE: "queue_v1",
     });
@@ -2555,7 +3306,12 @@ describe("shared ACPX engine runtime behavior", () => {
       const localCwd = path.join(root, hostWorktree);
       await fs.mkdir(localCwd, { recursive: true });
       return runExecutor(
-        { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, hostWorktree, "state"), cwd: localCwd },
+        {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, hostWorktree, "state"),
+          cwd: localCwd,
+        },
         {
           authToken: "real-run-jwt",
           executionTarget: {
@@ -2573,12 +3329,15 @@ describe("shared ACPX engine runtime behavior", () => {
     const second = await runOnce("worktree-b");
 
     // Host cwd (and therefore `spawnCwd`) differs between the two runs...
-    expect(first.runtimeOptions[0]!.spawnCwd).not.toBe(second.runtimeOptions[0]!.spawnCwd);
+    expect(first.runtimeOptions[0]!.spawnCwd).not.toBe(
+      second.runtimeOptions[0]!.spawnCwd,
+    );
     // ...but the advertised session cwd — and thus the fingerprint — is identical.
     expect(first.sessionInputs[0]!.cwd).toBe(remoteCwd);
     expect(second.sessionInputs[0]!.cwd).toBe(remoteCwd);
     const fp = (r: { result: { sessionParams?: unknown } }) =>
-      (r.result.sessionParams as { configFingerprint?: string } | undefined)?.configFingerprint;
+      (r.result.sessionParams as { configFingerprint?: string } | undefined)
+        ?.configFingerprint;
     expect(fp(first)).toBeDefined();
     expect(fp(second)).toBe(fp(first));
   });
@@ -2604,21 +3363,32 @@ describe("shared ACPX engine runtime behavior", () => {
         runId: "run-nes-close-1",
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir,
+        },
         context: {},
         onLog: async () => {},
         onMeta: async () => {},
       } as never);
       expect(result.exitCode).toBe(0);
-      runtimeOptions?.onAgentStderr?.("Error handling request { method: 'nes/cl");
+      runtimeOptions?.onAgentStderr?.(
+        "Error handling request { method: 'nes/cl",
+      );
       runtimeOptions?.onAgentStderr?.("ose' } { code: -32601 }\n");
-      runtimeOptions?.onAgentStderr?.("some genuine crash: TypeError: x is not a function\n");
+      runtimeOptions?.onAgentStderr?.(
+        "some genuine crash: TypeError: x is not a function\n",
+      );
     } finally {
       process.stderr.write = originalWrite;
     }
     expect(writes.join("")).not.toContain("nes/close");
     expect(writes.join("")).toContain("some genuine crash");
-    const runLog = await fs.readFile(path.join(stateDir, "run-stderr", "run-nes-close-1.log"), "utf8");
+    const runLog = await fs.readFile(
+      path.join(stateDir, "run-stderr", "run-nes-close-1.log"),
+      "utf8",
+    );
     expect(runLog).toContain("nes/close");
     expect(runLog).toContain("some genuine crash");
   });
@@ -2662,25 +3432,41 @@ describe("shared ACPX engine runtime behavior", () => {
     } as never);
     expect(second.exitCode).toBe(0);
     runtimeOptions?.onAgentStderr?.("current-run-stderr\n");
-    await expect(fs.readFile(path.join(stateDir, "run-stderr", "run-warm-1.log"), "utf8")).rejects.toThrow();
-    await expect(fs.readFile(path.join(stateDir, "run-stderr", "run-warm-2.log"), "utf8")).resolves.toContain("current-run-stderr");
+    await expect(
+      fs.readFile(path.join(stateDir, "run-stderr", "run-warm-1.log"), "utf8"),
+    ).rejects.toThrow();
+    await expect(
+      fs.readFile(path.join(stateDir, "run-stderr", "run-warm-2.log"), "utf8"),
+    ).resolves.toContain("current-run-stderr");
   });
 
   it("passes Taskcore env through ACPX session options instead of process.env", async () => {
     let observedSessionEnv: Record<string, string> | undefined;
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async (input: { sessionOptions?: { env?: Record<string, string> } }) => {
-          observedSessionEnv = input.sessionOptions?.env;
-          return { backendSessionId: "backend-session", agentSessionId: "agent-session", runtimeSessionName: "runtime-session" };
-        },
-        startTurn: () => ({
-          events: (async function* () { yield { type: "done", stopReason: "end_turn" }; })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        close: async () => {},
-      }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async (input: {
+            sessionOptions?: { env?: Record<string, string> };
+          }) => {
+            observedSessionEnv = input.sessionOptions?.env;
+            return {
+              backendSessionId: "backend-session",
+              agentSessionId: "agent-session",
+              runtimeSessionName: "runtime-session",
+            };
+          },
+          startTurn: () => ({
+            events: (async function* () {
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          close: async () => {},
+        }) as never,
     });
     const previousApiKey = process.env.TASKCORE_API_KEY;
     try {
@@ -2712,7 +3498,11 @@ describe("shared ACPX engine runtime behavior", () => {
 
     const { meta } = await runExecutor(
       { agent: "claude", stateDir, cwd },
-      { context: { taskcoreWorkspace: { cwd, agentHome: path.join(root, "agent-home") } } },
+      {
+        context: {
+          taskcoreWorkspace: { cwd, agentHome: path.join(root, "agent-home") },
+        },
+      },
     );
 
     const settingsPath = path.join(cwd, ".claude", "settings.local.json");
@@ -2728,13 +3518,14 @@ describe("shared ACPX engine runtime behavior", () => {
     expect(Array.isArray(allow)).toBe(true);
     expect(allow).toContain("Bash(curl:*)");
     expect(allow).toContain(`Bash(${cwd}/scripts/taskcore-issue-update.sh:*)`);
-    const additionalDirectories = written.permissions?.additionalDirectories as string[] | undefined;
+    const additionalDirectories = written.permissions?.additionalDirectories as
+      string[] | undefined;
     expect(Array.isArray(additionalDirectories)).toBe(true);
     expect(additionalDirectories).toContain(stateDir);
     expect(additionalDirectories).toContain(path.join(root, "agent-home"));
 
-    const note = (meta[0]?.commandNotes as string[] | undefined)?.find((entry) =>
-      entry.includes("Taskcore-managed Claude settings"),
+    const note = (meta[0]?.commandNotes as string[] | undefined)?.find(
+      (entry) => entry.includes("Taskcore-managed Claude settings"),
     );
     expect(note).toBeTruthy();
   });
@@ -2767,7 +3558,10 @@ describe("shared ACPX engine runtime behavior", () => {
     );
 
     const written = JSON.parse(
-      await fs.readFile(path.join(cwd, ".claude", "settings.local.json"), "utf8"),
+      await fs.readFile(
+        path.join(cwd, ".claude", "settings.local.json"),
+        "utf8",
+      ),
     ) as {
       statusLine?: unknown;
       permissions?: {
@@ -2776,11 +3570,16 @@ describe("shared ACPX engine runtime behavior", () => {
         defaultMode?: string;
       };
     };
-    expect(written.statusLine).toEqual({ type: "command", command: "preserve-me" });
+    expect(written.statusLine).toEqual({
+      type: "command",
+      command: "preserve-me",
+    });
     expect(written.permissions?.defaultMode).toBe("acceptEdits");
     expect(written.permissions?.allow).toContain("Bash(npm test:*)");
     expect(written.permissions?.allow).toContain("Bash(curl:*)");
-    expect(written.permissions?.additionalDirectories).toContain("/Users/example/custom");
+    expect(written.permissions?.additionalDirectories).toContain(
+      "/Users/example/custom",
+    );
     expect(written.permissions?.additionalDirectories).toContain(stateDir);
   });
 
@@ -2801,12 +3600,15 @@ describe("shared ACPX engine runtime behavior", () => {
     );
 
     const written = JSON.parse(
-      await fs.readFile(path.join(cwd, ".claude", "settings.local.json"), "utf8"),
+      await fs.readFile(
+        path.join(cwd, ".claude", "settings.local.json"),
+        "utf8",
+      ),
     ) as { permissions?: { defaultMode?: string } };
     expect(written.permissions?.defaultMode).toBe("default");
 
-    const overrideNote = (meta[0]?.commandNotes as string[] | undefined)?.find((entry) =>
-      entry.includes("overrode user dontAsk"),
+    const overrideNote = (meta[0]?.commandNotes as string[] | undefined)?.find(
+      (entry) => entry.includes("overrode user dontAsk"),
     );
     expect(overrideNote).toBeTruthy();
   });
@@ -2831,14 +3633,21 @@ describe("shared ACPX engine runtime behavior", () => {
         runtime: {},
         config:
           agent === "custom"
-            ? { agent, agentCommand: "node ./fake-acp.js", stateDir: path.join(root, `state-${agent}`), cwd }
+            ? {
+                agent,
+                agentCommand: "node ./fake-acp.js",
+                stateDir: path.join(root, `state-${agent}`),
+                cwd,
+              }
             : { agent, stateDir: path.join(root, `state-${agent}`), cwd },
         context: { taskcoreWorkspace: { cwd } },
         onLog: async () => {},
         onMeta: async () => {},
       } as never);
       expect(result.exitCode).toBe(0);
-      verboseByAgent[agent] = (runtimeOptions[0] as { verbose?: boolean } | undefined)?.verbose;
+      verboseByAgent[agent] = (
+        runtimeOptions[0] as { verbose?: boolean } | undefined
+      )?.verbose;
     }
 
     expect(verboseByAgent.claude).toBe(true);
@@ -2857,7 +3666,9 @@ describe("shared ACPX engine runtime behavior", () => {
       { context: { taskcoreWorkspace: { cwd } } },
     );
 
-    expect(await pathExists(path.join(cwd, ".claude", "settings.local.json"))).toBe(false);
+    expect(
+      await pathExists(path.join(cwd, ".claude", "settings.local.json")),
+    ).toBe(false);
   });
 
   it("changes the ACPX session fingerprint when the resolved secret manifest rotates", async () => {
@@ -2905,28 +3716,67 @@ describe("shared ACPX engine runtime behavior", () => {
 
     expect(first.result.sessionParams?.configFingerprint).toBeTypeOf("string");
     expect(second.result.sessionParams?.configFingerprint).toBeTypeOf("string");
-    expect(first.result.sessionParams?.configFingerprint).not.toBe(second.result.sessionParams?.configFingerprint);
+    expect(first.result.sessionParams?.configFingerprint).not.toBe(
+      second.result.sessionParams?.configFingerprint,
+    );
   });
 
-  it.each(["claude", "codex", "grok", "gemini", "kimi"])("resumes %s with added and removed MCP servers and current credentials", async (agent) => {
-    const root = await makeTempRoot();
-    // This fixture injects its runtime. Keep session identity independent of
-    // host CLI discovery/version probes while testing MCP credential changes.
-    const config = { agent, agentCommand: "node ./fake-acp.js", cwd: root, stateDir: path.join(root, "state"), taskcoreRuntimeSkills: [], taskcoreSkillSync: { desiredSkills: [] } };
-    const first = await runExecutor(config);
-    const server = { name: "github", url: "https://example.test/github/mcp", connectionId: "github", token: "current-token" };
-    const second = await runExecutor(config, {
-      runtime: { sessionParams: sessionCodec.deserialize(first.result.sessionParams), taskKey: "default" },
-      runtimeMcp: { getServers: () => [server] }, context: { refreshTools: true },
-    });
-    expect(second.sessionInputs[0]?.resumeSessionId).toBe("backend-session");
-    expect(second.result.sessionParams?.configFingerprint).toBe(first.result.sessionParams?.configFingerprint);
-    expect(second.runtimeOptions[0]?.mcpServers).toEqual([{ type: "http", name: "github", url: server.url, headers: [{ name: "Authorization", value: "Bearer current-token" }] }]);
-    expect(JSON.stringify(sessionCodec.serialize(second.result.sessionParams ?? null))).not.toContain("current-token");
-    const third = await runExecutor(config, { runtime: { sessionParams: sessionCodec.deserialize(second.result.sessionParams) }, context: { refreshTools: true } });
-    expect(third.sessionInputs[0]?.resumeSessionId).toBe("backend-session");
-    expect(third.runtimeOptions[0]?.mcpServers).toEqual([]);
-  });
+  it.each(["claude", "codex", "grok", "gemini", "kimi"])(
+    "resumes %s with added and removed MCP servers and current credentials",
+    async (agent) => {
+      const root = await makeTempRoot();
+      // This fixture injects its runtime. Keep session identity independent of
+      // host CLI discovery/version probes while testing MCP credential changes.
+      const config = {
+        agent,
+        agentCommand: "node ./fake-acp.js",
+        cwd: root,
+        stateDir: path.join(root, "state"),
+        taskcoreRuntimeSkills: [],
+        taskcoreSkillSync: { desiredSkills: [] },
+      };
+      const first = await runExecutor(config);
+      const server = {
+        name: "github",
+        url: "https://example.test/github/mcp",
+        connectionId: "github",
+        token: "current-token",
+      };
+      const second = await runExecutor(config, {
+        runtime: {
+          sessionParams: sessionCodec.deserialize(first.result.sessionParams),
+          taskKey: "default",
+        },
+        runtimeMcp: { getServers: () => [server] },
+        context: { refreshTools: true },
+      });
+      expect(second.sessionInputs[0]?.resumeSessionId).toBe("backend-session");
+      expect(second.result.sessionParams?.configFingerprint).toBe(
+        first.result.sessionParams?.configFingerprint,
+      );
+      expect(second.runtimeOptions[0]?.mcpServers).toEqual([
+        {
+          type: "http",
+          name: "github",
+          url: server.url,
+          headers: [{ name: "Authorization", value: "Bearer current-token" }],
+        },
+      ]);
+      expect(
+        JSON.stringify(
+          sessionCodec.serialize(second.result.sessionParams ?? null),
+        ),
+      ).not.toContain("current-token");
+      const third = await runExecutor(config, {
+        runtime: {
+          sessionParams: sessionCodec.deserialize(second.result.sessionParams),
+        },
+        context: { refreshTools: true },
+      });
+      expect(third.sessionInputs[0]?.resumeSessionId).toBe("backend-session");
+      expect(third.runtimeOptions[0]?.mcpServers).toEqual([]);
+    },
+  );
 
   it("injects runtime MCP servers and fingerprints their identity without persisting bearer tokens", async () => {
     const root = await makeTempRoot();
@@ -2948,24 +3798,36 @@ describe("shared ACPX engine runtime behavior", () => {
     });
     const changedSet = await runExecutor(baseConfig, {
       runtimeMcp: {
-        getServers: () => [{ ...server, connectionId: "connection-2", token: "token-two" }],
+        getServers: () => [
+          { ...server, connectionId: "connection-2", token: "token-two" },
+        ],
       },
     });
 
-    expect(first.runtimeOptions[0]?.mcpServers).toEqual([{
-      type: "http",
-      name: "github",
-      url: server.url,
-      headers: [{ name: "Authorization", value: "Bearer token-one" }],
-    }]);
-    expect(first.result.sessionParams?.mcpServers).toEqual([{
-      name: "github",
-      url: server.url,
-      connectionId: "connection-1",
-    }]);
-    expect(JSON.stringify(first.result.sessionParams)).not.toContain("token-one");
-    expect(first.result.sessionParams?.configFingerprint).toBe(rotatedToken.result.sessionParams?.configFingerprint);
-    expect(first.result.sessionParams?.configFingerprint).not.toBe(changedSet.result.sessionParams?.configFingerprint);
+    expect(first.runtimeOptions[0]?.mcpServers).toEqual([
+      {
+        type: "http",
+        name: "github",
+        url: server.url,
+        headers: [{ name: "Authorization", value: "Bearer token-one" }],
+      },
+    ]);
+    expect(first.result.sessionParams?.mcpServers).toEqual([
+      {
+        name: "github",
+        url: server.url,
+        connectionId: "connection-1",
+      },
+    ]);
+    expect(JSON.stringify(first.result.sessionParams)).not.toContain(
+      "token-one",
+    );
+    expect(first.result.sessionParams?.configFingerprint).toBe(
+      rotatedToken.result.sessionParams?.configFingerprint,
+    );
+    expect(first.result.sessionParams?.configFingerprint).not.toBe(
+      changedSet.result.sessionParams?.configFingerprint,
+    );
   });
 });
 
@@ -2974,13 +3836,20 @@ describe("findAncestorBin", () => {
     const binDir = path.join(dir, "node_modules", ".bin");
     await fs.mkdir(binDir, { recursive: true });
     const binPath = path.join(binDir, name);
-    await fs.writeFile(binPath, "#!/usr/bin/env bash\necho ok\n", { mode: 0o755 });
+    await fs.writeFile(binPath, "#!/usr/bin/env bash\necho ok\n", {
+      mode: 0o755,
+    });
     return binPath;
   }
 
   it("finds the binary in the start directory's own node_modules/.bin", async () => {
     const root = await makeTempRoot();
-    const packageDir = path.join(root, "node_modules", "@taskcore", "adapter-utils");
+    const packageDir = path.join(
+      root,
+      "node_modules",
+      "@taskcore",
+      "adapter-utils",
+    );
     await fs.mkdir(packageDir, { recursive: true });
     const expectedBin = await writeFakeBin(packageDir, "claude-agent-acp");
 
@@ -2991,7 +3860,12 @@ describe("findAncestorBin", () => {
 
   it("finds the binary hoisted to an ancestor node_modules/.bin", async () => {
     const root = await makeTempRoot();
-    const packageDir = path.join(root, "node_modules", "@taskcore", "adapter-utils");
+    const packageDir = path.join(
+      root,
+      "node_modules",
+      "@taskcore",
+      "adapter-utils",
+    );
     await fs.mkdir(packageDir, { recursive: true });
     const expectedBin = await writeFakeBin(root, "claude-agent-acp");
 
@@ -3002,7 +3876,12 @@ describe("findAncestorBin", () => {
 
   it("returns null when the binary is not present in any ancestor", async () => {
     const root = await makeTempRoot();
-    const packageDir = path.join(root, "node_modules", "@taskcore", "adapter-utils");
+    const packageDir = path.join(
+      root,
+      "node_modules",
+      "@taskcore",
+      "adapter-utils",
+    );
     await fs.mkdir(packageDir, { recursive: true });
 
     const resolved = await findAncestorBin(packageDir, "claude-agent-acp");
@@ -3011,7 +3890,10 @@ describe("findAncestorBin", () => {
   });
 
   it("terminates at the filesystem root instead of looping forever", async () => {
-    const resolved = await findAncestorBin("/", "definitely-not-a-real-bin-name-xyz");
+    const resolved = await findAncestorBin(
+      "/",
+      "definitely-not-a-real-bin-name-xyz",
+    );
     expect(resolved).toBeNull();
   });
 });
@@ -3022,9 +3904,15 @@ describe("gemini ACP flag selection", () => {
     const workspace = path.join(root, "workspace");
     const alias = path.join(root, "workspace-alias");
     await fs.mkdir(workspace);
-    await fs.symlink(workspace, alias, process.platform === "win32" ? "junction" : "dir");
+    await fs.symlink(
+      workspace,
+      alias,
+      process.platform === "win32" ? "junction" : "dir",
+    );
     const { runtimeOptions, sessionInputs } = await runExecutor({
-      agent: "gemini", agentCommand: "node ./fake-acp.js", cwd: alias,
+      agent: "gemini",
+      agentCommand: "node ./fake-acp.js",
+      cwd: alias,
       stateDir: path.join(root, "state"),
     });
     const canonical = await fs.realpath(workspace);
@@ -3044,42 +3932,66 @@ describe("gemini ACP flag selection", () => {
     expect(geminiVersionSupportsNativeAcpFlag([0, 34, 1])).toBe(true);
     expect(geminiVersionSupportsNativeAcpFlag([1, 0, 0])).toBe(true);
     expect(geminiVersionSupportsNativeAcpFlag(null)).toBe(true);
-    expect(rewriteGeminiAcpFlagForVersion("gemini --acp", [0, 33, 0])).toBe("gemini --acp");
+    expect(rewriteGeminiAcpFlagForVersion("gemini --acp", [0, 33, 0])).toBe(
+      "gemini --acp",
+    );
   });
 
   it("downgrades --acp to --experimental-acp for gemini < 0.33.0", () => {
     expect(geminiVersionSupportsNativeAcpFlag([0, 30, 0])).toBe(false);
     expect(geminiVersionSupportsNativeAcpFlag([0, 32, 9])).toBe(false);
-    expect(rewriteGeminiAcpFlagForVersion("gemini --acp", [0, 30, 0])).toBe("gemini --experimental-acp");
-    expect(rewriteGeminiAcpFlagForVersion("/opt/bin/gemini --acp", [0, 30, 0])).toBe(
-      "/opt/bin/gemini --experimental-acp",
+    expect(rewriteGeminiAcpFlagForVersion("gemini --acp", [0, 30, 0])).toBe(
+      "gemini --experimental-acp",
     );
+    expect(
+      rewriteGeminiAcpFlagForVersion("/opt/bin/gemini --acp", [0, 30, 0]),
+    ).toBe("/opt/bin/gemini --experimental-acp");
   });
 
   async function writeFakeGemini(binDir: string, version: string) {
     await fs.mkdir(binDir, { recursive: true });
     const binPath = path.join(binDir, "gemini");
-    await fs.writeFile(binPath, `#!/bin/sh\necho "${version}"\n`, { mode: 0o755 });
+    await fs.writeFile(binPath, `#!/bin/sh\necho "${version}"\n`, {
+      mode: 0o755,
+    });
   }
 
   function pathWithFakeBin(binDir: string): string {
-    return [binDir, process.env.PATH ?? ""].filter(Boolean).join(path.delimiter);
+    return [binDir, process.env.PATH ?? ""]
+      .filter(Boolean)
+      .join(path.delimiter);
   }
 
   it("registers the gemini multi-word command directly", async () => {
     const root = await makeTempRoot();
     const binDir = path.join(root, "bin");
     await writeFakeGemini(binDir, "0.33.0");
-    const { runtimeOptions } = await runExecutor({ agent: "gemini", stateDir: path.join(root, "state"), env: { HOME: path.join(root, "home"), PATH: pathWithFakeBin(binDir) } });
-    expect((runtimeOptions[0]!.agentRegistry as { resolve(name: string): string }).resolve("gemini")).toBe("gemini --acp");
+    const { runtimeOptions } = await runExecutor({
+      agent: "gemini",
+      stateDir: path.join(root, "state"),
+      env: { HOME: path.join(root, "home"), PATH: pathWithFakeBin(binDir) },
+    });
+    expect(
+      (
+        runtimeOptions[0]!.agentRegistry as { resolve(name: string): string }
+      ).resolve("gemini"),
+    ).toBe("gemini --acp");
   });
 
   it("downgrades the registered gemini command when the local CLI predates --acp", async () => {
     const root = await makeTempRoot();
     const binDir = path.join(root, "bin");
     await writeFakeGemini(binDir, "0.30.0");
-    const { runtimeOptions } = await runExecutor({ agent: "gemini", stateDir: path.join(root, "state"), env: { HOME: path.join(root, "home"), PATH: pathWithFakeBin(binDir) } });
-    expect((runtimeOptions[0]!.agentRegistry as { resolve(name: string): string }).resolve("gemini")).toBe("gemini --experimental-acp");
+    const { runtimeOptions } = await runExecutor({
+      agent: "gemini",
+      stateDir: path.join(root, "state"),
+      env: { HOME: path.join(root, "home"), PATH: pathWithFakeBin(binDir) },
+    });
+    expect(
+      (
+        runtimeOptions[0]!.agentRegistry as { resolve(name: string): string }
+      ).resolve("gemini"),
+    ).toBe("gemini --experimental-acp");
   });
 
   it("applies the 4h sandbox backstop when timeoutSec is unset on a sandbox execution target", async () => {
@@ -3103,11 +4015,15 @@ describe("gemini ACP flag selection", () => {
     );
 
     // The sandbox default flows into the ACPX runtime wall-clock timer.
-    expect(runtimeOptions[0]?.timeoutMs).toBe(DEFAULT_REMOTE_SANDBOX_ADAPTER_TIMEOUT_SEC * 1000);
+    expect(runtimeOptions[0]?.timeoutMs).toBe(
+      DEFAULT_REMOTE_SANDBOX_ADAPTER_TIMEOUT_SEC * 1000,
+    );
     // The effective timeout and its source are stated at run start so a later
     // timeout is diagnosable from the run log alone.
     const startLine = logs.find(
-      (entry) => entry.stream === "stderr" && entry.text.includes("Adapter execution timeout:"),
+      (entry) =>
+        entry.stream === "stderr" &&
+        entry.text.includes("Adapter execution timeout:"),
     );
     expect(startLine).toBeTruthy();
     expect(startLine!.text).toContain(
@@ -3131,7 +4047,9 @@ describe("gemini ACP flag selection", () => {
 
     expect(runtimeOptions[0]?.timeoutMs).toBeUndefined();
     const startLine = logs.find(
-      (entry) => entry.stream === "stderr" && entry.text.includes("Adapter execution timeout:"),
+      (entry) =>
+        entry.stream === "stderr" &&
+        entry.text.includes("Adapter execution timeout:"),
     );
     expect(startLine).toBeTruthy();
     expect(startLine!.text).toContain("Adapter execution timeout: none");
@@ -3144,7 +4062,13 @@ describe("gemini ACP flag selection", () => {
     await fs.mkdir(cwd, { recursive: true });
 
     const { logs, runtimeOptions } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd, timeoutSec: 90 },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd,
+        timeoutSec: 90,
+      },
       {
         executionTarget: {
           kind: "remote",
@@ -3156,7 +4080,9 @@ describe("gemini ACP flag selection", () => {
 
     expect(runtimeOptions[0]?.timeoutMs).toBe(90 * 1000);
     const startLine = logs.find(
-      (entry) => entry.stream === "stderr" && entry.text.includes("Adapter execution timeout:"),
+      (entry) =>
+        entry.stream === "stderr" &&
+        entry.text.includes("Adapter execution timeout:"),
     );
     expect(startLine!.text).toContain(
       "Adapter execution timeout: timeoutSec=90 (configured via adapterConfig.timeoutSec; set adapterConfig.timeoutSec to override).",
@@ -3179,26 +4105,44 @@ describe("gemini ACP flag selection", () => {
     // The config UI persists the schema default of 0 for untouched fields, so
     // an explicit 0 cannot mean "no timeout" — it keeps the 4h backstop.
     const explicitZero = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd, timeoutSec: 0 },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd,
+        timeoutSec: 0,
+      },
       sandboxContext,
     );
     expect(explicitZero.runtimeOptions[0]?.timeoutMs).toBe(
       DEFAULT_REMOTE_SANDBOX_ADAPTER_TIMEOUT_SEC * 1000,
     );
     expect(explicitZero.result.resultJson?.adapterExecutionTimeout).toEqual({
-      timeoutSec: DEFAULT_REMOTE_SANDBOX_ADAPTER_TIMEOUT_SEC, source: "sandbox_default",
+      timeoutSec: DEFAULT_REMOTE_SANDBOX_ADAPTER_TIMEOUT_SEC,
+      source: "sandbox_default",
     });
 
     // A negative timeoutSec is the documented opt-out from any adapter
     // wall-clock timeout, sandbox targets included.
     const negativeOptOut = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd, timeoutSec: -1 },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd,
+        timeoutSec: -1,
+      },
       sandboxContext,
     );
     expect(negativeOptOut.runtimeOptions[0]?.timeoutMs).toBeUndefined();
-    expect(negativeOptOut.result.resultJson?.adapterExecutionTimeout).toEqual({ timeoutSec: 0, source: "configured" });
+    expect(negativeOptOut.result.resultJson?.adapterExecutionTimeout).toEqual({
+      timeoutSec: 0,
+      source: "configured",
+    });
     const startLine = negativeOptOut.logs.find(
-      (entry) => entry.stream === "stderr" && entry.text.includes("Adapter execution timeout:"),
+      (entry) =>
+        entry.stream === "stderr" &&
+        entry.text.includes("Adapter execution timeout:"),
     );
     expect(startLine!.text).toContain(
       "Adapter execution timeout: none (explicitly disabled via adapterConfig.timeoutSec; " +
@@ -3219,26 +4163,30 @@ describe("gemini ACP flag selection", () => {
     });
 
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          // Never yields on its own: only the Taskcore wall-clock timer's
-          // cancel unblocks the turn, simulating a hung run.
-          events: (async function* () {
-            await turnCancelled;
-          })(),
-          result: turnCancelled.then(() => ({ status: "cancelled", stopReason: "cancelled" })),
-          cancel: async ({ reason }: { reason: string }) => {
-            cancelReasons.push(reason);
-            releaseTurn?.();
-          },
-        }),
-        close: async () => {},
-      }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => ({
+            // Never yields on its own: only the Taskcore wall-clock timer's
+            // cancel unblocks the turn, simulating a hung run.
+            events: (async function* () {
+              await turnCancelled;
+            })(),
+            result: turnCancelled.then(() => ({
+              status: "cancelled",
+              stopReason: "cancelled",
+            })),
+            cancel: async ({ reason }: { reason: string }) => {
+              cancelReasons.push(reason);
+              releaseTurn?.();
+            },
+          }),
+          close: async () => {},
+        }) as never,
     });
 
     const result = await execute({
@@ -3262,33 +4210,79 @@ describe("gemini ACP flag selection", () => {
       "Set adapterConfig.timeoutSec to raise it.";
     expect(result.timedOut).toBe(true);
     expect(result.errorCode).toBe("acpx_timeout");
-    expect(result.resultJson?.adapterExecutionTimeout).toEqual({ timeoutSec: 1, source: "configured" });
+    expect(result.resultJson?.adapterExecutionTimeout).toEqual({
+      timeoutSec: 1,
+      source: "configured",
+    });
     expect(result.errorMessage).toBe(expectedMessage);
     expect(cancelReasons).toContain(expectedMessage);
-    expect(result.resultJson).toMatchObject({ acpObservedEventCount: 0, acpPendingToolCount: 0, acpToolInventoryComplete: true });
+    expect(result.resultJson).toMatchObject({
+      acpObservedEventCount: 0,
+      acpPendingToolCount: 0,
+      acpToolInventoryComplete: true,
+    });
     expect(result.resultJson).not.toHaveProperty("acpLastEventAgeMs");
   }, 15_000);
 });
 
 describe("ACP activity diagnostics", () => {
   it("classifies rejected definitions before redaction and overrides a transient adapter label", async () => {
-    const root = await makeTempRoot(), cwd = path.join(root, "worktree");
+    const root = await makeTempRoot(),
+      cwd = path.join(root, "worktree");
     await fs.mkdir(cwd, { recursive: true });
     const execute = createAcpxEngineExecutor({
-      classifyTerminalSessionFailure: () => ({ errorCode: "claude_transient_upstream", errorFamily: "transient_upstream" }),
-      createRuntime: () => ({ ...buildRuntime(), startTurn: (options: { onTerminalSessionFailure: (failure: unknown) => void }) => {
-        options.onTerminalSessionFailure({ category: "service", details: "API Error: 400 tools.17.custom.name: String should have at most 128 characters" });
-        return { events: (async function* () {})(), result: Promise.resolve({ status: "failed", error: new Error("turn failed") }), cancel: async () => {} };
-      } }) as never,
+      classifyTerminalSessionFailure: () => ({
+        errorCode: "claude_transient_upstream",
+        errorFamily: "transient_upstream",
+      }),
+      createRuntime: () =>
+        ({
+          ...buildRuntime(),
+          startTurn: (options: {
+            onTerminalSessionFailure: (failure: unknown) => void;
+          }) => {
+            options.onTerminalSessionFailure({
+              category: "service",
+              details:
+                "API Error: 400 tools.17.custom.name: String should have at most 128 characters",
+            });
+            return {
+              events: (async function* () {})(),
+              result: Promise.resolve({
+                status: "failed",
+                error: new Error("turn failed"),
+              }),
+              cancel: async () => {},
+            };
+          },
+        }) as never,
     });
-    const result = await execute({ runId: "invalid-definition", agent: { id: "agent-1", companyId: "company-1" }, runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state"), cwd, env: { SECRET: "128" } },
-      context: {}, onMeta: async () => {}, onLog: async () => {} } as never);
-    expect(result).toMatchObject({ errorCode: "provider_tool_definition_invalid", errorFamily: "configuration" });
-    expect(JSON.stringify(result.resultJson?.terminalSessionFailure)).not.toContain("128");
+    const result = await execute({
+      runId: "invalid-definition",
+      agent: { id: "agent-1", companyId: "company-1" },
+      runtime: {},
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+        cwd,
+        env: { SECRET: "128" },
+      },
+      context: {},
+      onMeta: async () => {},
+      onLog: async () => {},
+    } as never);
+    expect(result).toMatchObject({
+      errorCode: "provider_tool_definition_invalid",
+      errorFamily: "configuration",
+    });
+    expect(
+      JSON.stringify(result.resultJson?.terminalSessionFailure),
+    ).not.toContain("128");
   });
   it.each(["terminal", "relay_error", "no_events"])(
-    "snapshots %s activity before usage reads, failure logging, and cleanup", async (outcome) => {
+    "snapshots %s activity before usage reads, failure logging, and cleanup",
+    async (outcome) => {
       const root = await makeTempRoot();
       const cwd = path.join(root, "worktree");
       await fs.mkdir(cwd, { recursive: true });
@@ -3296,35 +4290,76 @@ describe("ACP activity diagnostics", () => {
       let statusReads = 0;
       const execute = createAcpxEngineExecutor({
         now: () => currentNow,
-        createRuntime: () => ({
-          ...buildRuntime(),
-          getStatus: async () => {
-            if (++statusReads > 1) currentNow += 100_000;
-            return null;
-          },
-          startTurn: () => ({
-            events: (async function* () {
-              if (outcome !== "no_events") {
-                yield { type: "tool_call", toolCallId: "private-pending-id", title: "private command", kind: "execute", status: "in_progress" };
-                yield { type: "tool_call", toolCallId: "private-done-id", title: "private read", kind: "read", status: "in_progress" };
-                yield { type: "tool_call", toolCallId: "private-done-id", status: "completed" };
-                yield { type: "tool_call", toolCallId: "private-cancelled-id", status: "cancelled" };
-                yield { type: "tool_call", toolCallId: "private-failed-id", status: "failed" };
-                yield { type: "status", text: "terminal/create private receipt" };
-              }
-              currentNow = 10_000;
-              if (outcome === "relay_error") throw new Error("relay failed");
-            })(),
-            result: Promise.resolve({ status: "failed", error: new Error("turn failed") }),
-            cancel: async () => {},
-          }),
-          close: async () => { currentNow += 100_000; },
-        }) as never,
+        createRuntime: () =>
+          ({
+            ...buildRuntime(),
+            getStatus: async () => {
+              if (++statusReads > 1) currentNow += 100_000;
+              return null;
+            },
+            startTurn: () => ({
+              events: (async function* () {
+                if (outcome !== "no_events") {
+                  yield {
+                    type: "tool_call",
+                    toolCallId: "private-pending-id",
+                    title: "private command",
+                    kind: "execute",
+                    status: "in_progress",
+                  };
+                  yield {
+                    type: "tool_call",
+                    toolCallId: "private-done-id",
+                    title: "private read",
+                    kind: "read",
+                    status: "in_progress",
+                  };
+                  yield {
+                    type: "tool_call",
+                    toolCallId: "private-done-id",
+                    status: "completed",
+                  };
+                  yield {
+                    type: "tool_call",
+                    toolCallId: "private-cancelled-id",
+                    status: "cancelled",
+                  };
+                  yield {
+                    type: "tool_call",
+                    toolCallId: "private-failed-id",
+                    status: "failed",
+                  };
+                  yield {
+                    type: "status",
+                    text: "terminal/create private receipt",
+                  };
+                }
+                currentNow = 10_000;
+                if (outcome === "relay_error") throw new Error("relay failed");
+              })(),
+              result: Promise.resolve({
+                status: "failed",
+                error: new Error("turn failed"),
+              }),
+              cancel: async () => {},
+            }),
+            close: async () => {
+              currentNow += 100_000;
+            },
+          }) as never,
       });
       const result = await execute({
-        runId: "activity-run", agent: { id: "agent-1", companyId: "company-1" }, runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state"), cwd },
-        context: {}, onMeta: async () => {},
+        runId: "activity-run",
+        agent: { id: "agent-1", companyId: "company-1" },
+        runtime: {},
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+          cwd,
+        },
+        context: {},
+        onMeta: async () => {},
         onLog: async (_stream: string, text: string) => {
           if (text.includes('"type":"acpx.error"')) currentNow += 100_000;
         },
@@ -3335,9 +4370,14 @@ describe("ACP activity diagnostics", () => {
         acpPendingToolCount: outcome === "no_events" ? 0 : 1,
         acpToolInventoryComplete: outcome === "no_events",
       });
-      if (outcome === "no_events") expect(result.resultJson).not.toHaveProperty("acpLastEventAgeMs");
+      if (outcome === "no_events")
+        expect(result.resultJson).not.toHaveProperty("acpLastEventAgeMs");
       else expect(result.resultJson?.acpLastEventAgeMs).toBe(9000);
-      const diagnostics = Object.fromEntries(Object.entries(result.resultJson ?? {}).filter(([key]) => key.startsWith("acp")));
+      const diagnostics = Object.fromEntries(
+        Object.entries(result.resultJson ?? {}).filter(([key]) =>
+          key.startsWith("acp"),
+        ),
+      );
       expect(JSON.stringify(diagnostics)).not.toContain("private");
       expect(currentNow).toBeGreaterThan(10_000);
     },
@@ -3388,8 +4428,15 @@ describe("summarizeAcpxTurnUsage no-report turns", () => {
   it("suppresses usage when the turn reported nothing and the persisted breakdown is unchanged", () => {
     const stale = { inputTokens: 10, outputTokens: 500, cachedReadTokens: 30 };
     const summary = summarizeAcpxTurnUsage({
-      preStatus: { usage: { cumulative: stale, cost: { amount: 0.5, currency: "USD" } } },
-      postStatus: { usage: { cumulative: { ...stale }, cost: { amount: 0.5, currency: "USD" } } },
+      preStatus: {
+        usage: { cumulative: stale, cost: { amount: 0.5, currency: "USD" } },
+      },
+      postStatus: {
+        usage: {
+          cumulative: { ...stale },
+          cost: { amount: 0.5, currency: "USD" },
+        },
+      },
       eventBreakdown: null,
       eventCostUsd: null,
     });
@@ -3418,7 +4465,9 @@ describe("summarizeAcpxTurnUsage no-report turns", () => {
   it("treats omitted and explicit zero fields as the same stale breakdown", () => {
     const current = { inputTokens: 25, outputTokens: 75, cachedReadTokens: 5 };
     const summary = summarizeAcpxTurnUsage({
-      preStatus: { usage: { cumulative: { inputTokens: 10, outputTokens: 500 } } },
+      preStatus: {
+        usage: { cumulative: { inputTokens: 10, outputTokens: 500 } },
+      },
       postStatus: {
         usage: {
           cumulative: {
@@ -3444,9 +4493,14 @@ describe("summarizeAcpxTurnUsage no-report turns", () => {
   it("does not reuse stale tokens when the turn reports cost only", () => {
     const stale = { inputTokens: 10, outputTokens: 500, cachedReadTokens: 30 };
     const summary = summarizeAcpxTurnUsage({
-      preStatus: { usage: { cumulative: stale, cost: { amount: 0.5, currency: "USD" } } },
+      preStatus: {
+        usage: { cumulative: stale, cost: { amount: 0.5, currency: "USD" } },
+      },
       postStatus: {
-        usage: { cumulative: { ...stale }, cost: { amount: 0.5, currency: "USD" } },
+        usage: {
+          cumulative: { ...stale },
+          cost: { amount: 0.5, currency: "USD" },
+        },
       },
       eventBreakdown: null,
       eventCostUsd: 0.75,
@@ -3485,110 +4539,153 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
   }
 
   it("test_remote_buildRuntime_crosses_staging_seam", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     const { sessionInputs, events } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", executionTarget },
     );
 
     // Crossing the staging seam emits a per-step timing event for the sync.
     const stageEvent = events.find(
-      (event) => event.eventType === "run.startup.step" && event.payload?.step === "stage.sync",
+      (event) =>
+        event.eventType === "run.startup.step" &&
+        event.payload?.step === "stage.sync",
     );
     expect(stageEvent).toBeTruthy();
     expect(typeof stageEvent!.payload?.durationMs).toBe("number");
 
     // Staging seam crossed exactly once, shipping the HOST worktree.
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(1);
-    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock.calls[0]![0];
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(1);
+    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock
+      .calls[0]![0];
     expect(stageArgs.workspaceLocalDir).toBe(localCwd);
-    expect(stageArgs.target).toMatchObject({ kind: "remote", transport: "sandbox" });
+    expect(stageArgs.target).toMatchObject({
+      kind: "remote",
+      transport: "sandbox",
+    });
     // No credential/home asset staged in PR 1 (that is PR 2's per-adapter seed).
     expect(stageArgs.assets ?? []).toEqual([]);
     expect(stageArgs.installCommand ?? null).toBeNull();
 
     // Both bridges receive the real (non-null) runtimeRootDir from staging.
-    const taskcoreArgs = vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mock.calls[0]![0];
-    const processArgs = vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mock.calls[0]![0];
+    const taskcoreArgs = vi.mocked(startAdapterExecutionTargetTaskcoreBridge)
+      .mock.calls[0]![0];
+    const processArgs = vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mock.calls[0]![0];
     expect(taskcoreArgs.runtimeRootDir).toBeTruthy();
     expect(processArgs.runtimeRootDir).toBeTruthy();
     expect(String(taskcoreArgs.runtimeRootDir)).toContain(".taskcore-runtime");
     expect(processArgs.runtimeRootDir).toBe(taskcoreArgs.runtimeRootDir);
 
     // The workspace really landed in the sandbox workspace dir.
-    await expect(fs.readFile(path.join(remoteCwd, "hello.txt"), "utf8")).resolves.toBe("hi");
+    await expect(
+      fs.readFile(path.join(remoteCwd, "hello.txt"), "utf8"),
+    ).resolves.toBe("hi");
     // And session/new is created on the in-sandbox workspace cwd.
     expect(sessionInputs[0]?.cwd).toBe(remoteCwd);
   });
 
   it("hands the merged taskcore env to the process-session launch when the setups overlap", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     // Decode the process-session LAUNCH payload (the base64 command blob) — the
     // in-sandbox process env is carried there, NOT in the exec's own `env`.
     let launchPayload: Record<string, unknown> | null = null;
-    (executionTarget as { runner: unknown }).runner = createLocalSandboxRunner((input) => {
-      if (input.env?.TASKCORE_SANDBOX_EXEC_CHANNEL === "bridge") {
-        const script = input.args?.[1] ?? "";
-        const match = script.match(/TASKCORE_PROCESS_SESSION_COMMAND_B64='([^']+)'/);
-        if (match) {
-          launchPayload = JSON.parse(Buffer.from(match[1]!, "base64").toString("utf8")) as Record<
-            string,
-            unknown
-          >;
+    (executionTarget as { runner: unknown }).runner = createLocalSandboxRunner(
+      (input) => {
+        if (input.env?.TASKCORE_SANDBOX_EXEC_CHANNEL === "bridge") {
+          const script = input.args?.[1] ?? "";
+          const match = script.match(
+            /TASKCORE_PROCESS_SESSION_COMMAND_B64='([^']+)'/,
+          );
+          if (match) {
+            launchPayload = JSON.parse(
+              Buffer.from(match[1]!, "base64").toString("utf8"),
+            ) as Record<string, unknown>;
+          }
         }
-      }
-    });
+      },
+    );
 
     await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", executionTarget },
     );
 
     // The process-session bridge receives its launch env as a DEFERRED thunk —
     // the seam that lets its env-independent setup overlap the taskcore bridge
     // start instead of running strictly after it.
-    const processArgs = vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mock.calls[0]![0];
+    const processArgs = vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mock.calls[0]![0];
     expect(typeof processArgs.env).toBe("function");
 
     // ...and despite the overlap the launch still observes the MERGED taskcore
     // env: the taskcore-`env` → process-session-launch hand-off stays sequenced
     // under concurrency (bridge base URL + minted bridge token both present, and
     // the token is NOT the host run JWT).
-    const payloadEnv = ((launchPayload as Record<string, unknown> | null)?.env ?? {}) as Record<
-      string,
-      unknown
-    >;
+    const payloadEnv = ((launchPayload as Record<string, unknown> | null)
+      ?.env ?? {}) as Record<string, unknown>;
     expect(payloadEnv).toMatchObject({ TASKCORE_API_BRIDGE_MODE: "queue_v1" });
-    expect(String(payloadEnv.TASKCORE_API_URL ?? "")).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+    expect(String(payloadEnv.TASKCORE_API_URL ?? "")).toMatch(
+      /^http:\/\/127\.0\.0\.1:\d+$/,
+    );
     expect(payloadEnv.TASKCORE_API_KEY).toBeTruthy();
     expect(payloadEnv.TASKCORE_API_KEY).not.toBe("real-run-jwt");
   });
 
   it("publishes referenced-project workspace hints repointed at their staged sandbox directories", async () => {
-    const { root, stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
+    const { root, stateDir, localCwd, executionTarget } =
+      await setupRemoteSandbox();
     // A referenced project with a real host tree, so the sandbox transport stages it and returns a
     // `project-<projectId>` directory for it.
     const referencedProjectDir = path.join(root, "referenced-project-a");
     await fs.mkdir(referencedProjectDir, { recursive: true });
-    await fs.writeFile(path.join(referencedProjectDir, "note.txt"), "referenced", "utf8");
+    await fs.writeFile(
+      path.join(referencedProjectDir, "note.txt"),
+      "referenced",
+      "utf8",
+    );
 
     // Decode the process-session LAUNCH payload — the in-sandbox process env is carried there.
     let launchPayload: Record<string, unknown> | null = null;
-    (executionTarget as { runner: unknown }).runner = createLocalSandboxRunner((input) => {
-      if (input.env?.TASKCORE_SANDBOX_EXEC_CHANNEL === "bridge") {
-        const script = input.args?.[1] ?? "";
-        const match = script.match(/TASKCORE_PROCESS_SESSION_COMMAND_B64='([^']+)'/);
-        if (match) {
-          launchPayload = JSON.parse(Buffer.from(match[1]!, "base64").toString("utf8")) as Record<
-            string,
-            unknown
-          >;
+    (executionTarget as { runner: unknown }).runner = createLocalSandboxRunner(
+      (input) => {
+        if (input.env?.TASKCORE_SANDBOX_EXEC_CHANNEL === "bridge") {
+          const script = input.args?.[1] ?? "";
+          const match = script.match(
+            /TASKCORE_PROCESS_SESSION_COMMAND_B64='([^']+)'/,
+          );
+          if (match) {
+            launchPayload = JSON.parse(
+              Buffer.from(match[1]!, "base64").toString("utf8"),
+            ) as Record<string, unknown>;
+          }
         }
-      }
-    });
+      },
+    );
 
     await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       {
         authToken: "real-run-jwt",
         executionTarget,
@@ -3624,13 +4721,13 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
       },
     );
 
-    const payloadEnv = ((launchPayload as Record<string, unknown> | null)?.env ?? {}) as Record<
-      string,
-      unknown
-    >;
+    const payloadEnv = ((launchPayload as Record<string, unknown> | null)
+      ?.env ?? {}) as Record<string, unknown>;
     const workspacesJson = payloadEnv.TASKCORE_WORKSPACES_JSON;
     expect(typeof workspacesJson).toBe("string");
-    const hints = JSON.parse(String(workspacesJson)) as Array<Record<string, unknown>>;
+    const hints = JSON.parse(String(workspacesJson)) as Array<
+      Record<string, unknown>
+    >;
     const referencedHint = hints.find((hint) => hint.projectId === "a");
     expect(referencedHint).toBeTruthy();
     // The referenced hint repoints from the host path to its staged in-sandbox directory.
@@ -3644,10 +4741,14 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
     // with it — still resolves a live handle. The abandon path must stop that
     // handle so no started bridge leaks on partial failure.
     const stop = vi.fn(async () => {});
-    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(async () => {
-      throw new Error("taskcore bridge boom");
-    });
-    vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementationOnce(
+    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(
+      async () => {
+        throw new Error("taskcore bridge boom");
+      },
+    );
+    vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mockImplementationOnce(
       async () => ({ agentCommand: null, stop }) as never,
     );
 
@@ -3660,7 +4761,12 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
         runId: "run-bridge-fail",
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir,
+          cwd: localCwd,
+        },
         context: {},
         authToken: "real-run-jwt",
         executionTarget,
@@ -3675,9 +4781,15 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
   });
 
   it("test_remote_session_new_uses_in_sandbox_cwd", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     const { sessionInputs, runtimeOptions } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", executionTarget },
     );
 
@@ -3689,9 +4801,15 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
   });
 
   it("preserves Gemini's in-sandbox workspace without host canonicalization", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     const { sessionInputs, runtimeOptions } = await runExecutor(
-      { agent: "gemini", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "gemini",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", executionTarget },
     );
     expect(runtimeOptions[0]?.cwd).toBe(remoteCwd);
@@ -3699,11 +4817,13 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
   });
 
   it("test_remote_warm_handle_reused_after_cwd_change", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     const ensureInputs: Array<Record<string, unknown>> = [];
     const execute = createAcpxEngineExecutor({
       warmHandles: new Map(),
-      createRuntime: () => buildRuntime(undefined, (input) => ensureInputs.push(input)) as never,
+      createRuntime: () =>
+        buildRuntime(undefined, (input) => ensureInputs.push(input)) as never,
     });
     const base = {
       agent: { id: "agent-1", companyId: "company-1" },
@@ -3722,7 +4842,11 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
       onMeta: async () => {},
     };
 
-    const first = await execute({ runId: "run-remote-a", runtime: {}, ...base } as never);
+    const first = await execute({
+      runId: "run-remote-a",
+      runtime: {},
+      ...base,
+    } as never);
     const second = await execute({
       runId: "run-remote-b",
       runtime: { sessionParams: first.sessionParams },
@@ -3753,9 +4877,15 @@ describe("ACPX engine remote sandbox staging seam (PR 1: workspace + cwd)", () =
 
     // A local (non-remote) run never crosses the staging seam or starts a
     // bridge, and session/new stays on the HOST cwd — byte-identical to today.
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).not.toHaveBeenCalled();
-    expect(vi.mocked(startAdapterExecutionTargetTaskcoreBridge)).not.toHaveBeenCalled();
-    expect(vi.mocked(startAdapterExecutionTargetProcessSessionBridge)).not.toHaveBeenCalled();
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).not.toHaveBeenCalled();
+    expect(
+      vi.mocked(startAdapterExecutionTargetTaskcoreBridge),
+    ).not.toHaveBeenCalled();
+    expect(
+      vi.mocked(startAdapterExecutionTargetProcessSessionBridge),
+    ).not.toHaveBeenCalled();
     expect(sessionInputs[0]?.cwd).toBe(localCwd);
     expect(runtimeOptions[0]?.cwd).toBe(localCwd);
   });
@@ -3785,7 +4915,8 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
   }
 
   it("test_remote_seam_receives_adapter_agnostic_context", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     let captured: Record<string, unknown> | null = null;
     const { sessionInputs, events } = await runExecutor(
       {
@@ -3810,7 +4941,9 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
     // The managed-home seam runs inside the timed stage.sync boundary, so a
     // per-step timing event is emitted for it.
     const stageEvent = events.find(
-      (event) => event.eventType === "run.startup.step" && event.payload?.step === "stage.sync",
+      (event) =>
+        event.eventType === "run.startup.step" &&
+        event.payload?.step === "stage.sync",
     );
     expect(stageEvent).toBeTruthy();
     expect(typeof stageEvent!.payload?.durationMs).toBe("number");
@@ -3824,28 +4957,41 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
     expect(context.companyId).toBe("company-1");
     expect(context.runId).toBe("run-1");
     expect(context.workspaceLocalDir).toBe(localCwd);
-    expect(context.executionTarget).toMatchObject({ kind: "remote", transport: "sandbox" });
+    expect(context.executionTarget).toMatchObject({
+      kind: "remote",
+      transport: "sandbox",
+    });
     expect(typeof context.stage).toBe("function");
     expect(typeof context.timeoutSec).toBe("number");
     // ...including the resolved run env (adapter config env folded in).
-    expect((context.env as Record<string, string>).SEAM_MARKER).toBe("seam-marker-value");
+    expect((context.env as Record<string, string>).SEAM_MARKER).toBe(
+      "seam-marker-value",
+    );
     // ...and NOTHING scoped to a single adapter leaks across the seam. This locks
     // the boundary: the engine must not hand a Gemini/Claude/Codex-specific field
     // (e.g. the former `geminiSkillsHome`) to the generic seam context.
     expect(context).not.toHaveProperty("geminiSkillsHome");
-    expect(Object.keys(context).some((key) => /gemini|claude|codex/i.test(key))).toBe(false);
+    expect(
+      Object.keys(context).some((key) => /gemini|claude|codex/i.test(key)),
+    ).toBe(false);
     expect(sessionInputs[0]?.cwd).toBe(remoteCwd);
   });
 
   it("test_remote_seam_stages_assets_and_env_remap_reaches_process", async () => {
-    const { root, stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { root, stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     // A managed-home dir the seam ships as an asset (mirrors a per-adapter home).
     const managedHomeDir = path.join(root, "managed-home");
     await fs.mkdir(managedHomeDir, { recursive: true });
     await fs.writeFile(path.join(managedHomeDir, "config.json"), "{}", "utf8");
 
     const { meta } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       {
         authToken: "real-run-jwt",
         executionTarget,
@@ -3862,14 +5008,19 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
     );
 
     // The seam's asset was threaded through the shared staging seam...
-    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock.calls[0]![0];
+    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock
+      .calls[0]![0];
     expect(stageArgs.assets).toEqual([
       { key: "home", localDir: managedHomeDir, followSymlinks: true },
     ]);
     // ...it really landed in the sandbox (local runner extracts to the asset dir)...
-    const remoteAssetDir = String((meta[0]?.env as Record<string, string>).MANAGED_HOME);
+    const remoteAssetDir = String(
+      (meta[0]?.env as Record<string, string>).MANAGED_HOME,
+    );
     expect(remoteAssetDir).toBeTruthy();
-    await expect(fs.readFile(path.join(remoteAssetDir, "config.json"), "utf8")).resolves.toBe("{}");
+    await expect(
+      fs.readFile(path.join(remoteAssetDir, "config.json"), "utf8"),
+    ).resolves.toBe("{}");
     // ...the staged asset dir resolves under the run's managed runtime root (an
     // in-sandbox path), not the host managed-home dir.
     expect(remoteAssetDir).toContain(".taskcore-runtime");
@@ -3879,19 +5030,36 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
 
   it("retains bounded restore diagnostics through real settlement and result reproduction", async () => {
     const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
-    const failure = Object.assign(new Error("private-restore-path and command"), { code: 1, stderr: "private-restore-stderr" });
+    const failure = Object.assign(
+      new Error("private-restore-path and command"),
+      { code: 1, stderr: "private-restore-stderr" },
+    );
     const { result } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
       {
-        authToken: "real-run-jwt", executionTarget,
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
         prepareRemoteManagedHome: async (input) => {
           const stagedRuntime = await input.stage([]);
           return {
             stagedRuntime,
             teardown: createWorkspaceRestoreTeardown({
-              stagedRuntime: { restoreWorkspace: () => withWorkspaceRestoreDiagnostics("workspace", () =>
-                withWorkspaceRestoreStep("git_integration", async () => { throw failure; })) },
-              onLog: async () => {}, startMessage: "Restoring workspace", failurePrefix: "Restore failed",
+              stagedRuntime: {
+                restoreWorkspace: () =>
+                  withWorkspaceRestoreDiagnostics("workspace", () =>
+                    withWorkspaceRestoreStep("git_integration", async () => {
+                      throw failure;
+                    }),
+                  ),
+              },
+              onLog: async () => {},
+              startMessage: "Restoring workspace",
+              failurePrefix: "Restore failed",
             }),
           };
         },
@@ -3899,7 +5067,12 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
     );
     expect(result.resultJson).toMatchObject({
       workspaceRestoreFailure: "restore_failed",
-      workspaceRestoreDiagnostic: { phase: "workspace", step: "git_integration", errorCode: "unknown", exitCode: 1 },
+      workspaceRestoreDiagnostic: {
+        phase: "workspace",
+        step: "git_integration",
+        errorCode: "unknown",
+        exitCode: 1,
+      },
     });
     expect(JSON.stringify(result)).not.toContain("private-restore-");
   });
@@ -3908,7 +5081,12 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
     const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
     let teardownCalls = 0;
     await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       {
         authToken: "real-run-jwt",
         executionTarget,
@@ -3933,14 +5111,23 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
   it("test_remote_seam_absent_stages_workspace_only", async () => {
     // Without a seam (custom agents / adapters with no home seed), the remote lane
     // stages the workspace with no home asset — byte-identical to PR-1 behavior.
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     const { sessionInputs } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", executionTarget },
     );
 
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(1);
-    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock.calls[0]![0];
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(1);
+    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock
+      .calls[0]![0];
     expect(stageArgs.assets ?? []).toEqual([]);
     expect(sessionInputs[0]?.cwd).toBe(remoteCwd);
   });
@@ -3952,7 +5139,12 @@ describe("ACPX engine remote managed-home seam (PR 2: per-adapter home seed)", (
     // project id and the reason. The run stays successful (per-project isolation).
     const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
     const { result, logs } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       {
         authToken: "real-run-jwt",
         executionTarget,
@@ -4014,7 +5206,13 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     return async (input) => {
       const stagedRuntime = await input.stage(
         input.skillsBundleDir
-          ? [{ key: "skills", localDir: input.skillsBundleDir, followSymlinks: false }]
+          ? [
+              {
+                key: "skills",
+                localDir: input.skillsBundleDir,
+                followSymlinks: false,
+              },
+            ]
           : [],
       );
       return { stagedRuntime };
@@ -4026,22 +5224,49 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     const cwd = path.join(root, "worktree");
     const stateDir = path.join(root, "state");
     await fs.mkdir(cwd, { recursive: true });
-    const skill = await createSkill(path.join(root, "sources"), "taskcore--versioned", [
-      "---", "description: >-", "  Use for Taskcore-managed tasks", "  and durable task documents.",
-      "---", "PRIVATE_SKILL_BODY_RECIPE", "",
-    ].join("\n"));
+    const skill = await createSkill(
+      path.join(root, "sources"),
+      "taskcore--versioned",
+      [
+        "---",
+        "description: >-",
+        "  Use for Taskcore-managed tasks",
+        "  and durable task documents.",
+        "---",
+        "PRIVATE_SKILL_BODY_RECIPE",
+        "",
+      ].join("\n"),
+    );
     const { meta, result } = await runExecutor({
-      agent: "claude", agentCommand: "node ./fake-acp.js", stateDir, cwd,
-      taskcoreRuntimeSkills: [skill], taskcoreSkillSync: { desiredSkills: [skill.key] },
+      agent: "claude",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+      cwd,
+      taskcoreRuntimeSkills: [skill],
+      taskcoreSkillSync: { desiredSkills: [skill.key] },
     });
-    const bundle = await onlyChildDir(path.join(stateDir, "runtime-skills", "claude"));
-    const stagedFile = path.join(bundle, ".claude", "skills", skill.runtimeName, "SKILL.md");
+    const bundle = await onlyChildDir(
+      path.join(stateDir, "runtime-skills", "claude"),
+    );
+    const stagedFile = path.join(
+      bundle,
+      ".claude",
+      "skills",
+      skill.runtimeName,
+      "SKILL.md",
+    );
     const prompt = String(meta[0]?.prompt ?? "");
-    expect(prompt).toContain(`- ${skill.runtimeName}: Use for Taskcore-managed tasks and durable task documents. (file: ${stagedFile})`);
+    expect(prompt).toContain(
+      `- ${skill.runtimeName}: Use for Taskcore-managed tasks and durable task documents. (file: ${stagedFile})`,
+    );
     expect(prompt).not.toContain("PRIVATE_SKILL_BODY_RECIPE");
     expect(prompt).not.toContain(skill.source);
-    expect(result.sessionParams?.skills).toMatchObject({ selectedSkills: [skill.runtimeName] });
-    await expect(fs.readFile(stagedFile, "utf8")).resolves.toContain("PRIVATE_SKILL_BODY_RECIPE");
+    expect(result.sessionParams?.skills).toMatchObject({
+      selectedSkills: [skill.runtimeName],
+    });
+    await expect(fs.readFile(stagedFile, "utf8")).resolves.toContain(
+      "PRIVATE_SKILL_BODY_RECIPE",
+    );
   });
 
   it("bounds routing descriptions and keeps files discoverable when metadata is absent or malformed", async () => {
@@ -4050,25 +5275,42 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     const stateDir = path.join(root, "state");
     await fs.mkdir(cwd, { recursive: true });
     const sources = path.join(root, "sources");
-    const bounded = await createSkill(sources, "bounded", `---\ndescription: ${"x".repeat(600)}\n---\nBOUNDED_BODY\n`);
+    const bounded = await createSkill(
+      sources,
+      "bounded",
+      `---\ndescription: ${"x".repeat(600)}\n---\nBOUNDED_BODY\n`,
+    );
     const absent = await createSkill(sources, "absent", "# ABSENT_BODY\n");
-    const malformed = await createSkill(sources, "malformed", "---\ndescription: incomplete header\nMALFORMED_BODY\n");
+    const malformed = await createSkill(
+      sources,
+      "malformed",
+      "---\ndescription: incomplete header\nMALFORMED_BODY\n",
+    );
     const skills = [bounded, absent, malformed];
     const { meta } = await runExecutor({
-      agent: "claude", agentCommand: "node ./fake-acp.js", stateDir, cwd,
-      taskcoreRuntimeSkills: skills, taskcoreSkillSync: { desiredSkills: skills.map((skill) => skill.key) },
+      agent: "claude",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+      cwd,
+      taskcoreRuntimeSkills: skills,
+      taskcoreSkillSync: { desiredSkills: skills.map((skill) => skill.key) },
     });
     const prompt = String(meta[0]?.prompt ?? "");
     expect(prompt).toContain(`- bounded: ${"x".repeat(512)} (file: `);
     expect(prompt).not.toContain("x".repeat(513));
     expect(prompt).toMatch(/- absent \(file: .*\/absent\/SKILL\.md\)/);
     expect(prompt).toMatch(/- malformed \(file: .*\/malformed\/SKILL\.md\)/);
-    for (const body of ["BOUNDED_BODY", "ABSENT_BODY", "MALFORMED_BODY"]) expect(prompt).not.toContain(body);
+    for (const body of ["BOUNDED_BODY", "ABSENT_BODY", "MALFORMED_BODY"])
+      expect(prompt).not.toContain(body);
   });
 
   it("rewrites the prompt and skill identity onto the in-sandbox skill root once the bundle is staged", async () => {
     const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
-    const skill = await createSkill(path.join(localCwd, "skills"), "review", "---\ndescription: Review requested task documents.\n---\n# review\nREMOTE_BODY_ONLY\n");
+    const skill = await createSkill(
+      path.join(localCwd, "skills"),
+      "review",
+      "---\ndescription: Review requested task documents.\n---\n# review\nREMOTE_BODY_ONLY\n",
+    );
 
     const { meta, result } = await runExecutor(
       {
@@ -4079,10 +5321,16 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
         taskcoreRuntimeSkills: [skill],
         taskcoreSkillSync: { desiredSkills: [skill.key] },
       },
-      { authToken: "real-run-jwt", executionTarget, prepareRemoteManagedHome: stagingClaudeSeam() },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        prepareRemoteManagedHome: stagingClaudeSeam(),
+      },
     );
 
-    const hostBundleDir = await onlyChildDir(path.join(stateDir, "runtime-skills", "claude"));
+    const hostBundleDir = await onlyChildDir(
+      path.join(stateDir, "runtime-skills", "claude"),
+    );
     const hostSkillsHome = path.join(hostBundleDir, ".claude", "skills");
 
     const prompt = String(meta[0]?.prompt ?? "");
@@ -4091,13 +5339,19 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
 
     const inSandboxSkillsRoot = prompt.match(/Skill root: (\S+)/)![1]!;
     expect(inSandboxSkillsRoot).not.toBe(hostSkillsHome);
-    expect(prompt).toContain(`- review: Review requested task documents. (file: ${path.join(inSandboxSkillsRoot, "review", "SKILL.md")})`);
+    expect(prompt).toContain(
+      `- review: Review requested task documents. (file: ${path.join(inSandboxSkillsRoot, "review", "SKILL.md")})`,
+    );
     expect(prompt).not.toContain("REMOTE_BODY_ONLY");
     await expect(
-      fs.readFile(path.join(inSandboxSkillsRoot, skill.runtimeName, "SKILL.md"), "utf8"),
+      fs.readFile(
+        path.join(inSandboxSkillsRoot, skill.runtimeName, "SKILL.md"),
+        "utf8",
+      ),
     ).resolves.toContain("# review");
 
-    const skillsIdentity = result.sessionParams?.skills as { skillRoot?: string } | undefined;
+    const skillsIdentity = result.sessionParams?.skills as
+      { skillRoot?: string } | undefined;
     expect(skillsIdentity?.skillRoot).toBe(inSandboxSkillsRoot);
   });
 
@@ -4115,13 +5369,20 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
       taskcoreRuntimeSkills: [skill],
       taskcoreSkillSync: { desiredSkills: [skill.key] },
     };
-    const seamWithOverriddenSkillsDir = (
-      overridePath: string,
-    ): AcpxEngineExecutorOptions["prepareRemoteManagedHome"] =>
+    const seamWithOverriddenSkillsDir =
+      (
+        overridePath: string,
+      ): AcpxEngineExecutorOptions["prepareRemoteManagedHome"] =>
       async (input) => {
         const stagedRuntime = await input.stage(
           input.skillsBundleDir
-            ? [{ key: "skills", localDir: input.skillsBundleDir, followSymlinks: false }]
+            ? [
+                {
+                  key: "skills",
+                  localDir: input.skillsBundleDir,
+                  followSymlinks: false,
+                },
+              ]
             : [],
         );
         stagedRuntime.assetDirs.skills = overridePath;
@@ -4131,19 +5392,29 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     const runA = await runExecutor(baseConfig, {
       authToken: "real-run-jwt",
       executionTarget,
-      prepareRemoteManagedHome: seamWithOverriddenSkillsDir("/sandbox/path-a/skills"),
+      prepareRemoteManagedHome: seamWithOverriddenSkillsDir(
+        "/sandbox/path-a/skills",
+      ),
     });
     const runB = await runExecutor(baseConfig, {
       authToken: "real-run-jwt",
       executionTarget,
-      prepareRemoteManagedHome: seamWithOverriddenSkillsDir("/sandbox/path-b/skills"),
+      prepareRemoteManagedHome: seamWithOverriddenSkillsDir(
+        "/sandbox/path-b/skills",
+      ),
     });
 
-    expect(String(runA.meta[0]?.prompt ?? "")).toContain("Skill root: /sandbox/path-a/skills");
-    expect(String(runB.meta[0]?.prompt ?? "")).toContain("Skill root: /sandbox/path-b/skills");
+    expect(String(runA.meta[0]?.prompt ?? "")).toContain(
+      "Skill root: /sandbox/path-a/skills",
+    );
+    expect(String(runB.meta[0]?.prompt ?? "")).toContain(
+      "Skill root: /sandbox/path-b/skills",
+    );
     // The session fingerprint, which only ever saw the host-independent skill
     // identity, stays the same across the two different in-sandbox paths.
-    expect(runA.result.sessionParams?.configFingerprint).toBe(runB.result.sessionParams?.configFingerprint);
+    expect(runA.result.sessionParams?.configFingerprint).toBe(
+      runB.result.sessionParams?.configFingerprint,
+    );
   });
 
   it("stages no skills asset and leaves the prompt untouched when no skill is selected", async () => {
@@ -4158,11 +5429,18 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
         taskcoreRuntimeSkills: [],
         taskcoreSkillSync: { desiredSkills: [] },
       },
-      { authToken: "real-run-jwt", executionTarget, prepareRemoteManagedHome: stagingClaudeSeam() },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        prepareRemoteManagedHome: stagingClaudeSeam(),
+      },
     );
 
-    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock.calls[0]![0];
-    expect((stageArgs.assets ?? []).some((asset) => asset.key === "skills")).toBe(false);
+    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock
+      .calls[0]![0];
+    expect(
+      (stageArgs.assets ?? []).some((asset) => asset.key === "skills"),
+    ).toBe(false);
     expect(String(meta[0]?.prompt ?? "")).not.toContain("Skill root:");
   });
 
@@ -4177,7 +5455,11 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     // filter).
     const linkedTarget = path.join(skillsRoot, "broken-target");
     await fs.mkdir(linkedTarget, { recursive: true });
-    await fs.writeFile(path.join(linkedTarget, "SKILL.md"), "# broken\n", "utf8");
+    await fs.writeFile(
+      path.join(linkedTarget, "SKILL.md"),
+      "# broken\n",
+      "utf8",
+    );
     const brokenSource = path.join(skillsRoot, "broken");
     await fs.symlink(linkedTarget, brokenSource, "dir");
     const broken = {
@@ -4196,19 +5478,28 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
         taskcoreRuntimeSkills: [review, broken],
         taskcoreSkillSync: { desiredSkills: [review.key, broken.key] },
       },
-      { authToken: "real-run-jwt", executionTarget, prepareRemoteManagedHome: stagingClaudeSeam() },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        prepareRemoteManagedHome: stagingClaudeSeam(),
+      },
     );
 
     const prompt = String(meta[0]?.prompt ?? "");
     expect(prompt).toContain("Selected skills: review");
     expect(prompt).not.toContain("broken");
 
-    const skillsIdentity = result.sessionParams?.skills as { selectedSkills?: string[] } | undefined;
+    const skillsIdentity = result.sessionParams?.skills as
+      { selectedSkills?: string[] } | undefined;
     expect(skillsIdentity?.selectedSkills).toEqual(["review"]);
 
-    const hostBundleDir = await onlyChildDir(path.join(stateDir, "runtime-skills", "claude"));
+    const hostBundleDir = await onlyChildDir(
+      path.join(stateDir, "runtime-skills", "claude"),
+    );
     const hostSkillsHome = path.join(hostBundleDir, ".claude", "skills");
-    await expect(pathExists(path.join(hostSkillsHome, "broken"))).resolves.toBe(false);
+    await expect(pathExists(path.join(hostSkillsHome, "broken"))).resolves.toBe(
+      false,
+    );
   });
 
   it("stages no skills asset when every selected skill fails to materialize", async () => {
@@ -4216,7 +5507,11 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     const skillsRoot = path.join(localCwd, "skills");
     const linkedTarget = path.join(skillsRoot, "broken-target");
     await fs.mkdir(linkedTarget, { recursive: true });
-    await fs.writeFile(path.join(linkedTarget, "SKILL.md"), "# broken\n", "utf8");
+    await fs.writeFile(
+      path.join(linkedTarget, "SKILL.md"),
+      "# broken\n",
+      "utf8",
+    );
     const brokenSource = path.join(skillsRoot, "broken");
     await fs.symlink(linkedTarget, brokenSource, "dir");
     const broken = {
@@ -4235,11 +5530,18 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
         taskcoreRuntimeSkills: [broken],
         taskcoreSkillSync: { desiredSkills: [broken.key] },
       },
-      { authToken: "real-run-jwt", executionTarget, prepareRemoteManagedHome: stagingClaudeSeam() },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        prepareRemoteManagedHome: stagingClaudeSeam(),
+      },
     );
 
-    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock.calls[0]![0];
-    expect((stageArgs.assets ?? []).some((asset) => asset.key === "skills")).toBe(false);
+    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock
+      .calls[0]![0];
+    expect(
+      (stageArgs.assets ?? []).some((asset) => asset.key === "skills"),
+    ).toBe(false);
     expect(String(meta[0]?.prompt ?? "")).not.toContain("Skill root:");
   });
 
@@ -4252,11 +5554,18 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     // throw), but whose `SKILL.md` is a symlink. `materializeTaskcoreSkillCopy`
     // skips a symlinked file entry instead of copying it, so the staged
     // directory ends up with no `SKILL.md`.
-    const linkedSkillMdTarget = path.join(skillsRoot, "linked-skill-md-target.md");
+    const linkedSkillMdTarget = path.join(
+      skillsRoot,
+      "linked-skill-md-target.md",
+    );
     await fs.writeFile(linkedSkillMdTarget, "# linked\n", "utf8");
     const symlinkedSkillMdSource = path.join(skillsRoot, "symlinked-skill-md");
     await fs.mkdir(symlinkedSkillMdSource, { recursive: true });
-    await fs.symlink(linkedSkillMdTarget, path.join(symlinkedSkillMdSource, "SKILL.md"), "file");
+    await fs.symlink(
+      linkedSkillMdTarget,
+      path.join(symlinkedSkillMdSource, "SKILL.md"),
+      "file",
+    );
     const symlinkedSkillMd = {
       key: "taskcore/test/symlinked-skill-md",
       runtimeName: "symlinked-skill-md",
@@ -4267,7 +5576,11 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     // A skill root that is a real directory with no `SKILL.md` at all.
     const noSkillMdSource = path.join(skillsRoot, "no-skill-md");
     await fs.mkdir(noSkillMdSource, { recursive: true });
-    await fs.writeFile(path.join(noSkillMdSource, "notes.md"), "# notes\n", "utf8");
+    await fs.writeFile(
+      path.join(noSkillMdSource, "notes.md"),
+      "# notes\n",
+      "utf8",
+    );
     const noSkillMd = {
       key: "taskcore/test/no-skill-md",
       runtimeName: "no-skill-md",
@@ -4282,9 +5595,15 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
         stateDir,
         cwd: localCwd,
         taskcoreRuntimeSkills: [review, symlinkedSkillMd, noSkillMd],
-        taskcoreSkillSync: { desiredSkills: [review.key, symlinkedSkillMd.key, noSkillMd.key] },
+        taskcoreSkillSync: {
+          desiredSkills: [review.key, symlinkedSkillMd.key, noSkillMd.key],
+        },
       },
-      { authToken: "real-run-jwt", executionTarget, prepareRemoteManagedHome: stagingClaudeSeam() },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        prepareRemoteManagedHome: stagingClaudeSeam(),
+      },
     );
 
     const prompt = String(meta[0]?.prompt ?? "");
@@ -4292,13 +5611,20 @@ describe("ACPX engine Claude skill bundle staging (remote ACP lane)", () => {
     expect(prompt).not.toContain("symlinked-skill-md");
     expect(prompt).not.toContain("no-skill-md");
 
-    const skillsIdentity = result.sessionParams?.skills as { selectedSkills?: string[] } | undefined;
+    const skillsIdentity = result.sessionParams?.skills as
+      { selectedSkills?: string[] } | undefined;
     expect(skillsIdentity?.selectedSkills).toEqual(["review"]);
 
-    const hostBundleDir = await onlyChildDir(path.join(stateDir, "runtime-skills", "claude"));
+    const hostBundleDir = await onlyChildDir(
+      path.join(stateDir, "runtime-skills", "claude"),
+    );
     const hostSkillsHome = path.join(hostBundleDir, ".claude", "skills");
-    await expect(pathExists(path.join(hostSkillsHome, "symlinked-skill-md"))).resolves.toBe(false);
-    await expect(pathExists(path.join(hostSkillsHome, "no-skill-md"))).resolves.toBe(false);
+    await expect(
+      pathExists(path.join(hostSkillsHome, "symlinked-skill-md")),
+    ).resolves.toBe(false);
+    await expect(
+      pathExists(path.join(hostSkillsHome, "no-skill-md")),
+    ).resolves.toBe(false);
   });
 });
 
@@ -4384,25 +5710,43 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
     const controller = new AbortController();
     let entered!: () => void;
-    const started = new Promise<void>(resolve => { entered = resolve; });
+    const started = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
     let release!: () => void;
-    const blocked = new Promise<void>(resolve => { release = resolve; });
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     const stopRemoteStartup = vi.fn(async () => {});
-    const createRuntime = vi.fn(() => recordingRuntime({ ensureInputs: [] }) as never);
+    const createRuntime = vi.fn(
+      () => recordingRuntime({ ensureInputs: [] }) as never,
+    );
     const originalExecute = executionTarget.runner.execute;
-    executionTarget.runner.execute = async input => {
+    executionTarget.runner.execute = async (input) => {
       if (input.command === "stalled-auth-setup") {
         entered();
         await blocked;
-        return { exitCode: 0, signal: null, timedOut: false, stdout: "", stderr: "", pid: null, startedAt: new Date().toISOString() };
+        return {
+          exitCode: 0,
+          signal: null,
+          timedOut: false,
+          stdout: "",
+          stderr: "",
+          pid: null,
+          startedAt: new Date().toISOString(),
+        };
       }
       return originalExecute(input);
     };
     const execute = createAcpxEngineExecutor({
       createRuntime,
-      prepareRemoteManagedHome: async input => {
+      prepareRemoteManagedHome: async (input) => {
         const target = input.executionTarget;
-        if (target?.kind !== "remote" || target.transport !== "sandbox" || !target.runner) {
+        if (
+          target?.kind !== "remote" ||
+          target.transport !== "sandbox" ||
+          !target.runner
+        ) {
           throw new Error("Expected sandbox target");
         }
         await target.runner.execute({ command: "stalled-auth-setup" });
@@ -4411,14 +5755,23 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     });
     let settled = false;
     const run = execute({
-      runId: "cancel-startup", runtime: {},
+      runId: "cancel-startup",
+      runtime: {},
       ...baseExecuteArgs({ stateDir, localCwd, executionTarget }),
-      signal: controller.signal, stopRemoteStartup,
-    } as never).catch(error => error).finally(() => { settled = true; });
+      signal: controller.signal,
+      stopRemoteStartup,
+    } as never)
+      .catch((error) => error)
+      .finally(() => {
+        settled = true;
+      });
     await started;
     controller.abort(new Error("Stopped by user"));
     try {
-      await vi.waitFor(() => expect(stopRemoteStartup).toHaveBeenCalledTimes(1), { timeout: 500 });
+      await vi.waitFor(
+        () => expect(stopRemoteStartup).toHaveBeenCalledTimes(1),
+        { timeout: 500 },
+      );
       await vi.waitFor(() => expect(settled).toBe(true), { timeout: 500 });
       expect(createRuntime).not.toHaveBeenCalled();
     } finally {
@@ -4430,7 +5783,8 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     // A subsequent run can acquire the same local staging/auth preparation
     // resources; cancellation must not leave the staging lease held.
     const retry = await execute({
-      runId: "retry-after-cancel", runtime: {},
+      runId: "retry-after-cancel",
+      runtime: {},
       ...baseExecuteArgs({ stateDir, localCwd, executionTarget }),
     } as never);
     expect(retry.exitCode).toBe(0);
@@ -4438,7 +5792,8 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
   });
 
   it("test_acp_resume_compatible_session_does_not_restage", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     const ensureInputs: Array<Record<string, unknown>> = [];
     const execute = createAcpxEngineExecutor({
       warmHandles: new Map(),
@@ -4447,7 +5802,11 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     });
     const base = baseExecuteArgs({ stateDir, localCwd, executionTarget });
 
-    const first = await execute({ runId: "run-a", runtime: {}, ...base } as never);
+    const first = await execute({
+      runId: "run-a",
+      runtime: {},
+      ...base,
+    } as never);
     const second = await execute({
       runId: "run-b",
       runtime: { sessionParams: first.sessionParams },
@@ -4458,7 +5817,9 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     expect(second.exitCode).toBe(0);
     // Staging (workspace ship + home seed) ran exactly ONCE across both runs:
     // the compatible resume reused the already-staged in-sandbox runtime.
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(1);
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(1);
     // Both runs bind session/new (and resume) to the in-sandbox workspace cwd...
     expect(ensureInputs[0]?.cwd).toBe(remoteCwd);
     expect(ensureInputs[1]?.cwd).toBe(remoteCwd);
@@ -4467,7 +5828,8 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
   });
 
   it("test_acp_resume_incompatible_fingerprint_stages_fresh", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     const ensureInputs: Array<Record<string, unknown>> = [];
     const execute = createAcpxEngineExecutor({
       warmHandles: new Map(),
@@ -4478,20 +5840,32 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     const first = await execute({
       runId: "run-a",
       runtime: {},
-      ...baseExecuteArgs({ stateDir, localCwd, executionTarget, env: { FOO: "a" } }),
+      ...baseExecuteArgs({
+        stateDir,
+        localCwd,
+        executionTarget,
+        env: { FOO: "a" },
+      }),
     } as never);
     // A changed adapter env value shifts the session fingerprint → a different
     // sessionKey → the cache slot does not match, so staging runs fresh.
     const second = await execute({
       runId: "run-b",
       runtime: { sessionParams: first.sessionParams },
-      ...baseExecuteArgs({ stateDir, localCwd, executionTarget, env: { FOO: "b" } }),
+      ...baseExecuteArgs({
+        stateDir,
+        localCwd,
+        executionTarget,
+        env: { FOO: "b" },
+      }),
     } as never);
 
     expect(first.exitCode).toBe(0);
     expect(second.exitCode).toBe(0);
     // Incompatible fingerprint → staged fresh, no stale reuse.
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(2);
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(2);
     expect(ensureInputs[0]?.cwd).toBe(remoteCwd);
     expect(ensureInputs[1]?.cwd).toBe(remoteCwd);
     // The second run does NOT resume the first session (fingerprint differs).
@@ -4499,7 +5873,8 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
   });
 
   it("test_warm_handle_scoped_per_fingerprint_no_cross_session_credential_reuse", async () => {
-    const { root, stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
+    const { root, stateDir, localCwd, executionTarget } =
+      await setupRemoteSandbox();
     const ensureInputs: Array<Record<string, unknown>> = [];
     // Two managed homes, one per session, each carrying a distinct credential
     // marker. The seam seeds whichever home belongs to the current run.
@@ -4507,8 +5882,16 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     const homeB = path.join(root, "home-b");
     await fs.mkdir(homeA, { recursive: true });
     await fs.mkdir(homeB, { recursive: true });
-    await fs.writeFile(path.join(homeA, "auth.json"), JSON.stringify({ token: "SECRET-A" }), "utf8");
-    await fs.writeFile(path.join(homeB, "auth.json"), JSON.stringify({ token: "SECRET-B" }), "utf8");
+    await fs.writeFile(
+      path.join(homeA, "auth.json"),
+      JSON.stringify({ token: "SECRET-A" }),
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(homeB, "auth.json"),
+      JSON.stringify({ token: "SECRET-B" }),
+      "utf8",
+    );
 
     const seededHomeEnv: string[] = [];
     const execute = createAcpxEngineExecutor({
@@ -4529,7 +5912,12 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     const first = await execute({
       runId: "run-a",
       runtime: {},
-      ...baseExecuteArgs({ stateDir, localCwd, executionTarget, env: { SESSION_MARKER: "a" } }),
+      ...baseExecuteArgs({
+        stateDir,
+        localCwd,
+        executionTarget,
+        env: { SESSION_MARKER: "a" },
+      }),
     } as never);
     // Different fingerprint (SESSION_MARKER changed) → different sessionKey. If the
     // cache were NOT fingerprint-scoped, this run could silently inherit session A's
@@ -4537,17 +5925,26 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     const second = await execute({
       runId: "run-b",
       runtime: { sessionParams: first.sessionParams },
-      ...baseExecuteArgs({ stateDir, localCwd, executionTarget, env: { SESSION_MARKER: "b" } }),
+      ...baseExecuteArgs({
+        stateDir,
+        localCwd,
+        executionTarget,
+        env: { SESSION_MARKER: "b" },
+      }),
     } as never);
 
     expect(first.exitCode).toBe(0);
     expect(second.exitCode).toBe(0);
     // Each session staged its OWN managed home — no cross-session reuse.
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(2);
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(2);
     expect(seededHomeEnv).toHaveLength(2);
     // Session B's staged home holds session B's credential, never session A's.
     const bHome = seededHomeEnv[1]!;
-    await expect(fs.readFile(path.join(bHome, "auth.json"), "utf8")).resolves.toContain("SECRET-B");
+    await expect(
+      fs.readFile(path.join(bHome, "auth.json"), "utf8"),
+    ).resolves.toContain("SECRET-B");
   });
 
   it("test_acp_failed_turn_evicts_staged_runtime_so_resume_restages", async () => {
@@ -4570,7 +5967,11 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     });
     const base = baseExecuteArgs({ stateDir, localCwd, executionTarget });
 
-    const first = await execute({ runId: "run-a", runtime: {}, ...base } as never);
+    const first = await execute({
+      runId: "run-a",
+      runtime: {},
+      ...base,
+    } as never);
     const second = await execute({
       runId: "run-b",
       runtime: { sessionParams: first.sessionParams },
@@ -4581,7 +5982,9 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     expect(second.exitCode).toBe(0);
     // A failed turn discards the staged runtime, so the next run stages fresh
     // instead of reusing a torn-down session's staged credentials.
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(2);
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(2);
   });
 
   // Greptile P1 "Cache Reuse Bypasses Session Compatibility": a fresh invocation
@@ -4589,7 +5992,8 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
   // run but carries NO sessionParams starts a new ACP session — it must NOT
   // inherit the prior session's staged workspace + managed home.
   it("test_acp_reuse_requires_compatible_resume_not_just_session_key", async () => {
-    const { stateDir, localCwd, remoteCwd, executionTarget } = await setupRemoteSandbox();
+    const { stateDir, localCwd, remoteCwd, executionTarget } =
+      await setupRemoteSandbox();
     const ensureInputs: Array<Record<string, unknown>> = [];
     let seamCalls = 0;
     const execute = createAcpxEngineExecutor({
@@ -4603,17 +6007,27 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     });
     const base = baseExecuteArgs({ stateDir, localCwd, executionTarget });
 
-    const first = await execute({ runId: "run-a", runtime: {}, ...base } as never);
+    const first = await execute({
+      runId: "run-a",
+      runtime: {},
+      ...base,
+    } as never);
     // Same config (identical sessionKey) but sessionParams cleared → this is a
     // NEW session, not a resume of A. The old code reused A's staged runtime on a
     // bare sessionKey hit; the compatibility gate now forces a fresh stage.
-    const second = await execute({ runId: "run-b", runtime: {}, ...base } as never);
+    const second = await execute({
+      runId: "run-b",
+      runtime: {},
+      ...base,
+    } as never);
 
     expect(first.exitCode).toBe(0);
     expect(second.exitCode).toBe(0);
     // Staged (and re-seeded the managed home) fresh for the new session — no
     // silent inheritance of the prior session's staged credentials.
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(2);
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(2);
     expect(seamCalls).toBe(2);
     // B binds a fresh session/new (no resumeSessionId), it does not resume A.
     expect(ensureInputs[1]?.cwd).toBe(remoteCwd);
@@ -4649,7 +6063,11 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     });
     const base = baseExecuteArgs({ stateDir, localCwd, executionTarget });
 
-    const first = await execute({ runId: "run-a", runtime: {}, ...base } as never);
+    const first = await execute({
+      runId: "run-a",
+      runtime: {},
+      ...base,
+    } as never);
     const second = await execute({
       runId: "run-b",
       runtime: { sessionParams: first.sessionParams },
@@ -4659,7 +6077,9 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     expect(first.exitCode).toBe(0);
     expect(second.exitCode).toBe(0);
     // Staged once, reused on the compatible resume.
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(1);
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(1);
     // Per-run copy-back fired on BOTH runs — cadence unchanged.
     expect(teardownCalls).toBe(2);
     // The staged temp was never disposed while the entry stayed warm for reuse,
@@ -4679,7 +6099,8 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     const execute = createAcpxEngineExecutor({
       warmHandles: new Map(),
       stagedRuntimes: new Map(),
-      createRuntime: () => recordingRuntime({ ensureInputs, terminalStatus: "failed" }) as never,
+      createRuntime: () =>
+        recordingRuntime({ ensureInputs, terminalStatus: "failed" }) as never,
       prepareRemoteManagedHome: async (input) => ({
         stagedRuntime: await input.stage([]),
         teardown: async () => {
@@ -4693,7 +6114,11 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     });
     const base = baseExecuteArgs({ stateDir, localCwd, executionTarget });
 
-    const result = await execute({ runId: "run-a", runtime: {}, ...base } as never);
+    const result = await execute({
+      runId: "run-a",
+      runtime: {},
+      ...base,
+    } as never);
 
     expect(result.exitCode).toBe(1);
     // Failed turn → staged runtime dropped → host staged-temp disposed once, and
@@ -4737,8 +6162,14 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
                 })(),
                 result:
                   call === 2
-                    ? turnCompleted.then(() => ({ status: "completed", stopReason: "end_turn" }))
-                    : Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+                    ? turnCompleted.then(() => ({
+                        status: "completed",
+                        stopReason: "end_turn",
+                      }))
+                    : Promise.resolve({
+                        status: "completed",
+                        stopReason: "end_turn",
+                      }),
                 cancel: async () => {},
               };
             },
@@ -4764,7 +6195,11 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
       env: { SESSION_MARKER: "idle-eviction" },
     });
 
-    const first = await execute({ runId: "run-a", runtime: {}, ...base } as never);
+    const first = await execute({
+      runId: "run-a",
+      runtime: {},
+      ...base,
+    } as never);
     expect(first.exitCode).toBe(0);
 
     const second = execute({
@@ -4813,7 +6248,9 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     // drop + dispose A's superseded staged entry, then stage fresh.
     await execute({ runId: "run-b", runtime: {}, ...base } as never);
 
-    expect(vi.mocked(prepareAdapterExecutionTargetRuntime)).toHaveBeenCalledTimes(2);
+    expect(
+      vi.mocked(prepareAdapterExecutionTargetRuntime),
+    ).toHaveBeenCalledTimes(2);
     // A's staged temp was disposed when B superseded it.
     expect(disposedRunIds).toContain("run-a");
   });
@@ -4873,7 +6310,11 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     });
     const base = baseExecuteArgs({ stateDir, localCwd, executionTarget });
 
-    const first = await execute({ runId: "run-a", runtime: {}, ...base } as never);
+    const first = await execute({
+      runId: "run-a",
+      runtime: {},
+      ...base,
+    } as never);
     expect(first.exitCode).toBe(0);
     // The clean turn cached the staged runtime for reuse; nothing disposed yet.
     expect(stagedRuntimes.size).toBe(1);
@@ -4881,11 +6322,17 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
 
     // Run B resumes the same session and borrows the cached staged runtime, but a
     // bridge fails during bring-up.
-    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(async () => {
-      throw new Error("taskcore bridge boom");
-    });
+    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(
+      async () => {
+        throw new Error("taskcore bridge boom");
+      },
+    );
     await expect(
-      execute({ runId: "run-b", runtime: { sessionParams: first.sessionParams }, ...base } as never),
+      execute({
+        runId: "run-b",
+        runtime: { sessionParams: first.sessionParams },
+        ...base,
+      } as never),
     ).rejects.toThrow("taskcore bridge boom");
 
     // The rollback removed the borrowed cache entry through the identity guard, so a
@@ -4955,25 +6402,29 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
       warmHandles: new Map(),
       stagedRuntimes: new Map(),
       stagingLocks: new Map(),
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => {
-          signalTurnStarted();
-          return {
-            events: (async function* () {
-              yield { type: "done", stopReason: "end_turn" };
-            })(),
-            result: turnCompleted.then(() => ({ status: "completed", stopReason: "end_turn" })),
-            cancel: async () => {},
-          };
-        },
-        setConfigOption: async () => {},
-        close: async () => {},
-      }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => {
+            signalTurnStarted();
+            return {
+              events: (async function* () {
+                yield { type: "done", stopReason: "end_turn" };
+              })(),
+              result: turnCompleted.then(() => ({
+                status: "completed",
+                stopReason: "end_turn",
+              })),
+              cancel: async () => {},
+            };
+          },
+          setConfigOption: async () => {},
+          close: async () => {},
+        }) as never,
       prepareRemoteManagedHome: async (input) => {
         events.push(`enter:${input.runId}`);
         await new Promise((resolve) => setTimeout(resolve, 5));
@@ -4996,7 +6447,9 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     await runB;
 
     expect(events).toContain("enter:run-b");
-    expect(events.indexOf("enter:run-b")).toBeGreaterThan(events.indexOf("run-a-finished"));
+    expect(events.indexOf("enter:run-b")).toBeGreaterThan(
+      events.indexOf("run-a-finished"),
+    );
   });
 
   // The per-session lease must be released when a run is abandoned before it
@@ -5012,22 +6465,26 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
       warmHandles: new Map(),
       stagedRuntimes: new Map(),
       stagingLocks: new Map(),
-      createRuntime: () => ({
-        ensureSession: async () => ({
-          backendSessionId: "backend-session",
-          agentSessionId: "agent-session",
-          runtimeSessionName: "runtime-session",
-        }),
-        startTurn: () => ({
-          events: (async function* () {
-            yield { type: "done", stopReason: "end_turn" };
-          })(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
-          cancel: async () => {},
-        }),
-        setConfigOption: async () => {},
-        close: async () => {},
-      }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => ({
+            backendSessionId: "backend-session",
+            agentSessionId: "agent-session",
+            runtimeSessionName: "runtime-session",
+          }),
+          startTurn: () => ({
+            events: (async function* () {
+              yield { type: "done", stopReason: "end_turn" };
+            })(),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
+            cancel: async () => {},
+          }),
+          setConfigOption: async () => {},
+          close: async () => {},
+        }) as never,
       prepareRemoteManagedHome: async (input) => {
         events.push(`enter:${input.runId}`);
         if (failNextStaging) {
@@ -5041,12 +6498,16 @@ describe("ACPX engine remote session-lifecycle re-staging (PR 3: stage once / re
     });
     const base = baseExecuteArgs({ stateDir, localCwd, executionTarget });
 
-    await expect(execute({ runId: "run-a", runtime: {}, ...base } as never)).rejects.toThrow(
-      "staging boom",
-    );
+    await expect(
+      execute({ runId: "run-a", runtime: {}, ...base } as never),
+    ).rejects.toThrow("staging boom");
     // If the failed run had stranded its lease, this second same-session run
     // would hang on it and the test would time out.
-    const resultB = await execute({ runId: "run-b", runtime: {}, ...base } as never);
+    const resultB = await execute({
+      runId: "run-b",
+      runtime: {},
+      ...base,
+    } as never);
 
     expect(resultB.exitCode).toBe(0);
     expect(events).toContain("enter:run-b");
@@ -5091,7 +6552,11 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
         cwd: localCwd,
         env: { CODEX_HOME: codexHome },
       },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
     // Exactly one trace root, and it is the run root span.
@@ -5137,31 +6602,33 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
       )
       .map((span) => span.name)
       .sort();
-    expect(childNames).toEqual(
-      [
-        "acp.handshake",
-        "bridge.taskcore",
-        "bridge.process-session",
-        "codex-home.seed",
-        "pack",
-        "skills.reconcile",
-        "snapshot.baseline",
-        "snapshot.git",
-        "stage.sync",
-        "stage.workspace",
-        "workspace.resolve",
-      ],
-    );
+    expect(childNames).toEqual([
+      "acp.handshake",
+      "bridge.taskcore",
+      "bridge.process-session",
+      "codex-home.seed",
+      "pack",
+      "skills.reconcile",
+      "snapshot.baseline",
+      "snapshot.git",
+      "stage.sync",
+      "stage.workspace",
+      "workspace.resolve",
+    ]);
 
     // The two pre-task sub-step spans and the `stage.workspace` task span nest
     // under the `stage.sync` step span (that host work runs inside the step), not
     // directly under the bring-up span. The `pack` span nests under
     // `stage.workspace`, because the host builds the tarball inside the task.
     const stageSyncSpan = spans.find((span) => span.name === "stage.sync");
-    const stageWorkspaceSpan = spans.find((span) => span.name === "stage.workspace");
+    const stageWorkspaceSpan = spans.find(
+      (span) => span.name === "stage.workspace",
+    );
     const packSpan = spans.find((span) => span.name === "pack");
     const snapshotGitSpan = spans.find((span) => span.name === "snapshot.git");
-    const snapshotBaselineSpan = spans.find((span) => span.name === "snapshot.baseline");
+    const snapshotBaselineSpan = spans.find(
+      (span) => span.name === "snapshot.baseline",
+    );
     expect(stageSyncSpan).toBeTruthy();
     expect(stageWorkspaceSpan).toBeTruthy();
     expect(packSpan).toBeTruthy();
@@ -5184,9 +6651,13 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
       syncBackSpan,
     ]);
     for (const span of spans) {
-      if (span === runRootSpan || span === startupSpan || span === turnSpan) continue;
+      if (span === runRootSpan || span === startupSpan || span === turnSpan)
+        continue;
       if (nonStartupChildren.has(span)) continue;
-      expect(span.parent, `span "${span.name}" must parent to the startup span`).toBe(startupSpan);
+      expect(
+        span.parent,
+        `span "${span.name}" must parent to the startup span`,
+      ).toBe(startupSpan);
       expect(span.ended, `span "${span.name}" must end`).toBe(true);
     }
   });
@@ -5211,7 +6682,11 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
         cwd: localCwd,
         env: { CODEX_HOME: codexHome },
       },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
     // Exactly one `task.run` span opens for a remote-sandbox run.
@@ -5227,8 +6702,12 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     expect(runSpan.status).toBeNull();
     // The run id rides only as a non-reversible hash; the raw run id never rides
     // the span.
-    expect(runSpan.attributes["taskcore.task.run.run_id"]).toMatch(/^[0-9a-f]{12}$/);
-    expect(String(runSpan.attributes["taskcore.task.run.run_id"])).not.toContain("run-");
+    expect(runSpan.attributes["taskcore.task.run.run_id"]).toMatch(
+      /^[0-9a-f]{12}$/,
+    );
+    expect(
+      String(runSpan.attributes["taskcore.task.run.run_id"]),
+    ).not.toContain("run-");
   });
 
   it("test_sandbox_startup_parents_to_task_run", async () => {
@@ -5252,7 +6731,11 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
         cwd: localCwd,
         env: { CODEX_HOME: codexHome },
       },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
     const runSpan = spans.find((span) => span.name === "task.run");
@@ -5277,7 +6760,12 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     // A local run has no sandbox, so the run root span stays a no-op even when a
     // trace context is injected. No real `task.run` span opens.
     const { result } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", startupTraceContext: traceContext },
     );
     expect(result.exitCode).toBe(0);
@@ -5306,7 +6794,11 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
         cwd: localCwd,
         env: { CODEX_HOME: codexHome },
       },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
     const runSpan = spans.find((span) => span.name === "task.run");
@@ -5336,7 +6828,12 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     // A local run has no sandbox, so the turn span stays a no-op even when a
     // trace context is injected. No real `agent.turn` span opens.
     const { result } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", startupTraceContext: traceContext },
     );
     expect(result.exitCode).toBe(0);
@@ -5364,7 +6861,9 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     let capturedGetter: (() => unknown) | undefined;
     const execute = createAcpxEngineExecutor({
       createRuntime: (options) => {
-        const opts = options as unknown as { getRuntimeParentContext?: () => unknown };
+        const opts = options as unknown as {
+          getRuntimeParentContext?: () => unknown;
+        };
         // Keep the getter for the post-turn sample after the run resolves.
         capturedGetter = opts.getRuntimeParentContext;
         // Startup phase: the holder is the `task.run` token here.
@@ -5537,18 +7036,31 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     const { traceContext, spans } = createRecordingStartupTrace();
 
     await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
     const rootSpan = spans.find((span) => span.name === "sandbox.startup");
     expect(rootSpan).toBeTruthy();
     // The three timing numbers are present, finite, and non-negative.
     for (const key of [A.rootWallMs, A.rootWorkMs, A.rootDiffMs]) {
-      expect(typeof rootSpan!.attributes[key], `attribute ${key}`).toBe("number");
+      expect(typeof rootSpan!.attributes[key], `attribute ${key}`).toBe(
+        "number",
+      );
       expect(Number.isFinite(rootSpan!.attributes[key] as number)).toBe(true);
     }
-    expect(rootSpan!.attributes[A.rootWorkMs] as number).toBeGreaterThanOrEqual(0);
+    expect(rootSpan!.attributes[A.rootWorkMs] as number).toBeGreaterThanOrEqual(
+      0,
+    );
     // A cold start (no warm handle) and the clamped provider family.
     expect(rootSpan!.attributes[A.coldStart]).toBe(true);
     expect(rootSpan!.attributes[A.provider]).toBe("plugin");
@@ -5580,13 +7092,24 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
         cwd: localCwd,
         env: { CODEX_HOME: codexHome, OPENAI_API_KEY: "sk-acp-test-key" },
       },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
-    const stepEvents = events.filter((event) => event.eventType === "run.startup.step");
+    const stepEvents = events.filter(
+      (event) => event.eventType === "run.startup.step",
+    );
     // The nested skills.reconcile step still emits its own boundary event.
-    const reconcile = stepEvents.find((event) => event.payload?.step === "skills.reconcile");
-    expect(reconcile, "skills.reconcile must still emit its own step event").toBeTruthy();
+    const reconcile = stepEvents.find(
+      (event) => event.payload?.step === "skills.reconcile",
+    );
+    expect(
+      reconcile,
+      "skills.reconcile must still emit its own step event",
+    ).toBeTruthy();
 
     // The root work sum is the sum of the top-level step walls only. The nested
     // skills.reconcile wall sits inside the codex-home.seed wall, so it must not
@@ -5595,7 +7118,10 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     // reports the same duration to the event and to the root accumulator.
     const sumExceptReconcile = stepEvents
       .filter((event) => event.payload?.step !== "skills.reconcile")
-      .reduce((total, event) => total + (event.payload?.durationMs as number), 0);
+      .reduce(
+        (total, event) => total + (event.payload?.durationMs as number),
+        0,
+      );
 
     const rootSpan = spans.find((span) => span.name === "sandbox.startup");
     expect(rootSpan).toBeTruthy();
@@ -5611,21 +7137,34 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     const { traceContext, spans } = createRecordingStartupTrace();
 
     await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
     const rootSpan = spans.find((span) => span.name === "sandbox.startup");
     expect(rootSpan).toBeTruthy();
     const taskcore = spans.find((span) => span.name === "bridge.taskcore");
-    const processSession = spans.find((span) => span.name === "bridge.process-session");
+    const processSession = spans.find(
+      (span) => span.name === "bridge.process-session",
+    );
     expect(taskcore?.parent).toBe(rootSpan);
     expect(processSession?.parent).toBe(rootSpan);
     // Both bridge spans carry the same batch tag, so the trace marks them as one
     // parallel batch.
     expect(taskcore?.attributes[A.batch]).toBe("bridge");
     expect(processSession?.attributes[A.batch]).toBe("bridge");
-    expect(taskcore?.attributes[A.batch]).toBe(processSession?.attributes[A.batch]);
+    expect(taskcore?.attributes[A.batch]).toBe(
+      processSession?.attributes[A.batch],
+    );
   });
 
   it("records the handshake create-runtime and ensure-session sub-times on the acp.handshake span", async () => {
@@ -5637,17 +7176,34 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     const { traceContext, spans } = createRecordingStartupTrace();
 
     await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
     const handshake = spans.find((span) => span.name === "acp.handshake");
     expect(handshake).toBeTruthy();
     // A cold start records both sub-times as finite float ms on the span.
-    expect(typeof handshake!.attributes[A.handshakeCreateRuntimeWallMs]).toBe("number");
-    expect(handshake!.attributes[A.handshakeCreateRuntimeWallMs] as number).toBeGreaterThanOrEqual(0);
-    expect(typeof handshake!.attributes[A.handshakeEnsureSessionWallMs]).toBe("number");
-    expect(handshake!.attributes[A.handshakeEnsureSessionWallMs] as number).toBeGreaterThanOrEqual(0);
+    expect(typeof handshake!.attributes[A.handshakeCreateRuntimeWallMs]).toBe(
+      "number",
+    );
+    expect(
+      handshake!.attributes[A.handshakeCreateRuntimeWallMs] as number,
+    ).toBeGreaterThanOrEqual(0);
+    expect(typeof handshake!.attributes[A.handshakeEnsureSessionWallMs]).toBe(
+      "number",
+    );
+    expect(
+      handshake!.attributes[A.handshakeEnsureSessionWallMs] as number,
+    ).toBeGreaterThanOrEqual(0);
   });
 
   it("keeps every span attribute inside the closed allowlist (no command/path/id keys)", async () => {
@@ -5659,8 +7215,17 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     const { traceContext, spans } = createRecordingStartupTrace();
 
     await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
-      { authToken: "real-run-jwt", executionTarget, startupTraceContext: traceContext },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
+      {
+        authToken: "real-run-jwt",
+        executionTarget,
+        startupTraceContext: traceContext,
+      },
     );
 
     expect(spans.length).toBeGreaterThan(0);
@@ -5680,7 +7245,10 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
         ).toBe(true);
         // No non-finite numeric attribute (no NaN, no Infinity).
         if (typeof value === "number") {
-          expect(Number.isFinite(value), `attribute "${key}" must be finite`).toBe(true);
+          expect(
+            Number.isFinite(value),
+            `attribute "${key}" must be finite`,
+          ).toBe(true);
         }
       }
     }
@@ -5714,7 +7282,12 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
       runId: "run-handshake-fail",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       context: {},
       authToken: "real-run-jwt",
       executionTarget,
@@ -5742,7 +7315,12 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     // runExecutor asserts exitCode 0 internally; the run must complete with no
     // injected trace context (the default no-op path).
     const { result } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", executionTarget },
     );
     expect(result.exitCode).toBe(0);
@@ -5758,7 +7336,12 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     // A local run has no execution target. The `sandbox.startup` span names a
     // sandbox bring-up, so a local run must stay out of sandbox telemetry.
     const { result } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", startupTraceContext: traceContext },
     );
     expect(result.exitCode).toBe(0);
@@ -5776,7 +7359,12 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     // An SSH run is remote but is not a sandbox, so it also stays out of sandbox
     // telemetry.
     const { result } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       {
         authToken: "real-run-jwt",
         executionTarget: { kind: "remote", transport: "ssh", remoteCwd },
@@ -5908,24 +7496,43 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     expect(execSpans).toHaveLength(4);
 
     // A root-region exec parents to `sandbox.startup`.
-    const rootRegionExec = execSpans.find((span) => span.parent === startupSpan);
-    expect(rootRegionExec, "a root-region exec must parent to sandbox.startup").toBeTruthy();
+    const rootRegionExec = execSpans.find(
+      (span) => span.parent === startupSpan,
+    );
+    expect(
+      rootRegionExec,
+      "a root-region exec must parent to sandbox.startup",
+    ).toBeTruthy();
 
     // A `stage.sync` body exec parents to the sync step, not to `sandbox.startup`.
     const syncExec = execSpans.find((span) => span.parent === syncStepSpan);
-    expect(syncExec, "a stage.sync exec must parent to the sync step").toBeTruthy();
+    expect(
+      syncExec,
+      "a stage.sync exec must parent to the sync step",
+    ).toBeTruthy();
     expect(syncExec!.parent).not.toBe(startupSpan);
 
     // A turn detached exec parents to `agent.turn`.
     const turnExec = execSpans.find((span) => span.parent === turnSpan);
-    expect(turnExec, "a turn detached exec must parent to agent.turn").toBeTruthy();
+    expect(
+      turnExec,
+      "a turn detached exec must parent to agent.turn",
+    ).toBeTruthy();
 
     // An off-turn detached exec parents to `task.run`.
     const offTurnExec = execSpans.find((span) => span.parent === runSpan);
-    expect(offTurnExec, "an off-turn detached exec must parent to task.run").toBeTruthy();
+    expect(
+      offTurnExec,
+      "an off-turn detached exec must parent to task.run",
+    ).toBeTruthy();
 
     // The four execs are distinct spans with four distinct parents.
-    const execParents = new Set([rootRegionExec, syncExec, turnExec, offTurnExec]);
+    const execParents = new Set([
+      rootRegionExec,
+      syncExec,
+      turnExec,
+      offTurnExec,
+    ]);
     expect(execParents.size).toBe(4);
   });
 
@@ -5988,7 +7595,9 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     // `task.run` at that time.
     const runSpan = spans.find((span) => span.name === "task.run");
     expect(runSpan).toBeTruthy();
-    const syncBackSpans = spans.filter((span) => span.name === "sandbox.syncBack");
+    const syncBackSpans = spans.filter(
+      (span) => span.name === "sandbox.syncBack",
+    );
     expect(syncBackSpans).toHaveLength(1);
     const syncBackSpan = syncBackSpans[0]!;
     expect(syncBackSpan.ended).toBe(true);
@@ -5999,7 +7608,10 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     const syncBackExec = spans.find(
       (span) => span.name === "sandbox.exec" && span.parent === syncBackSpan,
     );
-    expect(syncBackExec, "the teardown exec must parent to sandbox.syncBack").toBeTruthy();
+    expect(
+      syncBackExec,
+      "the teardown exec must parent to sandbox.syncBack",
+    ).toBeTruthy();
   });
 
   it("test_no_sandbox_exec_parents_to_http_root", async () => {
@@ -6019,7 +7631,11 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
     // token is exactly the exec that the real tracer would attach to the ambient
     // HTTP request span. So the two negatives are: no exec names this request
     // span, and no exec opens with an `undefined` token (the ambient root).
-    const httpRequestSpan = traceContext.tracer.startSpan("http.request", undefined, undefined);
+    const httpRequestSpan = traceContext.tracer.startSpan(
+      "http.request",
+      undefined,
+      undefined,
+    );
 
     let rootRegionExecFired = false;
     let syncExecFired = false;
@@ -6103,15 +7719,21 @@ describe("ACPX engine sandbox-start spans (opt-in root + child parenting)", () =
 
     for (const span of execSpans) {
       // Negative 1: no exec parents to the top-level HTTP request span.
-      expect(span.parent, "a sandbox.exec must not parent to the HTTP request span").not.toBe(
-        httpRequestSpan,
-      );
+      expect(
+        span.parent,
+        "a sandbox.exec must not parent to the HTTP request span",
+      ).not.toBe(httpRequestSpan);
       // Negative 2: no exec opens unparented inside the run. An `undefined`
       // parent token is the ambient root that would attach to the HTTP request
       // span in production, and a `null` parent is a detached span.
-      expect(span.parentContextArg, "a sandbox.exec must open with an explicit parent token")
-        .not.toBeUndefined();
-      expect(span.parent, "a sandbox.exec must not open unparented inside the run").not.toBeNull();
+      expect(
+        span.parentContextArg,
+        "a sandbox.exec must open with an explicit parent token",
+      ).not.toBeUndefined();
+      expect(
+        span.parent,
+        "a sandbox.exec must not open unparented inside the run",
+      ).not.toBeNull();
     }
   });
 });
@@ -6121,7 +7743,9 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
     vi.clearAllMocks();
   });
 
-  function stepEvents(events: Array<{ eventType: string; payload?: Record<string, unknown> }>) {
+  function stepEvents(
+    events: Array<{ eventType: string; payload?: Record<string, unknown> }>,
+  ) {
     return events.filter((event) => event.eventType === "run.startup.step");
   }
 
@@ -6156,7 +7780,9 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
     );
 
     const steps = stepEvents(events);
-    const seen = new Map(steps.map((event) => [String(event.payload?.step), event]));
+    const seen = new Map(
+      steps.map((event) => [String(event.payload?.step), event]),
+    );
     // A codex bring-up over the remote sandbox lane crosses all 7 boundaries.
     for (const step of [
       "workspace.resolve",
@@ -6168,13 +7794,20 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
       "acp.handshake",
     ]) {
       const event = seen.get(step);
-      expect(event, `expected a run.startup.step event for "${step}"`).toBeTruthy();
+      expect(
+        event,
+        `expected a run.startup.step event for "${step}"`,
+      ).toBeTruthy();
       expect(typeof event!.payload?.durationMs).toBe("number");
       expect(event!.payload?.durationMs as number).toBeGreaterThanOrEqual(0);
     }
-    const sessionEnv = (sessionInputs[0]?.sessionOptions as { env: Record<string, string> }).env;
+    const sessionEnv = (
+      sessionInputs[0]?.sessionOptions as { env: Record<string, string> }
+    ).env;
     expect(sessionEnv.OPENAI_API_KEY).toBe("sk-acp-test-key");
-    expect(sessionEnv.DEFAULT_AUTH_REQUEST).toBe(JSON.stringify({ methodId: "api-key" }));
+    expect(sessionEnv.DEFAULT_AUTH_REQUEST).toBe(
+      JSON.stringify({ methodId: "api-key" }),
+    );
   });
 
   it("emits the 5 non-codex boundaries for a custom-agent sandbox bring-up (no codex steps)", async () => {
@@ -6193,11 +7826,18 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
     };
 
     const { events } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", executionTarget },
     );
 
-    const emitted = new Set(stepEvents(events).map((event) => String(event.payload?.step)));
+    const emitted = new Set(
+      stepEvents(events).map((event) => String(event.payload?.step)),
+    );
     // The custom-agent lane skips the codex-only skill prep entirely...
     expect(emitted.has("codex-home.seed")).toBe(false);
     expect(emitted.has("skills.reconcile")).toBe(false);
@@ -6209,7 +7849,10 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
       "bridge.process-session",
       "acp.handshake",
     ]) {
-      expect(emitted.has(step), `expected a run.startup.step event for "${step}"`).toBe(true);
+      expect(
+        emitted.has(step),
+        `expected a run.startup.step event for "${step}"`,
+      ).toBe(true);
     }
   });
 
@@ -6229,7 +7872,12 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
     };
 
     const { events } = await runExecutor(
-      { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       { authToken: "real-run-jwt", executionTarget },
     );
 
@@ -6254,7 +7902,10 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
     const root = await makeTempRoot();
     const stateDir = path.join(root, "state");
     const warmHandles = new Map();
-    const secondEvents: Array<{ eventType: string; payload?: Record<string, unknown> }> = [];
+    const secondEvents: Array<{
+      eventType: string;
+      payload?: Record<string, unknown>;
+    }> = [];
     const execute = createAcpxEngineExecutor({
       warmHandles,
       createRuntime: () => buildRuntime() as never,
@@ -6282,18 +7933,25 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
     await execute({
       runId: "run-warm-2",
       agent: { id: "agent-1", companyId: "company-1" },
-      runtime: { sessionParams: (first as { sessionParams?: unknown }).sessionParams },
+      runtime: {
+        sessionParams: (first as { sessionParams?: unknown }).sessionParams,
+      },
       config,
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
-      onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
+      onEvent: async (event: {
+        eventType: string;
+        payload?: Record<string, unknown>;
+      }) => {
         secondEvents.push(event);
       },
     } as never);
 
     const handshakeEvents = secondEvents.filter(
-      (event) => event.eventType === "run.startup.step" && event.payload?.step === "acp.handshake",
+      (event) =>
+        event.eventType === "run.startup.step" &&
+        event.payload?.step === "acp.handshake",
     );
     expect(handshakeEvents).toHaveLength(1);
     expect(handshakeEvents[0]!.payload?.outcome).not.toBe("skipped");
@@ -6311,7 +7969,9 @@ describe("ACPX engine per-step startup timing (run.startup.step events)", () => 
       cwd: localCwd,
     });
 
-    const emitted = new Set(stepEvents(events).map((event) => String(event.payload?.step)));
+    const emitted = new Set(
+      stepEvents(events).map((event) => String(event.payload?.step)),
+    );
     // A local run never crosses the staging seam or starts a bridge, so only the
     // always-run workspace resolution and the ACP handshake are timed.
     expect(emitted.has("workspace.resolve")).toBe(true);
@@ -6359,7 +8019,11 @@ describe("ACPX engine run lifecycle corrections (F1: settle every failure after 
       runId: "run-create-fail",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -6379,7 +8043,9 @@ describe("ACPX engine run lifecycle corrections (F1: settle every failure after 
     vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(
       async () => ({ env: {}, stop: taskcoreStop }) as never,
     );
-    vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementationOnce(
+    vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mockImplementationOnce(
       async () => ({ agentCommand: null, stop: processStop }) as never,
     );
     const stagingLocks = new Map<string, Promise<unknown>>();
@@ -6396,7 +8062,12 @@ describe("ACPX engine run lifecycle corrections (F1: settle every failure after 
       runId: "run-create-fail-remote",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       context: {},
       authToken: "real-run-jwt",
       executionTarget,
@@ -6415,58 +8086,72 @@ describe("ACPX engine run lifecycle corrections (F1: settle every failure after 
     expect(stagingLocks.size).toBe(0);
   });
 
-  it.each(["prompt", "metadata", "dispatch"])("records whether provider work could have started on %s failure", async (failure) => {
-    const root = await makeTempRoot();
-    const close = vi.fn(async () => {});
-    const startTurn = vi.fn(() => { throw new Error("dispatch failed"); });
-    const execute = createAcpxEngineExecutor({
-      createRuntime: () =>
-        ({
-          ensureSession: async () => ({
-            backendSessionId: "backend-session",
-            agentSessionId: "agent-session",
-            runtimeSessionName: "runtime-session",
-          }),
-          startTurn,
-          close,
-        }) as never,
-    });
+  it.each(["prompt", "metadata", "dispatch"])(
+    "records whether provider work could have started on %s failure",
+    async (failure) => {
+      const root = await makeTempRoot();
+      const close = vi.fn(async () => {});
+      const startTurn = vi.fn(() => {
+        throw new Error("dispatch failed");
+      });
+      const execute = createAcpxEngineExecutor({
+        createRuntime: () =>
+          ({
+            ensureSession: async () => ({
+              backendSessionId: "backend-session",
+              agentSessionId: "agent-session",
+              runtimeSessionName: "runtime-session",
+            }),
+            startTurn,
+            close,
+          }) as never,
+      });
 
-    // A throwing accessor on a field only `buildPrompt` reads makes the prompt
-    // build fail after the session handshake succeeds.
-    const context: Record<string, unknown> = {};
-    Object.defineProperty(context, "taskcoreSessionHandoffMarkdown", {
-      enumerable: false,
-      get() {
-        if (failure === "prompt") throw new Error("prompt build boom");
-        return undefined;
-      },
-    });
+      // A throwing accessor on a field only `buildPrompt` reads makes the prompt
+      // build fail after the session handshake succeeds.
+      const context: Record<string, unknown> = {};
+      Object.defineProperty(context, "taskcoreSessionHandoffMarkdown", {
+        enumerable: false,
+        get() {
+          if (failure === "prompt") throw new Error("prompt build boom");
+          return undefined;
+        },
+      });
 
-    const result = await execute({
-      runId: "run-prepare-fail",
-      agent: { id: "agent-1", companyId: "company-1" },
-      runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
-      context,
-      onLog: async () => {},
-      onMeta: async () => { if (failure === "metadata") throw new Error("metadata failed"); },
-    } as never);
+      const result = await execute({
+        runId: "run-prepare-fail",
+        agent: { id: "agent-1", companyId: "company-1" },
+        runtime: {},
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+        },
+        context,
+        onLog: async () => {},
+        onMeta: async () => {
+          if (failure === "metadata") throw new Error("metadata failed");
+        },
+      } as never);
 
-    expect(result.exitCode).toBe(1);
-    if (failure === "dispatch") {
-      expect(startTurn).toHaveBeenCalledTimes(1);
-      expect(result.executionRecovery).toBeUndefined();
-      expect(result.usageComplete).toBe(false);
-    } else {
-      expect(result.resultJson?.phase).toBe("prepare_turn");
-      expect(startTurn).not.toHaveBeenCalled();
-      expect(result.executionRecovery).toEqual({ kind: "bootstrap", providerWorkStarted: false });
-    }
-    // The established runtime is closed on the pre-turn failure, so no session
-    // leaks.
-    expect(close).toHaveBeenCalledTimes(1);
-  });
+      expect(result.exitCode).toBe(1);
+      if (failure === "dispatch") {
+        expect(startTurn).toHaveBeenCalledTimes(1);
+        expect(result.executionRecovery).toBeUndefined();
+        expect(result.usageComplete).toBe(false);
+      } else {
+        expect(result.resultJson?.phase).toBe("prepare_turn");
+        expect(startTurn).not.toHaveBeenCalled();
+        expect(result.executionRecovery).toEqual({
+          kind: "bootstrap",
+          providerWorkStarted: false,
+        });
+      }
+      // The established runtime is closed on the pre-turn failure, so no session
+      // leaks.
+      expect(close).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("test_sandbox_startup_span_ends_exactly_once_on_every_exit_path", async () => {
     // Each scenario runs a fresh remote bring-up with a recording trace and asserts
@@ -6478,12 +8163,18 @@ describe("ACPX engine run lifecycle corrections (F1: settle every failure after 
         },
         startTurn: () => ({
           events: (async function* () {})(),
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
           cancel: async () => {},
         }),
         close: async () => {},
       }) as never;
-    const scenarios: Array<{ name: string; createRuntime: AcpxEngineExecutorOptions["createRuntime"] }> = [
+    const scenarios: Array<{
+      name: string;
+      createRuntime: AcpxEngineExecutorOptions["createRuntime"];
+    }> = [
       { name: "success", createRuntime: () => buildRuntime() as never },
       {
         name: "create_runtime failure",
@@ -6495,7 +8186,8 @@ describe("ACPX engine run lifecycle corrections (F1: settle every failure after 
     ];
 
     for (const scenario of scenarios) {
-      const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
+      const { stateDir, localCwd, executionTarget } =
+        await setupRemoteSandbox();
       const { traceContext, spans } = createRecordingStartupTrace();
       const execute = createAcpxEngineExecutor({
         warmHandles: new Map(),
@@ -6508,7 +8200,12 @@ describe("ACPX engine run lifecycle corrections (F1: settle every failure after 
         runId: `run-span-${scenario.name.replace(/\s+/g, "-")}`,
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir,
+          cwd: localCwd,
+        },
         context: {},
         authToken: "real-run-jwt",
         executionTarget,
@@ -6518,8 +8215,13 @@ describe("ACPX engine run lifecycle corrections (F1: settle every failure after 
         onEvent: async () => {},
       } as never);
 
-      const startupSpans = spans.filter((span) => span.name === "sandbox.startup");
-      expect(startupSpans, `scenario "${scenario.name}" must open one sandbox.startup span`).toHaveLength(1);
+      const startupSpans = spans.filter(
+        (span) => span.name === "sandbox.startup",
+      );
+      expect(
+        startupSpans,
+        `scenario "${scenario.name}" must open one sandbox.startup span`,
+      ).toHaveLength(1);
       expect(
         startupSpans[0]!.endCalls,
         `scenario "${scenario.name}" must end the sandbox.startup span exactly once`,
@@ -6547,7 +8249,10 @@ describe("ACPX engine run lifecycle corrections (F2: close the runtime for every
       createRuntime: (options) => {
         created += 1;
         const opts = options as AcpRuntimeOptions & {
-          onAgentSpawn?: (meta: { pid: number; startedAt: string }) => Promise<void>;
+          onAgentSpawn?: (meta: {
+            pid: number;
+            startedAt: string;
+          }) => Promise<void>;
         };
         return {
           ensureSession: async () => {
@@ -6556,7 +8261,10 @@ describe("ACPX engine run lifecycle corrections (F2: close the runtime for every
           },
           startTurn: () => ({
             events: (async function* () {})(),
-            result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
             cancel: async () => {},
           }),
           close: closeSpy,
@@ -6620,7 +8328,10 @@ describe("ACPX engine run lifecycle corrections (F2: close the runtime for every
           ensureSession: async () => undefined,
           startTurn: () => ({
             events: (async function* () {})(),
-            result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
             cancel: async () => {},
           }),
           close: closeSpy,
@@ -6631,7 +8342,11 @@ describe("ACPX engine run lifecycle corrections (F2: close the runtime for every
       runId: "missing-handle",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -6655,7 +8370,10 @@ describe("ACPX engine run lifecycle corrections (F2: close the runtime for every
       createRuntime: (options) => {
         const id = (created += 1);
         const opts = options as AcpRuntimeOptions & {
-          onAgentSpawn?: (meta: { pid: number; startedAt: string }) => Promise<void>;
+          onAgentSpawn?: (meta: {
+            pid: number;
+            startedAt: string;
+          }) => Promise<void>;
         };
         return {
           ensureSession: async () => {
@@ -6664,7 +8382,10 @@ describe("ACPX engine run lifecycle corrections (F2: close the runtime for every
           },
           startTurn: () => ({
             events: (async function* () {})(),
-            result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
             cancel: async () => {},
           }),
           close: async () => {
@@ -6766,12 +8487,16 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
   function stubBridges() {
     const taskcoreStops: Array<ReturnType<typeof vi.fn>> = [];
     const processStops: Array<ReturnType<typeof vi.fn>> = [];
-    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(async () => {
-      const stop = vi.fn(async () => {});
-      taskcoreStops.push(stop);
-      return { env: {}, stop } as never;
-    });
-    vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementation(async () => {
+    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(
+      async () => {
+        const stop = vi.fn(async () => {});
+        taskcoreStops.push(stop);
+        return { env: {}, stop } as never;
+      },
+    );
+    vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mockImplementation(async () => {
       const stop = vi.fn(async () => {});
       processStops.push(stop);
       return { agentCommand: null, stop } as never;
@@ -6821,7 +8546,12 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
     return {
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       context: {},
       authToken: "real-run-jwt",
       executionTarget,
@@ -6837,15 +8567,26 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
     const { taskcoreStops, anyStopped } = stubBridges();
     const order: string[] = [];
     const execute = createAcpxEngineExecutor({
-      stagingLocks: new Map(), warmHandles: new Map(), stagedRuntimes: new Map(),
-      createRuntime: () => ({ ensureSession: async () => okHandle, startTurn: () => throwingTurn(),
-        close: async () => { order.push("close"); } }) as never,
+      stagingLocks: new Map(),
+      warmHandles: new Map(),
+      stagedRuntimes: new Map(),
+      createRuntime: () =>
+        ({
+          ensureSession: async () => okHandle,
+          startTurn: () => throwingTurn(),
+          close: async () => {
+            order.push("close");
+          },
+        }) as never,
     });
-    const result = await execute({ runId: "instruction-stop-failure",
-      ...remoteArgs(stateDir, localCwd, executionTarget, { onProviderStopped: async () => {
-        expect(anyStopped(taskcoreStops)).toBe(true);
-        order.push("collect");
-      } }),
+    const result = await execute({
+      runId: "instruction-stop-failure",
+      ...remoteArgs(stateDir, localCwd, executionTarget, {
+        onProviderStopped: async () => {
+          expect(anyStopped(taskcoreStops)).toBe(true);
+          order.push("collect");
+        },
+      }),
     } as never);
     expect(result.exitCode).toBe(1);
     expect(order).toEqual(["close", "collect"]);
@@ -6890,7 +8631,11 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
     expect(stagingLocks.size).toBe(0);
     // The close failure was recorded, not silently dropped.
     expect(
-      logs.some((entry) => entry.stream === "stderr" && entry.text.includes('teardown step "runtime-close" failed')),
+      logs.some(
+        (entry) =>
+          entry.stream === "stderr" &&
+          entry.text.includes('teardown step "runtime-close" failed'),
+      ),
     ).toBe(true);
   });
 
@@ -6901,18 +8646,37 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
     const order: string[] = [];
     const logs: string[] = [];
     const execute = createAcpxEngineExecutor({
-      stagingLocks, warmHandles: new Map(), stagedRuntimes: new Map(),
+      stagingLocks,
+      warmHandles: new Map(),
+      stagedRuntimes: new Map(),
       prepareRemoteManagedHome: async (input) => ({
         stagedRuntime: await input.stage([]),
-        teardown: async () => { order.push("restore"); return { ok: true }; },
+        teardown: async () => {
+          order.push("restore");
+          return { ok: true };
+        },
       }),
-      createRuntime: () => ({ ensureSession: async () => okHandle, startTurn: () => throwingTurn(),
-        close: async () => { order.push("close"); } }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => okHandle,
+          startTurn: () => throwingTurn(),
+          close: async () => {
+            order.push("close");
+          },
+        }) as never,
     });
-    const result = await execute({ runId: "instruction-collection-reject",
+    const result = await execute({
+      runId: "instruction-collection-reject",
       ...remoteArgs(stateDir, localCwd, executionTarget, {
-        onProviderStopped: async () => { order.push("collect"); throw new Error("collector failed reading /private/test-instructions/AGENTS.md"); },
-        onLog: async (_stream: string, text: string) => { logs.push(text); },
+        onProviderStopped: async () => {
+          order.push("collect");
+          throw new Error(
+            "collector failed reading /private/test-instructions/AGENTS.md",
+          );
+        },
+        onLog: async (_stream: string, text: string) => {
+          logs.push(text);
+        },
       }),
     } as never);
     expect(result.exitCode).toBe(1);
@@ -6920,8 +8684,16 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
     expect(anyStopped(taskcoreStops)).toBe(true);
     expect(anyStopped(processStops)).toBe(true);
     expect(stagingLocks.size).toBe(0);
-    expect(logs.some(text => text.includes('teardown step "instruction-collection" failed: Instruction collection failed'))).toBe(true);
-    expect(logs.some(text => text.includes("/private/test-instructions"))).toBe(false);
+    expect(
+      logs.some((text) =>
+        text.includes(
+          'teardown step "instruction-collection" failed: Instruction collection failed',
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      logs.some((text) => text.includes("/private/test-instructions")),
+    ).toBe(false);
   });
 
   it("test_staging_lease_releases_in_finally_on_every_exit_path", async () => {
@@ -6982,7 +8754,8 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
     ];
 
     for (const scenario of scenarios) {
-      const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
+      const { stateDir, localCwd, executionTarget } =
+        await setupRemoteSandbox();
       stubBridges();
       const stagingLocks = new Map<string, Promise<unknown>>();
       const execute = createAcpxEngineExecutor({
@@ -6994,12 +8767,17 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
 
       await execute({
         runId: `lease-${scenario.name}`,
-        ...remoteArgs(stateDir, localCwd, executionTarget, { context: scenario.context }),
+        ...remoteArgs(stateDir, localCwd, executionTarget, {
+          context: scenario.context,
+        }),
       } as never).catch(() => {});
 
       // The staging lease is released in a finally on every exit path, so the lock
       // map never strands the next same-session run.
-      expect(stagingLocks.size, `lease must release on the ${scenario.name} path`).toBe(0);
+      expect(
+        stagingLocks.size,
+        `lease must release on the ${scenario.name} path`,
+      ).toBe(0);
     }
   });
 
@@ -7024,7 +8802,8 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
       ...remoteArgs(stateDir, localCwd, executionTarget, {
         // Fail the acpx.error emission only, so teardown must still run.
         onLog: async (_stream: "stdout" | "stderr", text: string) => {
-          if (text.includes('"type":"acpx.error"')) throw new Error("onLog boom");
+          if (text.includes('"type":"acpx.error"'))
+            throw new Error("onLog boom");
         },
       }),
     } as never).catch(() => {});
@@ -7109,14 +8888,24 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
 
   it("test_flush_child_stderr_runs_on_every_exit_path", async () => {
     const writes: string[] = [];
-    const spy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+    const spy = vi.spyOn(process.stderr, "write").mockImplementation(((
+      chunk: unknown,
+    ) => {
       writes.push(String(chunk));
       return true;
     }) as never);
     try {
-      const scenarios: Array<{ name: string; mode: string; context: Record<string, unknown> }> = [
+      const scenarios: Array<{
+        name: string;
+        mode: string;
+        context: Record<string, unknown>;
+      }> = [
         { name: "ensure_session", mode: "ensure_fail", context: {} },
-        { name: "prepare_turn", mode: "success", context: throwingHandoffContext() },
+        {
+          name: "prepare_turn",
+          mode: "success",
+          context: throwingHandoffContext(),
+        },
         { name: "turn", mode: "turn_fail", context: {} },
         { name: "success", mode: "success", context: {} },
       ];
@@ -7135,11 +8924,14 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
             return {
               ensureSession: async () => {
                 emit();
-                if (scenario.mode === "ensure_fail") throw new Error("ensure boom");
+                if (scenario.mode === "ensure_fail")
+                  throw new Error("ensure boom");
                 return okHandle;
               },
               startTurn: () =>
-                scenario.mode === "turn_fail" ? throwingTurn() : completedTurn(),
+                scenario.mode === "turn_fail"
+                  ? throwingTurn()
+                  : completedTurn(),
               close: async () => {},
             } as never;
           },
@@ -7149,7 +8941,11 @@ describe("ACPX engine run lifecycle corrections (F3: one teardown error policy)"
           runId: `flush-${scenario.name}`,
           agent: { id: "agent-1", companyId: "company-1" },
           runtime: {},
-          config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+          config: {
+            agent: "custom",
+            agentCommand: "node ./fake-acp.js",
+            stateDir: path.join(root, "state"),
+          },
           context: scenario.context,
           onLog: async () => {},
           onMeta: async () => {},
@@ -7271,7 +9067,10 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
         })(),
         result: (async () => {
           beforeResult?.();
-          return { status: "failed" as const, error: new Error("agent failed") };
+          return {
+            status: "failed" as const,
+            error: new Error("agent failed"),
+          };
         })(),
         cancel: async () => {},
       }),
@@ -7383,7 +9182,9 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
     vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(
       async () => handle as never,
     );
-    vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementationOnce(
+    vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mockImplementationOnce(
       async () => ({ agentCommand: null, stop: async () => {} }) as never,
     );
     const execute = createAcpxEngineExecutor({
@@ -7413,7 +9214,9 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
     const sandbox = await setupRemoteSandbox();
     const fake = createFakeBridgeHandle();
     // Latch the loss before the ACP terminal resolves.
-    const runtime = runtimeWithControlledResult(() => fake.emitLoss("provider_exit"));
+    const runtime = runtimeWithControlledResult(() =>
+      fake.emitLoss("provider_exit"),
+    );
 
     const result = await runRemote(fake.handle, runtime, sandbox);
 
@@ -7454,7 +9257,9 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
     const sandbox = await setupRemoteSandbox();
     const fake = createFakeBridgeHandle();
     // Latch the loss before the ACP terminal resolves.
-    const runtime = runtimeWithControlledResult(() => fake.emitLoss("provider_exit"));
+    const runtime = runtimeWithControlledResult(() =>
+      fake.emitLoss("provider_exit"),
+    );
 
     const result = await runRemote(fake.handle, runtime, sandbox);
 
@@ -7491,7 +9296,9 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
     const fake = createFakeBridgeHandle();
     // Latch the loss before the ACP terminal resolves, and the terminal
     // itself also reports a provider failure.
-    const runtime = runtimeWithFailedResult(() => fake.emitLoss("provider_exit"));
+    const runtime = runtimeWithFailedResult(() =>
+      fake.emitLoss("provider_exit"),
+    );
 
     const result = await runRemote(fake.handle, runtime, sandbox);
 
@@ -7509,7 +9316,9 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
     const sandbox = await setupRemoteSandbox();
     const fake = createFakeBridgeHandle();
     let closeCalls = 0;
-    const runtime = runtimeWithControlledResult(() => fake.emitLoss("provider_exit"));
+    const runtime = runtimeWithControlledResult(() =>
+      fake.emitLoss("provider_exit"),
+    );
     // A close call with no deadline of its own would hang forever on a dead
     // channel. The test times out if the teardown still places the call.
     runtime.close = () => {
@@ -7544,7 +9353,10 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
           fake.emitLoss("provider_exit");
           throw new Error("turn upstream boom");
         })(),
-        result: Promise.resolve({ status: "completed" as const, stopReason: "end_turn" }),
+        result: Promise.resolve({
+          status: "completed" as const,
+          stopReason: "end_turn",
+        }),
         cancel: async () => {},
       }),
       setConfigOption: async () => {},
@@ -7575,7 +9387,10 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
         events: (async function* () {
           yield { type: "done", stopReason: "end_turn" };
         })(),
-        result: Promise.resolve({ status: "completed" as const, stopReason: "end_turn" }),
+        result: Promise.resolve({
+          status: "completed" as const,
+          stopReason: "end_turn",
+        }),
         cancel: async () => {},
       }),
       setConfigOption: async () => {},
@@ -7740,7 +9555,10 @@ describe("ACPX engine sandbox bridge run-disposition seam (fail-closed)", () => 
         events: (async function* () {
           yield { type: "done", stopReason: "end_turn" };
         })(),
-        result: Promise.resolve({ status: "completed" as const, stopReason: "end_turn" }),
+        result: Promise.resolve({
+          status: "completed" as const,
+          stopReason: "end_turn",
+        }),
         cancel: async (input?: { reason?: string }) => {
           cancelReasons.push(input?.reason);
         },
@@ -7771,7 +9589,9 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
 
   it("ends a handshake that stays pending past the startup deadline with a closed timeout code", async () => {
     const root = await makeTempRoot();
-    const ensureSession = trackEnsureSessionCall(() => new Promise<never>(() => {}));
+    const ensureSession = trackEnsureSessionCall(
+      () => new Promise<never>(() => {}),
+    );
     const execute = createAcpxEngineExecutor({
       createRuntime: () =>
         ({
@@ -7779,7 +9599,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
           ensureSession: ensureSession.call,
           startTurn: () => ({
             events: (async function* () {})(),
-            result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
             cancel: async () => {},
           }),
           close: async () => {},
@@ -7792,12 +9615,19 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         runId: "run-handshake-timeout",
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+        },
         context: {},
         onLog: async () => {},
         onMeta: async () => {},
       } as never);
-      await advanceHandshakeGuardAfterStart(ensureSession.started, ACPX_HANDSHAKE_TIMEOUT_MS + 50);
+      await advanceHandshakeGuardAfterStart(
+        ensureSession.started,
+        ACPX_HANDSHAKE_TIMEOUT_MS + 50,
+      );
       const result = await resultPromise;
 
       // The run terminalizes promptly on its own; no server restart needed.
@@ -7820,7 +9650,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
       events: (async function* () {
         yield { type: "done", stopReason: "end_turn" };
       })(),
-      result: Promise.resolve({ status: "completed" as const, stopReason: "end_turn" }),
+      result: Promise.resolve({
+        status: "completed" as const,
+        stopReason: "end_turn",
+      }),
       cancel: async () => {},
     }));
     const execute = createAcpxEngineExecutor({
@@ -7838,12 +9671,19 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         runId: "run-no-promotion",
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+        },
         context: {},
         onLog: async () => {},
         onMeta: async () => {},
       } as never);
-      await advanceHandshakeGuardAfterStart(ensureSession.started, ACPX_HANDSHAKE_TIMEOUT_MS + 50);
+      await advanceHandshakeGuardAfterStart(
+        ensureSession.started,
+        ACPX_HANDSHAKE_TIMEOUT_MS + 50,
+      );
       const result = await resultPromise;
 
       expect(result.errorCode).toBe("acpx_handshake_timeout");
@@ -7891,7 +9731,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
             ensureSession: ensureSession.call,
             startTurn: () => ({
               events: (async function* () {})(),
-              result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+              result: Promise.resolve({
+                status: "completed",
+                stopReason: "end_turn",
+              }),
               cancel: async () => {},
             }),
             close: closeSpy,
@@ -7901,12 +9744,19 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         runId: "run-fence-close",
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+        },
         context: {},
         onLog: async () => {},
         onMeta: async () => {},
       } as never);
-      await advanceHandshakeGuardAfterStart(ensureSession.started, ACPX_HANDSHAKE_TIMEOUT_MS + 1);
+      await advanceHandshakeGuardAfterStart(
+        ensureSession.started,
+        ACPX_HANDSHAKE_TIMEOUT_MS + 1,
+      );
       return { closeSpy, resolveEnsure, resultPromise };
     }
 
@@ -7916,24 +9766,30 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
       // Order A: the late resolution lands as soon as possible after the
       // guard rejects, ahead of the settlement steps that follow it.
       {
-        const { closeSpy, resolveEnsure, resultPromise } = await runAbandonedHandshake();
+        const { closeSpy, resolveEnsure, resultPromise } =
+          await runAbandonedHandshake();
         resolveEnsure(lateHandle);
         await resultPromise;
         expect(closeSpy).toHaveBeenCalledTimes(1);
-        expect(closeSpy).toHaveBeenCalledWith(expect.objectContaining({ handle: lateHandle }));
+        expect(closeSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ handle: lateHandle }),
+        );
       }
 
       // Order B: the run fully settles first (so settlement has already
       // sealed the fence), and only then does the late resolution land.
       {
-        const { closeSpy, resolveEnsure, resultPromise } = await runAbandonedHandshake();
+        const { closeSpy, resolveEnsure, resultPromise } =
+          await runAbandonedHandshake();
         await resultPromise;
         expect(closeSpy).not.toHaveBeenCalled();
         resolveEnsure(lateHandle);
         await Promise.resolve();
         await Promise.resolve();
         expect(closeSpy).toHaveBeenCalledTimes(1);
-        expect(closeSpy).toHaveBeenCalledWith(expect.objectContaining({ handle: lateHandle }));
+        expect(closeSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ handle: lateHandle }),
+        );
       }
     } finally {
       vi.useRealTimers();
@@ -7943,7 +9799,9 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
   it("discards the reuse decision and leaves no warm entry after a guard rejection", async () => {
     const root = await makeTempRoot();
     const warmHandles = new Map();
-    const ensureSession = trackEnsureSessionCall(() => new Promise<never>(() => {}));
+    const ensureSession = trackEnsureSessionCall(
+      () => new Promise<never>(() => {}),
+    );
     const execute = createAcpxEngineExecutor({
       warmHandles,
       createRuntime: () =>
@@ -7951,7 +9809,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
           ensureSession: ensureSession.call,
           startTurn: () => ({
             events: (async function* () {})(),
-            result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
             cancel: async () => {},
           }),
           close: async () => {},
@@ -7975,7 +9836,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         onLog: async () => {},
         onMeta: async () => {},
       } as never);
-      await advanceHandshakeGuardAfterStart(ensureSession.started, ACPX_HANDSHAKE_TIMEOUT_MS + 50);
+      await advanceHandshakeGuardAfterStart(
+        ensureSession.started,
+        ACPX_HANDSHAKE_TIMEOUT_MS + 50,
+      );
       const result = await resultPromise;
 
       expect(result.errorCode).toBe("acpx_handshake_timeout");
@@ -7998,11 +9862,16 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
       createRuntime: () =>
         ({
           ensureSession: async () => {
-            throw new FakeAcpRuntimeError("session/new failed: backend rejected initialize");
+            throw new FakeAcpRuntimeError(
+              "session/new failed: backend rejected initialize",
+            );
           },
           startTurn: () => ({
             events: (async function* () {})(),
-            result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
             cancel: async () => {},
           }),
           close: async () => {},
@@ -8013,7 +9882,11 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
       runId: "run-session-mismatch",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -8043,7 +9916,8 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
     const ensureSession = trackEnsureSessionCall(() => ensureSessionPromise);
     const logs: Array<{ stream: string; text: string }> = [];
     const unhandledRejections: unknown[] = [];
-    const onUnhandledRejection = (err: unknown) => unhandledRejections.push(err);
+    const onUnhandledRejection = (err: unknown) =>
+      unhandledRejections.push(err);
     process.on("unhandledRejection", onUnhandledRejection);
 
     try {
@@ -8054,7 +9928,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
             ensureSession: ensureSession.call,
             startTurn: () => ({
               events: (async function* () {})(),
-              result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+              result: Promise.resolve({
+                status: "completed",
+                stopReason: "end_turn",
+              }),
               cancel: async () => {},
             }),
             close: async () => {},
@@ -8064,14 +9941,21 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         runId: "run-late-rejection",
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+        },
         context: {},
         onLog: async (stream: "stdout" | "stderr", text: string) => {
           logs.push({ stream, text });
         },
         onMeta: async () => {},
       } as never);
-      await advanceHandshakeGuardAfterStart(ensureSession.started, ACPX_HANDSHAKE_TIMEOUT_MS + 1);
+      await advanceHandshakeGuardAfterStart(
+        ensureSession.started,
+        ACPX_HANDSHAKE_TIMEOUT_MS + 1,
+      );
       const result = await resultPromise;
       expect(result.errorCode).toBe("acpx_handshake_timeout");
 
@@ -8085,7 +9969,9 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         expect(entry.text).not.toContain(secretMarker);
       }
       expect(JSON.stringify(result)).not.toContain(secretMarker);
-      const lateRejectionLog = logs.find((entry) => entry.text.includes("acpx_handshake_late_rejection"));
+      const lateRejectionLog = logs.find((entry) =>
+        entry.text.includes("acpx_handshake_late_rejection"),
+      );
       expect(lateRejectionLog).toBeTruthy();
       expect(unhandledRejections).toHaveLength(0);
     } finally {
@@ -8107,7 +9993,9 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
     );
 
     const logs: Array<{ stream: string; text: string }> = [];
-    const ensureSession = trackEnsureSessionCall(() => new Promise<never>(() => {}));
+    const ensureSession = trackEnsureSessionCall(
+      () => new Promise<never>(() => {}),
+    );
     const execute = createAcpxEngineExecutor({
       createRuntime: () =>
         ({
@@ -8115,7 +10003,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
           ensureSession: ensureSession.call,
           startTurn: () => ({
             events: (async function* () {})(),
-            result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
             cancel: async () => {},
           }),
           close: async () => {},
@@ -8128,14 +10019,21 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         runId: "run-guard-timeout",
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir,
+        },
         context: {},
         onLog: async (stream: "stdout" | "stderr", text: string) => {
           logs.push({ stream, text });
         },
         onMeta: async () => {},
       } as never);
-      await advanceHandshakeGuardAfterStart(ensureSession.started, ACPX_HANDSHAKE_TIMEOUT_MS + 50);
+      await advanceHandshakeGuardAfterStart(
+        ensureSession.started,
+        ACPX_HANDSHAKE_TIMEOUT_MS + 50,
+      );
       const result = await resultPromise;
 
       expect(result.errorCode).toBe("acpx_handshake_timeout");
@@ -8143,7 +10041,9 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         expect(entry.text).not.toContain(secretMarker);
       }
       expect(JSON.stringify(result)).not.toContain(secretMarker);
-      const errorLogLine = logs.find((entry) => entry.text.includes("\"type\":\"acpx.error\""));
+      const errorLogLine = logs.find((entry) =>
+        entry.text.includes('"type":"acpx.error"'),
+      );
       expect(errorLogLine).toBeTruthy();
       const errorPayload = JSON.parse(errorLogLine!.text.trim());
       expect(errorPayload.childStderrTail).toBeUndefined();
@@ -8181,7 +10081,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
     // A minimal run-disposition latch, matching the real bridge transport: once
     // the loss is ordered, every later read still reports it.
     let lossOrdered = false;
-    const readDisposition = () => ({ failed: lossOrdered, lossReason: lossOrdered ? "provider_exit" : null });
+    const readDisposition = () => ({
+      failed: lossOrdered,
+      lossReason: lossOrdered ? "provider_exit" : null,
+    });
     const bridgeHandle = {
       env: {
         TASKCORE_API_URL: "http://127.0.0.1:1",
@@ -8196,7 +10099,9 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
     vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(
       async () => bridgeHandle as never,
     );
-    vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementationOnce(
+    vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mockImplementationOnce(
       async () => ({ agentCommand: null, stop: async () => {} }) as never,
     );
 
@@ -8209,7 +10114,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
           ensureSession: () => new Promise(() => {}),
           startTurn: () => ({
             events: (async function* () {})(),
-            result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+            result: Promise.resolve({
+              status: "completed",
+              stopReason: "end_turn",
+            }),
             cancel: async () => {},
           }),
           setConfigOption: async () => {},
@@ -8224,7 +10132,12 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
       runId: "run-guard-transport-lost",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd: localCwd,
+      },
       context: {},
       authToken: "real-run-jwt",
       executionTarget,
@@ -8242,7 +10155,9 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
       expect(entry.text).not.toContain(secretMarker);
     }
     expect(JSON.stringify(result)).not.toContain(secretMarker);
-    const errorLogLine = logs.find((entry) => entry.text.includes("\"type\":\"acpx.error\""));
+    const errorLogLine = logs.find((entry) =>
+      entry.text.includes('"type":"acpx.error"'),
+    );
     expect(errorLogLine).toBeTruthy();
     const errorPayload = JSON.parse(errorLogLine!.text.trim());
     expect(errorPayload.childStderrTail).toBeUndefined();
@@ -8263,7 +10178,8 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
     const ensureSession = trackEnsureSessionCall(() => ensureSessionPromise);
     const logs: Array<{ stream: string; text: string }> = [];
     const unhandledRejections: unknown[] = [];
-    const onUnhandledRejection = (err: unknown) => unhandledRejections.push(err);
+    const onUnhandledRejection = (err: unknown) =>
+      unhandledRejections.push(err);
     process.on("unhandledRejection", onUnhandledRejection);
 
     try {
@@ -8274,7 +10190,10 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
             ensureSession: ensureSession.call,
             startTurn: () => ({
               events: (async function* () {})(),
-              result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+              result: Promise.resolve({
+                status: "completed",
+                stopReason: "end_turn",
+              }),
               cancel: async () => {},
             }),
             close: async () => {
@@ -8286,14 +10205,21 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         runId: "run-late-close-rejection",
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+        },
         context: {},
         onLog: async (stream: "stdout" | "stderr", text: string) => {
           logs.push({ stream, text });
         },
         onMeta: async () => {},
       } as never);
-      await advanceHandshakeGuardAfterStart(ensureSession.started, ACPX_HANDSHAKE_TIMEOUT_MS + 1);
+      await advanceHandshakeGuardAfterStart(
+        ensureSession.started,
+        ACPX_HANDSHAKE_TIMEOUT_MS + 1,
+      );
       const result = await resultPromise;
       expect(result.errorCode).toBe("acpx_handshake_timeout");
 
@@ -8310,7 +10236,9 @@ describe("ACPX startup handshake guard and late-completion fence", () => {
         expect(entry.text).not.toContain(secretMarker);
       }
       expect(JSON.stringify(result)).not.toContain(secretMarker);
-      const lateCloseLog = logs.find((entry) => entry.text.includes("acpx_handshake_late_close_failed"));
+      const lateCloseLog = logs.find((entry) =>
+        entry.text.includes("acpx_handshake_late_close_failed"),
+      );
       expect(lateCloseLog).toBeTruthy();
       expect(unhandledRejections).toHaveLength(0);
     } finally {

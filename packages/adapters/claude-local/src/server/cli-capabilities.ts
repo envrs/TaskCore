@@ -6,12 +6,22 @@ const effortFlagSupportCache = new Map<string, Promise<boolean | null>>();
 
 export const CLAUDE_FABLE_5_1_MIN_CLI_VERSION = "2.1.251";
 
-export function claudeCommandLooksLike(command: string, expected = "claude"): boolean {
+export function claudeCommandLooksLike(
+  command: string,
+  expected = "claude",
+): boolean {
   const base = path.basename(command).toLowerCase();
-  return base === expected || base === `${expected}.cmd` || base === `${expected}.exe`;
+  return (
+    base === expected ||
+    base === `${expected}.cmd` ||
+    base === `${expected}.exe`
+  );
 }
 
-function cacheKeyForTarget(command: string, target: AdapterExecutionTarget | null | undefined): string {
+function cacheKeyForTarget(
+  command: string,
+  target: AdapterExecutionTarget | null | undefined,
+): string {
   if (!target) return `local::${command}`;
   if (target.kind === "local") {
     return `local:${target.environmentId ?? ""}:${target.leaseId ?? ""}:${command}`;
@@ -36,7 +46,10 @@ function cacheKeyForTarget(command: string, target: AdapterExecutionTarget | nul
 }
 
 export function minimumClaudeCliVersionForModel(model: string): string | null {
-  const modelId = model.trim().replace(/\[1m\]$/, "").replace(/^(?:(?:us|eu|apac|global)\.)?anthropic\./, "");
+  const modelId = model
+    .trim()
+    .replace(/\[1m\]$/, "")
+    .replace(/^(?:(?:us|eu|apac|global)\.)?anthropic\./, "");
   if (modelId === "claude-opus-5-5") return "2.1.280";
   if (modelId === "claude-sonnet-5-5") return "2.1.284";
   return modelId === "claude-fable-5-1"
@@ -48,7 +61,10 @@ export function parseClaudeCliVersion(output: string): string | null {
   return output.match(/\b(\d+)\.(\d+)\.(\d+)\b/)?.[0] ?? null;
 }
 
-export function claudeCliVersionAtLeast(version: string, minimum: string): boolean {
+export function claudeCliVersionAtLeast(
+  version: string,
+  minimum: string,
+): boolean {
   const parsedVersion = version.split(".").map(Number);
   const parsedMinimum = minimum.split(".").map(Number);
   if (

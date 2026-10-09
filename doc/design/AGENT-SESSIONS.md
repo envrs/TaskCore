@@ -1,6 +1,6 @@
 # Running an AI-agent session against the design system
 
-A guide for the *human* driving the session. You don't need to know the codebase — the system briefs the agent for you (AGENTS.md → `DESIGN.md` → `doc/design/`). Your job is to say what you want, look at pictures, and say yes or no. This document tells you how to do that well.
+A guide for the _human_ driving the session. You don't need to know the codebase — the system briefs the agent for you (AGENTS.md → `DESIGN.md` → `doc/design/`). Your job is to say what you want, look at pictures, and say yes or no. This document tells you how to do that well.
 
 ## The golden rule
 
@@ -11,21 +11,24 @@ A guide for the *human* driving the session. You don't need to know the codebase
 - ✅ "Corners feel too sharp. Round everything slightly."
 - ❌ "Edit line 1899 of IssueChatThread.tsx" (you'll be wrong, and it doesn't matter — the agent finds the sites)
 
-If your ask names a *feeling* ("too loud", "cramped", "inconsistent"), that's fine — expect the agent to translate it into a token change and show you the before/after to confirm the translation.
+If your ask names a _feeling_ ("too loud", "cramped", "inconsistent"), that's fine — expect the agent to translate it into a token change and show you the before/after to confirm the translation.
 
 ## Pick the session size
 
 **Small (minutes) — a value change.** Colors, sizes, spacing, radius, one component's look.
+
 > "In the Taskcore repo: make X look like Y. Show me before/after screenshots from the visual suite before you re-baseline anything."
 
 The agent should: edit token(s) → run `pnpm test:storybook-visual` → show you the diff images → only after your yes, run `test:storybook-visual:update`, publish the packed baseline archive from a trusted maintainer environment, and commit the code change + manifest update together.
 
 **Medium (an afternoon) — a retheme or a component-family restyle.** Ask for a **git worktree** so main stays untouched:
+
 > "Create a worktree off master, apply shadcn preset `<CODE>` as token values only (values-only — review the CLI's diff, revert scaffolding), reconcile the Taskcore status/agent color tiers, then build me a before/after gallery of the key surfaces."
 
 Review the gallery, iterate ("the dark red is too soft", "two different greens on toggles — one green"), then tell it to re-baseline and merge when you're satisfied.
 
-**Large (a day, unattended) — a bounded autonomous run.** Use `/goal` with a *measurable* finish line — the evaluator needs conditions a command can verify, not aspirations:
+**Large (a day, unattended) — a bounded autonomous run.** Use `/goal` with a _measurable_ finish line — the evaluator needs conditions a command can verify, not aspirations:
+
 > Good conditions: "rg finds zero palette classes in ui/src/components", "the snapshot suite passes against the pinned external baseline", "pnpm check:token-gates reports 3/3 CLEAN".
 > Bad conditions: "the UI feels cleaner", "design is more consistent".
 
@@ -63,4 +66,4 @@ Hold every session to these five, regardless of size:
 
 ## The short version
 
-Say what you want in plain language → agent turns it into token/component edits → you review before/after screenshots → you say "ship it" or say what's off → repeat. Every round today's system was built with took under an hour. That loop *is* the design workflow now.
+Say what you want in plain language → agent turns it into token/component edits → you review before/after screenshots → you say "ship it" or say what's off → repeat. Every round today's system was built with took under an hour. That loop _is_ the design workflow now.

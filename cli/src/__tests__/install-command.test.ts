@@ -52,21 +52,34 @@ describe("managed install commands", () => {
   });
 
   it("selects stable, canary, and exact-version npm sources", () => {
-    expect(resolveNpmInstallRequest({})).toEqual({ spec: "latest", channel: "latest" });
-    expect(resolveNpmInstallRequest({ canary: true })).toEqual({ spec: "canary", channel: "canary" });
+    expect(resolveNpmInstallRequest({})).toEqual({
+      spec: "latest",
+      channel: "latest",
+    });
+    expect(resolveNpmInstallRequest({ canary: true })).toEqual({
+      spec: "canary",
+      channel: "canary",
+    });
     expect(resolveNpmInstallRequest({ version: "2026.720.0" })).toEqual({
       spec: "2026.720.0",
       channel: "pinned",
     });
-    expect(() => resolveNpmInstallRequest({ canary: true, version: "1.2.3" })).toThrow();
+    expect(() =>
+      resolveNpmInstallRequest({ canary: true, version: "1.2.3" }),
+    ).toThrow();
     expect(() => resolveNpmInstallRequest({ version: "latest" })).toThrow();
   });
 
   it("resolves branch, tag, full SHA, and short SHA refs through GitHub", async () => {
     const sha = "a".repeat(40);
-    const runCommand = vi.fn(async (_file: string, _args: string[]) => ({ stdout: JSON.stringify({ sha }), stderr: "" }));
+    const runCommand = vi.fn(async (_file: string, _args: string[]) => ({
+      stdout: JSON.stringify({ sha }),
+      stderr: "",
+    }));
     for (const ref of ["master", "v1.2.3", sha, sha.slice(0, 12)]) {
-      await expect(resolveGitHubRef("khulnasoft/taskcore", ref, runCommand)).resolves.toBe(sha);
+      await expect(
+        resolveGitHubRef("khulnasoft/taskcore", ref, runCommand),
+      ).resolves.toBe(sha);
     }
     expect(runCommand.mock.calls.map((call) => call[1].at(-1))).toEqual([
       "https://api.github.com/repos/khulnasoft/taskcore/commits/master",
@@ -77,16 +90,31 @@ describe("managed install commands", () => {
   });
 
   it("supports fork overrides and classifies SHA refs as pinned", () => {
-    expect(resolveGitInstallRequest({ ref: "feature/test", repo: "HenkDz/taskcore" })).toEqual({ repo: "HenkDz/taskcore", ref: "feature/test", pinned: false });
-    expect(resolveGitInstallRequest({ ref: "abcdef1" })).toEqual({ repo: "khulnasoft/taskcore", ref: "abcdef1", pinned: true });
-    expect(() => resolveGitInstallRequest({ repo: "HenkDz/taskcore" })).toThrow("requires --ref");
+    expect(
+      resolveGitInstallRequest({
+        ref: "feature/test",
+        repo: "HenkDz/taskcore",
+      }),
+    ).toEqual({ repo: "HenkDz/taskcore", ref: "feature/test", pinned: false });
+    expect(resolveGitInstallRequest({ ref: "abcdef1" })).toEqual({
+      repo: "khulnasoft/taskcore",
+      ref: "abcdef1",
+      pinned: true,
+    });
+    expect(() => resolveGitInstallRequest({ repo: "HenkDz/taskcore" })).toThrow(
+      "requires --ref",
+    );
   });
 
   it("requires explicit non-interactive consent before resolving git refs", async () => {
     const runCommand = vi.fn();
 
-    await expect(installCommand({ ref: "master", repo: "HenkDz/taskcore" }, { runCommand }))
-      .rejects.toThrow("Re-run with --yes");
+    await expect(
+      installCommand(
+        { ref: "master", repo: "HenkDz/taskcore" },
+        { runCommand },
+      ),
+    ).rejects.toThrow("Re-run with --yes");
 
     expect(runCommand).not.toHaveBeenCalled();
   });
@@ -97,94 +125,235 @@ describe("managed install commands", () => {
     const payloadPath = payloadPathFor(paths, "git", sha.slice(0, 12));
     const packageRoot = path.join(payloadPath, "node_modules", "taskcore");
     fs.mkdirSync(path.join(packageRoot, "dist"), { recursive: true });
-    fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ version: "0.3.1" }));
-    fs.writeFileSync(path.join(packageRoot, "dist", "index.js"), "#!/usr/bin/env node\n");
-    const runCommand = vi.fn(async (_file: string, _args: string[]) => ({ stdout: "0.3.1\n", stderr: "" }));
-    await expect(installGitPayload("khulnasoft/taskcore", sha, runCommand, paths)).resolves.toEqual({ payloadPath, reused: true, version: "0.3.1" });
+    fs.writeFileSync(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({ version: "0.3.1" }),
+    );
+    fs.writeFileSync(
+      path.join(packageRoot, "dist", "index.js"),
+      "#!/usr/bin/env node\n",
+    );
+    const runCommand = vi.fn(async (_file: string, _args: string[]) => ({
+      stdout: "0.3.1\n",
+      stderr: "",
+    }));
+    await expect(
+      installGitPayload("khulnasoft/taskcore", sha, runCommand, paths),
+    ).resolves.toEqual({ payloadPath, reused: true, version: "0.3.1" });
     expect(runCommand).toHaveBeenCalledOnce();
     expect(runCommand.mock.calls[0]?.[0]).toBe(process.execPath);
   });
 
   const createGitCheckoutRunCommand = (sha: string) =>
-    vi.fn(async (file: string, args: string[], _options?: Parameters<CommandRunner>[2]) => {
-      if (file === "curl" && !args.includes("--output")) return { stdout: JSON.stringify({ sha }), stderr: "" };
-      if (file === "curl") { fs.writeFileSync(args[args.indexOf("--output") + 1], "archive"); return { stdout: "", stderr: "" }; }
-      if (file === "tar") {
-        const checkout = args[args.indexOf("-C") + 1];
-        const packages = [
-          { dir: "packages/shared", name: "@taskcore/shared", packageJson: { name: "@taskcore/shared", version: "0.3.1" } },
-          { dir: "packages/db", name: "@taskcore/db", packageJson: { name: "@taskcore/db", version: "0.3.1", dependencies: { "@taskcore/shared": "workspace:*" }, bundleDependencies: ["embedded-postgres"] } },
-          { dir: "server", name: "@taskcore/server", packageJson: { name: "@taskcore/server", version: "0.3.1", dependencies: { "@taskcore/db": "workspace:*" } } },
-        ];
-        fs.mkdirSync(path.join(checkout, "cli"), { recursive: true });
-        fs.writeFileSync(path.join(checkout, "cli", "package.json"), JSON.stringify({ version: "0.3.1" }));
-        fs.mkdirSync(path.join(checkout, "scripts"), { recursive: true });
-        fs.writeFileSync(path.join(checkout, "scripts", "release-package-manifest.json"), JSON.stringify(packages.map(({ dir, name }) => ({ dir, name }))));
-        for (const workspacePackage of packages) {
-          fs.mkdirSync(path.join(checkout, workspacePackage.dir), { recursive: true });
-          fs.writeFileSync(path.join(checkout, workspacePackage.dir, "package.json"), JSON.stringify(workspacePackage.packageJson));
+    vi.fn(
+      async (
+        file: string,
+        args: string[],
+        _options?: Parameters<CommandRunner>[2],
+      ) => {
+        if (file === "curl" && !args.includes("--output"))
+          return { stdout: JSON.stringify({ sha }), stderr: "" };
+        if (file === "curl") {
+          fs.writeFileSync(args[args.indexOf("--output") + 1], "archive");
+          return { stdout: "", stderr: "" };
         }
-        return { stdout: "", stderr: "" };
-      }
-      if (file === "corepack") {
-        if (args.includes("pack")) {
-          const destination = args[args.indexOf("--pack-destination") + 1];
-          const packageDir = args[args.indexOf("--dir") + 1];
-          const packageName = packageDir === "server" ? "taskcore-server" : "taskcore-shared";
-          fs.writeFileSync(path.join(destination, `${packageName}-0.3.1.tgz`), "package");
+        if (file === "tar") {
+          const checkout = args[args.indexOf("-C") + 1];
+          const packages = [
+            {
+              dir: "packages/shared",
+              name: "@taskcore/shared",
+              packageJson: { name: "@taskcore/shared", version: "0.3.1" },
+            },
+            {
+              dir: "packages/db",
+              name: "@taskcore/db",
+              packageJson: {
+                name: "@taskcore/db",
+                version: "0.3.1",
+                dependencies: { "@taskcore/shared": "workspace:*" },
+                bundleDependencies: ["embedded-postgres"],
+              },
+            },
+            {
+              dir: "server",
+              name: "@taskcore/server",
+              packageJson: {
+                name: "@taskcore/server",
+                version: "0.3.1",
+                dependencies: { "@taskcore/db": "workspace:*" },
+              },
+            },
+          ];
+          fs.mkdirSync(path.join(checkout, "cli"), { recursive: true });
+          fs.writeFileSync(
+            path.join(checkout, "cli", "package.json"),
+            JSON.stringify({ version: "0.3.1" }),
+          );
+          fs.mkdirSync(path.join(checkout, "scripts"), { recursive: true });
+          fs.writeFileSync(
+            path.join(checkout, "scripts", "release-package-manifest.json"),
+            JSON.stringify(packages.map(({ dir, name }) => ({ dir, name }))),
+          );
+          for (const workspacePackage of packages) {
+            fs.mkdirSync(path.join(checkout, workspacePackage.dir), {
+              recursive: true,
+            });
+            fs.writeFileSync(
+              path.join(checkout, workspacePackage.dir, "package.json"),
+              JSON.stringify(workspacePackage.packageJson),
+            );
+          }
+          return { stdout: "", stderr: "" };
         }
-        return { stdout: "", stderr: "" };
-      }
-      if (file === "bash") return { stdout: "", stderr: "" };
-      if (file === "npm" && args[0] === "pack") {
-        const packageName = args[1]?.includes("workspace-package-") ? "taskcore-db" : "taskcore";
-        fs.writeFileSync(path.join(args[args.indexOf("--pack-destination") + 1], `${packageName}-0.3.1.tgz`), "package");
-        return { stdout: "", stderr: "" };
-      }
-      if (file === "npm" && args[0] === "install") { const prefix = args[args.indexOf("--prefix") + 1]; const packageRoot = path.join(prefix, "node_modules", "taskcore"); fs.mkdirSync(path.join(packageRoot, "dist"), { recursive: true }); fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ version: "0.3.1" })); fs.writeFileSync(path.join(packageRoot, "dist", "index.js"), "#!/usr/bin/env node\n"); return { stdout: "", stderr: "" }; }
-      if (file === process.execPath && args[0]?.endsWith("prepare-bundled-package.mjs")) {
-        fs.mkdirSync(args[2], { recursive: true });
-        fs.writeFileSync(path.join(args[2], "package.json"), JSON.stringify({ name: "@taskcore/db", version: "0.3.1" }));
-        return { stdout: "", stderr: "" };
-      }
-      if (file === process.execPath) return { stdout: "0.3.1\n", stderr: "" };
-      throw new Error(`Unexpected command: ${file} ${args.join(" ")}`);
-    });
+        if (file === "corepack") {
+          if (args.includes("pack")) {
+            const destination = args[args.indexOf("--pack-destination") + 1];
+            const packageDir = args[args.indexOf("--dir") + 1];
+            const packageName =
+              packageDir === "server" ? "taskcore-server" : "taskcore-shared";
+            fs.writeFileSync(
+              path.join(destination, `${packageName}-0.3.1.tgz`),
+              "package",
+            );
+          }
+          return { stdout: "", stderr: "" };
+        }
+        if (file === "bash") return { stdout: "", stderr: "" };
+        if (file === "npm" && args[0] === "pack") {
+          const packageName = args[1]?.includes("workspace-package-")
+            ? "taskcore-db"
+            : "taskcore";
+          fs.writeFileSync(
+            path.join(
+              args[args.indexOf("--pack-destination") + 1],
+              `${packageName}-0.3.1.tgz`,
+            ),
+            "package",
+          );
+          return { stdout: "", stderr: "" };
+        }
+        if (file === "npm" && args[0] === "install") {
+          const prefix = args[args.indexOf("--prefix") + 1];
+          const packageRoot = path.join(prefix, "node_modules", "taskcore");
+          fs.mkdirSync(path.join(packageRoot, "dist"), { recursive: true });
+          fs.writeFileSync(
+            path.join(packageRoot, "package.json"),
+            JSON.stringify({ version: "0.3.1" }),
+          );
+          fs.writeFileSync(
+            path.join(packageRoot, "dist", "index.js"),
+            "#!/usr/bin/env node\n",
+          );
+          return { stdout: "", stderr: "" };
+        }
+        if (
+          file === process.execPath &&
+          args[0]?.endsWith("prepare-bundled-package.mjs")
+        ) {
+          fs.mkdirSync(args[2], { recursive: true });
+          fs.writeFileSync(
+            path.join(args[2], "package.json"),
+            JSON.stringify({ name: "@taskcore/db", version: "0.3.1" }),
+          );
+          return { stdout: "", stderr: "" };
+        }
+        if (file === process.execPath) return { stdout: "0.3.1\n", stderr: "" };
+        throw new Error(`Unexpected command: ${file} ${args.join(" ")}`);
+      },
+    );
 
   it("installs a GitHub branch through codeload and reuses the resolved SHA", async () => {
     const sha = "c".repeat(40);
     const runCommand = createGitCheckoutRunCommand(sha);
-    await installCommand({ ref: "master", repo: "HenkDz/taskcore", yes: true }, { runCommand });
-    await installCommand({ ref: "master", repo: "HenkDz/taskcore", yes: true }, { runCommand });
+    await installCommand(
+      { ref: "master", repo: "HenkDz/taskcore", yes: true },
+      { runCommand },
+    );
+    await installCommand(
+      { ref: "master", repo: "HenkDz/taskcore", yes: true },
+      { runCommand },
+    );
     const manifest = readInstallManifest(resolveInstallStorePaths());
-    expect(manifest).toMatchObject({ source: "git", repo: "HenkDz/taskcore", ref: "master", sha });
+    expect(manifest).toMatchObject({
+      source: "git",
+      repo: "HenkDz/taskcore",
+      ref: "master",
+      sha,
+    });
     expect(manifest?.payloadPath).toContain(path.join("git", sha.slice(0, 12)));
-    expect(runCommand.mock.calls.filter(([command, args]) => command === "curl" && args.includes("--output"))).toHaveLength(1);
-    expect(runCommand.mock.calls.filter(([command, args]) => command === "corepack" && args[1] === "install")).toHaveLength(1);
-    expect(runCommand.mock.calls.filter(([command, args]) => command === "corepack" && args.includes("pack"))).toHaveLength(2);
-    expect(runCommand.mock.calls.filter(([command, args]) => command === process.execPath && args[0]?.endsWith("prepare-bundled-package.mjs"))).toHaveLength(1);
-    expect(runCommand.mock.calls.filter(([command, args]) => command === "npm" && args[0] === "pack")).toHaveLength(2);
-    const installCall = runCommand.mock.calls.find(([command, args]) => command === "npm" && args[0] === "install");
-    expect(installCall?.[1].filter((arg) => arg.endsWith(".tgz"))).toHaveLength(4);
+    expect(
+      runCommand.mock.calls.filter(
+        ([command, args]) => command === "curl" && args.includes("--output"),
+      ),
+    ).toHaveLength(1);
+    expect(
+      runCommand.mock.calls.filter(
+        ([command, args]) => command === "corepack" && args[1] === "install",
+      ),
+    ).toHaveLength(1);
+    expect(
+      runCommand.mock.calls.filter(
+        ([command, args]) => command === "corepack" && args.includes("pack"),
+      ),
+    ).toHaveLength(2);
+    expect(
+      runCommand.mock.calls.filter(
+        ([command, args]) =>
+          command === process.execPath &&
+          args[0]?.endsWith("prepare-bundled-package.mjs"),
+      ),
+    ).toHaveLength(1);
+    expect(
+      runCommand.mock.calls.filter(
+        ([command, args]) => command === "npm" && args[0] === "pack",
+      ),
+    ).toHaveLength(2);
+    const installCall = runCommand.mock.calls.find(
+      ([command, args]) => command === "npm" && args[0] === "install",
+    );
+    expect(installCall?.[1].filter((arg) => arg.endsWith(".tgz"))).toHaveLength(
+      4,
+    );
   });
 
   it("builds git checkouts with NODE_ENV cleared so ambient production mode keeps devDependencies", async () => {
     process.env.NODE_ENV = "production";
     const sha = "d".repeat(40);
     const runCommand = createGitCheckoutRunCommand(sha);
-    await expect(installGitPayload("khulnasoft/taskcore", sha, runCommand, resolveInstallStorePaths())).resolves.toMatchObject({ version: "0.3.1", reused: false });
-    const buildCalls = runCommand.mock.calls.filter(([file, args]) =>
-      file === "bash" ||
-      file === "corepack" ||
-      (file === "npm" && args[0] === "pack") ||
-      (file === process.execPath && args[0]?.endsWith("prepare-bundled-package.mjs")));
+    await expect(
+      installGitPayload(
+        "khulnasoft/taskcore",
+        sha,
+        runCommand,
+        resolveInstallStorePaths(),
+      ),
+    ).resolves.toMatchObject({ version: "0.3.1", reused: false });
+    const buildCalls = runCommand.mock.calls.filter(
+      ([file, args]) =>
+        file === "bash" ||
+        file === "corepack" ||
+        (file === "npm" && args[0] === "pack") ||
+        (file === process.execPath &&
+          args[0]?.endsWith("prepare-bundled-package.mjs")),
+    );
     expect(buildCalls).toHaveLength(9);
     for (const call of buildCalls) {
       const env = call[2]?.env;
-      expect(env, `${call[0]} ${call[1].join(" ")} must run with an explicit env`).toBeDefined();
-      expect(env, `${call[0]} ${call[1].join(" ")} must not inherit NODE_ENV`).not.toHaveProperty("NODE_ENV");
+      expect(
+        env,
+        `${call[0]} ${call[1].join(" ")} must run with an explicit env`,
+      ).toBeDefined();
+      expect(
+        env,
+        `${call[0]} ${call[1].join(" ")} must not inherit NODE_ENV`,
+      ).not.toHaveProperty("NODE_ENV");
     }
-    const uiPackCall = buildCalls.find(([file, , options]) => file === "corepack" && options?.env?.TASKCORE_RELEASE_REUSE_UI_DIST === "1");
+    const uiPackCall = buildCalls.find(
+      ([file, , options]) =>
+        file === "corepack" &&
+        options?.env?.TASKCORE_RELEASE_REUSE_UI_DIST === "1",
+    );
     expect(uiPackCall).toBeDefined();
   });
 
@@ -192,63 +361,114 @@ describe("managed install commands", () => {
     const checkout = path.join(root, "checkout");
     const packages = [
       { dir: "packages/shared", name: "@taskcore/shared", dependencies: {} },
-      { dir: "packages/db", name: "@taskcore/db", dependencies: { "@taskcore/shared": "workspace:*" } },
-      { dir: "server", name: "@taskcore/server", dependencies: { "@taskcore/db": "workspace:*" } },
+      {
+        dir: "packages/db",
+        name: "@taskcore/db",
+        dependencies: { "@taskcore/shared": "workspace:*" },
+      },
+      {
+        dir: "server",
+        name: "@taskcore/server",
+        dependencies: { "@taskcore/db": "workspace:*" },
+      },
     ];
     fs.mkdirSync(path.join(checkout, "scripts"), { recursive: true });
-    fs.writeFileSync(path.join(checkout, "scripts", "release-package-manifest.json"), JSON.stringify(packages.map(({ dir, name }) => ({ dir, name }))));
+    fs.writeFileSync(
+      path.join(checkout, "scripts", "release-package-manifest.json"),
+      JSON.stringify(packages.map(({ dir, name }) => ({ dir, name }))),
+    );
     for (const workspacePackage of packages) {
-      fs.mkdirSync(path.join(checkout, workspacePackage.dir), { recursive: true });
-      fs.writeFileSync(path.join(checkout, workspacePackage.dir, "package.json"), JSON.stringify({ name: workspacePackage.name, dependencies: workspacePackage.dependencies }));
+      fs.mkdirSync(path.join(checkout, workspacePackage.dir), {
+        recursive: true,
+      });
+      fs.writeFileSync(
+        path.join(checkout, workspacePackage.dir, "package.json"),
+        JSON.stringify({
+          name: workspacePackage.name,
+          dependencies: workspacePackage.dependencies,
+        }),
+      );
     }
 
-    expect(resolveGitInstallWorkspacePackages(checkout).map(({ name }) => name)).toEqual([
-      "@taskcore/shared",
-      "@taskcore/db",
-      "@taskcore/server",
-    ]);
+    expect(
+      resolveGitInstallWorkspacePackages(checkout).map(({ name }) => name),
+    ).toEqual(["@taskcore/shared", "@taskcore/db", "@taskcore/server"]);
   });
 
   it("includes child-process stderr in command failures", async () => {
-    await expect(runCommandWithDiagnostics(process.execPath, ["-e", "process.stderr.write('unsupported workspace dependency\\n'); process.exit(1)"]))
-      .rejects.toThrow("unsupported workspace dependency");
+    await expect(
+      runCommandWithDiagnostics(process.execPath, [
+        "-e",
+        "process.stderr.write('unsupported workspace dependency\\n'); process.exit(1)",
+      ]),
+    ).rejects.toThrow("unsupported workspace dependency");
   });
 
   it("installs through the shim, reports provenance, and uninstalls without deleting user data", async () => {
     const version = "2026.720.0";
-    const runCommand = vi.fn(async (file: string, args: string[], _options?: unknown) => {
-      if (file === "npm" && args[0] === "view") return { stdout: JSON.stringify(version), stderr: "" };
-      if (file === "npm" && args[0] === "install") {
-        const prefix = args[args.indexOf("--prefix") + 1];
-        const entrypoint = path.join(prefix, "node_modules", "taskcore", "dist", "index.js");
-        fs.mkdirSync(path.dirname(entrypoint), { recursive: true });
-        fs.writeFileSync(entrypoint, "#!/usr/bin/env node\n");
-        return { stdout: "", stderr: "" };
-      }
-      if (file === process.execPath && args.at(-1) === "--version") {
-        return { stdout: `${version}\n`, stderr: "" };
-      }
-      throw new Error(`Unexpected command: ${file} ${args.join(" ")}`);
-    });
+    const runCommand = vi.fn(
+      async (file: string, args: string[], _options?: unknown) => {
+        if (file === "npm" && args[0] === "view")
+          return { stdout: JSON.stringify(version), stderr: "" };
+        if (file === "npm" && args[0] === "install") {
+          const prefix = args[args.indexOf("--prefix") + 1];
+          const entrypoint = path.join(
+            prefix,
+            "node_modules",
+            "taskcore",
+            "dist",
+            "index.js",
+          );
+          fs.mkdirSync(path.dirname(entrypoint), { recursive: true });
+          fs.writeFileSync(entrypoint, "#!/usr/bin/env node\n");
+          return { stdout: "", stderr: "" };
+        }
+        if (file === process.execPath && args.at(-1) === "--version") {
+          return { stdout: `${version}\n`, stderr: "" };
+        }
+        throw new Error(`Unexpected command: ${file} ${args.join(" ")}`);
+      },
+    );
 
-    await installCommand({}, { runCommand, now: () => new Date("2026-07-22T18:00:00.000Z") });
+    await installCommand(
+      {},
+      { runCommand, now: () => new Date("2026-07-22T18:00:00.000Z") },
+    );
 
     const paths = resolveInstallStorePaths();
     const manifest = readInstallManifest(paths);
     expect(manifest?.version).toBe(version);
     expect(manifest?.channel).toBe("latest");
-    expect(fs.realpathSync(paths.currentPath)).toBe(fs.realpathSync(manifest!.payloadPath));
+    expect(fs.realpathSync(paths.currentPath)).toBe(
+      fs.realpathSync(manifest!.payloadPath),
+    );
     expect(fs.existsSync(paths.shimPath)).toBe(true);
     const installCall = runCommand.mock.calls.find(
       ([file, args]) => file === "npm" && args[0] === "install",
     );
-    expect(installCall?.[1]).toContain("--@taskcore:registry=https://registry.npmjs.org");
-    const installOptions = installCall?.[2] as { env?: NodeJS.ProcessEnv } | undefined;
+    expect(installCall?.[1]).toContain(
+      "--@taskcore:registry=https://registry.npmjs.org",
+    );
+    const installOptions = installCall?.[2] as
+      { env?: NodeJS.ProcessEnv } | undefined;
     expect(installOptions?.env?.npm_config_userconfig).toContain(".npmrc-");
-    const entrypoint = path.join(manifest!.payloadPath, "node_modules", "taskcore", "dist", "index.js");
-    expect(resolveCliVersion(entrypoint)).toContain(`managed npm latest; payload ${manifest!.payloadPath}`);
+    const entrypoint = path.join(
+      manifest!.payloadPath,
+      "node_modules",
+      "taskcore",
+      "dist",
+      "index.js",
+    );
+    expect(resolveCliVersion(entrypoint)).toContain(
+      `managed npm latest; payload ${manifest!.payloadPath}`,
+    );
 
-    const userData = path.join(process.env.TASKCORE_HOME!, "instances", "default", "keep.txt");
+    const userData = path.join(
+      process.env.TASKCORE_HOME!,
+      "instances",
+      "default",
+      "keep.txt",
+    );
     fs.mkdirSync(path.dirname(userData), { recursive: true });
     fs.writeFileSync(userData, "keep");
     const uninstallService = vi.fn(async () => {
@@ -272,18 +492,28 @@ describe("managed install commands", () => {
 
   it("refuses to remove the shared CLI while another instance service is installed", async () => {
     const paths = resolveInstallStorePaths();
-    const otherUnitPath = path.join(process.env.HOME!, ".config", "systemd", "user", systemdServiceName("team-a"));
+    const otherUnitPath = path.join(
+      process.env.HOME!,
+      ".config",
+      "systemd",
+      "user",
+      systemdServiceName("team-a"),
+    );
     fs.mkdirSync(path.dirname(otherUnitPath), { recursive: true });
     fs.writeFileSync(otherUnitPath, "unit");
 
-    await expect(uninstallCommand({
-      detectServiceManager: vi.fn(async () => ({
-        supported: true as const,
-        manager: { status: vi.fn(async () => ({ installed: false, active: false })) } as never,
-      })),
-      platform: "linux",
-      userHomeDir: process.env.HOME!,
-    })).rejects.toThrow("other instance services are installed");
+    await expect(
+      uninstallCommand({
+        detectServiceManager: vi.fn(async () => ({
+          supported: true as const,
+          manager: {
+            status: vi.fn(async () => ({ installed: false, active: false })),
+          } as never,
+        })),
+        platform: "linux",
+        userHomeDir: process.env.HOME!,
+      }),
+    ).rejects.toThrow("other instance services are installed");
 
     expect(fs.existsSync(paths.cliRoot)).toBe(false);
     expect(fs.existsSync(otherUnitPath)).toBe(true);
@@ -303,14 +533,16 @@ describe("managed install commands", () => {
     fs.mkdirSync(path.dirname(unitPath), { recursive: true });
     fs.writeFileSync(unitPath, "unit");
 
-    await expect(uninstallCommand({
-      detectServiceManager: vi.fn(async () => ({
-        supported: false as const,
-        reason: "No usable systemd user manager was detected",
-      })),
-      platform: "linux",
-      userHomeDir: process.env.HOME!,
-    })).rejects.toThrow("Cannot verify or remove the background service");
+    await expect(
+      uninstallCommand({
+        detectServiceManager: vi.fn(async () => ({
+          supported: false as const,
+          reason: "No usable systemd user manager was detected",
+        })),
+        platform: "linux",
+        userHomeDir: process.env.HOME!,
+      }),
+    ).rejects.toThrow("Cannot verify or remove the background service");
 
     expect(fs.existsSync(paths.shimPath)).toBe(true);
     expect(fs.existsSync(unitPath)).toBe(true);
@@ -322,9 +554,14 @@ describe("managed install commands", () => {
     fs.mkdirSync(paths.cliRoot, { recursive: true });
     fs.mkdirSync(outside);
     fs.symlinkSync(outside, paths.installsRoot, "dir");
-    const runCommand = vi.fn(async () => ({ stdout: JSON.stringify("2026.720.0"), stderr: "" }));
+    const runCommand = vi.fn(async () => ({
+      stdout: JSON.stringify("2026.720.0"),
+      stderr: "",
+    }));
 
-    await expect(installCommand({}, { runCommand })).rejects.toThrow("non-directory install-store path");
+    await expect(installCommand({}, { runCommand })).rejects.toThrow(
+      "non-directory install-store path",
+    );
     expect(runCommand).toHaveBeenCalledTimes(1);
     expect(fs.readdirSync(outside)).toEqual([]);
   });
@@ -335,7 +572,9 @@ describe("managed install commands", () => {
     fs.mkdirSync(paths.cliRoot, { recursive: true });
     fs.writeFileSync(unrelatedFile, "keep");
 
-    await expect(uninstallCommand()).rejects.toThrow("unverified install store");
+    await expect(uninstallCommand()).rejects.toThrow(
+      "unverified install store",
+    );
     expect(fs.readFileSync(unrelatedFile, "utf8")).toBe("keep");
   });
 
@@ -345,32 +584,40 @@ describe("managed install commands", () => {
     initializeInstallStore(paths);
     fs.mkdirSync(payloadPath, { recursive: true });
     flipCurrentAtomic(payloadPath, paths);
-    writeInstallManifestAtomic({
-      schemaVersion: INSTALL_MANIFEST_VERSION,
-      source: "npm",
-      version: "2026.720.0",
-      channel: "latest",
-      payloadPath,
-      installedAt: "2026-07-22T18:00:00.000Z",
-      previous: [],
-    }, paths);
-
-    await withInstallStoreLock(
-      async () => {
-        await expect(uninstallCommand()).rejects.toThrow("already running");
+    writeInstallManifestAtomic(
+      {
+        schemaVersion: INSTALL_MANIFEST_VERSION,
+        source: "npm",
+        version: "2026.720.0",
+        channel: "latest",
+        payloadPath,
+        installedAt: "2026-07-22T18:00:00.000Z",
+        previous: [],
       },
       paths,
     );
+
+    await withInstallStoreLock(async () => {
+      await expect(uninstallCommand()).rejects.toThrow("already running");
+    }, paths);
     expect(fs.existsSync(paths.lockPath)).toBe(false);
   });
 
   it("refuses a symlinked git payload root before downloading", async () => {
-    const paths = resolveInstallStorePaths(); initializeInstallStore(paths);
-    const outside = path.join(root, "outside-git"); fs.mkdirSync(outside);
+    const paths = resolveInstallStorePaths();
+    initializeInstallStore(paths);
+    const outside = path.join(root, "outside-git");
+    fs.mkdirSync(outside);
     fs.symlinkSync(outside, path.join(paths.installsRoot, "git"));
     const runCommand = vi.fn(async () => ({ stdout: "", stderr: "" }));
-    await expect(installGitPayload("khulnasoft/taskcore", "4".repeat(40), runCommand, paths)).rejects.toThrow("unsafe payload root");
+    await expect(
+      installGitPayload(
+        "khulnasoft/taskcore",
+        "4".repeat(40),
+        runCommand,
+        paths,
+      ),
+    ).rejects.toThrow("unsafe payload root");
     expect(runCommand).not.toHaveBeenCalled();
   });
-
 });

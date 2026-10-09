@@ -17,19 +17,26 @@ async function buildCodexSkillSnapshot(
   config: Record<string, unknown>,
   adapterType: string,
 ): Promise<AdapterSkillSnapshot> {
-  const availableEntries = await readTaskcoreRuntimeSkillEntries(config, __moduleDir);
-  const desiredSkills = adapterType === "taskcore_runner"
-    ? resolveTaskcoreDesiredSkillNames(config, availableEntries)
-    : resolveLegacyTaskcoreDesiredSkillNames(config, availableEntries);
+  const availableEntries = await readTaskcoreRuntimeSkillEntries(
+    config,
+    __moduleDir,
+  );
+  const desiredSkills =
+    adapterType === "taskcore_runner"
+      ? resolveTaskcoreDesiredSkillNames(config, availableEntries)
+      : resolveLegacyTaskcoreDesiredSkillNames(config, availableEntries);
   return buildRuntimeMountedSkillSnapshot({
     adapterType,
     availableEntries,
     desiredSkills,
-    configuredDetail: "Will be linked into the effective CODEX_HOME/skills/ directory on the next run.",
+    configuredDetail:
+      "Will be linked into the effective CODEX_HOME/skills/ directory on the next run.",
   });
 }
 
-export async function listCodexSkills(ctx: AdapterSkillContext): Promise<AdapterSkillSnapshot> {
+export async function listCodexSkills(
+  ctx: AdapterSkillContext,
+): Promise<AdapterSkillSnapshot> {
   return buildCodexSkillSnapshot(ctx.config, ctx.adapterType);
 }
 

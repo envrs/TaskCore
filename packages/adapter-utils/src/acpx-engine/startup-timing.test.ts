@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AdapterRuntimeEvent } from "../types.js";
-import type { StartupSpan, StartupTraceContext, StartupTracer } from "./startup-timing.js";
+import type {
+  StartupSpan,
+  StartupTraceContext,
+  StartupTracer,
+} from "./startup-timing.js";
 import {
   clampSpanLabel,
   createRuntimeSpanRunner,
@@ -73,10 +77,15 @@ describe("measureStartupStep", () => {
       events.push(event);
     });
 
-    const result = await measureStartupStep({ onEvent }, now, "stage.sync", async () => {
-      t = 150; // clock advances while the wrapped step runs
-      return "ok";
-    });
+    const result = await measureStartupStep(
+      { onEvent },
+      now,
+      "stage.sync",
+      async () => {
+        t = 150; // clock advances while the wrapped step runs
+        return "ok";
+      },
+    );
 
     expect(result).toBe("ok");
     expect(onEvent).toHaveBeenCalledTimes(1);
@@ -106,7 +115,11 @@ describe("measureStartupStep", () => {
     // The detailed per-step round-trip and provider-duration numbers ride the
     // OTel spans now, so the run-log payload keeps only the high-level fields.
     const payload = events[0]!.payload as Record<string, unknown>;
-    expect(Object.keys(payload).sort()).toEqual(["durationMs", "outcome", "step"]);
+    expect(Object.keys(payload).sort()).toEqual([
+      "durationMs",
+      "outcome",
+      "step",
+    ]);
     expect(payload).not.toHaveProperty("roundTrips");
     expect(payload).not.toHaveProperty("providerExecMs");
     expect(payload).not.toHaveProperty("providerGetMs");
@@ -119,7 +132,12 @@ describe("measureStartupStep", () => {
     const onEvent = vi.fn(async () => {});
     const value = { nested: [1, 2, 3] };
 
-    const result = await measureStartupStep({ onEvent }, now, "workspace.resolve", async () => value);
+    const result = await measureStartupStep(
+      { onEvent },
+      now,
+      "workspace.resolve",
+      async () => value,
+    );
 
     expect(result).toBe(value);
   });
@@ -154,10 +172,15 @@ describe("measureStartupStep", () => {
       throw new Error("sink failed");
     });
 
-    const result = await measureStartupStep({ onEvent }, now, "bridge.taskcore", async () => {
-      t = 17;
-      return "value";
-    });
+    const result = await measureStartupStep(
+      { onEvent },
+      now,
+      "bridge.taskcore",
+      async () => {
+        t = 17;
+        return "value";
+      },
+    );
 
     expect(result).toBe("value");
     expect(onEvent).toHaveBeenCalledTimes(1);
@@ -172,10 +195,15 @@ describe("measureStartupStep", () => {
     const boom = new Error("step failed");
 
     await expect(
-      measureStartupStep({ onEvent }, now, "bridge.process-session", async () => {
-        t = 17;
-        throw boom;
-      }),
+      measureStartupStep(
+        { onEvent },
+        now,
+        "bridge.process-session",
+        async () => {
+          t = 17;
+          throw boom;
+        },
+      ),
     ).rejects.toBe(boom);
 
     expect(onEvent).toHaveBeenCalledTimes(1);
@@ -204,9 +232,15 @@ describe("measureStartupStep", () => {
     const { tracer, spans } = makeMockTracer();
     const onEvent = vi.fn(async () => {});
 
-    await measureStartupStep({ onEvent }, () => 0, "stage.sync", async () => "ok", {
-      tracer,
-    });
+    await measureStartupStep(
+      { onEvent },
+      () => 0,
+      "stage.sync",
+      async () => "ok",
+      {
+        tracer,
+      },
+    );
 
     expect(spans).toHaveLength(1);
     expect(spans[0]!.name).toBe("stage.sync");
@@ -223,9 +257,15 @@ describe("measureStartupStep", () => {
     const boom = new Error("step failed");
 
     await expect(
-      measureStartupStep({ onEvent }, () => 0, "acp.handshake", async () => {
-        throw boom;
-      }, { tracer }),
+      measureStartupStep(
+        { onEvent },
+        () => 0,
+        "acp.handshake",
+        async () => {
+          throw boom;
+        },
+        { tracer },
+      ),
     ).rejects.toBe(boom);
 
     expect(spans).toHaveLength(1);
@@ -241,10 +281,16 @@ describe("measureStartupStep", () => {
     });
     const { tracer, spans } = makeMockTracer();
 
-    await measureStartupStep({ onEvent }, () => 0, "stage.sync", async () => "ok", {
-      tracer,
-      provider: "daytona",
-    });
+    await measureStartupStep(
+      { onEvent },
+      () => 0,
+      "stage.sync",
+      async () => "ok",
+      {
+        tracer,
+        provider: "daytona",
+      },
+    );
 
     // The step span carries only the closed allowlist. The per-execution
     // `sandbox.exec` spans carry the round-trip and provider-duration detail.
@@ -261,22 +307,42 @@ describe("measureStartupStep", () => {
     const onEvent = vi.fn(async () => {});
 
     const custom = makeMockTracer();
-    await measureStartupStep({ onEvent }, () => 0, "stage.sync", async () => "ok", {
-      tracer: custom.tracer,
-      provider: "acme-cloud-runner",
-    });
+    await measureStartupStep(
+      { onEvent },
+      () => 0,
+      "stage.sync",
+      async () => "ok",
+      {
+        tracer: custom.tracer,
+        provider: "acme-cloud-runner",
+      },
+    );
     expect(custom.spans[0]!.attributes[A.provider]).toBe("plugin");
 
     const builtIn = makeMockTracer();
-    await measureStartupStep({ onEvent }, () => 0, "stage.sync", async () => "ok", {
-      tracer: builtIn.tracer,
-      provider: "daytona",
-    });
+    await measureStartupStep(
+      { onEvent },
+      () => 0,
+      "stage.sync",
+      async () => "ok",
+      {
+        tracer: builtIn.tracer,
+        provider: "daytona",
+      },
+    );
     expect(builtIn.spans[0]!.attributes[A.provider]).toBe("daytona");
   });
 
   it("normalizeProviderFamily maps every non-built-in key to plugin", () => {
-    for (const key of ["daytona", "kubernetes", "e2b", "cloudflare", "exe-dev", "modal", "novita"]) {
+    for (const key of [
+      "daytona",
+      "kubernetes",
+      "e2b",
+      "cloudflare",
+      "exe-dev",
+      "modal",
+      "novita",
+    ]) {
       expect(normalizeProviderFamily(key)).toBe(key);
     }
     for (const key of ["acme", "my-plugin", "", "DAYTONA", undefined]) {
@@ -288,10 +354,16 @@ describe("measureStartupStep", () => {
     const onEvent = vi.fn(async () => {});
     const { tracer, spans } = makeMockTracer();
 
-    await measureStartupStep({ onEvent }, () => 0, "acp.handshake", async () => "ok", {
-      tracer,
-      provider: "daytona",
-    });
+    await measureStartupStep(
+      { onEvent },
+      () => 0,
+      "acp.handshake",
+      async () => "ok",
+      {
+        tracer,
+        provider: "daytona",
+      },
+    );
 
     expect(Object.keys(spans[0]!.attributes).sort()).toEqual(
       [A.provider, A.stepWallMs, A.outcome].sort(),
@@ -305,7 +377,9 @@ describe("measureStartupStep", () => {
     // the span key set, even after the prefix.
     for (const key of Object.keys(spans[0]!.attributes)) {
       const suffix = key.slice(SANDBOX_STARTUP_SPAN_ATTR_PREFIX.length);
-      expect(suffix).not.toMatch(/command|args|env|stdout|stderr|path|url|repo|ref|branch|error|message/);
+      expect(suffix).not.toMatch(
+        /command|args|env|stdout|stderr|path|url|repo|ref|branch|error|message/,
+      );
     }
   });
 
@@ -317,7 +391,12 @@ describe("measureStartupStep", () => {
 
     // No tracer supplied. The helper must still emit the event and return the
     // value without throwing.
-    const result = await measureStartupStep({ onEvent }, () => 0, "stage.sync", async () => "ok");
+    const result = await measureStartupStep(
+      { onEvent },
+      () => 0,
+      "stage.sync",
+      async () => "ok",
+    );
 
     expect(result).toBe("ok");
     expect(events[0]!.payload).toMatchObject({ step: "stage.sync" });
@@ -325,57 +404,107 @@ describe("measureStartupStep", () => {
 
   it("sets a batch tag on the span from the batch option", async () => {
     const { tracer, spans } = makeMockTracer();
-    await measureStartupStep({ onEvent: vi.fn(async () => {}) }, () => 0, "bridge.taskcore", async () => "ok", {
-      tracer,
-      batch: "bridge",
-    });
+    await measureStartupStep(
+      { onEvent: vi.fn(async () => {}) },
+      () => 0,
+      "bridge.taskcore",
+      async () => "ok",
+      {
+        tracer,
+        batch: "bridge",
+      },
+    );
     expect(spans[0]!.attributes[A.batch]).toBe("bridge");
   });
 
   it("maps handshake sub-times to fixed span keys and skips a non-finite one", async () => {
     const { tracer, spans } = makeMockTracer();
-    await measureStartupStep({ onEvent: vi.fn(async () => {}) }, () => 0, "acp.handshake", async () => "ok", {
-      tracer,
-      spanWallTimes: () => ({ createRuntime: 12, ensureSession: 6988 }),
-    });
+    await measureStartupStep(
+      { onEvent: vi.fn(async () => {}) },
+      () => 0,
+      "acp.handshake",
+      async () => "ok",
+      {
+        tracer,
+        spanWallTimes: () => ({ createRuntime: 12, ensureSession: 6988 }),
+      },
+    );
     expect(spans[0]!.attributes[A.handshakeCreateRuntimeWallMs]).toBe(12);
     expect(spans[0]!.attributes[A.handshakeEnsureSessionWallMs]).toBe(6988);
 
     // A retry reports only its own ensure-session sub-time; the absent create-
     // runtime value sets no attribute.
     const retry = makeMockTracer();
-    await measureStartupStep({ onEvent: vi.fn(async () => {}) }, () => 0, "acp.handshake", async () => "ok", {
-      tracer: retry.tracer,
-      spanWallTimes: () => ({ ensureSession: 40 }),
-    });
+    await measureStartupStep(
+      { onEvent: vi.fn(async () => {}) },
+      () => 0,
+      "acp.handshake",
+      async () => "ok",
+      {
+        tracer: retry.tracer,
+        spanWallTimes: () => ({ ensureSession: 40 }),
+      },
+    );
     expect(retry.spans[0]!.attributes[A.handshakeEnsureSessionWallMs]).toBe(40);
-    expect(retry.spans[0]!.attributes).not.toHaveProperty(A.handshakeCreateRuntimeWallMs);
+    expect(retry.spans[0]!.attributes).not.toHaveProperty(
+      A.handshakeCreateRuntimeWallMs,
+    );
   });
 
   it("sets outcome = ok on a settled step and outcome = failed on a throwing step", async () => {
     const okEvents: AdapterRuntimeEvent[] = [];
     const ok = makeMockTracer();
-    await measureStartupStep({ onEvent: vi.fn(async (e: AdapterRuntimeEvent) => { okEvents.push(e); }) },
-      () => 0, "stage.sync", async () => "ok", { tracer: ok.tracer });
+    await measureStartupStep(
+      {
+        onEvent: vi.fn(async (e: AdapterRuntimeEvent) => {
+          okEvents.push(e);
+        }),
+      },
+      () => 0,
+      "stage.sync",
+      async () => "ok",
+      { tracer: ok.tracer },
+    );
     expect(ok.spans[0]!.attributes[A.outcome]).toBe("ok");
-    expect((okEvents[0]!.payload as Record<string, unknown>).outcome).toBe("ok");
+    expect((okEvents[0]!.payload as Record<string, unknown>).outcome).toBe(
+      "ok",
+    );
 
     const failEvents: AdapterRuntimeEvent[] = [];
     const fail = makeMockTracer();
     await expect(
-      measureStartupStep({ onEvent: vi.fn(async (e: AdapterRuntimeEvent) => { failEvents.push(e); }) },
-        () => 0, "acp.handshake", async () => { throw new Error("boom"); }, { tracer: fail.tracer }),
+      measureStartupStep(
+        {
+          onEvent: vi.fn(async (e: AdapterRuntimeEvent) => {
+            failEvents.push(e);
+          }),
+        },
+        () => 0,
+        "acp.handshake",
+        async () => {
+          throw new Error("boom");
+        },
+        { tracer: fail.tracer },
+      ),
     ).rejects.toThrow("boom");
     expect(fail.spans[0]!.attributes[A.outcome]).toBe("failed");
-    expect((failEvents[0]!.payload as Record<string, unknown>).outcome).toBe("failed");
+    expect((failEvents[0]!.payload as Record<string, unknown>).outcome).toBe(
+      "failed",
+    );
   });
 
   it("sets each step-span attribute key with the closed prefix and a type suffix", async () => {
     const { tracer, spans } = makeMockTracer();
-    await measureStartupStep({ onEvent: vi.fn(async () => {}) }, () => 0, "stage.sync", async () => "ok", {
-      tracer,
-      provider: "daytona",
-    });
+    await measureStartupStep(
+      { onEvent: vi.fn(async () => {}) },
+      () => 0,
+      "stage.sync",
+      async () => "ok",
+      {
+        tracer,
+        provider: "daytona",
+      },
+    );
 
     const keys = Object.keys(spans[0]!.attributes);
     expect(keys.length).toBeGreaterThan(0);
@@ -391,14 +520,18 @@ describe("measureStartupStep", () => {
 describe("setSandboxRootSpanAttributes", () => {
   it("records wall / work / diff and bounds the context, hashing ids and image", () => {
     const span = new MockSpan("sandbox.startup", undefined);
-    setSandboxRootSpanAttributes(span, { wallMs: 800, workMs: 1000 }, {
-      coldStart: true,
-      provider: "acme-custom-runner",
-      region: "us-east-1",
-      imageId: "registry.internal/team/secret-codename:sha-1234",
-      sandboxId: "sbx-secret-internal-id",
-      leaseId: "lease-secret-internal-id",
-    });
+    setSandboxRootSpanAttributes(
+      span,
+      { wallMs: 800, workMs: 1000 },
+      {
+        coldStart: true,
+        provider: "acme-custom-runner",
+        region: "us-east-1",
+        imageId: "registry.internal/team/secret-codename:sha-1234",
+        sandboxId: "sbx-secret-internal-id",
+        leaseId: "lease-secret-internal-id",
+      },
+    );
 
     expect(span.attributes[A.rootWallMs]).toBe(800);
     expect(span.attributes[A.rootWorkMs]).toBe(1000);
@@ -420,7 +553,11 @@ describe("setSandboxRootSpanAttributes", () => {
 
   it("maps an unknown region to `unknown` and omits every absent context value", () => {
     const span = new MockSpan("sandbox.startup", undefined);
-    setSandboxRootSpanAttributes(span, { wallMs: 5, workMs: 5 }, { region: "moon-base-1" });
+    setSandboxRootSpanAttributes(
+      span,
+      { wallMs: 5, workMs: 5 },
+      { region: "moon-base-1" },
+    );
     expect(span.attributes[A.region]).toBe("unknown");
     expect(span.attributes).not.toHaveProperty(A.coldStart);
     expect(span.attributes).not.toHaveProperty(A.provider);
@@ -457,10 +594,17 @@ describe("emitSkippedStartupStep", () => {
   it("emits the event with no injected tracer and does not throw", async () => {
     const events: AdapterRuntimeEvent[] = [];
     await emitSkippedStartupStep(
-      { onEvent: vi.fn(async (e: AdapterRuntimeEvent) => { events.push(e); }) },
+      {
+        onEvent: vi.fn(async (e: AdapterRuntimeEvent) => {
+          events.push(e);
+        }),
+      },
       "acp.handshake",
     );
-    expect(events[0]!.payload).toMatchObject({ step: "acp.handshake", outcome: "skipped" });
+    expect(events[0]!.payload).toMatchObject({
+      step: "acp.handshake",
+      outcome: "skipped",
+    });
   });
 });
 
@@ -473,16 +617,22 @@ describe("getActiveStepContext", () => {
     const { tracer, spans } = makeMockTracer();
     let seen: ReturnType<typeof getActiveStepContext> = null;
 
-    await measureStartupStep({ onEvent: vi.fn(async () => {}) }, () => 0, "stage.sync", async () => {
-      // Inner code reads the active step context through the getter.
-      seen = getActiveStepContext();
-      return "ok";
-    }, {
-      tracer,
-      // The server builds a child-context token whose active span is the step
-      // span. Model it as `{ span }`, the same shape the recording tracer reads.
-      contextWithSpan: (span) => ({ span }),
-    });
+    await measureStartupStep(
+      { onEvent: vi.fn(async () => {}) },
+      () => 0,
+      "stage.sync",
+      async () => {
+        // Inner code reads the active step context through the getter.
+        seen = getActiveStepContext();
+        return "ok";
+      },
+      {
+        tracer,
+        // The server builds a child-context token whose active span is the step
+        // span. Model it as `{ span }`, the same shape the recording tracer reads.
+        contextWithSpan: (span) => ({ span }),
+      },
+    );
 
     expect(seen).not.toBeNull();
     // The published span is the one open step span.
@@ -498,9 +648,15 @@ describe("getActiveStepContext", () => {
 
   it("carries criticalPath = false when the step opts out (parallel steps)", async () => {
     let seen: ReturnType<typeof getActiveStepContext> = null;
-    await measureStartupStep({ onEvent: vi.fn(async () => {}) }, () => 0, "bridge.taskcore", async () => {
-      seen = getActiveStepContext();
-    }, { criticalPath: false });
+    await measureStartupStep(
+      { onEvent: vi.fn(async () => {}) },
+      () => 0,
+      "bridge.taskcore",
+      async () => {
+        seen = getActiveStepContext();
+      },
+      { criticalPath: false },
+    );
     expect(seen!.criticalPath).toBe(false);
   });
 
@@ -615,7 +771,10 @@ describe("runWithRuntimeParent", () => {
   });
 
   it("returns the work result", () => {
-    const value = runWithRuntimeParent({ span: "runtime-parent" }, () => "value");
+    const value = runWithRuntimeParent(
+      { span: "runtime-parent" },
+      () => "value",
+    );
     expect(value).toBe("value");
   });
 });
@@ -626,7 +785,9 @@ describe("clampSpanLabel", () => {
     expect(clampSpanLabel("command", "git")).toBe("git");
     // A full command line, a path, or a secret-like argument is not a known
     // basename, so it maps to the bounded fallback and never leaks.
-    expect(clampSpanLabel("command", "bash -lc 'rm -rf /secret/path'")).toBe("other");
+    expect(clampSpanLabel("command", "bash -lc 'rm -rf /secret/path'")).toBe(
+      "other",
+    );
     expect(clampSpanLabel("command", "/usr/local/bin/node")).toBe("other");
     expect(clampSpanLabel("command", undefined)).toBe("other");
   });
@@ -690,7 +851,9 @@ describe("createRuntimeSpanRunner", () => {
       tracer,
       contextWithSpan: (span) => ({ span }),
     };
-    const run = createRuntimeSpanRunner(traceContext, () => ({ marker: "run-parent" }));
+    const run = createRuntimeSpanRunner(traceContext, () => ({
+      marker: "run-parent",
+    }));
 
     await expect(
       run("sandbox.callbackBridge.relayRequest", async () => {
@@ -703,7 +866,9 @@ describe("createRuntimeSpanRunner", () => {
   });
 
   it("runs the work unwrapped under a no-op trace context", async () => {
-    const run = createRuntimeSpanRunner(NOOP_STARTUP_TRACE_CONTEXT, () => ({ marker: "run-parent" }));
+    const run = createRuntimeSpanRunner(NOOP_STARTUP_TRACE_CONTEXT, () => ({
+      marker: "run-parent",
+    }));
     // The no-op `contextWithSpan` yields no child token, so the store empties for
     // the work, exactly like the earlier unparented run-time behavior.
     let childStep: unknown = "unset";
@@ -719,7 +884,9 @@ describe("createRuntimeSpanRunner", () => {
 describe("run phase timing telemetry", () => {
   it("test_phase_telemetry_fields_are_exactly_phase_duration_outcome", async () => {
     const events: AdapterRuntimeEvent[] = [];
-    const ctx = { onEvent: async (event: AdapterRuntimeEvent) => void events.push(event) };
+    const ctx = {
+      onEvent: async (event: AdapterRuntimeEvent) => void events.push(event),
+    };
 
     await emitRunPhaseTiming(ctx, "create_runtime", 12, "ok");
 
@@ -727,13 +894,23 @@ describe("run phase timing telemetry", () => {
     const event = events[0]!;
     expect(event.eventType).toBe(RUN_PHASE_TIMING_EVENT_TYPE);
     // The payload carries exactly the three closed fields and nothing else.
-    expect(Object.keys(event.payload ?? {}).sort()).toEqual(["durationMs", "outcome", "phase"]);
-    expect(event.payload).toEqual({ phase: "create_runtime", durationMs: 12, outcome: "ok" });
+    expect(Object.keys(event.payload ?? {}).sort()).toEqual([
+      "durationMs",
+      "outcome",
+      "phase",
+    ]);
+    expect(event.payload).toEqual({
+      phase: "create_runtime",
+      durationMs: 12,
+      outcome: "ok",
+    });
   });
 
   it("test_phase_telemetry_emits_no_command_path_environment_or_identifier_value", async () => {
     const events: AdapterRuntimeEvent[] = [];
-    const ctx = { onEvent: async (event: AdapterRuntimeEvent) => void events.push(event) };
+    const ctx = {
+      onEvent: async (event: AdapterRuntimeEvent) => void events.push(event),
+    };
 
     // Every allowlisted phase emits exactly one closed-shape event.
     for (const phase of RUN_PHASE_NAMES) {
@@ -768,6 +945,8 @@ describe("run phase timing telemetry", () => {
     };
 
     // A throwing telemetry sink never propagates, so the run continues.
-    await expect(emitRunPhaseTiming(ctx, "turn", 9, "failed")).resolves.toBeUndefined();
+    await expect(
+      emitRunPhaseTiming(ctx, "turn", 9, "failed"),
+    ).resolves.toBeUndefined();
   });
 });

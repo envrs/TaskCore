@@ -4928,12 +4928,12 @@ misleading: normal authenticated `auth.test`, `conversations.info` and member
 reads confirmed the current bot `U0C05EDC10R` was already a member. No access
 or invitation was changed to make the test pass.
 
-| Fresh source | Native execution | Source to final | Observed outcome |
-| --- | ---: | ---: | --- |
-| A, `1788957912.689909` | 27.341s | 29.147s | Requested Before/During/After checklist |
-| B, `1788958021.531449` | 16.266s | 17.914s | Requested five-point rollback checklist |
-| C, `1788958027.297669` | 11.789s | 23.945s | Exact `SLACK78-C-READY` |
-| Files, `1788958237.920639` | 56.099s | 66.789s through both files | Correct image/text facts and two actual attachments |
+| Fresh source               | Native execution |            Source to final | Observed outcome                                    |
+| -------------------------- | ---------------: | -------------------------: | --------------------------------------------------- |
+| A, `1788957912.689909`     |          27.341s |                    29.147s | Requested Before/During/After checklist             |
+| B, `1788958021.531449`     |          16.266s |                    17.914s | Requested five-point rollback checklist             |
+| C, `1788958027.297669`     |          11.789s |                    23.945s | Exact `SLACK78-C-READY`                             |
+| Files, `1788958237.920639` |          56.099s | 66.789s through both files | Correct image/text facts and two actual attachments |
 
 C arrived while B was active and waited 11.315s; its run began 54ms after B
 finished. A/B/C stayed on one task, native session and runner instance. Their
@@ -5124,11 +5124,11 @@ message created CHA-41, issue `20e15668-0011-4dd0-85db-528fc226d546`, conversati
 `cb6becfa-fbb2-4f7e-9f91-eb37f26e8e1a`, generation 2, provider DM
 `1546815225334865972`, native session `27bb1ebd-798b-47bf-93a8-13ae10c28423`.
 
-| Message | Native run interval (UTC) | Ingestion to final | Provider response |
-| --- | --- | --- | --- |
-| A | 13:29:28.841–13:29:46.973 | 19.447s | `1547237514740506736`, exact `DISCORD78-DM-READY` |
-| B | 13:31:17.785–13:31:56.566 | 40.028s | `1547237970732384266`, Before/During/After checklist |
-| C | 13:31:56.668–13:32:10.843 | 38.792s | `1547238037023363112`, exact `DISCORD78-DM-C-READY` |
+| Message | Native run interval (UTC) | Ingestion to final | Provider response                                    |
+| ------- | ------------------------- | ------------------ | ---------------------------------------------------- |
+| A       | 13:29:28.841–13:29:46.973 | 19.447s            | `1547237514740506736`, exact `DISCORD78-DM-READY`    |
+| B       | 13:31:17.785–13:31:56.566 | 40.028s            | `1547237970732384266`, Before/During/After checklist |
+| C       | 13:31:56.668–13:32:10.843 | 38.792s            | `1547238037023363112`, exact `DISCORD78-DM-C-READY`  |
 
 C was sent while B was confirmed running. It started **102ms after B ended**,
 with roughly 24.120s of real queue wait. Each progress/final used its own same
@@ -5414,16 +5414,16 @@ percentiles. All eight persisted `nativeExecutionInput.provider` descriptors
 identify `codex` / `gpt-5.6-luna`, with native `codex_app_server` execution.
 They contain no explicit reasoning-effort field; the applied effort is unknown.
 
-| Case / heartbeat run ID | Run start → finish | Runner startup | Provider submitted → started | Provider started → accepted result | Source → visible result |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Slack A `5c27b8d6-bf69-4057-999c-a03233866c94` | 15.587 s | 1.683 s | 0.792 s | 12.643 s | 17.071 s |
-| Slack C `81133e00-e330-4fca-b0f1-de02d5b3ae0a` | 13.184 s | 0.665 s | 0.552 s | 11.370 s | 14.298 s |
-| Slack E `29073090-1139-4ca5-a3c4-75a1d3898f62` | 18.531 s | 2.111 s | 0.729 s | 13.366 s | 62.822 s |
-| Slack after Stop `21babf1b-6839-4697-be80-33cd6850814d` | 16.251 s | 1.561 s | 0.697 s | 13.181 s | 17.460 s |
-| Discord question `3d3de750-a61e-48cc-83cf-c19277d1289f` | 12.672 s | 2.105 s | 0.888 s | 7.703 s | 13.526 s |
-| Discord choice `c7d2aeaf-8aea-45c3-97c7-12a5e46508ea` | 15.777 s | 1.554 s | 0.826 s | 12.385 s | 16.269 s |
-| Discord form `a9efa97a-b470-44a2-94a0-d5c024bba996` | 12.753 s | 1.777 s | 0.905 s | 8.457 s | 13.399 s |
-| Discord form answer `f2535ba3-cac2-4cfd-973b-3c0f89aee024` | 14.545 s | 0.985 s | 0.532 s | 12.104 s | 15.077 s |
+| Case / heartbeat run ID                                    | Run start → finish | Runner startup | Provider submitted → started | Provider started → accepted result | Source → visible result |
+| ---------------------------------------------------------- | -----------------: | -------------: | ---------------------------: | ---------------------------------: | ----------------------: |
+| Slack A `5c27b8d6-bf69-4057-999c-a03233866c94`             |           15.587 s |        1.683 s |                      0.792 s |                           12.643 s |                17.071 s |
+| Slack C `81133e00-e330-4fca-b0f1-de02d5b3ae0a`             |           13.184 s |        0.665 s |                      0.552 s |                           11.370 s |                14.298 s |
+| Slack E `29073090-1139-4ca5-a3c4-75a1d3898f62`             |           18.531 s |        2.111 s |                      0.729 s |                           13.366 s |                62.822 s |
+| Slack after Stop `21babf1b-6839-4697-be80-33cd6850814d`    |           16.251 s |        1.561 s |                      0.697 s |                           13.181 s |                17.460 s |
+| Discord question `3d3de750-a61e-48cc-83cf-c19277d1289f`    |           12.672 s |        2.105 s |                      0.888 s |                            7.703 s |                13.526 s |
+| Discord choice `c7d2aeaf-8aea-45c3-97c7-12a5e46508ea`      |           15.777 s |        1.554 s |                      0.826 s |                           12.385 s |                16.269 s |
+| Discord form `a9efa97a-b470-44a2-94a0-d5c024bba996`        |           12.753 s |        1.777 s |                      0.905 s |                            8.457 s |                13.399 s |
+| Discord form answer `f2535ba3-cac2-4cfd-973b-3c0f89aee024` |           14.545 s |        0.985 s |                      0.532 s |                           12.104 s |                15.077 s |
 
 “Source” is durable ingress, except choice/form answer, which start at durable
 interaction resolution (14:45:30.863 / 14:48:18.253 UTC). “Visible result” is
@@ -5812,11 +5812,12 @@ and TXT in the reopened CHA-43 thread. Run
 correct orange-tabby description and lighthouse/amber/63, one final response
 on existing progress message `1547280198834069515`, then real image
 `1547280428027879584` and TXT `1547280434126258197`, all publication attempts
+
 1. The expanded image viewer rendered the correct cat; the document preview
-contains the exact synthetic text and eyes disappeared. Local hashes of
-received and prepared output storage bytes match: PNG 2,111,878 bytes,
-`7693966f…`; TXT 152 bytes, `e5ea1c89…`. These are storage-byte checks plus
-actual provider presentation, not a claim of independently downloaded hashes.
+   contains the exact synthetic text and eyes disappeared. Local hashes of
+   received and prepared output storage bytes match: PNG 2,111,878 bytes,
+   `7693966f…`; TXT 152 bytes, `e5ea1c89…`. These are storage-byte checks plus
+   actual provider presentation, not a claim of independently downloaded hashes.
 
 Slack source `1788970785.056649` explicitly continued after restart without
 resuming the old cancelled checklist. Run
@@ -6484,13 +6485,13 @@ once as196. Actual browser text and durable receipts agree. All thirteen live83
 runs record `runtime_mode=native`, `driver_kind=codex_app_server` and persisted
 execution-input model `gpt-5.6-luna`; no raw reasoning or tool logs were posted.
 
-| Short request | Ingress-to-final | Run time | Publication attempts |
-| --- | ---: | ---: | ---: |
-| Discord fresh after close | 21.654s | 20.305s | 1 |
-| Telegram fresh after close | 16.418s | 14.519s | 1 |
-| Slack A | 15.126s | 13.836s | 1 |
-| GitHub A | 15.403s | 13.520s | 1 |
-| GitHub B | 13.336s | 11.246s | 1 |
+| Short request              | Ingress-to-final | Run time | Publication attempts |
+| -------------------------- | ---------------: | -------: | -------------------: |
+| Discord fresh after close  |          21.654s |  20.305s |                    1 |
+| Telegram fresh after close |          16.418s |  14.519s |                    1 |
+| Slack A                    |          15.126s |  13.836s |                    1 |
+| GitHub A                   |          15.403s |  13.520s |                    1 |
+| GitHub B                   |          13.336s |  11.246s |                    1 |
 
 Unlike live82's provider-delayed overlap attempts, live83 proves actual local
 FIFO overlap in both Slack and GitHub. Slack C ran18:32:28.998–18:33:25.741;

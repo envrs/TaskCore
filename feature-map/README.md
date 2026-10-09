@@ -15,77 +15,77 @@ manual verification steps, and gotchas.
 
 ### Getting started and access
 
-| Feature | What it covers |
-| --- | --- |
-| [Onboarding and first work](./onboarding.md) | Instance setup, company wizard, first agent and task. |
+| Feature                                       | What it covers                                                 |
+| --------------------------------------------- | -------------------------------------------------------------- |
+| [Onboarding and first work](./onboarding.md)  | Instance setup, company wizard, first agent and task.          |
 | [Login, invitations, and access](./access.md) | Sessions, bootstrap, membership, roles, and CLI authorization. |
-| [Companies and portability](./companies.md) | Company switching/settings, archival, package import/export. |
+| [Companies and portability](./companies.md)   | Company switching/settings, archival, package import/export.   |
 
 ### Tasks and conversations
 
-| Feature | What it covers |
-| --- | --- |
-| [Task creation and lifecycle](./tasks.md) | Creation, assignment, lists, properties, comments, and completion. |
-| [Delegation, dependencies, and signoff](./task-coordination.md) | Child work, prerequisites, reviewers, and task-tree controls. |
-| [Inbox, decisions, and search](./inbox-search.md) | Personal triage, decision queues, unread/blocked views, and search. |
-| [Agent conversations and project handoff](./agent-chat.md) | Persistent conversations, discovery, handoff, and gated board chat. |
-| [Questions and approvals](./questions-and-approvals.md) | Question/plan responses, formal approvals, and app-tool review. |
-| [Steering and queued messages](./steering.md) | Follow-ups, queue edits, interruption, and pause/resume. |
+| Feature                                                               | What it covers                                                          |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [Task creation and lifecycle](./tasks.md)                             | Creation, assignment, lists, properties, comments, and completion.      |
+| [Delegation, dependencies, and signoff](./task-coordination.md)       | Child work, prerequisites, reviewers, and task-tree controls.           |
+| [Inbox, decisions, and search](./inbox-search.md)                     | Personal triage, decision queues, unread/blocked views, and search.     |
+| [Agent conversations and project handoff](./agent-chat.md)            | Persistent conversations, discovery, handoff, and gated board chat.     |
+| [Questions and approvals](./questions-and-approvals.md)               | Question/plan responses, formal approvals, and app-tool review.         |
+| [Steering and queued messages](./steering.md)                         | Follow-ups, queue edits, interruption, and pause/resume.                |
 | [Documents, attachments, and work products](./documents-artifacts.md) | Versioned documents, annotations, files, outputs, and artifact library. |
 
 ### Agents and reusable capabilities
 
-| Feature | What it covers |
-| --- | --- |
-| [Hiring, configuration, and organization](./agents.md) | Agent identity, instructions, reporting lines, lifecycle, and built-ins. |
-| [Runs, harnesses, and model accounts](./runs-adapters.md) | Adapter/model setup, account validation, transcripts, and run history. |
-| [Skills and Skill Studio](./skills.md) | Discovery, sources, authoring, revisions, tests, and agent policies. |
-| [Team packages and installation](./teams.md) | Catalog preview/install via CLI/API; catalog UI availability called out. |
+| Feature                                                   | What it covers                                                           |
+| --------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [Hiring, configuration, and organization](./agents.md)    | Agent identity, instructions, reporting lines, lifecycle, and built-ins. |
+| [Runs, harnesses, and model accounts](./runs-adapters.md) | Adapter/model setup, account validation, transcripts, and run history.   |
+| [Skills and Skill Studio](./skills.md)                    | Discovery, sources, authoring, revisions, tests, and agent policies.     |
+| [Team packages and installation](./teams.md)              | Catalog preview/install via CLI/API; catalog UI availability called out. |
 
 ### Projects and execution
 
-| Feature | What it covers |
-| --- | --- |
-| [Projects and repositories](./projects.md) | Project lifecycle, task context, repository configuration, and defaults. |
-| [Goals and work alignment](./goals.md) | Goal hierarchy, ownership, status, and project/task context. |
-| [Workspaces, services, and files](./workspaces.md) | Provisioning, task bindings, services/logs, Git/files, and closure. |
-| [Execution environments](./execution-environments.md) | Local, SSH, sandbox providers, target probes, and custom images. |
-| [Recovery](./recovery.md) | Stopped work, workspace repair, bounded continuation, and reconnect. |
+| Feature                                               | What it covers                                                           |
+| ----------------------------------------------------- | ------------------------------------------------------------------------ |
+| [Projects and repositories](./projects.md)            | Project lifecycle, task context, repository configuration, and defaults. |
+| [Goals and work alignment](./goals.md)                | Goal hierarchy, ownership, status, and project/task context.             |
+| [Workspaces, services, and files](./workspaces.md)    | Provisioning, task bindings, services/logs, Git/files, and closure.      |
+| [Execution environments](./execution-environments.md) | Local, SSH, sandbox providers, target probes, and custom images.         |
+| [Recovery](./recovery.md)                             | Stopped work, workspace repair, bounded continuation, and reconnect.     |
 
 ### Apps, channels, and extensions
 
-| Feature | What it covers |
-| --- | --- |
-| [Connection setup](./connection-setup.md) | Catalog, MCP links, task requests, authentication, and setup resumption. |
-| [App access and action permissions](./app-permissions.md) | Agent grants, off/ask/allowed actions, discovery, tests, and revocation. |
-| [External chat and email](./chat-channels.md) | Provider-specific identity, threads, files, delivery, and endpoint upkeep. |
-| [Tool gateways and access profiles](./gateways-profiles.md) | Tool exposure, client configuration, tokens, profiles, and activity. |
-| [Secrets and proposals](./secrets.md) | Company/user credentials, grants, proposals, and vault import. |
-| [Plugins](./plugins.md) | Installation/configuration, contributed pages/tools, and lifecycle. |
+| Feature                                                     | What it covers                                                             |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [Connection setup](./connection-setup.md)                   | Catalog, MCP links, task requests, authentication, and setup resumption.   |
+| [App access and action permissions](./app-permissions.md)   | Agent grants, off/ask/allowed actions, discovery, tests, and revocation.   |
+| [External chat and email](./chat-channels.md)               | Provider-specific identity, threads, files, delivery, and endpoint upkeep. |
+| [Tool gateways and access profiles](./gateways-profiles.md) | Tool exposure, client configuration, tokens, profiles, and activity.       |
+| [Secrets and proposals](./secrets.md)                       | Company/user credentials, grants, proposals, and vault import.             |
+| [Plugins](./plugins.md)                                     | Installation/configuration, contributed pages/tools, and lifecycle.        |
 
 ### Automation and structured work
 
-| Feature | What it covers |
-| --- | --- |
-| [Routines, schedules, and triggers](./routines.md) | Definitions, variables, scheduled/webhook/manual runs, and history. |
-| [Pipelines, review queues, and learnings](./pipelines.md) | Experimental stages, automation, items, review, and learning records. |
-| [Cases](./cases.md) | Experimental structured fields, relationships, revisions, and task links. |
-| [Status cards](./status-cards.md) | Experimental summaries, watched work, refresh history, and settings. |
+| Feature                                                   | What it covers                                                            |
+| --------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [Routines, schedules, and triggers](./routines.md)        | Definitions, variables, scheduled/webhook/manual runs, and history.       |
+| [Pipelines, review queues, and learnings](./pipelines.md) | Experimental stages, automation, items, review, and learning records.     |
+| [Cases](./cases.md)                                       | Experimental structured fields, relationships, revisions, and task links. |
+| [Status cards](./status-cards.md)                         | Experimental summaries, watched work, refresh history, and settings.      |
 
 ### Oversight and operation
 
-| Feature | What it covers |
-| --- | --- |
-| [Costs and budgets](./budgets-costs.md) | Spend reports, scoped limits, incidents, hard stops, and resumption. |
-| [Dashboards and audit trails](./activity.md) | Company health, live work, activity, runs, routines, and timeline. |
-| [Navigation, profile, and announcements](./navigation-preferences.md) | Sidebar state, favorites/recents, personal identity, and dismissals. |
-| [Instance operations](./instance-operations.md) | Installation, updates, service health, configuration, and backups. |
-| [CLI/API and local worktrees](./cli-operations.md) | Explicit context, resource commands, outputs, runs, and isolated instances. |
+| Feature                                                               | What it covers                                                              |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [Costs and budgets](./budgets-costs.md)                               | Spend reports, scoped limits, incidents, hard stops, and resumption.        |
+| [Dashboards and audit trails](./activity.md)                          | Company health, live work, activity, runs, routines, and timeline.          |
+| [Navigation, profile, and announcements](./navigation-preferences.md) | Sidebar state, favorites/recents, personal identity, and dismissals.        |
+| [Instance operations](./instance-operations.md)                       | Installation, updates, service health, configuration, and backups.          |
+| [CLI/API and local worktrees](./cli-operations.md)                    | Explicit context, resource commands, outputs, runs, and isolated instances. |
 
 ### Contributor surfaces
 
-| Feature | What it covers |
-| --- | --- |
+| Feature                                                       | What it covers                                                                        |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | [Developer previews and diagnostic labs](./developer-labs.md) | Design examples, interaction fixtures, performance checks; not production acceptance. |
 
 These are verification instructions, not a claim that every journey passed a live

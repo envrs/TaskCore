@@ -101,7 +101,8 @@ async function main() {
 
   const rpcOk = (result.rpc as { ok?: boolean } | undefined)?.ok === true;
   const whamOk = (result.wham as { ok?: boolean } | undefined)?.ok === true;
-  const aggregatedOk = (result.aggregated as { ok?: boolean } | undefined)?.ok === true;
+  const aggregatedOk =
+    (result.aggregated as { ok?: boolean } | undefined)?.ok === true;
   const ok = rpcOk || whamOk || aggregatedOk;
 
   if (args.json || process.stdout.isTTY === false) {
@@ -111,8 +112,10 @@ async function main() {
     console.log(`auth: ${JSON.stringify(auth)}`);
     console.log(`tokenAvailable: ${token != null}`);
     if (result.rpc) console.log(`rpc: ${JSON.stringify(result.rpc, null, 2)}`);
-    if (result.wham) console.log(`wham: ${JSON.stringify(result.wham, null, 2)}`);
-    if (result.aggregated) console.log(`aggregated: ${JSON.stringify(result.aggregated, null, 2)}`);
+    if (result.wham)
+      console.log(`wham: ${JSON.stringify(result.wham, null, 2)}`);
+    if (result.aggregated)
+      console.log(`aggregated: ${JSON.stringify(result.aggregated, null, 2)}`);
   }
 
   if (!ok) process.exitCode = 1;

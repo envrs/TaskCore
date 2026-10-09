@@ -124,19 +124,19 @@ Implemented in `codex/agent-personas`, based on `5cb4f061d`, with the original
 checkout left unchanged. Verification used disposable embedded-Postgres data,
 a local MinIO container, and Playwright's Linux Noble image.
 
-| Check | Result |
-| --- | --- |
-| Repository typecheck and build | Passed |
-| Token gates and palette-token synchronization | Passed |
-| Storybook production build | Passed |
-| Linux visual/performance suite | 30 passed; exact snapshot comparison passed |
-| Static/live agreement | Rest at 16/24/48/256 logical pixels, both densities; all eight animated expression snapshots at 128px/2× |
-| Avatar endpoint | Cold/warm requests, concurrency, deletion, retry, ETags and invalid parameters passed |
-| Real local-disk and S3-compatible storage | Passed; persisted warm cache reused by a fresh service instance |
-| Compiled API-only smoke | Passed with TypeScript stripping disabled, no UI and a native worker |
-| Persistence and contracts | Creation, saved draft, SQL backfill, approvals, duplication, portability and revision restoration passed |
-| UI/runtime lifecycle | Reduced motion, one live owner, scoped pointers, hidden/offscreen suspension, failures and disposal passed |
-| Hands-on app | Stable rename/reload, fresh duplicate assignment, paused static portrait, matching task/list/configuration identities passed |
+| Check                                         | Result                                                                                                                       |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Repository typecheck and build                | Passed                                                                                                                       |
+| Token gates and palette-token synchronization | Passed                                                                                                                       |
+| Storybook production build                    | Passed                                                                                                                       |
+| Linux visual/performance suite                | 30 passed; exact snapshot comparison passed                                                                                  |
+| Static/live agreement                         | Rest at 16/24/48/256 logical pixels, both densities; all eight animated expression snapshots at 128px/2×                     |
+| Avatar endpoint                               | Cold/warm requests, concurrency, deletion, retry, ETags and invalid parameters passed                                        |
+| Real local-disk and S3-compatible storage     | Passed; persisted warm cache reused by a fresh service instance                                                              |
+| Compiled API-only smoke                       | Passed with TypeScript stripping disabled, no UI and a native worker                                                         |
+| Persistence and contracts                     | Creation, saved draft, SQL backfill, approvals, duplication, portability and revision restoration passed                     |
+| UI/runtime lifecycle                          | Reduced motion, one live owner, scoped pointers, hidden/offscreen suspension, failures and disposal passed                   |
+| Hands-on app                                  | Stable rename/reload, fresh duplicate assignment, paused static portrait, matching task/list/configuration identities passed |
 
 The broad `pnpm test:run` verification was completed in its groups/shards after
 resource-contention retries. General server (8,347 tests), UI (5,619), CLI (484),

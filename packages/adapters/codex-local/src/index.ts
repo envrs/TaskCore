@@ -1,6 +1,4 @@
-import {
-  TASKCORE_RUNNER_DEFAULT_MODELS,
-} from "@taskcore/adapter-utils";
+import { TASKCORE_RUNNER_DEFAULT_MODELS } from "@taskcore/adapter-utils";
 
 export const type = "codex_local";
 export const label = "Codex";
@@ -92,17 +90,22 @@ export function codexLocalReasoningEffortsForModel(
 // before the catalog gained the model. Record the oldest stable release verified to work so the
 // Test and the remote runner can name the actual gap. Omit models with no verified floor; the
 // install pin in the runner and images is always at or above every floor listed here.
-const CODEX_LOCAL_MODEL_MINIMUM_CLI_VERSIONS: Readonly<Record<string, string>> = {
-  // 0.156.1 and older are rejected (openai/codex#49396); 0.159.0 and 0.159.2 are accepted
-  // (openai/codex#49464). No stable release between those was verified either way.
-  "gpt-6.1-sol": "0.159.0",
-  // Codex 0.157.0 release notes: "Add GPT-6 Sol and Luna to the model catalog".
-  "gpt-6-sol": "0.157.0",
-  "gpt-6-luna": "0.157.0",
-};
+const CODEX_LOCAL_MODEL_MINIMUM_CLI_VERSIONS: Readonly<Record<string, string>> =
+  {
+    // 0.156.1 and older are rejected (openai/codex#49396); 0.159.0 and 0.159.2 are accepted
+    // (openai/codex#49464). No stable release between those was verified either way.
+    "gpt-6.1-sol": "0.159.0",
+    // Codex 0.157.0 release notes: "Add GPT-6 Sol and Luna to the model catalog".
+    "gpt-6-sol": "0.157.0",
+    "gpt-6-luna": "0.157.0",
+  };
 
-export function minimumCodexCliVersionForModel(model: string | null | undefined): string | null {
-  return CODEX_LOCAL_MODEL_MINIMUM_CLI_VERSIONS[normalizeCodexModel(model)] ?? null;
+export function minimumCodexCliVersionForModel(
+  model: string | null | undefined,
+): string | null {
+  return (
+    CODEX_LOCAL_MODEL_MINIMUM_CLI_VERSIONS[normalizeCodexModel(model)] ?? null
+  );
 }
 
 const STABLE_CODEX_CLI_VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -120,11 +123,15 @@ export function parseCodexCliVersionOutput(output: string): string | null {
     .split(/\r?\n/)
     .map((line) => /^codex-cli (\S+)$/.exec(line.trim())?.[1])
     .filter((version): version is string => version !== undefined);
-  if (versions.length !== 1 || !stableCodexCliVersionParts(versions[0]!)) return null;
+  if (versions.length !== 1 || !stableCodexCliVersionParts(versions[0]!))
+    return null;
   return versions[0]!;
 }
 
-export function codexCliVersionAtLeast(version: string, minimum: string): boolean {
+export function codexCliVersionAtLeast(
+  version: string,
+  minimum: string,
+): boolean {
   const parsedVersion = stableCodexCliVersionParts(version);
   const parsedMinimum = stableCodexCliVersionParts(minimum);
   if (!parsedVersion || !parsedMinimum) return false;
@@ -139,18 +146,24 @@ export function codexCliVersionAtLeast(version: string, minimum: string): boolea
 export const CODEX_CHATGPT_MODEL_REJECTION_RE =
   /The '([^']+)' model is not supported when using Codex with a ChatGPT account\./;
 
-export function isCodexLocalKnownModel(model: string | null | undefined): boolean {
+export function isCodexLocalKnownModel(
+  model: string | null | undefined,
+): boolean {
   const normalizedModel = normalizeModelId(model);
   if (!normalizedModel) return false;
   return models.some((entry) => entry.id === normalizedModel);
 }
 
-export function isCodexLocalManualModel(model: string | null | undefined): boolean {
+export function isCodexLocalManualModel(
+  model: string | null | undefined,
+): boolean {
   const normalizedModel = normalizeModelId(model);
   return Boolean(normalizedModel) && !isCodexLocalKnownModel(normalizedModel);
 }
 
-export function isCodexLocalFastModeSupported(model: string | null | undefined): boolean {
+export function isCodexLocalFastModeSupported(
+  model: string | null | undefined,
+): boolean {
   if (isCodexLocalManualModel(model)) return true;
   const normalizedModel = typeof model === "string" ? model.trim() : "";
   // Empty means we're omitting --model so the Codex CLI picks its own default.

@@ -14,13 +14,13 @@ The Dockerfile installs common agent tools (`git`, `gh`, `curl`, `wget`, `ripgre
 
 Build arguments:
 
-| Arg | Default | Purpose |
-|-----|---------|---------|
-| `USER_UID` | `1000` | UID for the container `node` user (match your host UID to avoid permission issues on bind mounts) |
-| `USER_GID` | `1000` | GID for the container `node` group |
-| `CLI_TOOLS_CACHE_EPOCH` | empty | Refresh the CLI-install layer; CI supplies the current ISO week |
-| `TASKCORE_BUILD_VERSION` | empty | Runtime version when Git metadata is unavailable |
-| `TASKCORE_BUILD_COMMIT` | empty | Source commit written into the server build stamp and runtime environment |
+| Arg                      | Default | Purpose                                                                                           |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------- |
+| `USER_UID`               | `1000`  | UID for the container `node` user (match your host UID to avoid permission issues on bind mounts) |
+| `USER_GID`               | `1000`  | GID for the container `node` group                                                                |
+| `CLI_TOOLS_CACHE_EPOCH`  | empty   | Refresh the CLI-install layer; CI supplies the current ISO week                                   |
+| `TASKCORE_BUILD_VERSION` | empty   | Runtime version when Git metadata is unavailable                                                  |
+| `TASKCORE_BUILD_COMMIT`  | empty   | Source commit written into the server build stamp and runtime environment                         |
 
 Changing the build version or commit preserves the CLI-install cache. The
 tool layer refreshes when its weekly epoch, base image, installation command,
@@ -236,11 +236,11 @@ Notes:
 
 The `docker/quadlet/` directory contains unit files to run Taskcore + PostgreSQL as systemd services via Podman Quadlet.
 
-| File | Purpose |
-|------|---------|
-| `docker/quadlet/taskcore.pod` | Pod definition — groups containers into a shared network namespace |
-| `docker/quadlet/taskcore.container` | Taskcore server — joins the pod, connects to Postgres at `127.0.0.1` |
-| `docker/quadlet/taskcore-db.container` | PostgreSQL 17 — joins the pod, health-checked |
+| File                                   | Purpose                                                              |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| `docker/quadlet/taskcore.pod`          | Pod definition — groups containers into a shared network namespace   |
+| `docker/quadlet/taskcore.container`    | Taskcore server — joins the pod, connects to Postgres at `127.0.0.1` |
+| `docker/quadlet/taskcore-db.container` | PostgreSQL 17 — joins the pod, health-checked                        |
 
 ### Setup
 
@@ -293,7 +293,7 @@ systemctl --user stop taskcore-pod      # Stop all
 
 ### Quadlet notes
 
-- **First boot**: Unlike Docker Compose's `condition: service_healthy`, Quadlet's `After=` only waits for the DB unit to *start*, not for PostgreSQL to be ready. On a cold first boot you may see one or two restart attempts in `journalctl --user -u taskcore` while PostgreSQL initialises — this is expected and resolves automatically via `Restart=on-failure`.
+- **First boot**: Unlike Docker Compose's `condition: service_healthy`, Quadlet's `After=` only waits for the DB unit to _start_, not for PostgreSQL to be ready. On a cold first boot you may see one or two restart attempts in `journalctl --user -u taskcore` while PostgreSQL initialises — this is expected and resolves automatically via `Restart=on-failure`.
 - Containers in a pod share `localhost`, so Taskcore reaches Postgres at `127.0.0.1:5432`.
 - PostgreSQL data persists in the `taskcore-pgdata` named volume.
 - Taskcore data persists at `~/.local/share/taskcore`.
@@ -333,7 +333,7 @@ Notes:
 - In authenticated mode, the smoke script defaults `SMOKE_AUTO_BOOTSTRAP=true` and drives the real bootstrap path automatically: it signs up a real user, runs `taskcore auth bootstrap-ceo` inside the container to mint a real bootstrap invite, accepts that invite over HTTP, and verifies board session access.
 - Run the script in the foreground to watch the onboarding flow; stop with `Ctrl+C` after validation.
 - Set `SMOKE_DETACH=true` to leave the container running for automation and optionally write shell-ready metadata to `SMOKE_METADATA_FILE`.
-- Set `SMOKE_CONTAINER_NAME` to fix the container's name up front. Automation that has to collect diagnostics when the script *fails* needs a name it already knows, rather than one it can only read back out of a successful run. Defaults to the image name.
+- Set `SMOKE_CONTAINER_NAME` to fix the container's name up front. Automation that has to collect diagnostics when the script _fails_ needs a name it already knows, rather than one it can only read back out of a successful run. Defaults to the image name.
 - The container's logs are dumped to `SMOKE_LOG_FILE` (default `$TMPDIR/<container name>.log`) before the script tears the container down, so a run that never became ready still leaves its logs behind.
 - The image definition is in `docker/Dockerfile.onboard-smoke`.
 

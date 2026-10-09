@@ -105,19 +105,26 @@ const __moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 function codexSkillsHome(): string {
   const fromEnv = process.env.CODEX_HOME?.trim();
-  const base = fromEnv && fromEnv.length > 0 ? fromEnv : path.join(os.homedir(), ".codex");
+  const base =
+    fromEnv && fromEnv.length > 0 ? fromEnv : path.join(os.homedir(), ".codex");
   return path.join(base, "skills");
 }
 
 function claudeSkillsHome(): string {
   const fromEnv = process.env.CLAUDE_HOME?.trim();
-  const base = fromEnv && fromEnv.length > 0 ? fromEnv : path.join(os.homedir(), ".claude");
+  const base =
+    fromEnv && fromEnv.length > 0
+      ? fromEnv
+      : path.join(os.homedir(), ".claude");
   return path.join(base, "skills");
 }
 
 function kimiSkillsHome(): string {
   const fromEnv = process.env.KIMI_CODE_HOME?.trim();
-  const base = fromEnv && fromEnv.length > 0 ? fromEnv : path.join(os.homedir(), ".kimi-code");
+  const base =
+    fromEnv && fromEnv.length > 0
+      ? fromEnv
+      : path.join(os.homedir(), ".kimi-code");
   return path.join(base, "skills");
 }
 
@@ -245,20 +252,23 @@ export function registerAgentCommands(program: Command): void {
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const rows = (await ctx.api.get<Issue[]>("/api/agents/me/inbox-lite")) ?? [];
+          const rows =
+            (await ctx.api.get<Issue[]>("/api/agents/me/inbox-lite")) ?? [];
           if (ctx.json) {
             printOutput(rows, { json: true });
             return;
           }
           for (const row of rows) {
-            console.log(formatInlineRecord({
-              identifier: row.identifier,
-              id: row.id,
-              status: row.status,
-              priority: row.priority,
-              title: row.title,
-              projectId: row.projectId,
-            }));
+            console.log(
+              formatInlineRecord({
+                identifier: row.identifier,
+                id: row.id,
+                status: row.status,
+                priority: row.priority,
+                title: row.title,
+                projectId: row.projectId,
+              }),
+            );
           }
           if (rows.length === 0) printOutput([], { json: false });
         } catch (err) {
@@ -270,7 +280,9 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("inbox-mine")
-      .description("List current agent inbox items touched or archived by a board user")
+      .description(
+        "List current agent inbox items touched or archived by a board user",
+      )
       .requiredOption("--user-id <id>", "Board user ID")
       .option("--status <csv>", "Comma-separated issue statuses")
       .action(async (opts: AgentInboxMineOptions) => {
@@ -278,7 +290,10 @@ export function registerAgentCommands(program: Command): void {
           const ctx = resolveCommandContext(opts);
           const params = new URLSearchParams({ userId: opts.userId });
           if (opts.status) params.set("status", opts.status);
-          const rows = (await ctx.api.get<Issue[]>(`/api/agents/me/inbox/mine?${params.toString()}`)) ?? [];
+          const rows =
+            (await ctx.api.get<Issue[]>(
+              `/api/agents/me/inbox/mine?${params.toString()}`,
+            )) ?? [];
           printOutput(rows, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -294,7 +309,10 @@ export function registerAgentCommands(program: Command): void {
       .action(async (opts: AgentListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const rows = (await ctx.api.get<Agent[]>(apiPath`/api/companies/${ctx.companyId}/agents`)) ?? [];
+          const rows =
+            (await ctx.api.get<Agent[]>(
+              apiPath`/api/companies/${ctx.companyId}/agents`,
+            )) ?? [];
 
           if (ctx.json) {
             printOutput(rows, { json: true });
@@ -352,7 +370,10 @@ export function registerAgentCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const payload = createAgentSchema.parse(parseJson(opts.payloadJson));
-          const created = await ctx.api.post<Agent>(apiPath`/api/companies/${ctx.companyId}/agents`, payload);
+          const created = await ctx.api.post<Agent>(
+            apiPath`/api/companies/${ctx.companyId}/agents`,
+            payload,
+          );
           printOutput(created, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -370,7 +391,10 @@ export function registerAgentCommands(program: Command): void {
       .action(async (opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const result = await ctx.api.post(apiPath`/api/companies/${ctx.companyId}/agent-hires`, parseJson(opts.payloadJson));
+          const result = await ctx.api.post(
+            apiPath`/api/companies/${ctx.companyId}/agent-hires`,
+            parseJson(opts.payloadJson),
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -389,7 +413,10 @@ export function registerAgentCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts);
           const payload = updateAgentSchema.parse(parseJson(opts.payloadJson));
-          const updated = await ctx.api.patch<Agent>(apiPath`/api/agents/${agentId}`, payload);
+          const updated = await ctx.api.patch<Agent>(
+            apiPath`/api/agents/${agentId}`,
+            payload,
+          );
           printOutput(updated, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -431,7 +458,10 @@ export function registerAgentCommands(program: Command): void {
         .action(async (agentId: string, opts: BaseClientOptions) => {
           try {
             const ctx = resolveCommandContext(opts);
-            const result = await ctx.api.post(`${apiPath`/api/agents/${agentId}`}/${path}`, {});
+            const result = await ctx.api.post(
+              `${apiPath`/api/agents/${agentId}`}/${path}`,
+              {},
+            );
             printOutput(result, { json: ctx.json });
           } catch (err) {
             handleCommandError(err);
@@ -445,12 +475,20 @@ export function registerAgentCommands(program: Command): void {
       .command("permissions:update")
       .description("Update agent permissions")
       .argument("<agentId>", "Agent ID")
-      .requiredOption("--payload-json <json>", "UpdateAgentPermissions JSON payload")
+      .requiredOption(
+        "--payload-json <json>",
+        "UpdateAgentPermissions JSON payload",
+      )
       .action(async (agentId: string, opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = updateAgentPermissionsSchema.parse(parseJson(opts.payloadJson));
-          const updated = await ctx.api.patch(apiPath`/api/agents/${agentId}/permissions`, payload);
+          const payload = updateAgentPermissionsSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const updated = await ctx.api.patch(
+            apiPath`/api/agents/${agentId}/permissions`,
+            payload,
+          );
           printOutput(updated, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -466,7 +504,9 @@ export function registerAgentCommands(program: Command): void {
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.get(apiPath`/api/agents/${agentId}/configuration`);
+          const result = await ctx.api.get(
+            apiPath`/api/agents/${agentId}/configuration`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -482,7 +522,9 @@ export function registerAgentCommands(program: Command): void {
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.get(apiPath`/api/agents/${agentId}/config-revisions`);
+          const result = await ctx.api.get(
+            apiPath`/api/agents/${agentId}/config-revisions`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -496,15 +538,23 @@ export function registerAgentCommands(program: Command): void {
       .description("Get one agent config revision")
       .argument("<agentId>", "Agent ID")
       .argument("<revisionId>", "Revision ID")
-      .action(async (agentId: string, revisionId: string, opts: BaseClientOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.get(apiPath`/api/agents/${agentId}/config-revisions/${revisionId}`);
-          printOutput(result, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          agentId: string,
+          revisionId: string,
+          opts: BaseClientOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const result = await ctx.api.get(
+              apiPath`/api/agents/${agentId}/config-revisions/${revisionId}`,
+            );
+            printOutput(result, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -513,15 +563,24 @@ export function registerAgentCommands(program: Command): void {
       .description("Roll an agent back to a config revision")
       .argument("<agentId>", "Agent ID")
       .argument("<revisionId>", "Revision ID")
-      .action(async (agentId: string, revisionId: string, opts: BaseClientOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.post(apiPath`/api/agents/${agentId}/config-revisions/${revisionId}/rollback`, {});
-          printOutput(result, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          agentId: string,
+          revisionId: string,
+          opts: BaseClientOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const result = await ctx.api.post(
+              apiPath`/api/agents/${agentId}/config-revisions/${revisionId}/rollback`,
+              {},
+            );
+            printOutput(result, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -532,7 +591,9 @@ export function registerAgentCommands(program: Command): void {
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.get(apiPath`/api/agents/${agentId}/runtime-state`);
+          const result = await ctx.api.get(
+            apiPath`/api/agents/${agentId}/runtime-state`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -549,8 +610,13 @@ export function registerAgentCommands(program: Command): void {
       .action(async (agentId: string, opts: AgentResetSessionOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = resetAgentSessionSchema.parse({ taskKey: opts.taskKey });
-          const result = await ctx.api.post(apiPath`/api/agents/${agentId}/runtime-state/reset-session`, payload);
+          const payload = resetAgentSessionSchema.parse({
+            taskKey: opts.taskKey,
+          });
+          const result = await ctx.api.post(
+            apiPath`/api/agents/${agentId}/runtime-state/reset-session`,
+            payload,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -566,7 +632,9 @@ export function registerAgentCommands(program: Command): void {
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.get(apiPath`/api/agents/${agentId}/task-sessions`);
+          const result = await ctx.api.get(
+            apiPath`/api/agents/${agentId}/task-sessions`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -582,7 +650,9 @@ export function registerAgentCommands(program: Command): void {
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.get(apiPath`/api/agents/${agentId}/skills`);
+          const result = await ctx.api.get(
+            apiPath`/api/agents/${agentId}/skills`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -607,7 +677,10 @@ export function registerAgentCommands(program: Command): void {
             desiredSkills: parseCsv(opts.desiredSkills),
             mode: opts.mode,
           });
-          const result = await ctx.api.post(apiPath`/api/agents/${agentId}/skills/sync`, payload);
+          const result = await ctx.api.post(
+            apiPath`/api/agents/${agentId}/skills/sync`,
+            payload,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -618,14 +691,24 @@ export function registerAgentCommands(program: Command): void {
   addCommonClientOptions(
     agent
       .command("instructions-path:update")
-      .description("Update an agent instructions path. Process adapters require adapterConfigKey and relative paths require adapterConfig.cwd.")
+      .description(
+        "Update an agent instructions path. Process adapters require adapterConfigKey and relative paths require adapterConfig.cwd.",
+      )
       .argument("<agentId>", "Agent ID")
-      .requiredOption("--payload-json <json>", "UpdateAgentInstructionsPath JSON payload, for example {\"path\":\"/tmp/AGENTS.md\",\"adapterConfigKey\":\"instructionsFilePath\"}")
+      .requiredOption(
+        "--payload-json <json>",
+        'UpdateAgentInstructionsPath JSON payload, for example {"path":"/tmp/AGENTS.md","adapterConfigKey":"instructionsFilePath"}',
+      )
       .action(async (agentId: string, opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = updateAgentInstructionsPathSchema.parse(parseJson(opts.payloadJson));
-          const result = await ctx.api.patch(apiPath`/api/agents/${agentId}/instructions-path`, payload);
+          const payload = updateAgentInstructionsPathSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const result = await ctx.api.patch(
+            apiPath`/api/agents/${agentId}/instructions-path`,
+            payload,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -641,7 +724,9 @@ export function registerAgentCommands(program: Command): void {
       .action(async (agentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.get(apiPath`/api/agents/${agentId}/instructions-bundle`);
+          const result = await ctx.api.get(
+            apiPath`/api/agents/${agentId}/instructions-bundle`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -654,12 +739,20 @@ export function registerAgentCommands(program: Command): void {
       .command("instructions-bundle:update")
       .description("Update an agent instructions bundle")
       .argument("<agentId>", "Agent ID")
-      .requiredOption("--payload-json <json>", "UpdateAgentInstructionsBundle JSON payload")
+      .requiredOption(
+        "--payload-json <json>",
+        "UpdateAgentInstructionsBundle JSON payload",
+      )
       .action(async (agentId: string, opts: AgentJsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = updateAgentInstructionsBundleSchema.parse(parseJson(opts.payloadJson));
-          const result = await ctx.api.patch(apiPath`/api/agents/${agentId}/instructions-bundle`, payload);
+          const payload = updateAgentInstructionsBundleSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const result = await ctx.api.patch(
+            apiPath`/api/agents/${agentId}/instructions-bundle`,
+            payload,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -677,7 +770,9 @@ export function registerAgentCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts);
           const query = new URLSearchParams({ path: opts.path });
-          const result = await ctx.api.get(`${apiPath`/api/agents/${agentId}/instructions-bundle/file`}?${query.toString()}`);
+          const result = await ctx.api.get(
+            `${apiPath`/api/agents/${agentId}/instructions-bundle/file`}?${query.toString()}`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -694,21 +789,30 @@ export function registerAgentCommands(program: Command): void {
       .option("--content <text>", "File content")
       .option("--content-file <path>", "Read file content from disk")
       .option("--clear-legacy-prompt-template", "Clear legacy prompt template")
-      .action(async (agentId: string, opts: AgentInstructionsFilePutOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const content = opts.contentFile ? await fs.readFile(opts.contentFile, "utf8") : opts.content;
-          const payload = upsertAgentInstructionsFileSchema.parse({
-            path: opts.path,
-            content,
-            clearLegacyPromptTemplate: Boolean(opts.clearLegacyPromptTemplate),
-          });
-          const result = await ctx.api.put(apiPath`/api/agents/${agentId}/instructions-bundle/file`, payload);
-          printOutput(result, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (agentId: string, opts: AgentInstructionsFilePutOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const content = opts.contentFile
+              ? await fs.readFile(opts.contentFile, "utf8")
+              : opts.content;
+            const payload = upsertAgentInstructionsFileSchema.parse({
+              path: opts.path,
+              content,
+              clearLegacyPromptTemplate: Boolean(
+                opts.clearLegacyPromptTemplate,
+              ),
+            });
+            const result = await ctx.api.put(
+              apiPath`/api/agents/${agentId}/instructions-bundle/file`,
+              payload,
+            );
+            printOutput(result, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -721,7 +825,9 @@ export function registerAgentCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts);
           const query = new URLSearchParams({ path: opts.path });
-          const result = await ctx.api.delete(`${apiPath`/api/agents/${agentId}/instructions-bundle/file`}?${query.toString()}`);
+          const result = await ctx.api.delete(
+            `${apiPath`/api/agents/${agentId}/instructions-bundle/file`}?${query.toString()}`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -734,9 +840,20 @@ export function registerAgentCommands(program: Command): void {
       .command("wake")
       .description("Request a heartbeat wakeup for an agent")
       .argument("<agentRef>", "Agent ID or shortname/url-key")
-      .option("-C, --company-id <id>", "Company ID for shortname/url-key lookup")
-      .option("--source <source>", "Invocation source (timer, assignment, on_demand, automation)", "on_demand")
-      .option("--trigger <trigger>", "Trigger detail (manual, ping, callback, system)", "manual")
+      .option(
+        "-C, --company-id <id>",
+        "Company ID for shortname/url-key lookup",
+      )
+      .option(
+        "--source <source>",
+        "Invocation source (timer, assignment, on_demand, automation)",
+        "on_demand",
+      )
+      .option(
+        "--trigger <trigger>",
+        "Trigger detail (manual, ping, callback, system)",
+        "manual",
+      )
       .option("--reason <text>", "Wakeup reason")
       .option("--payload <json>", "JSON object payload")
       .option("--idempotency-key <key>", "Wakeup idempotency key")
@@ -744,8 +861,12 @@ export function registerAgentCommands(program: Command): void {
       .action(async (agentRef: string, opts: AgentWakeOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const query = opts.companyId ? `?${new URLSearchParams({ companyId: opts.companyId }).toString()}` : "";
-          const agentRow = await ctx.api.get<Agent>(`${apiPath`/api/agents/${agentRef}`}${query}`);
+          const query = opts.companyId
+            ? `?${new URLSearchParams({ companyId: opts.companyId }).toString()}`
+            : "";
+          const agentRow = await ctx.api.get<Agent>(
+            `${apiPath`/api/agents/${agentRef}`}${query}`,
+          );
           if (!agentRow) {
             throw new Error(`Agent not found: ${agentRef}`);
           }
@@ -757,7 +878,10 @@ export function registerAgentCommands(program: Command): void {
             idempotencyKey: opts.idempotencyKey,
             forceFreshSession: Boolean(opts.forceFreshSession),
           });
-          const result = await ctx.api.post<AgentWakeupResponse>(apiPath`/api/agents/${agentRow.id}/wakeup`, payload);
+          const result = await ctx.api.post<AgentWakeupResponse>(
+            apiPath`/api/agents/${agentRow.id}/wakeup`,
+            payload,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -791,15 +915,22 @@ export function registerAgentCommands(program: Command): void {
           }
 
           const now = new Date().toISOString().replaceAll(":", "-");
-          const keyName = opts.keyName?.trim() ? opts.keyName.trim() : `local-cli-${now}`;
-          const key = await ctx.api.post<CreatedAgentKey>(apiPath`/api/agents/${agentRow.id}/keys`, { name: keyName });
+          const keyName = opts.keyName?.trim()
+            ? opts.keyName.trim()
+            : `local-cli-${now}`;
+          const key = await ctx.api.post<CreatedAgentKey>(
+            apiPath`/api/agents/${agentRow.id}/keys`,
+            { name: keyName },
+          );
           if (!key) {
             throw new Error("Failed to create API key");
           }
 
           const installSummaries: SkillsInstallSummary[] = [];
           if (opts.installSkills !== false) {
-            const skillsDir = await resolveTaskcoreSkillsDir(__moduleDir, [path.resolve(process.cwd(), "skills")]);
+            const skillsDir = await resolveTaskcoreSkillsDir(__moduleDir, [
+              path.resolve(process.cwd(), "skills"),
+            ]);
             if (!skillsDir) {
               throw new Error(
                 "Could not locate local Taskcore skills directory. Expected ./skills in the repo checkout.",
@@ -807,8 +938,16 @@ export function registerAgentCommands(program: Command): void {
             }
 
             installSummaries.push(
-              await installSkillsForTarget(skillsDir, codexSkillsHome(), "codex"),
-              await installSkillsForTarget(skillsDir, claudeSkillsHome(), "claude"),
+              await installSkillsForTarget(
+                skillsDir,
+                codexSkillsHome(),
+                "codex",
+              ),
+              await installSkillsForTarget(
+                skillsDir,
+                claudeSkillsHome(),
+                "claude",
+              ),
               await installSkillsForTarget(skillsDir, kimiSkillsHome(), "kimi"),
             );
           }
@@ -856,7 +995,9 @@ export function registerAgentCommands(program: Command): void {
             }
           }
           console.log("");
-          console.log("# Run this in your shell before launching codex/claude:");
+          console.log(
+            "# Run this in your shell before launching codex/claude:",
+          );
           console.log(exportsText);
         } catch (err) {
           handleCommandError(err);
@@ -866,7 +1007,9 @@ export function registerAgentCommands(program: Command): void {
   );
 }
 
-function parseJsonObject(value: string | undefined): Record<string, unknown> | undefined {
+function parseJsonObject(
+  value: string | undefined,
+): Record<string, unknown> | undefined {
   if (value === undefined) return undefined;
   const parsed = JSON.parse(value) as unknown;
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
@@ -881,5 +1024,8 @@ function parseJson(value: string): unknown {
 
 function parseCsv(value: string | undefined): string[] {
   if (!value) return [];
-  return value.split(",").map((part) => part.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
 }

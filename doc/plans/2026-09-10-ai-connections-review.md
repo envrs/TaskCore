@@ -28,19 +28,19 @@ Agent preview headings, harness/model values, form buttons, and provider simulat
 
 The current `/:company/apps` route renders **Browse**, not the older Connections page. Its actual provider groups, account rows, search, Add account buttons, status icons, owner identities, and management menus are mounted in the stories. A small optional account-detail slot adds AI sign-in method, personal/shared identity, default, and delegation metadata to its existing rows.
 
-| Existing component | Reuse in this milestone |
-| --- | --- |
-| `pages/apps/Browse.tsx` | Real Connectors list; existing provider groups and account rows. No standalone AI list. |
-| `pages/apps/AppDetail.tsx` | Existing header, naming, identities, permission loading and account status. |
-| `app-detail/IdentitiesSection.tsx` | Existing personal/company ownership display, member audience selection, and revoke confirmation dialog. |
-| `app-detail/PermissionsPanel.tsx` | Existing agent access radio cards and agent selector. Only the irrelevant tool-action section is replaced with AI account/default controls. |
-| `app-detail/AdvancedPanel.tsx` | Existing reconnect banner with an optional provider-auth callback, behind its existing permission check. |
-| `features/connections/ConnectionSetupFlow.tsx` | Existing branded setup shell, human/agent access step, navigation, cancellation and reuse flow. Provider login is composed in a credential-content slot. |
-| `features/connections/ConnectionIntentInteractionBody.tsx` | Real task card, modal, existing-account choice, completion and return-focus lifecycle. |
-| `ConnectionChoiceList` | Extracted from the existing setup flow's account-reuse rows. Both that flow and the AI agent picker render this component. |
-| `pages/apps/AppLogo.tsx` | Existing branding component in AI identity summaries; handles local and dark assets. |
-| `AdapterLoginChrome`, `AgentConfigForm`, `AgentProviderConnection` | Existing subscription card/code/input presentation extracted into shared wrappers; live lifecycle hooks remain owned by the existing hosts. |
-| `OnboardingWizard`, `ModelSourceTiles`, `CredentialModeLink` | Existing onboarding provider/method controls and API credential card remain shared. |
+| Existing component                                                 | Reuse in this milestone                                                                                                                                  |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages/apps/Browse.tsx`                                            | Real Connectors list; existing provider groups and account rows. No standalone AI list.                                                                  |
+| `pages/apps/AppDetail.tsx`                                         | Existing header, naming, identities, permission loading and account status.                                                                              |
+| `app-detail/IdentitiesSection.tsx`                                 | Existing personal/company ownership display, member audience selection, and revoke confirmation dialog.                                                  |
+| `app-detail/PermissionsPanel.tsx`                                  | Existing agent access radio cards and agent selector. Only the irrelevant tool-action section is replaced with AI account/default controls.              |
+| `app-detail/AdvancedPanel.tsx`                                     | Existing reconnect banner with an optional provider-auth callback, behind its existing permission check.                                                 |
+| `features/connections/ConnectionSetupFlow.tsx`                     | Existing branded setup shell, human/agent access step, navigation, cancellation and reuse flow. Provider login is composed in a credential-content slot. |
+| `features/connections/ConnectionIntentInteractionBody.tsx`         | Real task card, modal, existing-account choice, completion and return-focus lifecycle.                                                                   |
+| `ConnectionChoiceList`                                             | Extracted from the existing setup flow's account-reuse rows. Both that flow and the AI agent picker render this component.                               |
+| `pages/apps/AppLogo.tsx`                                           | Existing branding component in AI identity summaries; handles local and dark assets.                                                                     |
+| `AdapterLoginChrome`, `AgentConfigForm`, `AgentProviderConnection` | Existing subscription card/code/input presentation extracted into shared wrappers; live lifecycle hooks remain owned by the existing hosts.              |
+| `OnboardingWizard`, `ModelSourceTiles`, `CredentialModeLink`       | Existing onboarding provider/method controls and API credential card remain shared.                                                                      |
 
 The separate `AiProviderPicker`, `AiConnectionRow`, and standalone AI management form have been removed. New AI-specific presentation is limited to agent binding selection, personal defaults/delegation, AI account controls, and controlled auth states. The design guide explains these boundaries and shows the shared picker and credential presentation.
 

@@ -5,19 +5,23 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  scaffoldPluginProject: vi.fn((options: { outputDir: string }) => options.outputDir),
+  scaffoldPluginProject: vi.fn(
+    (options: { outputDir: string }) => options.outputDir,
+  ),
 }));
 
-vi.mock("../../../packages/plugins/create-taskcore-plugin/src/index.js", async () => {
-  const actual =
-    await vi.importActual<typeof import("../../../packages/plugins/create-taskcore-plugin/src/index.js")>(
-      "../../../packages/plugins/create-taskcore-plugin/src/index.js",
-    );
-  return {
-    ...actual,
-    scaffoldPluginProject: mocks.scaffoldPluginProject,
-  };
-});
+vi.mock(
+  "../../../packages/plugins/create-taskcore-plugin/src/index.js",
+  async () => {
+    const actual = await vi.importActual<
+      typeof import("../../../packages/plugins/create-taskcore-plugin/src/index.js")
+    >("../../../packages/plugins/create-taskcore-plugin/src/index.js");
+    return {
+      ...actual,
+      scaffoldPluginProject: mocks.scaffoldPluginProject,
+    };
+  },
+);
 
 import {
   buildPluginInstallRequest,
@@ -154,9 +158,13 @@ describe("plugin install", () => {
 
   it("preserves npm package installs when no local path exists", () => {
     expect(
-      buildPluginInstallRequest("@acme/plugin-linear", { version: "1.2.3" }, {
-        cwd: makeTempDir(),
-      }),
+      buildPluginInstallRequest(
+        "@acme/plugin-linear",
+        { version: "1.2.3" },
+        {
+          cwd: makeTempDir(),
+        },
+      ),
     ).toEqual({
       packageName: "@acme/plugin-linear",
       version: "1.2.3",
@@ -174,7 +182,10 @@ describe("plugin target diagnostics", () => {
       deploymentExposure: "private",
     }));
 
-    const diag = await probeTargetDiagnostics({ apiBase: "http://127.0.0.1:3100", get });
+    const diag = await probeTargetDiagnostics({
+      apiBase: "http://127.0.0.1:3100",
+      get,
+    });
 
     expect(get).toHaveBeenCalledWith("/api/health");
     expect(diag).toEqual({
@@ -194,7 +205,10 @@ describe("plugin target diagnostics", () => {
       throw new Error("Could not reach the Taskcore API.\nRequest: GET ...");
     });
 
-    const diag = await probeTargetDiagnostics({ apiBase: "http://other-host:9999", get });
+    const diag = await probeTargetDiagnostics({
+      apiBase: "http://other-host:9999",
+      get,
+    });
 
     expect(diag.apiBase).toBe("http://other-host:9999");
     expect(diag.reachable).toBe(false);
@@ -205,7 +219,11 @@ describe("plugin target diagnostics", () => {
     const rendered = formatTargetDiagnostics({
       apiBase: "http://127.0.0.1:3100",
       reachable: true,
-      health: { status: "ok", version: "9.9.9", deploymentMode: "local_trusted" },
+      health: {
+        status: "ok",
+        version: "9.9.9",
+        deploymentMode: "local_trusted",
+      },
     });
 
     expect(rendered).toContain("http://127.0.0.1:3100");

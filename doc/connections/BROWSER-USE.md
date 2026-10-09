@@ -25,15 +25,15 @@ Taskcore does not create or import profiles.
 
 ## Reviewed actions
 
-| Action | Risk | Scope and behavior |
-| --- | --- | --- |
-| `browser_start` | Destructive-capable | Delegate a task; optional allowed profile and lower cost cap. |
-| `browser_status` | Read | Current run status, sanitized result, progress and recorded run cost. |
+| Action             | Risk                | Scope and behavior                                                       |
+| ------------------ | ------------------- | ------------------------------------------------------------------------ |
+| `browser_start`    | Destructive-capable | Delegate a task; optional allowed profile and lower cost cap.            |
+| `browser_status`   | Read                | Current run status, sanitized result, progress and recorded run cost.    |
 | `browser_continue` | Destructive-capable | Start a new turn in an idle owned conversation. Busy sessions reject it. |
-| `browser_cancel` | Destructive-capable | Cancel hosted agent work; keep the browser for the idle window. |
-| `browser_end` | Destructive-capable | Cancel work and stop every browser registered to the conversation. |
-| `browser_sessions` | Read | List conversations for the current task, agent and selected grant only. |
-| `browser_profiles` | Read | List existing profiles explicitly allowed for the selected grant. |
+| `browser_cancel`   | Destructive-capable | Cancel hosted agent work; keep the browser for the idle window.          |
+| `browser_end`      | Destructive-capable | Cancel work and stop every browser registered to the conversation.       |
+| `browser_sessions` | Read                | List conversations for the current task, agent and selected grant only.  |
+| `browser_profiles` | Read                | List existing profiles explicitly allowed for the selected grant.        |
 
 Start, continue and control are conservative because a natural-language browser
 task can change external systems. They use the normal Allowed / Ask first / Off
@@ -245,10 +245,10 @@ creation API documents the same opt-in and notes its stealth tradeoff.
 
 Live test results, using the same browser and page throughout each test:
 
-| Browser configuration | Requested viewport | Measured page viewport | Result |
-| --- | --- | --- | --- |
-| Agent run, default resizing policy | 480 × 800, then 900 × 700 | Stayed 1280 × 588 | CDP commands succeeded but had no effect; native window resizing also had no effect |
-| Standalone browser, `allowResizing: true` | 480 × 800, then 900 × 700 | 480 × 800, then 900 × 700 | Responsive layout and screenshot dimensions changed |
+| Browser configuration                            | Requested viewport        | Measured page viewport    | Result                                                                                |
+| ------------------------------------------------ | ------------------------- | ------------------------- | ------------------------------------------------------------------------------------- |
+| Agent run, default resizing policy               | 480 × 800, then 900 × 700 | Stayed 1280 × 588         | CDP commands succeeded but had no effect; native window resizing also had no effect   |
+| Standalone browser, `allowResizing: true`        | 480 × 800, then 900 × 700 | 480 × 800, then 900 × 700 | Responsive layout and screenshot dimensions changed                                   |
 | Agent run, `browserSettings.allowResizing: true` | 480 × 800, then 900 × 700 | 480 × 800, then 900 × 700 | Both changes occurred while run status was `running`; live viewer followed the change |
 
 The successful command was server-side CDP `Emulation.setDeviceMetricsOverride`

@@ -12,10 +12,7 @@
 export type RuntimeProgressSink = (line: string) => void | Promise<void>;
 
 export type RuntimeProgressPhase =
-  | "Syncing"
-  | "Restoring"
-  | "Importing git history"
-  | "Exporting git history";
+  "Syncing" | "Restoring" | "Importing git history" | "Exporting git history";
 
 export type RuntimeProgressDirection = "to" | "from";
 
@@ -37,7 +34,9 @@ export interface RuntimeStatusUpdate {
   lastEventAt?: Date | string | null;
 }
 
-export type RuntimeStatusSink = (update: RuntimeStatusUpdate) => void | Promise<void>;
+export type RuntimeStatusSink = (
+  update: RuntimeStatusUpdate,
+) => void | Promise<void>;
 
 export interface RuntimeProgressReporterOptions {
   sink: RuntimeProgressSink;
@@ -87,14 +86,18 @@ function clampPercent(value: number): number {
 export function createRuntimeProgressReporter(
   options: RuntimeProgressReporterOptions,
 ): RuntimeProgressReporter {
-  const stepPercent = options.stepPercent && options.stepPercent > 0 ? options.stepPercent : 10;
+  const stepPercent =
+    options.stepPercent && options.stepPercent > 0 ? options.stepPercent : 10;
   const minIntervalMs =
-    options.minIntervalMs && options.minIntervalMs > 0 ? options.minIntervalMs : 2000;
+    options.minIntervalMs && options.minIntervalMs > 0
+      ? options.minIntervalMs
+      : 2000;
   const now = options.now ?? Date.now;
   // "sandbox" is the transport key, not product vocabulary: progress lines are
   // user-visible run status, and the product refers to the run's machine as an
   // environment ("Taskcore Computer" on managed deployments).
-  const targetDisplay = options.target === "sandbox" ? "environment" : options.target;
+  const targetDisplay =
+    options.target === "sandbox" ? "environment" : options.target;
   const prefix = `[taskcore] ${options.phase}${options.label ? ` ${options.label}` : ""} ${options.direction} ${targetDisplay}`;
 
   let lastEmitAt: number | null = null;
@@ -119,7 +122,10 @@ export function createRuntimeProgressReporter(
     return `${prefix}: failed after ${formatMb(doneBytes)} MB\n`;
   }
 
-  async function emit(doneBytes: number, totalBytes: number | null): Promise<void> {
+  async function emit(
+    doneBytes: number,
+    totalBytes: number | null,
+  ): Promise<void> {
     lastEmitAt = now();
     if (totalBytes != null && totalBytes > 0) {
       lastStep = Math.floor(((doneBytes / totalBytes) * 100) / stepPercent);
@@ -133,7 +139,8 @@ export function createRuntimeProgressReporter(
       lastTotalBytes = totalBytes;
       if (completed) return;
 
-      const elapsedOk = lastEmitAt == null || now() - lastEmitAt >= minIntervalMs;
+      const elapsedOk =
+        lastEmitAt == null || now() - lastEmitAt >= minIntervalMs;
 
       if (totalBytes != null && totalBytes > 0) {
         const terminal = doneBytes >= totalBytes;

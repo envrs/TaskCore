@@ -4,7 +4,10 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AdapterExecutionTarget } from "@taskcore/adapter-utils/execution-target";
 
-const { ensureAdapterExecutionTargetCommandResolvable, runAdapterExecutionTargetProcess } = vi.hoisted(() => ({
+const {
+  ensureAdapterExecutionTargetCommandResolvable,
+  runAdapterExecutionTargetProcess,
+} = vi.hoisted(() => ({
   ensureAdapterExecutionTargetCommandResolvable: vi.fn(async () => {}),
   runAdapterExecutionTargetProcess: vi.fn(async () => ({
     exitCode: 0,
@@ -18,10 +21,14 @@ const { ensureAdapterExecutionTargetCommandResolvable, runAdapterExecutionTarget
 }));
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
-  return { ...actual, ensureAdapterExecutionTargetCommandResolvable, runAdapterExecutionTargetProcess };
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
+  return {
+    ...actual,
+    ensureAdapterExecutionTargetCommandResolvable,
+    runAdapterExecutionTargetProcess,
+  };
 });
 
 import { testCodexAcpEnvironment } from "./acp.js";
@@ -30,9 +37,17 @@ describe("codex ACP lane model CLI floor", () => {
   let cwd: string;
 
   beforeEach(async () => {
-    cwd = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-acp-version-"));
-    vi.stubEnv("CODEX_HOME", await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-acp-home-")));
-    vi.stubEnv("TASKCORE_HOME", await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-acp-instance-")));
+    cwd = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-acp-version-"),
+    );
+    vi.stubEnv(
+      "CODEX_HOME",
+      await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-acp-home-")),
+    );
+    vi.stubEnv(
+      "TASKCORE_HOME",
+      await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-acp-instance-")),
+    );
     vi.stubEnv("TASKCORE_INSTANCE_ID", "default");
   });
 
@@ -72,9 +87,14 @@ describe("codex ACP lane model CLI floor", () => {
     });
 
     expect(result.status).toBe("fail");
-    expect(result.checks.find((check) => check.code === "codex_cli_version_incompatible")).toMatchObject({
+    expect(
+      result.checks.find(
+        (check) => check.code === "codex_cli_version_incompatible",
+      ),
+    ).toMatchObject({
       level: "error",
-      message: "gpt-6.1-sol requires Codex CLI 0.159.0 or newer with ChatGPT sign-in.",
+      message:
+        "gpt-6.1-sol requires Codex CLI 0.159.0 or newer with ChatGPT sign-in.",
       detail: "Detected Codex CLI 0.156.0.",
     });
     expect(runAdapterExecutionTargetProcess).toHaveBeenCalledTimes(1);
@@ -120,8 +140,13 @@ describe("codex ACP lane model CLI floor", () => {
     });
 
     expect(result.status).toBe("pass");
-    expect(result.checks.find((check) => check.code === "codex_cli_version_compatible")).toMatchObject({
-      message: "Codex CLI 0.160.0 satisfies the 0.159.0 minimum for gpt-6.1-sol.",
+    expect(
+      result.checks.find(
+        (check) => check.code === "codex_cli_version_compatible",
+      ),
+    ).toMatchObject({
+      message:
+        "Codex CLI 0.160.0 satisfies the 0.159.0 minimum for gpt-6.1-sol.",
     });
     expect(runAdapterExecutionTargetProcess).toHaveBeenCalledTimes(1);
     const call = runAdapterExecutionTargetProcess.mock.calls[0] as unknown as [
@@ -161,8 +186,13 @@ describe("codex ACP lane model CLI floor", () => {
     });
 
     expect(result.status).toBe("pass");
-    expect(result.checks.find((check) => check.code === "codex_cli_version_compatible")).toMatchObject({
-      message: "Codex CLI 0.160.0 satisfies the 0.159.0 minimum for gpt-6.1-sol.",
+    expect(
+      result.checks.find(
+        (check) => check.code === "codex_cli_version_compatible",
+      ),
+    ).toMatchObject({
+      message:
+        "Codex CLI 0.160.0 satisfies the 0.159.0 minimum for gpt-6.1-sol.",
     });
   });
 
@@ -177,6 +207,10 @@ describe("codex ACP lane model CLI floor", () => {
 
     expect(result.status).toBe("pass");
     expect(runAdapterExecutionTargetProcess).not.toHaveBeenCalled();
-    expect(result.checks.some((check) => check.code.startsWith("codex_cli_version_"))).toBe(false);
+    expect(
+      result.checks.some((check) =>
+        check.code.startsWith("codex_cli_version_"),
+      ),
+    ).toBe(false);
   });
 });

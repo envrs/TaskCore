@@ -19,7 +19,9 @@ interface ActivityListOptions extends BaseClientOptions {
 }
 
 export function registerActivityCommands(program: Command): void {
-  const activity = program.command("activity").description("Activity log operations");
+  const activity = program
+    .command("activity")
+    .description("Activity log operations");
 
   addCommonClientOptions(
     activity
@@ -80,7 +82,10 @@ export function registerActivityCommands(program: Command): void {
       .action(async (opts: ActivityListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const result = await ctx.api.post(apiPath`/api/companies/${ctx.companyId}/activity`, parseJson(opts.payloadJson ?? "{}"));
+          const result = await ctx.api.post(
+            apiPath`/api/companies/${ctx.companyId}/activity`,
+            parseJson(opts.payloadJson ?? "{}"),
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -97,7 +102,10 @@ export function registerActivityCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          printOutput(await ctx.api.get(apiPath`/api/issues/${issueId}/activity`), { json: ctx.json });
+          printOutput(
+            await ctx.api.get(apiPath`/api/issues/${issueId}/activity`),
+            { json: ctx.json },
+          );
         } catch (err) {
           handleCommandError(err);
         }

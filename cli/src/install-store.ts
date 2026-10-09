@@ -42,7 +42,9 @@ function ensurePrivateDirectory(directoryPath: string): void {
   fs.mkdirSync(directoryPath, { recursive: true, mode: 0o700 });
   const stat = fs.lstatSync(directoryPath);
   if (!stat.isDirectory() || stat.isSymbolicLink()) {
-    throw new Error(`Refusing to use non-directory install-store path ${directoryPath}.`);
+    throw new Error(
+      `Refusing to use non-directory install-store path ${directoryPath}.`,
+    );
   }
   fs.chmodSync(directoryPath, 0o700);
 }
@@ -50,11 +52,17 @@ function ensurePrivateDirectory(directoryPath: string): void {
 function assertOwnedByCurrentUser(stat: fs.Stats, targetPath: string): void {
   const getuid = process.getuid;
   if (typeof getuid === "function" && stat.uid !== getuid()) {
-    throw new Error(`Refusing to modify path not owned by the current user: ${targetPath}.`);
+    throw new Error(
+      `Refusing to modify path not owned by the current user: ${targetPath}.`,
+    );
   }
 }
 
-function writeFileAtomic(filePath: string, contents: string, mode: number): void {
+function writeFileAtomic(
+  filePath: string,
+  contents: string,
+  mode: number,
+): void {
   const temporaryPath = path.join(
     path.dirname(filePath),
     `.${path.basename(filePath)}.tmp-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -67,12 +75,18 @@ function writeFileAtomic(filePath: string, contents: string, mode: number): void
   }
 }
 
-export function resolveInstallStorePaths(options: {
-  taskcoreHome?: string;
-  homeDir?: string;
-} = {}): InstallStorePaths {
-  const taskcoreHome = path.resolve(options.taskcoreHome ?? resolveTaskcoreHomeDir());
-  const homeDir = path.resolve(options.homeDir ?? process.env.HOME ?? path.dirname(taskcoreHome));
+export function resolveInstallStorePaths(
+  options: {
+    taskcoreHome?: string;
+    homeDir?: string;
+  } = {},
+): InstallStorePaths {
+  const taskcoreHome = path.resolve(
+    options.taskcoreHome ?? resolveTaskcoreHomeDir(),
+  );
+  const homeDir = path.resolve(
+    options.homeDir ?? process.env.HOME ?? path.dirname(taskcoreHome),
+  );
   const cliRoot = path.join(taskcoreHome, "cli");
   return {
     taskcoreHome,
@@ -86,22 +100,35 @@ export function resolveInstallStorePaths(options: {
   };
 }
 
-export function initializeInstallStore(paths = resolveInstallStorePaths()): void {
+export function initializeInstallStore(
+  paths = resolveInstallStorePaths(),
+): void {
   ensurePrivateDirectory(paths.cliRoot);
   ensurePrivateDirectory(paths.installsRoot);
   try {
     const markerStat = fs.lstatSync(paths.markerPath);
-    if (!markerStat.isFile() || markerStat.isSymbolicLink() || markerStat.nlink > 1) {
-      throw new Error(`Refusing to use unsafe install-store marker ${paths.markerPath}.`);
+    if (
+      !markerStat.isFile() ||
+      markerStat.isSymbolicLink() ||
+      markerStat.nlink > 1
+    ) {
+      throw new Error(
+        `Refusing to use unsafe install-store marker ${paths.markerPath}.`,
+      );
     }
     assertOwnedByCurrentUser(markerStat, paths.markerPath);
     if (fs.readFileSync(paths.markerPath, "utf8") !== MANAGED_STORE_MARKER) {
-      throw new Error(`Refusing to use unrecognized install store ${paths.cliRoot}.`);
+      throw new Error(
+        `Refusing to use unrecognized install store ${paths.cliRoot}.`,
+      );
     }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     try {
-      fs.writeFileSync(paths.markerPath, MANAGED_STORE_MARKER, { mode: 0o600, flag: "wx" });
+      fs.writeFileSync(paths.markerPath, MANAGED_STORE_MARKER, {
+        mode: 0o600,
+        flag: "wx",
+      });
     } catch (writeError) {
       if (
         (writeError as NodeJS.ErrnoException).code !== "EEXIST" ||
@@ -113,10 +140,14 @@ export function initializeInstallStore(paths = resolveInstallStorePaths()): void
   }
 }
 
-export function assertManagedInstallStore(paths = resolveInstallStorePaths()): InstallManifest {
+export function assertManagedInstallStore(
+  paths = resolveInstallStorePaths(),
+): InstallManifest {
   const cliStat = fs.lstatSync(paths.cliRoot);
   if (!cliStat.isDirectory() || cliStat.isSymbolicLink()) {
-    throw new Error(`Refusing to remove unsafe install-store path ${paths.cliRoot}.`);
+    throw new Error(
+      `Refusing to remove unsafe install-store path ${paths.cliRoot}.`,
+    );
   }
   assertOwnedByCurrentUser(cliStat, paths.cliRoot);
   let markerStat: fs.Stats;
@@ -124,22 +155,44 @@ export function assertManagedInstallStore(paths = resolveInstallStorePaths()): I
     markerStat = fs.lstatSync(paths.markerPath);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new Error(`Refusing to remove unverified install store ${paths.cliRoot}.`);
+      throw new Error(
+        `Refusing to remove unverified install store ${paths.cliRoot}.`,
+      );
     }
     throw error;
   }
-  if (!markerStat.isFile() || markerStat.isSymbolicLink() || markerStat.nlink > 1) {
-    throw new Error(`Refusing to remove unverified install store ${paths.cliRoot}.`);
+  if (
+    !markerStat.isFile() ||
+    markerStat.isSymbolicLink() ||
+    markerStat.nlink > 1
+  ) {
+    throw new Error(
+      `Refusing to remove unverified install store ${paths.cliRoot}.`,
+    );
   }
   assertOwnedByCurrentUser(markerStat, paths.markerPath);
   if (fs.readFileSync(paths.markerPath, "utf8") !== MANAGED_STORE_MARKER) {
-    throw new Error(`Refusing to remove unverified install store ${paths.cliRoot}.`);
+    throw new Error(
+      `Refusing to remove unverified install store ${paths.cliRoot}.`,
+    );
   }
   const manifest = readInstallManifest(paths);
-  if (!manifest) throw new Error(`Refusing to remove install store without a manifest at ${paths.cliRoot}.`);
-  const relativePayload = path.relative(paths.installsRoot, path.resolve(manifest.payloadPath));
-  if (!relativePayload || relativePayload.startsWith("..") || path.isAbsolute(relativePayload)) {
-    throw new Error(`Refusing to remove install store with an invalid manifest at ${paths.cliRoot}.`);
+  if (!manifest)
+    throw new Error(
+      `Refusing to remove install store without a manifest at ${paths.cliRoot}.`,
+    );
+  const relativePayload = path.relative(
+    paths.installsRoot,
+    path.resolve(manifest.payloadPath),
+  );
+  if (
+    !relativePayload ||
+    relativePayload.startsWith("..") ||
+    path.isAbsolute(relativePayload)
+  ) {
+    throw new Error(
+      `Refusing to remove install store with an invalid manifest at ${paths.cliRoot}.`,
+    );
   }
   return manifest;
 }
@@ -162,7 +215,10 @@ export async function withInstallStoreLock<T>(
   const acquire = (): void => {
     const temporaryPath = `${paths.lockPath}.${token}.tmp`;
     try {
-      fs.writeFileSync(temporaryPath, `${token}\n`, { mode: 0o600, flag: "wx" });
+      fs.writeFileSync(temporaryPath, `${token}\n`, {
+        mode: 0o600,
+        flag: "wx",
+      });
       try {
         fs.linkSync(temporaryPath, paths.lockPath);
         return;
@@ -171,16 +227,21 @@ export async function withInstallStoreLock<T>(
       }
       const owner = fs.readFileSync(paths.lockPath, "utf8").trim();
       const ownerPid = Number.parseInt(owner.split(":", 1)[0] ?? "", 10);
-      if (Number.isInteger(ownerPid) && ownerPid > 0 && !processIsAlive(ownerPid)) {
+      if (
+        Number.isInteger(ownerPid) &&
+        ownerPid > 0 &&
+        !processIsAlive(ownerPid)
+      ) {
         fs.rmSync(paths.lockPath);
         fs.rmSync(temporaryPath, { force: true });
         acquire();
         return;
       }
-      const ownerLabel = Number.isInteger(ownerPid) && ownerPid > 0 ? ` (pid ${ownerPid})` : "";
+      const ownerLabel =
+        Number.isInteger(ownerPid) && ownerPid > 0 ? ` (pid ${ownerPid})` : "";
       throw new Error(
         `Another managed install is already running${ownerLabel}. ` +
-        `If no install process is active, remove the stale lock at ${paths.lockPath} and retry.`,
+          `If no install process is active, remove the stale lock at ${paths.lockPath} and retry.`,
       );
     } finally {
       fs.rmSync(temporaryPath, { force: true });
@@ -212,9 +273,13 @@ export function payloadPathFor(
   return path.join(paths.installsRoot, source, identifier);
 }
 
-export function readInstallManifest(paths = resolveInstallStorePaths()): InstallManifest | null {
+export function readInstallManifest(
+  paths = resolveInstallStorePaths(),
+): InstallManifest | null {
   try {
-    const value = JSON.parse(fs.readFileSync(paths.manifestPath, "utf8")) as InstallManifest;
+    const value = JSON.parse(
+      fs.readFileSync(paths.manifestPath, "utf8"),
+    ) as InstallManifest;
     if (
       value.schemaVersion !== INSTALL_MANIFEST_VERSION ||
       (value.source !== "npm" && value.source !== "git") ||
@@ -226,7 +291,9 @@ export function readInstallManifest(paths = resolveInstallStorePaths()): Install
     return value;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw new Error(`Could not read managed install manifest at ${paths.manifestPath}: ${String(error)}`);
+    throw new Error(
+      `Could not read managed install manifest at ${paths.manifestPath}: ${String(error)}`,
+    );
   }
 }
 
@@ -237,26 +304,37 @@ export function writeInstallManifestAtomic(
   ensurePrivateDirectory(paths.cliRoot);
   const temporaryPath = `${paths.manifestPath}.tmp-${process.pid}-${Date.now()}`;
   try {
-    fs.writeFileSync(temporaryPath, `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o600 });
+    fs.writeFileSync(temporaryPath, `${JSON.stringify(manifest, null, 2)}\n`, {
+      mode: 0o600,
+    });
     fs.renameSync(temporaryPath, paths.manifestPath);
   } finally {
     fs.rmSync(temporaryPath, { force: true });
   }
 }
 
-function assertPayloadPath(payloadPath: string, paths: InstallStorePaths): void {
+function assertPayloadPath(
+  payloadPath: string,
+  paths: InstallStorePaths,
+): void {
   const relative = path.relative(paths.installsRoot, path.resolve(payloadPath));
   if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
-    throw new Error(`Refusing to activate payload outside ${paths.installsRoot}.`);
+    throw new Error(
+      `Refusing to activate payload outside ${paths.installsRoot}.`,
+    );
   }
   const stat = fs.lstatSync(payloadPath);
   if (!stat.isDirectory() || stat.isSymbolicLink()) {
-    throw new Error(`Refusing to activate non-directory payload ${payloadPath}.`);
+    throw new Error(
+      `Refusing to activate non-directory payload ${payloadPath}.`,
+    );
   }
   const installsRealPath = fs.realpathSync(paths.installsRoot);
   const payloadRealPath = fs.realpathSync(payloadPath);
   if (!payloadRealPath.startsWith(`${installsRealPath}${path.sep}`)) {
-    throw new Error(`Refusing to activate payload that resolves outside ${paths.installsRoot}.`);
+    throw new Error(
+      `Refusing to activate payload that resolves outside ${paths.installsRoot}.`,
+    );
   }
 }
 
@@ -310,11 +388,18 @@ export function buildNextManifest(
       ]
     : [];
   const previous = candidates
-    .filter((candidate) => path.resolve(candidate.payloadPath) !== path.resolve(record.payloadPath))
+    .filter(
+      (candidate) =>
+        path.resolve(candidate.payloadPath) !==
+        path.resolve(record.payloadPath),
+    )
     .filter(
       (candidate, index, all) =>
-        all.findIndex((other) => path.resolve(other.payloadPath) === path.resolve(candidate.payloadPath)) ===
-        index,
+        all.findIndex(
+          (other) =>
+            path.resolve(other.payloadPath) ===
+            path.resolve(candidate.payloadPath),
+        ) === index,
     )
     .slice(0, 2);
 
@@ -326,7 +411,9 @@ export function pruneInstallPayloads(
   paths = resolveInstallStorePaths(),
 ): string[] {
   const retained = new Set(
-    [manifest, ...manifest.previous].map((record) => path.resolve(record.payloadPath)),
+    [manifest, ...manifest.previous].map((record) =>
+      path.resolve(record.payloadPath),
+    ),
   );
   const removed: string[] = [];
   for (const source of ["npm", "git"] as const) {
@@ -334,7 +421,9 @@ export function pruneInstallPayloads(
     if (!fs.existsSync(sourceRoot)) continue;
     const sourceStat = fs.lstatSync(sourceRoot);
     if (!sourceStat.isDirectory() || sourceStat.isSymbolicLink()) {
-      throw new Error(`Refusing to prune unsafe install-store path ${sourceRoot}.`);
+      throw new Error(
+        `Refusing to prune unsafe install-store path ${sourceRoot}.`,
+      );
     }
     for (const entry of fs.readdirSync(sourceRoot)) {
       if (entry.startsWith(".")) continue;
@@ -348,26 +437,41 @@ export function pruneInstallPayloads(
   return removed;
 }
 
-export function assertManagedShimWritable(paths = resolveInstallStorePaths()): void {
+export function assertManagedShimWritable(
+  paths = resolveInstallStorePaths(),
+): void {
   const homeDir = path.dirname(path.dirname(path.dirname(paths.shimPath)));
-  for (const directoryPath of [homeDir, path.join(homeDir, ".local"), path.dirname(paths.shimPath)]) {
+  for (const directoryPath of [
+    homeDir,
+    path.join(homeDir, ".local"),
+    path.dirname(paths.shimPath),
+  ]) {
     if (!fs.existsSync(directoryPath)) continue;
     const directoryStat = fs.lstatSync(directoryPath);
     if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) {
-      throw new Error(`Refusing to use unsafe shim directory ${directoryPath}.`);
+      throw new Error(
+        `Refusing to use unsafe shim directory ${directoryPath}.`,
+      );
     }
     assertOwnedByCurrentUser(directoryStat, directoryPath);
   }
   try {
     const stat = fs.lstatSync(paths.shimPath);
     if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw new Error(`Refusing to replace non-regular shim ${paths.shimPath}.`);
+      throw new Error(
+        `Refusing to replace non-regular shim ${paths.shimPath}.`,
+      );
     }
     assertOwnedByCurrentUser(stat, paths.shimPath);
-    if (stat.nlink > 1) throw new Error(`Refusing to replace multiply linked shim ${paths.shimPath}.`);
+    if (stat.nlink > 1)
+      throw new Error(
+        `Refusing to replace multiply linked shim ${paths.shimPath}.`,
+      );
     const existing = fs.readFileSync(paths.shimPath, "utf8");
     if (!isManagedShimContents(existing)) {
-      throw new Error(`Refusing to replace existing non-managed command ${paths.shimPath}.`);
+      throw new Error(
+        `Refusing to replace existing non-managed command ${paths.shimPath}.`,
+      );
     }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -388,7 +492,10 @@ function isManagedShimContents(contents: string): boolean {
     lines[0] === "#!/bin/sh" &&
     lines[1] === `# ${MANAGED_SHIM_MARKER}` &&
     lines[2] === "set -eu" &&
-    (!withRuntimePath || /^export PATH='(?:[^']|'"'"')+':"\$\{PATH:-\/usr\/local\/bin:\/usr\/bin:\/bin\}"$/.test(lines[3])) &&
+    (!withRuntimePath ||
+      /^export PATH='(?:[^']|'"'"')+':"\$\{PATH:-\/usr\/local\/bin:\/usr\/bin:\/bin\}"$/.test(
+        lines[3],
+      )) &&
     /^exec '(?:[^']|'"'"')+' '(?:[^']|'"'"')+' "\$@"$/.test(lines[execIndex]) &&
     lines[execIndex + 1] === ""
   );
@@ -402,7 +509,13 @@ export function writeManagedShim(paths = resolveInstallStorePaths()): void {
   fs.mkdirSync(localDir, { recursive: true, mode: 0o755 });
   fs.mkdirSync(path.dirname(paths.shimPath), { recursive: true, mode: 0o755 });
   assertManagedShimWritable(paths);
-  const entrypoint = path.join(paths.currentPath, "node_modules", "taskcore", "dist", "index.js");
+  const entrypoint = path.join(
+    paths.currentPath,
+    "node_modules",
+    "taskcore",
+    "dist",
+    "index.js",
+  );
   // ACP servers and package-manager shims use /usr/bin/env node. Pin their
   // runtime too, even when systemd/launchd supplies a different PATH.
   const contents = `#!/bin/sh\n# ${MANAGED_SHIM_MARKER}\nset -eu\nexport PATH=${shellQuote(path.dirname(process.execPath))}:"\${PATH:-/usr/local/bin:/usr/bin:/bin}"\nexec ${shellQuote(process.execPath)} ${shellQuote(entrypoint)} "\$@"\n`;
@@ -431,7 +544,9 @@ export function addManagedPathBlock(rcPath: string): boolean {
   try {
     const stat = fs.lstatSync(rcPath);
     if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw new Error(`Refusing to modify non-regular shell rc file ${rcPath}.`);
+      throw new Error(
+        `Refusing to modify non-regular shell rc file ${rcPath}.`,
+      );
     }
     assertOwnedByCurrentUser(stat, rcPath);
     mode = stat.mode & 0o777;
@@ -452,7 +567,9 @@ export function removeManagedPathBlock(rcPath: string): boolean {
   try {
     const stat = fs.lstatSync(rcPath);
     if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw new Error(`Refusing to modify non-regular shell rc file ${rcPath}.`);
+      throw new Error(
+        `Refusing to modify non-regular shell rc file ${rcPath}.`,
+      );
     }
     assertOwnedByCurrentUser(stat, rcPath);
     mode = stat.mode & 0o777;
@@ -463,7 +580,10 @@ export function removeManagedPathBlock(rcPath: string): boolean {
   }
   const escapedStart = PATH_BLOCK_START.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const escapedEnd = PATH_BLOCK_END.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const next = existing.replace(new RegExp(`(?:^|\\n)${escapedStart}\\n[\\s\\S]*?${escapedEnd}\\n?`), "\n");
+  const next = existing.replace(
+    new RegExp(`(?:^|\\n)${escapedStart}\\n[\\s\\S]*?${escapedEnd}\\n?`),
+    "\n",
+  );
   if (next === existing) return false;
   writeFileAtomic(rcPath, next.replace(/^\n/, ""), mode);
   return true;

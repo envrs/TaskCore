@@ -5,7 +5,10 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { isSupportedNodeVersion, MINIMUM_NODE_VERSION } from "@taskcore/shared/node-version";
+import {
+  isSupportedNodeVersion,
+  MINIMUM_NODE_VERSION,
+} from "@taskcore/shared/node-version";
 import {
   addManagedPathBlock,
   assertManagedShimWritable,
@@ -27,7 +30,13 @@ export const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
 const DEFAULT_GITHUB_REPO = "khulnasoft/taskcore";
 const EXACT_VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
-export type InstallOptions = { canary?: boolean; version?: string; ref?: string; repo?: string; yes?: boolean };
+export type InstallOptions = {
+  canary?: boolean;
+  version?: string;
+  ref?: string;
+  repo?: string;
+  yes?: boolean;
+};
 
 export type CommandRunner = (
   file: string,
@@ -45,17 +54,33 @@ export async function runCommandWithDiagnostics(
   try {
     return await execFileAsync(file, args, { ...options, encoding: "utf8" });
   } catch (error) {
-    const stderr = error && typeof error === "object" && "stderr" in error && typeof error.stderr === "string"
-      ? error.stderr.trim()
-      : "";
-    if (!stderr || (error instanceof Error && error.message.includes(stderr))) throw error;
-    throw new Error(`${error instanceof Error ? error.message : String(error)}\n${stderr}`, { cause: error });
+    const stderr =
+      error &&
+      typeof error === "object" &&
+      "stderr" in error &&
+      typeof error.stderr === "string"
+        ? error.stderr.trim()
+        : "";
+    if (!stderr || (error instanceof Error && error.message.includes(stderr)))
+      throw error;
+    throw new Error(
+      `${error instanceof Error ? error.message : String(error)}\n${stderr}`,
+      { cause: error },
+    );
   }
 }
 
-export function resolveGitInstallWorkspacePackages(checkoutPath: string): ReleasePackageEntry[] {
-  const manifestPath = path.join(checkoutPath, "scripts", "release-package-manifest.json");
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as ReleasePackageEntry[];
+export function resolveGitInstallWorkspacePackages(
+  checkoutPath: string,
+): ReleasePackageEntry[] {
+  const manifestPath = path.join(
+    checkoutPath,
+    "scripts",
+    "release-package-manifest.json",
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(manifestPath, "utf8"),
+  ) as ReleasePackageEntry[];
   const packageByName = new Map(manifest.map((entry) => [entry.name, entry]));
   const visiting = new Set<string>();
   const visited = new Set<string>();
@@ -63,12 +88,27 @@ export function resolveGitInstallWorkspacePackages(checkoutPath: string): Releas
 
   const visit = (packageName: string): void => {
     if (visited.has(packageName)) return;
-    if (visiting.has(packageName)) throw new Error(`Circular workspace dependency while staging ${packageName}.`);
+    if (visiting.has(packageName))
+      throw new Error(
+        `Circular workspace dependency while staging ${packageName}.`,
+      );
     const entry = packageByName.get(packageName);
-    if (!entry) throw new Error(`Git install cannot stage workspace dependency ${packageName}; it is missing from scripts/release-package-manifest.json.`);
+    if (!entry)
+      throw new Error(
+        `Git install cannot stage workspace dependency ${packageName}; it is missing from scripts/release-package-manifest.json.`,
+      );
     visiting.add(packageName);
-    const packageJson = JSON.parse(fs.readFileSync(path.join(checkoutPath, entry.dir, "package.json"), "utf8")) as Record<string, unknown>;
-    for (const section of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
+    const packageJson = JSON.parse(
+      fs.readFileSync(
+        path.join(checkoutPath, entry.dir, "package.json"),
+        "utf8",
+      ),
+    ) as Record<string, unknown>;
+    for (const section of [
+      "dependencies",
+      "optionalDependencies",
+      "peerDependencies",
+    ] as const) {
       const dependencies = packageJson[section];
       if (!dependencies || typeof dependencies !== "object") continue;
       for (const dependencyName of Object.keys(dependencies)) {
@@ -86,7 +126,9 @@ export function resolveGitInstallWorkspacePackages(checkoutPath: string): Releas
 
 export function assertSupportedNodeVersion(): void {
   if (!isSupportedNodeVersion(process.versions.node)) {
-    throw new Error(`Installing or updating Taskcore requires Node.js ${MINIMUM_NODE_VERSION} or newer (found ${process.version} at ${process.execPath}). Put a supported Node bin directory first on PATH and run 'npx taskcore@latest install --yes' to re-pin an existing managed install.`);
+    throw new Error(
+      `Installing or updating Taskcore requires Node.js ${MINIMUM_NODE_VERSION} or newer (found ${process.version} at ${process.execPath}). Put a supported Node bin directory first on PATH and run 'npx taskcore@latest install --yes' to re-pin an existing managed install.`,
+    );
   }
 }
 
@@ -94,15 +136,20 @@ export function resolveNpmInstallRequest(options: InstallOptions): {
   spec: string;
   channel: InstallChannel;
 } {
-  if (options.canary && options.version) throw new Error("Choose either --canary or --version, not both.");
+  if (options.canary && options.version)
+    throw new Error("Choose either --canary or --version, not both.");
   if (options.version) {
     const version = options.version.trim();
     if (!EXACT_VERSION_PATTERN.test(version)) {
-      throw new Error(`--version requires an exact published version, received '${options.version}'.`);
+      throw new Error(
+        `--version requires an exact published version, received '${options.version}'.`,
+      );
     }
     return { spec: version, channel: "pinned" };
   }
-  return options.canary ? { spec: "canary", channel: "canary" } : { spec: "latest", channel: "latest" };
+  return options.canary
+    ? { spec: "canary", channel: "canary" }
+    : { spec: "latest", channel: "latest" };
 }
 
 function parseResolvedVersion(stdout: string): string {
@@ -117,23 +164,39 @@ function parseResolvedVersion(stdout: string): string {
   throw new Error(`npm returned an unexpected version response: ${trimmed}`);
 }
 
-export async function resolvePublishedVersion(spec: string, runCommand: CommandRunner): Promise<string> {
+export async function resolvePublishedVersion(
+  spec: string,
+  runCommand: CommandRunner,
+): Promise<string> {
   const result = await runCommand(
     "npm",
-    ["view", `taskcore@${spec}`, "version", "--json", `--registry=${PUBLIC_NPM_REGISTRY}`],
+    [
+      "view",
+      `taskcore@${spec}`,
+      "version",
+      "--json",
+      `--registry=${PUBLIC_NPM_REGISTRY}`,
+    ],
     { maxBuffer: 1024 * 1024 },
   );
   return parseResolvedVersion(result.stdout);
 }
 
-export function resolveGitInstallRequest(options: InstallOptions): { repo: string; ref: string; pinned: boolean } | null {
+export function resolveGitInstallRequest(
+  options: InstallOptions,
+): { repo: string; ref: string; pinned: boolean } | null {
   if (!options.ref && !options.repo) return null;
   if (!options.ref) throw new Error("--repo requires --ref.");
-  if (options.canary || options.version) throw new Error("--ref cannot be combined with --canary or --version.");
+  if (options.canary || options.version)
+    throw new Error("--ref cannot be combined with --canary or --version.");
   const repo = (options.repo ?? DEFAULT_GITHUB_REPO).trim();
   const ref = options.ref.trim();
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) throw new Error(`--repo must be an owner/name GitHub repository, received '${repo}'.`);
-  if (!ref || ref.startsWith("-") || /[\0\r\n]/.test(ref)) throw new Error(`Invalid GitHub ref '${options.ref}'.`);
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo))
+    throw new Error(
+      `--repo must be an owner/name GitHub repository, received '${repo}'.`,
+    );
+  if (!ref || ref.startsWith("-") || /[\0\r\n]/.test(ref))
+    throw new Error(`Invalid GitHub ref '${options.ref}'.`);
   return { repo, ref, pinned: /^[0-9a-f]{7,40}$/i.test(ref) };
 }
 
@@ -150,18 +213,49 @@ async function runGitHubCurl(
   const configDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-gh-"));
   const configFile = path.join(configDir, "headers");
   try {
-    fs.writeFileSync(configFile, `header = "Authorization: Bearer ${token}"\n`, { mode: 0o600 });
+    fs.writeFileSync(
+      configFile,
+      `header = "Authorization: Bearer ${token}"\n`,
+      { mode: 0o600 },
+    );
     return await runCommand("curl", ["--config", configFile, ...args], options);
   } finally {
     fs.rmSync(configDir, { recursive: true, force: true });
   }
 }
 
-export async function resolveGitHubRef(repo: string, ref: string, runCommand: CommandRunner): Promise<string> {
-  const result = await runGitHubCurl(["--fail", "--silent", "--show-error", "--location", "--header", "Accept: application/vnd.github+json", "--header", "User-Agent: taskcore-install", `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`], runCommand, { maxBuffer: 4 * 1024 * 1024 });
+export async function resolveGitHubRef(
+  repo: string,
+  ref: string,
+  runCommand: CommandRunner,
+): Promise<string> {
+  const result = await runGitHubCurl(
+    [
+      "--fail",
+      "--silent",
+      "--show-error",
+      "--location",
+      "--header",
+      "Accept: application/vnd.github+json",
+      "--header",
+      "User-Agent: taskcore-install",
+      `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`,
+    ],
+    runCommand,
+    { maxBuffer: 4 * 1024 * 1024 },
+  );
   let sha: unknown;
-  try { sha = (JSON.parse(result.stdout) as { sha?: unknown }).sha; } catch { throw new Error(`GitHub returned an invalid response while resolving ${repo}@${ref}.`); }
-  if (typeof sha !== "string" || !/^[0-9a-f]{40}$/i.test(sha)) throw new Error(`GitHub did not return a full commit SHA for ${repo}@${ref}.`);
+  try {
+    sha = (JSON.parse(result.stdout) as { sha?: unknown }).sha;
+  } catch {
+    throw new Error(
+      `GitHub returned an invalid response while resolving ${repo}@${ref}.`,
+    );
+  }
+  if (typeof sha !== "string" || !/^[0-9a-f]{40}$/i.test(sha))
+    throw new Error(
+      `GitHub did not return a full commit SHA for ${repo}@${ref}.`,
+    );
   return sha.toLowerCase();
 }
 
@@ -169,13 +263,24 @@ function payloadEntrypoint(payloadPath: string): string {
   return path.join(payloadPath, "node_modules", "taskcore", "dist", "index.js");
 }
 
-export async function smokePayload(payloadPath: string, expectedVersion: string, runCommand: CommandRunner): Promise<void> {
+export async function smokePayload(
+  payloadPath: string,
+  expectedVersion: string,
+  runCommand: CommandRunner,
+): Promise<void> {
   const entrypoint = payloadEntrypoint(payloadPath);
-  if (!fs.existsSync(entrypoint)) throw new Error(`Installed package is missing its CLI entrypoint: ${entrypoint}`);
-  const result = await runCommand(process.execPath, [entrypoint, "--version"], { maxBuffer: 1024 * 1024 });
+  if (!fs.existsSync(entrypoint))
+    throw new Error(
+      `Installed package is missing its CLI entrypoint: ${entrypoint}`,
+    );
+  const result = await runCommand(process.execPath, [entrypoint, "--version"], {
+    maxBuffer: 1024 * 1024,
+  });
   const reportedVersion = result.stdout.trim().split(/\s+/)[0];
   if (reportedVersion !== expectedVersion) {
-    throw new Error(`Installed CLI smoke check reported ${reportedVersion || "no version"}; expected ${expectedVersion}.`);
+    throw new Error(
+      `Installed CLI smoke check reported ${reportedVersion || "no version"}; expected ${expectedVersion}.`,
+    );
   }
 }
 
@@ -193,13 +298,21 @@ export async function installNpmPayload(
   fs.mkdirSync(sourceRoot, { recursive: true, mode: 0o700 });
   const sourceStat = fs.lstatSync(sourceRoot);
   if (!sourceStat.isDirectory() || sourceStat.isSymbolicLink()) {
-    throw new Error(`Refusing to install into unsafe payload root ${sourceRoot}.`);
+    throw new Error(
+      `Refusing to install into unsafe payload root ${sourceRoot}.`,
+    );
   }
   fs.chmodSync(paths.cliRoot, 0o700);
   fs.chmodSync(paths.installsRoot, 0o700);
   fs.chmodSync(sourceRoot, 0o700);
-  const stagingPath = path.join(sourceRoot, `.${version}.tmp-${process.pid}-${Date.now()}`);
-  const npmUserConfigPath = path.join(sourceRoot, `.npmrc-${process.pid}-${Date.now()}`);
+  const stagingPath = path.join(
+    sourceRoot,
+    `.${version}.tmp-${process.pid}-${Date.now()}`,
+  );
+  const npmUserConfigPath = path.join(
+    sourceRoot,
+    `.npmrc-${process.pid}-${Date.now()}`,
+  );
   fs.rmSync(stagingPath, { recursive: true, force: true });
   try {
     fs.writeFileSync(
@@ -242,11 +355,21 @@ function gitBuildEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
   return env;
 }
 
-export async function installGitPayload(repo: string, sha: string, runCommand: CommandRunner, paths = resolveInstallStorePaths()): Promise<{ payloadPath: string; reused: boolean; version: string }> {
+export async function installGitPayload(
+  repo: string,
+  sha: string,
+  runCommand: CommandRunner,
+  paths = resolveInstallStorePaths(),
+): Promise<{ payloadPath: string; reused: boolean; version: string }> {
   const identifier = sha.slice(0, 12);
   const payloadPath = payloadPathFor(paths, "git", identifier);
   if (fs.existsSync(payloadPath)) {
-    const metadata = JSON.parse(fs.readFileSync(path.join(payloadPath, "node_modules", "taskcore", "package.json"), "utf8")) as { version: string };
+    const metadata = JSON.parse(
+      fs.readFileSync(
+        path.join(payloadPath, "node_modules", "taskcore", "package.json"),
+        "utf8",
+      ),
+    ) as { version: string };
     await smokePayload(payloadPath, metadata.version, runCommand);
     return { payloadPath, reused: true, version: metadata.version };
   }
@@ -254,12 +377,17 @@ export async function installGitPayload(repo: string, sha: string, runCommand: C
   fs.mkdirSync(sourceRoot, { recursive: true, mode: 0o700 });
   const sourceStat = fs.lstatSync(sourceRoot);
   if (!sourceStat.isDirectory() || sourceStat.isSymbolicLink()) {
-    throw new Error(`Refusing to install into unsafe payload root ${sourceRoot}.`);
+    throw new Error(
+      `Refusing to install into unsafe payload root ${sourceRoot}.`,
+    );
   }
   fs.chmodSync(paths.cliRoot, 0o700);
   fs.chmodSync(paths.installsRoot, 0o700);
   fs.chmodSync(sourceRoot, 0o700);
-  const stagingRoot = path.join(sourceRoot, `.${identifier}.tmp-${process.pid}-${Date.now()}`);
+  const stagingRoot = path.join(
+    sourceRoot,
+    `.${identifier}.tmp-${process.pid}-${Date.now()}`,
+  );
   const checkoutPath = path.join(stagingRoot, "source");
   const archivePath = path.join(stagingRoot, "source.tar.gz");
   const stagedPayload = path.join(stagingRoot, "payload");
@@ -270,45 +398,152 @@ export async function installGitPayload(repo: string, sha: string, runCommand: C
   const pnpmShimDir = path.join(stagingRoot, "pnpm-bin");
   fs.mkdirSync(pnpmShimDir, { recursive: true, mode: 0o700 });
   const buildEnv = (extra: NodeJS.ProcessEnv = {}) =>
-    gitBuildEnv({ PATH: [pnpmShimDir, process.env.PATH].filter(Boolean).join(path.delimiter), ...extra });
+    gitBuildEnv({
+      PATH: [pnpmShimDir, process.env.PATH]
+        .filter(Boolean)
+        .join(path.delimiter),
+      ...extra,
+    });
   try {
-    await runGitHubCurl(["--fail", "--silent", "--show-error", "--location", "--output", archivePath, `https://codeload.github.com/${repo}/tar.gz/${sha}`], runCommand, { maxBuffer: 4 * 1024 * 1024 });
-    await runCommand("tar", ["-xzf", archivePath, "--strip-components=1", "-C", checkoutPath], { maxBuffer: 4 * 1024 * 1024 });
-    await runCommand("corepack", ["enable", "pnpm", "--install-directory", pnpmShimDir], { cwd: checkoutPath, env: buildEnv(), maxBuffer: 4 * 1024 * 1024 });
-    await runCommand("corepack", ["pnpm", "install", "--frozen-lockfile"], { cwd: checkoutPath, env: buildEnv(), maxBuffer: 32 * 1024 * 1024 });
-    await runCommand("bash", ["scripts/build-npm.sh", "--skip-checks", "--skip-typecheck"], { cwd: checkoutPath, env: buildEnv(), maxBuffer: 32 * 1024 * 1024 });
-    await runCommand("corepack", ["pnpm", "-r", "--filter", "@taskcore/server...", "--if-present", "run", "build"], { cwd: checkoutPath, env: buildEnv(), maxBuffer: 32 * 1024 * 1024 });
-    const metadata = JSON.parse(fs.readFileSync(path.join(checkoutPath, "cli", "package.json"), "utf8")) as { version: string };
+    await runGitHubCurl(
+      [
+        "--fail",
+        "--silent",
+        "--show-error",
+        "--location",
+        "--output",
+        archivePath,
+        `https://codeload.github.com/${repo}/tar.gz/${sha}`,
+      ],
+      runCommand,
+      { maxBuffer: 4 * 1024 * 1024 },
+    );
+    await runCommand(
+      "tar",
+      ["-xzf", archivePath, "--strip-components=1", "-C", checkoutPath],
+      { maxBuffer: 4 * 1024 * 1024 },
+    );
+    await runCommand(
+      "corepack",
+      ["enable", "pnpm", "--install-directory", pnpmShimDir],
+      { cwd: checkoutPath, env: buildEnv(), maxBuffer: 4 * 1024 * 1024 },
+    );
+    await runCommand("corepack", ["pnpm", "install", "--frozen-lockfile"], {
+      cwd: checkoutPath,
+      env: buildEnv(),
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    await runCommand(
+      "bash",
+      ["scripts/build-npm.sh", "--skip-checks", "--skip-typecheck"],
+      { cwd: checkoutPath, env: buildEnv(), maxBuffer: 32 * 1024 * 1024 },
+    );
+    await runCommand(
+      "corepack",
+      [
+        "pnpm",
+        "-r",
+        "--filter",
+        "@taskcore/server...",
+        "--if-present",
+        "run",
+        "build",
+      ],
+      { cwd: checkoutPath, env: buildEnv(), maxBuffer: 32 * 1024 * 1024 },
+    );
+    const metadata = JSON.parse(
+      fs.readFileSync(path.join(checkoutPath, "cli", "package.json"), "utf8"),
+    ) as { version: string };
     const workspacePackages = resolveGitInstallWorkspacePackages(checkoutPath);
     for (const [index, workspacePackage] of workspacePackages.entries()) {
       const packageDir = path.join(checkoutPath, workspacePackage.dir);
-      const packageJson = JSON.parse(fs.readFileSync(path.join(packageDir, "package.json"), "utf8")) as { bundleDependencies?: string[]; bundledDependencies?: string[] };
-      const bundledDependencies = packageJson.bundleDependencies ?? packageJson.bundledDependencies ?? [];
+      const packageJson = JSON.parse(
+        fs.readFileSync(path.join(packageDir, "package.json"), "utf8"),
+      ) as { bundleDependencies?: string[]; bundledDependencies?: string[] };
+      const bundledDependencies =
+        packageJson.bundleDependencies ?? packageJson.bundledDependencies ?? [];
       if (bundledDependencies.length > 0) {
-        const stagedPackage = path.join(stagingRoot, `workspace-package-${index}`);
-        await runCommand(process.execPath, [path.join(checkoutPath, "scripts", "prepare-bundled-package.mjs"), packageDir, stagedPackage], { cwd: checkoutPath, env: buildEnv(), maxBuffer: 32 * 1024 * 1024 });
-        await runCommand("npm", ["pack", stagedPackage, "--pack-destination", stagingRoot], { cwd: checkoutPath, env: buildEnv(), maxBuffer: 16 * 1024 * 1024 });
+        const stagedPackage = path.join(
+          stagingRoot,
+          `workspace-package-${index}`,
+        );
+        await runCommand(
+          process.execPath,
+          [
+            path.join(checkoutPath, "scripts", "prepare-bundled-package.mjs"),
+            packageDir,
+            stagedPackage,
+          ],
+          { cwd: checkoutPath, env: buildEnv(), maxBuffer: 32 * 1024 * 1024 },
+        );
+        await runCommand(
+          "npm",
+          ["pack", stagedPackage, "--pack-destination", stagingRoot],
+          { cwd: checkoutPath, env: buildEnv(), maxBuffer: 16 * 1024 * 1024 },
+        );
       } else {
-        await runCommand("corepack", ["pnpm", "--dir", workspacePackage.dir, "pack", "--pack-destination", stagingRoot], { cwd: checkoutPath, env: buildEnv({ TASKCORE_RELEASE_REUSE_UI_DIST: "1" }), maxBuffer: 32 * 1024 * 1024 });
+        await runCommand(
+          "corepack",
+          [
+            "pnpm",
+            "--dir",
+            workspacePackage.dir,
+            "pack",
+            "--pack-destination",
+            stagingRoot,
+          ],
+          {
+            cwd: checkoutPath,
+            env: buildEnv({ TASKCORE_RELEASE_REUSE_UI_DIST: "1" }),
+            maxBuffer: 32 * 1024 * 1024,
+          },
+        );
       }
     }
-    await runCommand("npm", ["pack", "--pack-destination", stagingRoot], { cwd: path.join(checkoutPath, "cli"), env: buildEnv(), maxBuffer: 16 * 1024 * 1024 });
-    const tarballs = fs.readdirSync(stagingRoot).filter((entry) => entry.endsWith(".tgz"));
-    const cliTarball = tarballs.find((entry) => entry === `taskcore-${metadata.version}.tgz`);
+    await runCommand("npm", ["pack", "--pack-destination", stagingRoot], {
+      cwd: path.join(checkoutPath, "cli"),
+      env: buildEnv(),
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    const tarballs = fs
+      .readdirSync(stagingRoot)
+      .filter((entry) => entry.endsWith(".tgz"));
+    const cliTarball = tarballs.find(
+      (entry) => entry === `taskcore-${metadata.version}.tgz`,
+    );
     const workspaceTarballs = tarballs.filter((entry) => entry !== cliTarball);
     if (!cliTarball || workspaceTarballs.length !== workspacePackages.length) {
-      throw new Error(`Git install packaging produced ${workspaceTarballs.length} workspace tarballs; expected ${workspacePackages.length}.`);
+      throw new Error(
+        `Git install packaging produced ${workspaceTarballs.length} workspace tarballs; expected ${workspacePackages.length}.`,
+      );
     }
-    await runCommand("npm", ["install", "--prefix", stagedPayload, path.join(stagingRoot, cliTarball), ...workspaceTarballs.map((entry) => path.join(stagingRoot, entry)), "--no-audit", "--no-fund"], { cwd: stagingRoot, maxBuffer: 32 * 1024 * 1024 });
+    await runCommand(
+      "npm",
+      [
+        "install",
+        "--prefix",
+        stagedPayload,
+        path.join(stagingRoot, cliTarball),
+        ...workspaceTarballs.map((entry) => path.join(stagingRoot, entry)),
+        "--no-audit",
+        "--no-fund",
+      ],
+      { cwd: stagingRoot, maxBuffer: 32 * 1024 * 1024 },
+    );
     await smokePayload(stagedPayload, metadata.version, runCommand);
     fs.renameSync(stagedPayload, payloadPath);
     return { payloadPath, reused: false, version: metadata.version };
-  } finally { fs.rmSync(stagingRoot, { recursive: true, force: true }); }
+  } finally {
+    fs.rmSync(stagingRoot, { recursive: true, force: true });
+  }
 }
 
 function pathContains(directory: string): boolean {
   const normalized = path.resolve(directory);
-  return (process.env.PATH ?? "").split(path.delimiter).filter(Boolean).some((entry) => path.resolve(entry) === normalized);
+  return (process.env.PATH ?? "")
+    .split(path.delimiter)
+    .filter(Boolean)
+    .some((entry) => path.resolve(entry) === normalized);
 }
 
 function shellRcPath(): string | null {
@@ -327,31 +562,53 @@ async function ensureShimOnPath(options: InstallOptions): Promise<void> {
   const manualInstruction = `export PATH="$HOME/.local/bin:$PATH"`;
   const rcPath = shellRcPath();
   if (!process.stdin.isTTY || !process.stdout.isTTY || !rcPath) {
-    console.log(pc.yellow(`Add Taskcore to PATH for this shell:\n  ${manualInstruction}`));
+    console.log(
+      pc.yellow(`Add Taskcore to PATH for this shell:\n  ${manualInstruction}`),
+    );
     return;
   }
-  const confirmed = options.yes === true ? true : await p.confirm({ message: `Add ~/.local/bin to PATH in ${rcPath}?`, initialValue: true });
+  const confirmed =
+    options.yes === true
+      ? true
+      : await p.confirm({
+          message: `Add ~/.local/bin to PATH in ${rcPath}?`,
+          initialValue: true,
+        });
   if (p.isCancel(confirmed) || !confirmed) {
-    console.log(pc.yellow(`PATH was not changed. Run:\n  ${manualInstruction}`));
+    console.log(
+      pc.yellow(`PATH was not changed. Run:\n  ${manualInstruction}`),
+    );
     return;
   }
   const changed = addManagedPathBlock(rcPath);
-  console.log(changed ? pc.green(`Updated ${rcPath}.`) : pc.dim(`${rcPath} already contains the PATH block.`));
+  console.log(
+    changed
+      ? pc.green(`Updated ${rcPath}.`)
+      : pc.dim(`${rcPath} already contains the PATH block.`),
+  );
 }
 
-async function confirmGitInstall(options: InstallOptions, repo: string, ref: string): Promise<void> {
+async function confirmGitInstall(
+  options: InstallOptions,
+  repo: string,
+  ref: string,
+): Promise<void> {
   const warning = `Installing ${repo}@${ref} executes dependency and build scripts from that repository.`;
   console.log(pc.yellow(`Warning: ${warning}`));
   if (options.yes === true) return;
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new Error(`${warning} Re-run with --yes to consent in non-interactive environments.`);
+    throw new Error(
+      `${warning} Re-run with --yes to consent in non-interactive environments.`,
+    );
   }
   const confirmed = await p.confirm({
     message: `${warning} Continue?`,
     initialValue: false,
   });
   if (p.isCancel(confirmed) || !confirmed) {
-    throw new Error("Git-ref install cancelled before downloading or executing repository code.");
+    throw new Error(
+      "Git-ref install cancelled before downloading or executing repository code.",
+    );
   }
 }
 
@@ -364,25 +621,60 @@ export async function installCommand(
   const gitRequest = resolveGitInstallRequest(options);
   if (gitRequest) {
     await confirmGitInstall(options, gitRequest.repo, gitRequest.ref);
-    const sha = await resolveGitHubRef(gitRequest.repo, gitRequest.ref, runCommand);
+    const sha = await resolveGitHubRef(
+      gitRequest.repo,
+      gitRequest.ref,
+      runCommand,
+    );
     const paths = resolveInstallStorePaths();
     const installed = await withInstallStoreLock(async () => {
       assertManagedShimWritable(paths);
       const currentManifest = readInstallManifest(paths);
-      const payload = await installGitPayload(gitRequest.repo, sha, runCommand, paths);
-      const record: InstallRecord = { source: "git", version: payload.version, channel: "pinned", repo: gitRequest.repo, ref: gitRequest.ref, sha, payloadPath: payload.payloadPath, installedAt: (dependencies.now?.() ?? new Date()).toISOString() };
+      const payload = await installGitPayload(
+        gitRequest.repo,
+        sha,
+        runCommand,
+        paths,
+      );
+      const record: InstallRecord = {
+        source: "git",
+        version: payload.version,
+        channel: "pinned",
+        repo: gitRequest.repo,
+        ref: gitRequest.ref,
+        sha,
+        payloadPath: payload.payloadPath,
+        installedAt: (dependencies.now?.() ?? new Date()).toISOString(),
+      };
       const nextManifest = buildNextManifest(record, currentManifest);
-      const oldTarget = fs.existsSync(paths.currentPath) ? fs.readlinkSync(paths.currentPath) : null;
+      const oldTarget = fs.existsSync(paths.currentPath)
+        ? fs.readlinkSync(paths.currentPath)
+        : null;
       flipCurrentAtomic(payload.payloadPath, paths);
-      try { writeInstallManifestAtomic(nextManifest, paths); } catch (error) { if (oldTarget) flipCurrentAtomic(path.resolve(paths.cliRoot, oldTarget), paths); else fs.rmSync(paths.currentPath, { force: true }); throw error; }
-      writeManagedShim(paths); pruneInstallPayloads(nextManifest, paths); return payload;
+      try {
+        writeInstallManifestAtomic(nextManifest, paths);
+      } catch (error) {
+        if (oldTarget)
+          flipCurrentAtomic(path.resolve(paths.cliRoot, oldTarget), paths);
+        else fs.rmSync(paths.currentPath, { force: true });
+        throw error;
+      }
+      writeManagedShim(paths);
+      pruneInstallPayloads(nextManifest, paths);
+      return payload;
     }, paths);
     await ensureShimOnPath(options);
-    console.log(pc.green(`${installed.reused ? "Activated cached" : "Installed"} taskcore git payload ${sha.slice(0, 12)}.`));
+    console.log(
+      pc.green(
+        `${installed.reused ? "Activated cached" : "Installed"} taskcore git payload ${sha.slice(0, 12)}.`,
+      ),
+    );
     return;
   }
   const request = resolveNpmInstallRequest(options);
-  console.log(`Resolving taskcore@${request.spec} from ${PUBLIC_NPM_REGISTRY}...`);
+  console.log(
+    `Resolving taskcore@${request.spec} from ${PUBLIC_NPM_REGISTRY}...`,
+  );
   const version = await resolvePublishedVersion(request.spec, runCommand);
   console.log(`Installing taskcore@${version}...`);
 
@@ -399,12 +691,15 @@ export async function installCommand(
       installedAt: (dependencies.now?.() ?? new Date()).toISOString(),
     };
     const nextManifest = buildNextManifest(record, currentManifest);
-    const oldTarget = fs.existsSync(paths.currentPath) ? fs.readlinkSync(paths.currentPath) : null;
+    const oldTarget = fs.existsSync(paths.currentPath)
+      ? fs.readlinkSync(paths.currentPath)
+      : null;
     flipCurrentAtomic(payload.payloadPath, paths);
     try {
       writeInstallManifestAtomic(nextManifest, paths);
     } catch (error) {
-      if (oldTarget) flipCurrentAtomic(path.resolve(paths.cliRoot, oldTarget), paths);
+      if (oldTarget)
+        flipCurrentAtomic(path.resolve(paths.cliRoot, oldTarget), paths);
       else fs.rmSync(paths.currentPath, { force: true });
       throw error;
     }
@@ -414,7 +709,13 @@ export async function installCommand(
   }, paths);
   await ensureShimOnPath(options);
 
-  console.log(pc.green(`${installed.reused ? "Activated cached" : "Installed"} taskcore ${version} (${request.channel}).`));
+  console.log(
+    pc.green(
+      `${installed.reused ? "Activated cached" : "Installed"} taskcore ${version} (${request.channel}).`,
+    ),
+  );
   console.log(pc.dim(`Payload: ${installed.payloadPath}`));
-  console.log(`Run ${pc.cyan("taskcore --version")} to verify the managed install.`);
+  console.log(
+    `Run ${pc.cyan("taskcore --version")} to verify the managed install.`,
+  );
 }

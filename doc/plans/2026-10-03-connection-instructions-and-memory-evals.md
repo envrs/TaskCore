@@ -33,13 +33,13 @@ The five experimental catalog entries are ordinary remote MCP connections behind
 `enableMemoryConnectors`. `doc/connections/memory-tool-inventory.json` records
 authenticated discovery on **2026-09-24**, explicitly not execution of every tool.
 
-| Provider | Captured tools | Smallest useful path in that snapshot |
-| --- | ---: | --- |
-| Mem0 | 11 | `add_memory` → `get_event_status` if asynchronous → `search_memories` / `get_memory` |
-| Honcho | 40 | Resolve workspace/peer/session → `add_messages_to_session` → `search` or `get_session_messages` |
-| Supermemory | 16 | `add_memory` → `search_memory`, scoped to the approved space/tag |
-| Zep | 12 | `add_memory` / `add_memory_to_graph` → `search_graph` |
-| Cognee | 3 | `remember` → `recall`; `forget` for supported cleanup |
+| Provider    | Captured tools | Smallest useful path in that snapshot                                                           |
+| ----------- | -------------: | ----------------------------------------------------------------------------------------------- |
+| Mem0        |             11 | `add_memory` → `get_event_status` if asynchronous → `search_memories` / `get_memory`            |
+| Honcho      |             40 | Resolve workspace/peer/session → `add_messages_to_session` → `search` or `get_session_messages` |
+| Supermemory |             16 | `add_memory` → `search_memory`, scoped to the approved space/tag                                |
+| Zep         |             12 | `add_memory` / `add_memory_to_graph` → `search_graph`                                           |
+| Cognee      |              3 | `remember` → `recall`; `forget` for supported cleanup                                           |
 
 These are observed names, not a cross-provider API or a claim that every
 operation works. Capture fresh schemas before writing live fixtures. In particular,
@@ -214,14 +214,14 @@ Assert tool calls, arguments, returned records, and a random fact in the answer.
 Start with Honcho and Mem0. Each has a different memory shape, and both are already
 in the catalog. Expand to the other three once those fixtures are useful.
 
-| Case | Setup / task | Pass evidence |
-| --- | --- | --- |
-| Discover (no model) | Authenticate disposable test connection and list tools through the actual run gateway | Required read/write tools visible; record schema hashes and policies |
-| Save → fresh recall | A: “Remember: release codename is `<random nonce>`.” B: fresh task/session, same memory subject: “What is the release codename?” | Confirmed write receipt; B performs retrieval before answering and includes the nonce from the returned record |
-| Implicit recall | Seed a synthetic formatting preference, then ask “Draft my weekly update” without mentioning memory | Guidance-on run retrieves and follows the seeded preference; record guidance-off control separately |
-| Skip irrelevant work | “What is 19 × 7?” with memory available | Correct answer, no memory calls or unnecessary writes |
-| Failed write / denied access | Return write failure; separately deny the grant | No “saved” claim; useful task continues; no fallback to another user's/company's memory |
-| Updated / disabled guidance (no model) | Change text, resume; turn off; unassign; revoke | Correct revision supplied once or absent as applicable; no agent file changes |
+| Case                                   | Setup / task                                                                                                                     | Pass evidence                                                                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Discover (no model)                    | Authenticate disposable test connection and list tools through the actual run gateway                                            | Required read/write tools visible; record schema hashes and policies                                           |
+| Save → fresh recall                    | A: “Remember: release codename is `<random nonce>`.” B: fresh task/session, same memory subject: “What is the release codename?” | Confirmed write receipt; B performs retrieval before answering and includes the nonce from the returned record |
+| Implicit recall                        | Seed a synthetic formatting preference, then ask “Draft my weekly update” without mentioning memory                              | Guidance-on run retrieves and follows the seeded preference; record guidance-off control separately            |
+| Skip irrelevant work                   | “What is 19 × 7?” with memory available                                                                                          | Correct answer, no memory calls or unnecessary writes                                                          |
+| Failed write / denied access           | Return write failure; separately deny the grant                                                                                  | No “saved” claim; useful task continues; no fallback to another user's/company's memory                        |
+| Updated / disabled guidance (no model) | Change text, resume; turn off; unassign; revoke                                                                                  | Correct revision supplied once or absent as applicable; no agent file changes                                  |
 
 The fresh-recall reader receives neither the writer transcript nor its answer,
 nonce, runtime session, scratch files, or task summary. Disable other memory

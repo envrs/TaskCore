@@ -45,7 +45,9 @@ function envDisablesBrowser(value = process.env.TASKCORE_NO_BROWSER): boolean {
   return normalized === "1" || normalized === "true" || normalized === "yes";
 }
 
-async function waitUntilDashboardReady(timeoutMs = 60_000): Promise<TaskcoreRuntimeInfo | null> {
+async function waitUntilDashboardReady(
+  timeoutMs = 60_000,
+): Promise<TaskcoreRuntimeInfo | null> {
   const instanceId = resolveTaskcoreInstanceId();
   const detection = await detectServiceManager({ instanceId });
   if (!detection.supported) return null;
@@ -56,10 +58,13 @@ async function waitUntilDashboardReady(timeoutMs = 60_000): Promise<TaskcoreRunt
       const status = await detection.manager.status().catch(() => null);
       if (status?.active && status.pid === info.pid) {
         try {
-          const response = await fetch(buildLocalHealthUrl(info.host, info.port), {
-            signal: AbortSignal.timeout(2_000),
-          });
-          const body = await response.json() as { status?: unknown };
+          const response = await fetch(
+            buildLocalHealthUrl(info.host, info.port),
+            {
+              signal: AbortSignal.timeout(2_000),
+            },
+          );
+          const body = (await response.json()) as { status?: unknown };
           if (response.ok && body.status === "ok") return info;
         } catch {}
       }
@@ -70,7 +75,8 @@ async function waitUntilDashboardReady(timeoutMs = 60_000): Promise<TaskcoreRunt
 }
 
 const defaultDashboardDependencies: OnboardServiceDashboardDependencies = {
-  isInteractive: () => process.stdin.isTTY === true && process.stdout.isTTY === true,
+  isInteractive: () =>
+    process.stdin.isTTY === true && process.stdout.isTTY === true,
   waitUntilReady: waitUntilDashboardReady,
   openDashboard: openUrl,
   info: (message) => p.log.info(message),
@@ -82,8 +88,12 @@ export function resolveOnboardServiceDashboardUrl(
   config: OnboardServiceDashboardConfig,
   runtime?: Pick<TaskcoreRuntimeInfo, "dashboardUrl"> | null,
 ): string {
-  if (runtime?.dashboardUrl.trim()) return runtime.dashboardUrl.trim().replace(/\/+$/, "");
-  if (config.auth.baseUrlMode === "explicit" && config.auth.publicBaseUrl?.trim()) {
+  if (runtime?.dashboardUrl.trim())
+    return runtime.dashboardUrl.trim().replace(/\/+$/, "");
+  if (
+    config.auth.baseUrlMode === "explicit" &&
+    config.auth.publicBaseUrl?.trim()
+  ) {
     return config.auth.publicBaseUrl.trim().replace(/\/+$/, "");
   }
   return buildLocalAppUrl(config.server.host, config.server.port);
@@ -111,7 +121,9 @@ export async function handoffToOnboardedService(
   if (await deps.openDashboard(dashboardUrl)) {
     deps.success("Sent the Taskcore dashboard to your browser.");
   } else {
-    deps.warn(`Could not open a browser automatically. Open ${dashboardUrl} manually.`);
+    deps.warn(
+      `Could not open a browser automatically. Open ${dashboardUrl} manually.`,
+    );
   }
 }
 
@@ -159,7 +171,11 @@ const defaultDependencies: OnboardServiceDependencies = {
       if (manifest?.source === "git" && manifest.repo) {
         // A managed git payload must be preserved as-is: reinstall the
         // exact revision the manifest records, not an npm release.
-        await installCommand({ repo: manifest.repo, ref: manifest.sha ?? manifest.ref, yes: true });
+        await installCommand({
+          repo: manifest.repo,
+          ref: manifest.sha ?? manifest.ref,
+          yes: true,
+        });
       } else if (isInstallableReleaseVersion(packageVersion)) {
         // packageVersion, not cliVersion: a managed executable's cliVersion
         // carries provenance text that is not an installable npm spec.
@@ -198,12 +214,14 @@ const defaultDependencies: OnboardServiceDependencies = {
   },
   confirmLinger: async () => {
     const answer = await p.confirm({
-      message: "Allow Taskcore to keep running after logout? This may request system authorization.",
+      message:
+        "Allow Taskcore to keep running after logout? This may request system authorization.",
       initialValue: false,
     });
     return !p.isCancel(answer) && answer === true;
   },
-  isInteractive: () => process.stdin.isTTY === true && process.stdout.isTTY === true,
+  isInteractive: () =>
+    process.stdin.isTTY === true && process.stdout.isTTY === true,
   info: (message) => p.log.message(pc.dim(message)),
   success: (message) => p.log.success(message),
   warn: (message) => p.log.warn(message),
@@ -247,11 +265,17 @@ export async function handleOnboardService(
     return false;
   }
   if (shim.installedNow) {
-    deps.success("Installed the managed taskcore payload and command shim for the service.");
+    deps.success(
+      "Installed the managed taskcore payload and command shim for the service.",
+    );
   }
 
   await detection.manager.install({ startNow: true, startOnLogin: true });
-  if (!explicitlyRequested && detection.manager.enableLinger && await deps.confirmLinger()) {
+  if (
+    !explicitlyRequested &&
+    detection.manager.enableLinger &&
+    (await deps.confirmLinger())
+  ) {
     await detection.manager.enableLinger();
   }
   deps.success(`Installed and started ${detection.manager.serviceName}.`);

@@ -15,13 +15,15 @@ optional UI. Bundle runtime dependencies; startup never installs them.
 ```json
 {
   "schemaVersion": 1,
-  "plugins": [{
-    "key": "example-extension",
-    "pluginKey": "example.extension",
-    "version": "1.0.0",
-    "directory": "example-extension",
-    "digest": "sha256:<64 lowercase hex characters>"
-  }]
+  "plugins": [
+    {
+      "key": "example-extension",
+      "pluginKey": "example.extension",
+      "version": "1.0.0",
+      "directory": "example-extension",
+      "digest": "sha256:<64 lowercase hex characters>"
+    }
+  ]
 }
 ```
 

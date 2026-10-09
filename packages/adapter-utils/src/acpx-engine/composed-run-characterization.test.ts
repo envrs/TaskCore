@@ -3,7 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AcpRuntimeOptions } from "acpx/runtime";
-import type { AdapterExecutionContext, AdapterRuntimeMcpAccess } from "@taskcore/adapter-utils";
+import type {
+  AdapterExecutionContext,
+  AdapterRuntimeMcpAccess,
+} from "@taskcore/adapter-utils";
 import {
   prepareAdapterExecutionTargetRuntime,
   startAdapterExecutionTargetTaskcoreBridge,
@@ -36,12 +39,21 @@ import {
 // tests assert the exact `runtimeRootDir`/`workspaceLocalDir`/`assets` the
 // engine threads without changing any real behavior for the other tests.
 vi.mock("@taskcore/adapter-utils/execution-target", async (importActual) => {
-  const actual = await importActual<typeof import("@taskcore/adapter-utils/execution-target")>();
+  const actual =
+    await importActual<
+      typeof import("@taskcore/adapter-utils/execution-target")
+    >();
   return {
     ...actual,
-    prepareAdapterExecutionTargetRuntime: vi.fn(actual.prepareAdapterExecutionTargetRuntime),
-    startAdapterExecutionTargetTaskcoreBridge: vi.fn(actual.startAdapterExecutionTargetTaskcoreBridge),
-    startAdapterExecutionTargetProcessSessionBridge: vi.fn(actual.startAdapterExecutionTargetProcessSessionBridge),
+    prepareAdapterExecutionTargetRuntime: vi.fn(
+      actual.prepareAdapterExecutionTargetRuntime,
+    ),
+    startAdapterExecutionTargetTaskcoreBridge: vi.fn(
+      actual.startAdapterExecutionTargetTaskcoreBridge,
+    ),
+    startAdapterExecutionTargetProcessSessionBridge: vi.fn(
+      actual.startAdapterExecutionTargetProcessSessionBridge,
+    ),
   };
 });
 import {
@@ -53,7 +65,9 @@ import { runChildProcess } from "../server-utils.js";
 const tempRoots: string[] = [];
 
 async function makeTempRoot() {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-acpx-skills-"));
+  const root = await fs.mkdtemp(
+    path.join(os.tmpdir(), "taskcore-acpx-skills-"),
+  );
   tempRoots.push(root);
   return root;
 }
@@ -67,9 +81,16 @@ afterEach(async () => {
   // `ENOTEMPTY`. `maxRetries`/`retryDelay` make the cleanup ride out that window the
   // same way production tolerates it, instead of failing the just-passed test.
   await Promise.all(
-    tempRoots.splice(0).map((root) =>
-      fs.rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }),
-    ),
+    tempRoots
+      .splice(0)
+      .map((root) =>
+        fs.rm(root, {
+          recursive: true,
+          force: true,
+          maxRetries: 5,
+          retryDelay: 50,
+        }),
+      ),
   );
 });
 
@@ -96,17 +117,26 @@ function createLocalSandboxRunner(
       counter += 1;
       onExecute?.(input);
       const command = input.command === "bash" ? "/bin/bash" : input.command;
-      return await runChildProcess(`acpx-sandbox-run-${counter}`, command, input.args ?? [], {
-        cwd: input.cwd ?? process.cwd(),
-        env: input.env ?? {},
-        stdin: input.stdin,
-        timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-        graceSec: 5,
-        onLog: input.onLog ?? (async () => {}),
-        onSpawn: input.onSpawn
-          ? async (meta) => input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
-          : undefined,
-      });
+      return await runChildProcess(
+        `acpx-sandbox-run-${counter}`,
+        command,
+        input.args ?? [],
+        {
+          cwd: input.cwd ?? process.cwd(),
+          env: input.env ?? {},
+          stdin: input.stdin,
+          timeoutSec: Math.max(
+            1,
+            Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+          ),
+          graceSec: 5,
+          onLog: input.onLog ?? (async () => {}),
+          onSpawn: input.onSpawn
+            ? async (meta) =>
+                input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
+            : undefined,
+        },
+      );
     },
   };
 }
@@ -118,11 +148,11 @@ function buildRuntime(
   return {
     ensureSession: async (input: Record<string, unknown>) => {
       onEnsureSession?.(input);
-      return ({
-      backendSessionId: "backend-session",
-      agentSessionId: "agent-session",
-      runtimeSessionName: "runtime-session",
-      });
+      return {
+        backendSessionId: "backend-session",
+        agentSessionId: "agent-session",
+        runtimeSessionName: "runtime-session",
+      };
     },
     startTurn: () => ({
       events: (async function* () {
@@ -155,7 +185,10 @@ async function runExecutor(
   const sessionInputs: Record<string, unknown>[] = [];
   const meta: Record<string, unknown>[] = [];
   const logs: Array<{ stream: string; text: string }> = [];
-  const events: Array<{ eventType: string; payload?: Record<string, unknown> }> = [];
+  const events: Array<{
+    eventType: string;
+    payload?: Record<string, unknown>;
+  }> = [];
   const execute = createAcpxEngineExecutor({
     ...(options.prepareRemoteManagedHome
       ? { prepareRemoteManagedHome: options.prepareRemoteManagedHome }
@@ -175,27 +208,38 @@ async function runExecutor(
       id: "agent-1",
       companyId: "company-1",
     },
-      runtime: {},
-      config,
-      context: options.context ?? {},
-      executionTransport: options.executionTransport,
-      authToken: options.authToken,
-      executionTarget: options.executionTarget,
-      runtimeMcp: options.runtimeMcp,
-      startupTraceContext: options.startupTraceContext,
-      onLog: async (stream: "stdout" | "stderr", text: string) => {
-        logs.push({ stream, text });
-      },
+    runtime: {},
+    config,
+    context: options.context ?? {},
+    executionTransport: options.executionTransport,
+    authToken: options.authToken,
+    executionTarget: options.executionTarget,
+    runtimeMcp: options.runtimeMcp,
+    startupTraceContext: options.startupTraceContext,
+    onLog: async (stream: "stdout" | "stderr", text: string) => {
+      logs.push({ stream, text });
+    },
     onMeta: async (payload: unknown) => {
       meta.push(payload as Record<string, unknown>);
     },
-    onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
+    onEvent: async (event: {
+      eventType: string;
+      payload?: Record<string, unknown>;
+    }) => {
       events.push(event);
     },
   } as never);
 
   expect(result.exitCode).toBe(0);
-  return { logs, meta, events, runtimeOptions, configOptions, sessionInputs, result };
+  return {
+    logs,
+    meta,
+    events,
+    runtimeOptions,
+    configOptions,
+    sessionInputs,
+    result,
+  };
 }
 
 // A remote sandbox setup that stages the host worktree through the real local
@@ -261,16 +305,20 @@ function throwingHandoffContext(): Record<string, unknown> {
 function stubBridges() {
   const taskcoreStops: Array<ReturnType<typeof vi.fn>> = [];
   const processStops: Array<ReturnType<typeof vi.fn>> = [];
-  vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(async () => {
-    const stop = vi.fn(async () => {});
-    taskcoreStops.push(stop);
-    return { env: {}, stop } as never;
-  });
-  vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementation(async () => {
-    const stop = vi.fn(async () => {});
-    processStops.push(stop);
-    return { agentCommand: null, stop } as never;
-  });
+  vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(
+    async () => {
+      const stop = vi.fn(async () => {});
+      taskcoreStops.push(stop);
+      return { env: {}, stop } as never;
+    },
+  );
+  vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementation(
+    async () => {
+      const stop = vi.fn(async () => {});
+      processStops.push(stop);
+      return { agentCommand: null, stop } as never;
+    },
+  );
   const anyStopped = (stops: Array<ReturnType<typeof vi.fn>>) =>
     stops.some((stop) => stop.mock.calls.length > 0);
   const stoppedCount = (stops: Array<ReturnType<typeof vi.fn>>) =>
@@ -287,7 +335,12 @@ function remoteArgs(
   return {
     agent: { id: "agent-1", companyId: "company-1" },
     runtime: {},
-    config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+    config: {
+      agent: "custom",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+      cwd: localCwd,
+    },
     context: {},
     authToken: "real-run-jwt",
     executionTarget,
@@ -316,7 +369,11 @@ describe("composed ACPX run: engine-boundary result form per exit path", () => {
       runId: "boundary-create-fail",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -346,7 +403,11 @@ describe("composed ACPX run: engine-boundary result form per exit path", () => {
       runId: "boundary-ensure-fail",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -372,7 +433,11 @@ describe("composed ACPX run: engine-boundary result form per exit path", () => {
       runId: "boundary-missing-handle",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -442,7 +507,11 @@ describe("composed ACPX run: engine-boundary result form per exit path", () => {
       runId: "boundary-prepare-fail",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: throwingHandoffContext(),
       onLog: async () => {},
       onMeta: async () => {},
@@ -467,7 +536,11 @@ describe("composed ACPX run: engine-boundary result form per exit path", () => {
       runId: "boundary-turn-fail",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -488,7 +561,11 @@ describe("composed ACPX run: engine-boundary result form per exit path", () => {
       runId: "boundary-success",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -511,9 +588,11 @@ describe("composed ACPX run: engine-boundary result form per exit path", () => {
     // A staging failure throws inside buildRuntime before it settles, so the engine
     // rethrows through the `if (!buildRuntimeSettled) throw err` guard. This is one
     // of exactly two engine-boundary throw paths.
-    vi.mocked(prepareAdapterExecutionTargetRuntime).mockImplementationOnce(async () => {
-      throw new Error("staging boom");
-    });
+    vi.mocked(prepareAdapterExecutionTargetRuntime).mockImplementationOnce(
+      async () => {
+        throw new Error("staging boom");
+      },
+    );
     const execute = createAcpxEngineExecutor({
       warmHandles: new Map(),
       stagedRuntimes: new Map(),
@@ -535,10 +614,14 @@ describe("composed ACPX run: engine-boundary result form per exit path", () => {
     // bridge resolves a live handle. This is the second engine-boundary throw path;
     // the abandon path must stop the started sibling so no bridge leaks.
     const stop = vi.fn(async () => {});
-    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(async () => {
-      throw new Error("taskcore bridge boom");
-    });
-    vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementationOnce(
+    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(
+      async () => {
+        throw new Error("taskcore bridge boom");
+      },
+    );
+    vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mockImplementationOnce(
       async () => ({ agentCommand: null, stop }) as never,
     );
     const execute = createAcpxEngineExecutor({
@@ -598,7 +681,11 @@ describe("composed ACPX run: finalization set fires exactly once per exit path",
             },
             close: async () => {},
           }) as never,
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", model: "custom-model-x" },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          model: "custom-model-x",
+        },
       },
       {
         name: "prepare_turn",
@@ -631,7 +718,8 @@ describe("composed ACPX run: finalization set fires exactly once per exit path",
     ];
 
     for (const scenario of scenarios) {
-      const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
+      const { stateDir, localCwd, executionTarget } =
+        await setupRemoteSandbox();
       const { taskcoreStops, processStops, stoppedCount } = stubBridges();
       const stagingLocks = new Map<string, Promise<unknown>>();
       const execute = createAcpxEngineExecutor({
@@ -661,9 +749,17 @@ describe("composed ACPX run: finalization set fires exactly once per exit path",
       // The finalization set fires exactly once: each bridge stops once and the
       // per-session staging lease releases, so the lock map never strands the next
       // same-session run.
-      expect(stoppedCount(taskcoreStops), `taskcore bridge must stop once on ${scenario.name}`).toBe(1);
-      expect(stoppedCount(processStops), `process-session bridge must stop once on ${scenario.name}`).toBe(1);
-      expect(stagingLocks.size, `lease must release on ${scenario.name}`).toBe(0);
+      expect(
+        stoppedCount(taskcoreStops),
+        `taskcore bridge must stop once on ${scenario.name}`,
+      ).toBe(1);
+      expect(
+        stoppedCount(processStops),
+        `process-session bridge must stop once on ${scenario.name}`,
+      ).toBe(1);
+      expect(stagingLocks.size, `lease must release on ${scenario.name}`).toBe(
+        0,
+      );
     }
   });
 
@@ -788,7 +884,11 @@ describe("composed ACPX run: host-lane warm handle set", () => {
     });
     // No persistent mode, so the completed turn closes the runtime instead of
     // warm-saving it.
-    const config = { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir };
+    const config = {
+      agent: "custom",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+    };
 
     const first = await execute({
       runId: "warm-none-1",
@@ -824,7 +924,10 @@ describe("composed ACPX run: host-lane warm handle set", () => {
     const stateDir = path.join(root, "state");
     let createCount = 0;
     const warmHandles = new Map();
-    const secondEvents: Array<{ eventType: string; payload?: Record<string, unknown> }> = [];
+    const secondEvents: Array<{
+      eventType: string;
+      payload?: Record<string, unknown>;
+    }> = [];
     const execute = createAcpxEngineExecutor({
       warmHandles,
       createRuntime: () => {
@@ -853,12 +956,17 @@ describe("composed ACPX run: host-lane warm handle set", () => {
     await execute({
       runId: "warm-hit-2",
       agent: { id: "agent-1", companyId: "company-1" },
-      runtime: { sessionParams: (first as { sessionParams?: unknown }).sessionParams },
+      runtime: {
+        sessionParams: (first as { sessionParams?: unknown }).sessionParams,
+      },
       config,
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
-      onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
+      onEvent: async (event: {
+        eventType: string;
+        payload?: Record<string, unknown>;
+      }) => {
         secondEvents.push(event);
       },
     } as never);
@@ -867,7 +975,9 @@ describe("composed ACPX run: host-lane warm handle set", () => {
     // The second run runs a fresh acp.handshake (outcome ok, not skipped) and
     // re-creates the runtime.
     const handshakeEvents = secondEvents.filter(
-      (event) => event.eventType === "run.startup.step" && event.payload?.step === "acp.handshake",
+      (event) =>
+        event.eventType === "run.startup.step" &&
+        event.payload?.step === "acp.handshake",
     );
     expect(handshakeEvents).toHaveLength(1);
     expect(handshakeEvents[0]!.payload?.outcome).not.toBe("skipped");

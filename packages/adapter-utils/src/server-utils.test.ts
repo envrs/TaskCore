@@ -44,9 +44,17 @@ import {
 } from "./server-utils.js";
 
 it("reserves identity credentials even for mixed-case inherited or configured keys", () => {
-  const keys = ["TASKCORE_AGENT_KEY_ID", "Taskcore_Agent_Public_Key", "taskcore_agent_private_key"];
-  const inherited = Object.fromEntries(keys.map(key => [key, "host-override"]));
-  expect(sanitizeInheritedTaskcoreEnv({ ...inherited, PATH: "/usr/bin" })).toEqual({ PATH: "/usr/bin" });
+  const keys = [
+    "TASKCORE_AGENT_KEY_ID",
+    "Taskcore_Agent_Public_Key",
+    "taskcore_agent_private_key",
+  ];
+  const inherited = Object.fromEntries(
+    keys.map((key) => [key, "host-override"]),
+  );
+  expect(
+    sanitizeInheritedTaskcoreEnv({ ...inherited, PATH: "/usr/bin" }),
+  ).toEqual({ PATH: "/usr/bin" });
   for (const key of keys) expect(isForbiddenConfigEnvKey(key)).toBe(true);
 });
 
@@ -75,8 +83,7 @@ describe("runtime connection tool delivery", () => {
         access.rest.connectionsSearch,
       TASKCORE_RUNTIME_TOOLS_CONNECTION_REQUEST_URL:
         access.rest.connectionRequest,
-      TASKCORE_RUNTIME_TOOLS_AVAILABLE:
-        "connections_search,connection_request",
+      TASKCORE_RUNTIME_TOOLS_AVAILABLE: "connections_search,connection_request",
       TASKCORE_RUNTIME_TOOLS_GUIDANCE: CONNECTION_INTENT_AGENT_GUIDANCE,
     });
   });
@@ -99,9 +106,15 @@ describe("runtime connection tool delivery", () => {
     expect(DEFAULT_TASKCORE_AGENT_PROMPT_TEMPLATE).toContain(
       CONNECTION_INTENT_AGENT_GUIDANCE,
     );
-    expect(DEFAULT_TASKCORE_CONVERSATION_PROMPT_TEMPLATE).toContain(CONNECTION_INTENT_AGENT_GUIDANCE);
-    expect(DEFAULT_TASKCORE_CONVERSATION_PROMPT_TEMPLATE).not.toContain("Execution contract:");
-    expect(DEFAULT_TASKCORE_CONVERSATION_PROMPT_TEMPLATE).not.toContain("child issues");
+    expect(DEFAULT_TASKCORE_CONVERSATION_PROMPT_TEMPLATE).toContain(
+      CONNECTION_INTENT_AGENT_GUIDANCE,
+    );
+    expect(DEFAULT_TASKCORE_CONVERSATION_PROMPT_TEMPLATE).not.toContain(
+      "Execution contract:",
+    );
+    expect(DEFAULT_TASKCORE_CONVERSATION_PROMPT_TEMPLATE).not.toContain(
+      "child issues",
+    );
   });
 });
 
@@ -155,14 +168,19 @@ describe("legacy adapter skill selection", () => {
   });
 
   it("makes feedback available to existing legacy agents without opting native agents into API skills", () => {
-    const inventory = [operationalEntry, ...TASKCORE_FEEDBACK_SKILL_KEYS.map((key) => ({ key }))];
+    const inventory = [
+      operationalEntry,
+      ...TASKCORE_FEEDBACK_SKILL_KEYS.map((key) => ({ key })),
+    ];
     for (const config of [{}, { taskcoreSkillSync: { desiredSkills: [] } }]) {
-      expect(resolveLegacyTaskcoreDesiredSkillNames(config, inventory)).toEqual([
-        TASKCORE_OPERATIONAL_SKILL_KEY, ...TASKCORE_FEEDBACK_SKILL_KEYS,
-      ]);
+      expect(resolveLegacyTaskcoreDesiredSkillNames(config, inventory)).toEqual(
+        [TASKCORE_OPERATIONAL_SKILL_KEY, ...TASKCORE_FEEDBACK_SKILL_KEYS],
+      );
       expect(resolveTaskcoreDesiredSkillNames(config, inventory)).toEqual([]);
     }
-    expect(resolveLegacyTaskcoreDesiredSkillNames({}, inventory.slice(1))).toEqual([]);
+    expect(
+      resolveLegacyTaskcoreDesiredSkillNames({}, inventory.slice(1)),
+    ).toEqual([]);
   });
 });
 
@@ -935,19 +953,37 @@ describe("runChildProcess", () => {
 });
 
 describe("renderTaskcoreWakePrompt", () => {
-  it.each([false, true])("renders the runtime checkout flag for ordinary task wakes (resume=%s)", resumedSession => {
-    const payload = { reason: "issue_assigned", issue: { id: "issue-1", status: "in_progress" },
-      comments: [], commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
-      fallbackFetchNeeded: false };
-    const claimed = renderTaskcoreWakePrompt({ ...payload, checkedOutByHarness: true }, { resumedSession });
-    expect(claimed).toContain(resumedSession ? "checkout: already claimed by the harness for this run" :
-      "The harness already checked out this issue for the current run.");
-    for (const checkedOutByHarness of [false, undefined]) {
-      const unclaimed = renderTaskcoreWakePrompt({ ...payload, checkedOutByHarness }, { resumedSession });
-      expect(unclaimed).not.toContain("checkout: already claimed");
-      expect(unclaimed).not.toContain("The harness already checked out this issue for the current run.");
-    }
-  });
+  it.each([false, true])(
+    "renders the runtime checkout flag for ordinary task wakes (resume=%s)",
+    (resumedSession) => {
+      const payload = {
+        reason: "issue_assigned",
+        issue: { id: "issue-1", status: "in_progress" },
+        comments: [],
+        commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
+        fallbackFetchNeeded: false,
+      };
+      const claimed = renderTaskcoreWakePrompt(
+        { ...payload, checkedOutByHarness: true },
+        { resumedSession },
+      );
+      expect(claimed).toContain(
+        resumedSession
+          ? "checkout: already claimed by the harness for this run"
+          : "The harness already checked out this issue for the current run.",
+      );
+      for (const checkedOutByHarness of [false, undefined]) {
+        const unclaimed = renderTaskcoreWakePrompt(
+          { ...payload, checkedOutByHarness },
+          { resumedSession },
+        );
+        expect(unclaimed).not.toContain("checkout: already claimed");
+        expect(unclaimed).not.toContain(
+          "The harness already checked out this issue for the current run.",
+        );
+      }
+    },
+  );
 
   it("leaves conversation disposition and accepted-plan handoff to the injected chat policy", () => {
     const payload = {
@@ -959,12 +995,16 @@ describe("renderTaskcoreWakePrompt", () => {
       commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
       fallbackFetchNeeded: false,
     };
-    const ordinary = renderTaskcoreWakePrompt(payload, { resumedSession: true });
+    const ordinary = renderTaskcoreWakePrompt(payload, {
+      resumedSession: true,
+    });
     expect(ordinary).not.toContain("Execution contract:");
     expect(ordinary).toContain("Create child issues from the approved plan");
     for (const resumedSession of [false, true]) {
       const chat = renderTaskcoreWakePrompt(payload, {
-        resumedSession, conversationMode: true, includeExecutionContract: true,
+        resumedSession,
+        conversationMode: true,
+        includeExecutionContract: true,
       });
       expect(chat).not.toContain("Execution contract:");
       expect(chat).not.toContain("clear final disposition");
@@ -1145,12 +1185,16 @@ describe("renderTaskcoreWakePrompt", () => {
       );
       expect(prompt).toContain("server-authenticated github chat turn");
       expect(prompt).toContain("Make zero Taskcore API calls");
-      expect(prompt).toContain("text answer that does not require structured human input");
+      expect(prompt).toContain(
+        "text answer that does not require structured human input",
+      );
       expect(prompt).toContain("answer directly");
       expect(prompt).toContain("exactly one semantic completion");
       expect(prompt).toContain("summary is the user-visible final answer");
       expect(prompt).toContain("Private progress commentary is not delivered");
-      expect(prompt).toContain("any actionable file-access or delivery limitation");
+      expect(prompt).toContain(
+        "any actionable file-access or delivery limitation",
+      );
       expect(prompt).toContain(
         "Keep wait and review dispositions in the semantic control fields",
       );
@@ -1160,12 +1204,8 @@ describe("renderTaskcoreWakePrompt", () => {
       expect(prompt).toContain(
         "report `yielded` with continuation kind `response_wake`",
       );
-      expect(prompt).toContain(
-        "without scheduling more work",
-      );
-      expect(prompt).toContain(
-        "never use it to defer unfinished work",
-      );
+      expect(prompt).toContain("without scheduling more work");
+      expect(prompt).toContain("never use it to defer unfinished work");
       expect(prompt).toContain(
         "files, investigation, external access, or mutations",
       );
@@ -1503,9 +1543,14 @@ describe("renderTaskcoreWakePrompt", () => {
     for (const resumedSession of [false, true]) {
       for (const includeExecutionContract of [undefined, false, true]) {
         const prompt = renderTaskcoreWakePrompt(payload, {
-          resumedSession, includeExecutionContract,
+          resumedSession,
+          includeExecutionContract,
         });
-        expect(prompt).toContain(resumedSession ? "## TaskCore Resume Delta" : "## TaskCore Wake Payload");
+        expect(prompt).toContain(
+          resumedSession
+            ? "## TaskCore Resume Delta"
+            : "## TaskCore Wake Payload",
+        );
         expect(prompt).toContain("- reason: issue_assigned");
         expect(prompt).toContain("- issue: PAP-1580 Update prompts");
         expect(prompt).toContain("- issue status: in_progress");
@@ -2847,14 +2892,25 @@ describe("renderTaskcoreWakePrompt", () => {
   });
 
   it("delivers typed disposition repair instructions without liveness classification", () => {
-    const payload = { reason: "issue_disposition_repair", issue: { id: "issue-1", status: "in_progress" },
-      dispositionRepair: { attempt: 1, maxAttempts: 2, sourceRunId: "source-1", instruction: "Record completion or a durable waiting path through the API." } };
+    const payload = {
+      reason: "issue_disposition_repair",
+      issue: { id: "issue-1", status: "in_progress" },
+      dispositionRepair: {
+        attempt: 1,
+        maxAttempts: 2,
+        sourceRunId: "source-1",
+        instruction:
+          "Record completion or a durable waiting path through the API.",
+      },
+    };
     const prompt = renderTaskcoreWakePrompt(payload);
     expect(prompt).toContain("Task disposition repair:");
     expect(prompt).toContain("- attempt: 1/2");
     expect(prompt).toContain(payload.dispositionRepair.instruction);
     expect(prompt).not.toContain("liveness state:");
-    expect(JSON.parse(stringifyTaskcoreWakePayload(payload)!)).toMatchObject({ dispositionRepair: payload.dispositionRepair });
+    expect(JSON.parse(stringifyTaskcoreWakePayload(payload)!)).toMatchObject({
+      dispositionRepair: payload.dispositionRepair,
+    });
   });
 
   it("includes continuation and child issue summaries in structured wake context", () => {
@@ -3024,9 +3080,14 @@ describe("selectTaskcoreTaskMarkdown", () => {
       taskcoreWake: wake("issue_commented"),
     };
     expect(selectTaskcoreTaskMarkdown(context)).toBe(fullMarkdown);
-    expect(selectTaskcoreTaskMarkdown(context, { resumedSession: true })).toBe(compactMarkdown);
+    expect(selectTaskcoreTaskMarkdown(context, { resumedSession: true })).toBe(
+      compactMarkdown,
+    );
     expect(
-      selectTaskcoreTaskMarkdown({ taskcoreTaskMarkdown: "legacy", taskcoreWake: wake("issue_commented") }),
+      selectTaskcoreTaskMarkdown({
+        taskcoreTaskMarkdown: "legacy",
+        taskcoreWake: wake("issue_commented"),
+      }),
     ).toBe("legacy");
   });
 
@@ -3047,35 +3108,75 @@ describe("selectTaskcoreTaskMarkdown", () => {
     const context = {
       taskcoreTaskMarkdown: fullMarkdown,
       taskcoreTaskMarkdownCompact: compactMarkdown,
-      taskcoreTaskCommunicationGuidance: "## Communication in Slack\nSaved initial guidance",
+      taskcoreTaskCommunicationGuidance:
+        "## Communication in Slack\nSaved initial guidance",
       taskcoreWake: wake("issue_commented"),
     };
-    expect(selectTaskcoreTaskMarkdown(context)).toContain("Saved initial guidance");
-    expect(selectInitialCommunicationGuidance({ taskcoreTaskCommunicationGuidance: "  Slack preference  " })).toBe("Slack preference");
-    expect(selectInitialCommunicationGuidance(context, { resumedSession: true })).toBe("");
+    expect(selectTaskcoreTaskMarkdown(context)).toContain(
+      "Saved initial guidance",
+    );
+    expect(
+      selectInitialCommunicationGuidance({
+        taskcoreTaskCommunicationGuidance: "  Slack preference  ",
+      }),
+    ).toBe("Slack preference");
+    expect(
+      selectInitialCommunicationGuidance(context, { resumedSession: true }),
+    ).toBe("");
     expect(selectInitialCommunicationGuidance({})).toBe("");
-    const handoffContext = { ...context, taskcoreFreshSessionHandoffMarkdown: "Prior goal and approved decisions" };
-    expect(selectInitialCommunicationGuidance(handoffContext, { resumedSession: true })).toBe("");
-    expect(selectInitialCommunicationGuidance(handoffContext, { resumedSession: false })).toContain("Prior goal and approved decisions");
-    expect(selectTaskcoreTaskMarkdown(context, { resumedSession: true })).toBe(compactMarkdown);
-    expect(selectTaskcoreTaskMarkdown(context, { includeCommunicationGuidance: false })).toBe(fullMarkdown);
-    context.taskcoreWake = { ...wake("issue_monitor_recovery"), recovery: { cause: "process_lost" } } as typeof context.taskcoreWake;
-    expect(selectTaskcoreTaskMarkdown(context, { resumedSession: true })).toBe(fullMarkdown);
-    expect(selectTaskcoreTaskMarkdown(context, { resumedSession: false }).match(/Saved initial guidance/g)).toHaveLength(1);
+    const handoffContext = {
+      ...context,
+      taskcoreFreshSessionHandoffMarkdown: "Prior goal and approved decisions",
+    };
+    expect(
+      selectInitialCommunicationGuidance(handoffContext, {
+        resumedSession: true,
+      }),
+    ).toBe("");
+    expect(
+      selectInitialCommunicationGuidance(handoffContext, {
+        resumedSession: false,
+      }),
+    ).toContain("Prior goal and approved decisions");
+    expect(selectTaskcoreTaskMarkdown(context, { resumedSession: true })).toBe(
+      compactMarkdown,
+    );
+    expect(
+      selectTaskcoreTaskMarkdown(context, {
+        includeCommunicationGuidance: false,
+      }),
+    ).toBe(fullMarkdown);
+    context.taskcoreWake = {
+      ...wake("issue_monitor_recovery"),
+      recovery: { cause: "process_lost" },
+    } as typeof context.taskcoreWake;
+    expect(selectTaskcoreTaskMarkdown(context, { resumedSession: true })).toBe(
+      fullMarkdown,
+    );
+    expect(
+      selectTaskcoreTaskMarkdown(context, { resumedSession: false }).match(
+        /Saved initial guidance/g,
+      ),
+    ).toHaveLength(1);
   });
 
   it("reads history only at a fresh provider attempt, including resume fallback", async () => {
     let reads = 0;
-    const ctx = { context: {} as Record<string, unknown>, getFreshSessionHandoff: async () => {
-      reads += 1;
-      return "Original goal and prior answer";
-    } };
+    const ctx = {
+      context: {} as Record<string, unknown>,
+      getFreshSessionHandoff: async () => {
+        reads += 1;
+        return "Original goal and prior answer";
+      },
+    };
     await hydrateFreshSessionHandoff(ctx, { resumedSession: true });
     expect(reads).toBe(0);
     expect(ctx.context.taskcoreFreshSessionHandoffMarkdown).toBeUndefined();
     await hydrateFreshSessionHandoff(ctx, { resumedSession: false });
     expect(reads).toBe(1);
-    expect(selectInitialCommunicationGuidance(ctx.context)).toContain("Original goal and prior answer");
+    expect(selectInitialCommunicationGuidance(ctx.context)).toContain(
+      "Original goal and prior answer",
+    );
   });
 
   it("falls back to the full markdown when no compact variant exists", () => {
@@ -3407,8 +3508,7 @@ describe("applyTaskcoreWorkspaceEnv", () => {
       TASKCORE_WORKSPACE_SOURCE: "project_primary",
       TASKCORE_WORKSPACE_STRATEGY: "git_worktree",
       TASKCORE_WORKSPACE_ID: "workspace-1",
-      TASKCORE_WORKSPACE_REPO_URL:
-        "https://github.com/khulnasoft/taskcore.git",
+      TASKCORE_WORKSPACE_REPO_URL: "https://github.com/khulnasoft/taskcore.git",
       TASKCORE_WORKSPACE_REPO_REF: "main",
       TASKCORE_WORKSPACE_BRANCH: "feature/test",
       TASKCORE_WORKSPACE_WORKTREE_PATH: "/tmp/worktree",
@@ -3433,10 +3533,22 @@ describe("applyTaskcoreWorkspaceEnv", () => {
 describe("shapeTaskcoreWorkspaceEnvForExecution", () => {
   it("maps editable project repositories inside the remote workspace", () => {
     const result = shapeTaskcoreWorkspaceEnvForExecution({
-      workspaceCwd: "/host/task", executionCwd: "/sandbox/task", executionTargetIsRemote: true,
-      workspaceHints: [{ workspaceId: "backend", cwd: "/host/task/.taskcore-repositories/backend" }],
+      workspaceCwd: "/host/task",
+      executionCwd: "/sandbox/task",
+      executionTargetIsRemote: true,
+      workspaceHints: [
+        {
+          workspaceId: "backend",
+          cwd: "/host/task/.taskcore-repositories/backend",
+        },
+      ],
     });
-    expect(result.workspaceHints).toEqual([{ workspaceId: "backend", cwd: "/sandbox/task/.taskcore-repositories/backend" }]);
+    expect(result.workspaceHints).toEqual([
+      {
+        workspaceId: "backend",
+        cwd: "/sandbox/task/.taskcore-repositories/backend",
+      },
+    ]);
   });
   it("rewrites workspace env paths for remote execution", () => {
     const shaped = shapeTaskcoreWorkspaceEnvForExecution({
@@ -3825,16 +3937,30 @@ describe("buildTaskcoreEnv", () => {
   });
 });
 
-
 describe("runtime skill assignment boundaries", () => {
   it("preserves an explicitly empty assignment instead of discovering bundled connector skills", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-skills-empty-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-skills-empty-"),
+    );
     try {
       await fs.mkdir(path.join(root, "agentmail"));
-      await fs.writeFile(path.join(root, "agentmail", "SKILL.md"), "---\nname: agentmail\ndescription: Email connector\n---\n");
-      const discovered = await readTaskcoreRuntimeSkillEntries({}, root, [root]);
-      expect(discovered.some((entry) => entry.runtimeName === "agentmail")).toBe(true);
-      expect(await readTaskcoreRuntimeSkillEntries({ taskcoreRuntimeSkills: [] }, root, [root])).toEqual([]);
+      await fs.writeFile(
+        path.join(root, "agentmail", "SKILL.md"),
+        "---\nname: agentmail\ndescription: Email connector\n---\n",
+      );
+      const discovered = await readTaskcoreRuntimeSkillEntries({}, root, [
+        root,
+      ]);
+      expect(
+        discovered.some((entry) => entry.runtimeName === "agentmail"),
+      ).toBe(true);
+      expect(
+        await readTaskcoreRuntimeSkillEntries(
+          { taskcoreRuntimeSkills: [] },
+          root,
+          [root],
+        ),
+      ).toEqual([]);
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
@@ -3842,19 +3968,32 @@ describe("runtime skill assignment boundaries", () => {
 });
 
 describe("wake continuation comment ownership", () => {
-  const continuation = (messages: Array<Record<string, unknown>>, resumeDelta?: Array<Record<string, unknown>>) => ({
+  const continuation = (
+    messages: Array<Record<string, unknown>>,
+    resumeDelta?: Array<Record<string, unknown>>,
+  ) => ({
     version: 1,
     companyId: "company-1",
     issueId: "issue-1",
-    trigger: { reason: "issue_commented", interactionId: null, sourceRunId: null },
+    trigger: {
+      reason: "issue_commented",
+      interactionId: null,
+      sourceRunId: null,
+    },
     originCommentIds: [],
     objective: "Continue the task.",
     messages,
-    ...(resumeDelta ? { resumeDelta: { baseRunId: "run-old", messages: resumeDelta } } : {}),
+    ...(resumeDelta
+      ? { resumeDelta: { baseRunId: "run-old", messages: resumeDelta } }
+      : {}),
     interactionOutcomes: [],
     completedWork: null,
     unresolvedInteractionIds: [],
-    coverage: { kind: "full_task_history", throughCommentId: null, summaryThroughCommentId: null },
+    coverage: {
+      kind: "full_task_history",
+      throughCommentId: null,
+      summaryThroughCommentId: null,
+    },
   });
 
   const message = (id: string, body: string) => ({
@@ -3871,7 +4010,12 @@ describe("wake continuation comment ownership", () => {
   it("suppresses only an exact continuation owner and keeps same-body distinct IDs", () => {
     const prompt = renderTaskcoreWakePrompt({
       reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: null },
+      issue: {
+        id: "issue-1",
+        identifier: "PAP-1",
+        title: "Task",
+        description: null,
+      },
       comments: [
         { id: "comment-a", body: "Repeat body" },
         { id: "comment-b", body: "Repeat body" },
@@ -3890,111 +4034,246 @@ describe("wake continuation comment ownership", () => {
   });
 
   it("does not suppress a current comment absent from the rendered resume delta", () => {
-    const prompt = renderTaskcoreWakePrompt({
-      reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: null },
-      comments: [{ id: "comment-new", body: "Current delta body" }],
-      commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: continuation(
-        [message("comment-new", "Current delta body")],
-        [],
-      ),
-    }, { resumedSession: true });
+    const prompt = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_commented",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: null,
+        },
+        comments: [{ id: "comment-new", body: "Current delta body" }],
+        commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: continuation(
+          [message("comment-new", "Current delta body")],
+          [],
+        ),
+      },
+      { resumedSession: true },
+    );
     expect(prompt).toContain("comment-new");
     expect(prompt).toContain("Current delta body");
   });
 
   it("does not repeat the shared issue brief as continuation objective on a fresh owned wake", () => {
     const objective = "Assignment brief owned by task markdown.";
-    const prompt = renderTaskcoreWakePrompt({
-      reason: "issue_assigned",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: objective },
-      comments: [],
-      commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: { ...continuation([]), objective, objectiveSource: { kind: "description", id: "issue-1", revision: "3afeec397239f147627f99ddaa883639fa50d191fc2bbce0dc7515a0f05deedb" } },
-    }, { suppressIssueDescription: true });
+    const prompt = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_assigned",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: objective,
+        },
+        comments: [],
+        commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: {
+          ...continuation([]),
+          objective,
+          objectiveSource: {
+            kind: "description",
+            id: "issue-1",
+            revision:
+              "3afeec397239f147627f99ddaa883639fa50d191fc2bbce0dc7515a0f05deedb",
+          },
+        },
+      },
+      { suppressIssueDescription: true },
+    );
     expect(prompt).not.toContain(`"objective":"${objective}"`);
   });
 
   it("keeps a changed continuation objective on an ordinary compact resume", () => {
     const objective = "Changed objective must reach the compact resumed turn.";
-    const prompt = renderTaskcoreWakePrompt({
-      reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: "Original brief" },
-      comments: [],
-      commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: { ...continuation([]), objective, objectiveSource: { kind: "description", id: "issue-1", revision: "3fdd2539337403e2e9551085a24ce3737978e6f0d2fc129d71d6a27c2befb523" } },
-    }, { resumedSession: true, suppressIssueDescription: true });
+    const prompt = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_commented",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: "Original brief",
+        },
+        comments: [],
+        commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: {
+          ...continuation([]),
+          objective,
+          objectiveSource: {
+            kind: "description",
+            id: "issue-1",
+            revision:
+              "3fdd2539337403e2e9551085a24ce3737978e6f0d2fc129d71d6a27c2befb523",
+          },
+        },
+      },
+      { resumedSession: true, suppressIssueDescription: true },
+    );
     expect(prompt).toContain(`"objective":"${objective}"`);
   });
 
   it("keeps continuation objective when its issue identity does not match the assignment", () => {
     const objective = "Mismatched continuation objective remains visible.";
-    const prompt = renderTaskcoreWakePrompt({
-      reason: "issue_assigned",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: "Assignment brief" },
-      comments: [],
-      commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: { ...continuation([]), issueId: "issue-2", objective, objectiveSource: { kind: "description", id: "issue-2", revision: "ba02348ecb9f87dd102e0faf7ae65731c856c8a13ba64874394a873cc529c63f" } },
-    }, { suppressIssueDescription: true });
+    const prompt = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_assigned",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: "Assignment brief",
+        },
+        comments: [],
+        commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: {
+          ...continuation([]),
+          issueId: "issue-2",
+          objective,
+          objectiveSource: {
+            kind: "description",
+            id: "issue-2",
+            revision:
+              "ba02348ecb9f87dd102e0faf7ae65731c856c8a13ba64874394a873cc529c63f",
+          },
+        },
+      },
+      { suppressIssueDescription: true },
+    );
     expect(prompt).toContain(`"objective":"${objective}"`);
   });
 
   it("suppresses a latest comment objective only when its exact revised message is displayed", () => {
     const objective = "Latest user direction.";
-    const source = { ...message("comment-latest", objective), updatedAt: "2026-09-21T00:02:00.000Z" };
-    const full = renderTaskcoreWakePrompt({
-      reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: "Assignment brief" },
-      comments: [{ id: "comment-latest", body: objective }],
-      commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: { ...continuation([source]), objective, objectiveSource: { kind: "comment", id: source.id, revision: source.updatedAt } },
-    }, { suppressIssueDescription: true });
+    const source = {
+      ...message("comment-latest", objective),
+      updatedAt: "2026-09-21T00:02:00.000Z",
+    };
+    const full = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_commented",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: "Assignment brief",
+        },
+        comments: [{ id: "comment-latest", body: objective }],
+        commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: {
+          ...continuation([source]),
+          objective,
+          objectiveSource: {
+            kind: "comment",
+            id: source.id,
+            revision: source.updatedAt,
+          },
+        },
+      },
+      { suppressIssueDescription: true },
+    );
     expect(full).not.toContain(`"objective":"${objective}"`);
 
-    const stale = renderTaskcoreWakePrompt({
-      reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: "Assignment brief" },
-      comments: [{ id: "comment-latest", body: objective }],
-      commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: { ...continuation([source]), objective, objectiveSource: { kind: "comment", id: source.id, revision: "stale-revision" } },
-    }, { suppressIssueDescription: true });
+    const stale = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_commented",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: "Assignment brief",
+        },
+        comments: [{ id: "comment-latest", body: objective }],
+        commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: {
+          ...continuation([source]),
+          objective,
+          objectiveSource: {
+            kind: "comment",
+            id: source.id,
+            revision: "stale-revision",
+          },
+        },
+      },
+      { suppressIssueDescription: true },
+    );
     expect(stale).toContain(`"objective":"${objective}"`);
 
-    const wrongSource = renderTaskcoreWakePrompt({
-      reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: "Assignment brief" },
-      comments: [{ id: "comment-latest", body: objective }],
-      commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: { ...continuation([source]), objective, objectiveSource: { kind: "comment", id: "comment-other", revision: source.updatedAt } },
-    }, { suppressIssueDescription: true });
+    const wrongSource = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_commented",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: "Assignment brief",
+        },
+        comments: [{ id: "comment-latest", body: objective }],
+        commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: {
+          ...continuation([source]),
+          objective,
+          objectiveSource: {
+            kind: "comment",
+            id: "comment-other",
+            revision: source.updatedAt,
+          },
+        },
+      },
+      { suppressIssueDescription: true },
+    );
     expect(wrongSource).toContain(`"objective":"${objective}"`);
 
-    const missingDelta = renderTaskcoreWakePrompt({
-      reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: "Assignment brief" },
-      comments: [{ id: "comment-latest", body: objective }],
-      commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: { ...continuation([source], []), objective, objectiveSource: { kind: "comment", id: source.id, revision: source.updatedAt } },
-    }, { resumedSession: true, suppressIssueDescription: true });
+    const missingDelta = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_commented",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: "Assignment brief",
+        },
+        comments: [{ id: "comment-latest", body: objective }],
+        commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: {
+          ...continuation([source], []),
+          objective,
+          objectiveSource: {
+            kind: "comment",
+            id: source.id,
+            revision: source.updatedAt,
+          },
+        },
+      },
+      { resumedSession: true, suppressIssueDescription: true },
+    );
     expect(missingDelta).toContain(`"objective":"${objective}"`);
 
-    const legacy = renderTaskcoreWakePrompt({
-      reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Task", description: "Assignment brief" },
-      comments: [],
-      commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
-      fallbackFetchNeeded: false,
-      executionContinuation: { ...continuation([]), objective },
-    }, { suppressIssueDescription: true });
+    const legacy = renderTaskcoreWakePrompt(
+      {
+        reason: "issue_commented",
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Task",
+          description: "Assignment brief",
+        },
+        comments: [],
+        commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
+        fallbackFetchNeeded: false,
+        executionContinuation: { ...continuation([]), objective },
+      },
+      { suppressIssueDescription: true },
+    );
     expect(legacy).toContain(`"objective":"${objective}"`);
   });
 });

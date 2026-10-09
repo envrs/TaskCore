@@ -1,4 +1,12 @@
-import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -26,7 +34,10 @@ const {
   resolveCommandForLogs: vi.fn(async () => "/usr/bin/codex"),
   prepareWorkspaceForSshExecution: vi.fn(async () => ({ gitBacked: false })),
   restoreWorkspaceFromSshExecution: vi.fn(async () => undefined),
-  runSshCommand: vi.fn(async () => ({ stdout: Buffer.from("{}").toString("base64"), stderr: "" })),
+  runSshCommand: vi.fn(async () => ({
+    stdout: Buffer.from("{}").toString("base64"),
+    stderr: "",
+  })),
   syncDirectoryToSsh: vi.fn(async () => undefined),
   startAdapterExecutionTargetTaskcoreBridge: vi.fn(async () => ({
     env: {
@@ -39,9 +50,9 @@ const {
 }));
 
 vi.mock("@taskcore/adapter-utils/server-utils", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/server-utils")>(
-    "@taskcore/adapter-utils/server-utils",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/server-utils")
+  >("@taskcore/adapter-utils/server-utils");
   return {
     ...actual,
     ensureCommandResolvable,
@@ -51,9 +62,9 @@ vi.mock("@taskcore/adapter-utils/server-utils", async () => {
 });
 
 vi.mock("@taskcore/adapter-utils/ssh", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/ssh")>(
-    "@taskcore/adapter-utils/ssh",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/ssh")
+  >("@taskcore/adapter-utils/ssh");
   return {
     ...actual,
     prepareWorkspaceForSshExecution,
@@ -64,9 +75,9 @@ vi.mock("@taskcore/adapter-utils/ssh", async () => {
 });
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     startAdapterExecutionTargetTaskcoreBridge,
@@ -89,14 +100,21 @@ describe("codex remote execution", () => {
   });
 
   it("prepares the workspace, syncs CODEX_HOME, and restores workspace changes for remote SSH execution", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-remote-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-remote-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const codexHomeDir = path.join(rootDir, "codex-home");
-    const managedRemoteWorkspace = "/remote/workspace/.taskcore-runtime/runs/run-1/workspace";
+    const managedRemoteWorkspace =
+      "/remote/workspace/.taskcore-runtime/runs/run-1/workspace";
     await mkdir(workspaceDir, { recursive: true });
     await mkdir(codexHomeDir, { recursive: true });
-    await writeFile(path.join(rootDir, "instructions.md"), "Use the remote workspace.\n", "utf8");
+    await writeFile(
+      path.join(rootDir, "instructions.md"),
+      "Use the remote workspace.\n",
+      "utf8",
+    );
     await writeFile(path.join(codexHomeDir, "auth.json"), "{}", "utf8");
     const alternateWorkspaceDir = path.join(rootDir, "alternate-workspace");
     await mkdir(alternateWorkspaceDir, { recursive: true });
@@ -165,14 +183,18 @@ describe("codex remote execution", () => {
     });
 
     expect(prepareWorkspaceForSshExecution).toHaveBeenCalledTimes(1);
-    expect(prepareWorkspaceForSshExecution).toHaveBeenCalledWith(expect.objectContaining({
-      localDir: workspaceDir,
-      remoteDir: managedRemoteWorkspace,
-    }));
+    expect(prepareWorkspaceForSshExecution).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localDir: workspaceDir,
+        remoteDir: managedRemoteWorkspace,
+      }),
+    );
     expect(syncDirectoryToSsh).toHaveBeenCalledTimes(1);
     // The home asset now syncs a curated *staged* allowlist dir, not the raw
     // managed CODEX_HOME, and carries no `exclude` denylist.
-    const homeSyncArgs = (syncDirectoryToSsh.mock.calls[0] as unknown[])?.[0] as {
+    const homeSyncArgs = (
+      syncDirectoryToSsh.mock.calls[0] as unknown[]
+    )?.[0] as {
       localDir: string;
       remoteDir: string;
       followSymlinks?: boolean;
@@ -180,16 +202,28 @@ describe("codex remote execution", () => {
     };
     expect(homeSyncArgs.localDir).not.toBe(codexHomeDir);
     expect(homeSyncArgs.localDir).toContain("taskcore-codex-home-sync");
-    expect(homeSyncArgs.remoteDir).toBe(`${managedRemoteWorkspace}/.taskcore-runtime/codex/home`);
+    expect(homeSyncArgs.remoteDir).toBe(
+      `${managedRemoteWorkspace}/.taskcore-runtime/codex/home`,
+    );
     expect(homeSyncArgs.followSymlinks).toBe(true);
     expect(homeSyncArgs.exclude).toBeUndefined();
 
     expect(runChildProcess).toHaveBeenCalledTimes(1);
     const call = runChildProcess.mock.calls[0] as unknown as
-      | [string, string, string[], { env: Record<string, string>; remoteExecution?: { remoteCwd: string } | null }]
+      | [
+          string,
+          string,
+          string[],
+          {
+            env: Record<string, string>;
+            remoteExecution?: { remoteCwd: string } | null;
+          },
+        ]
       | undefined;
     expect(call?.[2]).not.toContain("--skip-git-repo-check");
-    expect(call?.[3].env.CODEX_HOME).toBe(`${managedRemoteWorkspace}/.taskcore-runtime/codex/home`);
+    expect(call?.[3].env.CODEX_HOME).toBe(
+      `${managedRemoteWorkspace}/.taskcore-runtime/codex/home`,
+    );
     expect(call?.[3].env.TASKCORE_WORKSPACE_CWD).toBe(managedRemoteWorkspace);
     expect(call?.[3].env.TASKCORE_WORKSPACE_WORKTREE_PATH).toBeUndefined();
     expect(JSON.parse(call?.[3].env.TASKCORE_WORKSPACES_JSON ?? "[]")).toEqual([
@@ -210,14 +244,18 @@ describe("codex remote execution", () => {
     expect(call?.[3].remoteExecution?.remoteCwd).toBe(managedRemoteWorkspace);
     expect(startAdapterExecutionTargetTaskcoreBridge).toHaveBeenCalledTimes(1);
     expect(restoreWorkspaceFromSshExecution).toHaveBeenCalledTimes(1);
-    expect(restoreWorkspaceFromSshExecution).toHaveBeenCalledWith(expect.objectContaining({
-      localDir: workspaceDir,
-      remoteDir: managedRemoteWorkspace,
-    }));
+    expect(restoreWorkspaceFromSshExecution).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localDir: workspaceDir,
+        remoteDir: managedRemoteWorkspace,
+      }),
+    );
   });
 
   it("stages only the allowlist into the home asset: keeps config.toml/skills/auth, drops session+sqlite state, no exclude", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-allowlist-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-allowlist-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const codexHomeDir = path.join(rootDir, "codex-home");
@@ -227,7 +265,11 @@ describe("codex remote execution", () => {
     // Seed the managed home with the files Codex needs (config.toml carries a
     // provider-routing block; skills injected) plus large runtime decoys the
     // old 4-name denylist missed.
-    await writeFile(path.join(codexHomeDir, "auth.json"), '{"tokens":{"account_id":"a","refresh_token":"r"}}', "utf8");
+    await writeFile(
+      path.join(codexHomeDir, "auth.json"),
+      '{"tokens":{"account_id":"a","refresh_token":"r"}}',
+      "utf8",
+    );
     await writeFile(
       path.join(codexHomeDir, "config.toml"),
       'model_provider = "bifrost"\n\n[model_providers.bifrost]\nname = "bifrost"\n',
@@ -235,23 +277,39 @@ describe("codex remote execution", () => {
     );
     await writeFile(path.join(codexHomeDir, "instructions.md"), "hi\n", "utf8");
     await mkdir(path.join(codexHomeDir, "skills", "demo"), { recursive: true });
-    await writeFile(path.join(codexHomeDir, "skills", "demo", "SKILL.md"), "# demo\n", "utf8");
+    await writeFile(
+      path.join(codexHomeDir, "skills", "demo", "SKILL.md"),
+      "# demo\n",
+      "utf8",
+    );
     // Decoys:
     await writeFile(path.join(codexHomeDir, "logs_2.sqlite"), "x", "utf8");
     await writeFile(path.join(codexHomeDir, "state_5.sqlite"), "x", "utf8");
     await mkdir(path.join(codexHomeDir, "sessions"), { recursive: true });
-    await writeFile(path.join(codexHomeDir, "sessions", "rollout.jsonl"), "x", "utf8");
+    await writeFile(
+      path.join(codexHomeDir, "sessions", "rollout.jsonl"),
+      "x",
+      "utf8",
+    );
     await mkdir(path.join(codexHomeDir, "tmp"), { recursive: true });
     await symlink("/usr/bin/env", path.join(codexHomeDir, "tmp", "arg0"));
 
     // Snapshot the staged dir contents at sync time — execute() removes the
     // staged temp dir on teardown, so we cannot read it after execute returns.
-    let stagedSnapshot:
-      | { localDir: string; entries: string[]; skillEntries: string[]; configToml: string; authJson: string }
-      | null = null;
-    (syncDirectoryToSsh as unknown as {
-      mockImplementationOnce: (fn: (args: { localDir: string }) => Promise<void>) => void;
-    }).mockImplementationOnce(async (args: { localDir: string }) => {
+    let stagedSnapshot: {
+      localDir: string;
+      entries: string[];
+      skillEntries: string[];
+      configToml: string;
+      authJson: string;
+    } | null = null;
+    (
+      syncDirectoryToSsh as unknown as {
+        mockImplementationOnce: (
+          fn: (args: { localDir: string }) => Promise<void>,
+        ) => void;
+      }
+    ).mockImplementationOnce(async (args: { localDir: string }) => {
       const entries = (await readdir(args.localDir)).sort();
       const skillEntries = entries.includes("skills")
         ? (await readdir(path.join(args.localDir, "skills"))).sort()
@@ -262,7 +320,13 @@ describe("codex remote execution", () => {
       const authJson = entries.includes("auth.json")
         ? await readFile(path.join(args.localDir, "auth.json"), "utf8")
         : "";
-      stagedSnapshot = { localDir: args.localDir, entries, skillEntries, configToml, authJson };
+      stagedSnapshot = {
+        localDir: args.localDir,
+        entries,
+        skillEntries,
+        configToml,
+        authJson,
+      };
     });
 
     await execute({
@@ -322,7 +386,13 @@ describe("codex remote execution", () => {
         .filter((e) => e !== "config.json") // no config.json was seeded
         .sort(),
     );
-    for (const decoy of ["logs_2.sqlite", "state_5.sqlite", "sessions", "tmp", "plugins"]) {
+    for (const decoy of [
+      "logs_2.sqlite",
+      "state_5.sqlite",
+      "sessions",
+      "tmp",
+      "plugins",
+    ]) {
       expect(snap.entries).not.toContain(decoy);
     }
     // Phase-3 behavioral invariants: provider routing + skills + auth survive staging.
@@ -332,11 +402,15 @@ describe("codex remote execution", () => {
     expect(snap.authJson).toContain("refresh_token");
 
     // The staged temp dir is removed after execute completes (cleanup on teardown).
-    await expect(readdir(snap.localDir)).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readdir(snap.localDir)).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   it("does not resume saved Codex sessions for remote SSH execution without a matching remote identity", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-remote-resume-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-remote-resume-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const codexHomeDir = path.join(rootDir, "codex-home");
@@ -391,7 +465,8 @@ describe("codex remote execution", () => {
     });
 
     expect(runChildProcess).toHaveBeenCalledTimes(1);
-    const call = runChildProcess.mock.calls[0] as unknown as [string, string, string[]] | undefined;
+    const call = runChildProcess.mock.calls[0] as unknown as
+      [string, string, string[]] | undefined;
     expect(call?.[2]).toEqual([
       "exec",
       "--json",
@@ -401,11 +476,14 @@ describe("codex remote execution", () => {
   });
 
   it("resumes saved Codex sessions for remote SSH execution when the remote identity matches", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-remote-resume-match-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-remote-resume-match-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const codexHomeDir = path.join(rootDir, "codex-home");
-    const managedRemoteWorkspace = "/remote/workspace/.taskcore-runtime/runs/run-ssh-resume/workspace";
+    const managedRemoteWorkspace =
+      "/remote/workspace/.taskcore-runtime/runs/run-ssh-resume/workspace";
     await mkdir(workspaceDir, { recursive: true });
     await mkdir(codexHomeDir, { recursive: true });
     await writeFile(path.join(codexHomeDir, "auth.json"), "{}", "utf8");
@@ -464,7 +542,8 @@ describe("codex remote execution", () => {
     });
 
     expect(runChildProcess).toHaveBeenCalledTimes(1);
-    const call = runChildProcess.mock.calls[0] as unknown as [string, string, string[]] | undefined;
+    const call = runChildProcess.mock.calls[0] as unknown as
+      [string, string, string[]] | undefined;
     expect(call?.[2]).toEqual([
       "exec",
       "--json",
@@ -476,11 +555,14 @@ describe("codex remote execution", () => {
   });
 
   it("uses the provider-neutral execution target contract for remote SSH execution", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-target-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-target-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const codexHomeDir = path.join(rootDir, "codex-home");
-    const managedRemoteWorkspace = "/remote/workspace/.taskcore-runtime/runs/run-target/workspace";
+    const managedRemoteWorkspace =
+      "/remote/workspace/.taskcore-runtime/runs/run-target/workspace";
     await mkdir(workspaceDir, { recursive: true });
     await mkdir(codexHomeDir, { recursive: true });
     await writeFile(path.join(codexHomeDir, "auth.json"), "{}", "utf8");
@@ -544,7 +626,15 @@ describe("codex remote execution", () => {
     expect(syncDirectoryToSsh).toHaveBeenCalledTimes(1);
     expect(runChildProcess).toHaveBeenCalledTimes(1);
     const call = runChildProcess.mock.calls[0] as unknown as
-      | [string, string, string[], { env: Record<string, string>; remoteExecution?: { remoteCwd: string } | null }]
+      | [
+          string,
+          string,
+          string[],
+          {
+            env: Record<string, string>;
+            remoteExecution?: { remoteCwd: string } | null;
+          },
+        ]
       | undefined;
     expect(call?.[2]).toEqual([
       "exec",
@@ -554,12 +644,16 @@ describe("codex remote execution", () => {
       "session-123",
       "-",
     ]);
-    expect(call?.[3].env.CODEX_HOME).toBe(`${managedRemoteWorkspace}/.taskcore-runtime/codex/home`);
+    expect(call?.[3].env.CODEX_HOME).toBe(
+      `${managedRemoteWorkspace}/.taskcore-runtime/codex/home`,
+    );
     expect(call?.[3].remoteExecution?.remoteCwd).toBe(managedRemoteWorkspace);
   });
 
   it("runs in place at the authoritative root without archive prepare or restore", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-in-place-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-in-place-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const codexHomeDir = path.join(rootDir, "codex-home");
@@ -576,8 +670,17 @@ describe("codex remote execution", () => {
         adapterType: "codex_local",
         adapterConfig: {},
       },
-      runtime: { sessionId: null, sessionParams: null, sessionDisplayId: null, taskKey: null },
-      config: { engine: "cli", command: "codex", env: { CODEX_HOME: codexHomeDir } },
+      runtime: {
+        sessionId: null,
+        sessionParams: null,
+        sessionDisplayId: null,
+        taskKey: null,
+      },
+      config: {
+        engine: "cli",
+        command: "codex",
+        env: { CODEX_HOME: codexHomeDir },
+      },
       context: {
         taskcoreWorkspace: {
           cwd: workspaceDir,
@@ -611,14 +714,24 @@ describe("codex remote execution", () => {
     expect(prepareWorkspaceForSshExecution).not.toHaveBeenCalled();
     expect(syncDirectoryToSsh).toHaveBeenCalledTimes(1);
     expect(restoreWorkspaceFromSshExecution).not.toHaveBeenCalled();
-    const homeSyncArgs = (syncDirectoryToSsh.mock.calls[0] as unknown[])?.[0] as {
+    const homeSyncArgs = (
+      syncDirectoryToSsh.mock.calls[0] as unknown[]
+    )?.[0] as {
       localDir: string;
       remoteDir: string;
     };
     expect(homeSyncArgs.localDir).toContain("taskcore-codex-home-sync");
     expect(homeSyncArgs.remoteDir).toBe("/app/.taskcore-runtime/codex/home");
     const call = runChildProcess.mock.calls[0] as unknown as
-      | [string, string, string[], { env: Record<string, string>; remoteExecution?: { remoteCwd: string } | null }]
+      | [
+          string,
+          string,
+          string[],
+          {
+            env: Record<string, string>;
+            remoteExecution?: { remoteCwd: string } | null;
+          },
+        ]
       | undefined;
     expect(call?.[3].env.TASKCORE_WORKSPACE_CWD).toBe("/app");
     expect(call?.[3].env.TASKCORE_WORKSPACE_REALIZATION_MODE).toBe("in_place");
@@ -628,7 +741,9 @@ describe("codex remote execution", () => {
   });
 
   it("reselects the full assignment and bootstrap guidance after a failed resume", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-cli-fallback-context-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-cli-fallback-context-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     await mkdir(workspaceDir, { recursive: true });
@@ -648,8 +763,14 @@ describe("codex remote execution", () => {
         signal: null,
         timedOut: false,
         stdout: [
-          JSON.stringify({ type: "thread.started", thread_id: "session-fresh" }),
-          JSON.stringify({ type: "turn.completed", usage: { input_tokens: 1, output_tokens: 1 } }),
+          JSON.stringify({
+            type: "thread.started",
+            thread_id: "session-fresh",
+          }),
+          JSON.stringify({
+            type: "turn.completed",
+            usage: { input_tokens: 1, output_tokens: 1 },
+          }),
         ].join("\\n"),
         stderr: "",
         pid: 124,
@@ -684,15 +805,32 @@ describe("codex remote execution", () => {
     });
 
     expect(runChildProcess).toHaveBeenCalledTimes(2);
-    const first = (runChildProcess.mock.calls[0] as unknown as [string, string, string[], { stdin?: string }])[3]?.stdin ?? "";
-    const retry = (runChildProcess.mock.calls[1] as unknown as [string, string, string[], { stdin?: string }])[3]?.stdin ?? "";
+    const first =
+      (
+        runChildProcess.mock.calls[0] as unknown as [
+          string,
+          string,
+          string[],
+          { stdin?: string },
+        ]
+      )[3]?.stdin ?? "";
+    const retry =
+      (
+        runChildProcess.mock.calls[1] as unknown as [
+          string,
+          string,
+          string[],
+          { stdin?: string },
+        ]
+      )[3]?.stdin ?? "";
     expect(first).toContain("## Compact assignment");
     expect(first).not.toContain("Explain the next step before starting work.");
     expect(retry).toContain("## Owned assignment");
     expect(retry).toContain("Explain the next step before starting work.");
     expect(retry).not.toContain("## Compact assignment");
-    expect(retry.indexOf("comment-first")).toBeLessThan(retry.indexOf("comment-second"));
+    expect(retry.indexOf("comment-first")).toBeLessThan(
+      retry.indexOf("comment-second"),
+    );
     expect(retry.split("Append the same ledger entry.")).toHaveLength(3);
   });
-
 });

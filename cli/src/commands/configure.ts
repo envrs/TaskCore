@@ -26,7 +26,8 @@ import {
 } from "../config/home.js";
 import { printTaskcoreCliBanner } from "../utils/banner.js";
 
-type Section = "llm" | "database" | "logging" | "server" | "storage" | "secrets";
+type Section =
+  "llm" | "database" | "logging" | "server" | "storage" | "secrets";
 
 const SECTION_LABELS: Record<Section, string> = {
   llm: "LLM Provider",
@@ -101,7 +102,9 @@ export async function configure(opts: {
   try {
     config = readConfig(opts.config) ?? defaultConfig();
     for (const warning of findTaskcoreConfigKeyWarnings(config)) {
-      p.log.warn(`Unknown config key ${warning.path}; did you mean ${warning.suggestion}? It will be preserved.`);
+      p.log.warn(
+        `Unknown config key ${warning.path}; did you mean ${warning.suggestion}? It will be preserved.`,
+      );
     }
   } catch (err) {
     const backupPath = backupInvalidConfig(opts.config);
@@ -135,7 +138,9 @@ export async function configure(opts: {
   let section: Section | undefined = opts.section as Section | undefined;
 
   if (section && !SECTION_LABELS[section]) {
-    p.log.error(`Unknown section: ${section}. Choose from: ${Object.keys(SECTION_LABELS).join(", ")}`);
+    p.log.error(
+      `Unknown section: ${section}. Choose from: ${Object.keys(SECTION_LABELS).join(", ")}`,
+    );
     p.outro("");
     process.exitCode = 1;
     return;
@@ -197,13 +202,27 @@ export async function configure(opts: {
         {
           const keyResult = ensureLocalSecretsKeyFile(config, configPath);
           if (keyResult.status === "created") {
-            p.log.success(`Created local secrets key file at ${pc.dim(keyResult.path)}`);
+            p.log.success(
+              `Created local secrets key file at ${pc.dim(keyResult.path)}`,
+            );
           } else if (keyResult.status === "existing") {
-            p.log.message(pc.dim(`Using existing local secrets key file at ${keyResult.path}`));
+            p.log.message(
+              pc.dim(
+                `Using existing local secrets key file at ${keyResult.path}`,
+              ),
+            );
           } else if (keyResult.status === "skipped_provider") {
-            p.log.message(pc.dim("Skipping local key file management for non-local provider"));
+            p.log.message(
+              pc.dim(
+                "Skipping local key file management for non-local provider",
+              ),
+            );
           } else {
-            p.log.message(pc.dim("Skipping local key file management because TASKCORE_SECRETS_MASTER_KEY is set"));
+            p.log.message(
+              pc.dim(
+                "Skipping local key file management because TASKCORE_SECRETS_MASTER_KEY is set",
+              ),
+            );
           }
         }
         break;
@@ -219,7 +238,9 @@ export async function configure(opts: {
     if (written) {
       p.log.success(`${SECTION_LABELS[section]} configuration updated.`);
     } else {
-      p.log.message(pc.dim(`${SECTION_LABELS[section]} configuration unchanged.`));
+      p.log.message(
+        pc.dim(`${SECTION_LABELS[section]} configuration unchanged.`),
+      );
     }
 
     // If section was provided via CLI flag, don't loop

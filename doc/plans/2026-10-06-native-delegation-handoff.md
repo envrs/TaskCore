@@ -58,13 +58,12 @@ shipped the smaller planning skills; its report publication is separate.
 
 - [x] Record merged #15218 and #15296 in the working checklist.
 - [x] Reproduce both relationship cases: second completion leaves only the
-  original wake against unchanged production.
+      original wake against unchanged production.
 - [x] Verify the scoped correction and replay behavior: all 20 database-backed
-  control-plane conformance tests pass, including exact watchdog and near-match
-  origin controls. Repository checks are still running.
+      control-plane conformance tests pass, including exact watchdog and near-match
+      origin controls. Repository checks are still running.
 - [ ] Complete frozen live comparison and retain original evidence.
 - [ ] Complete PR review and CI.
-
 
 ## Active-parent failure and bounded correction
 
@@ -95,7 +94,6 @@ The original baseline remains frozen. Measure only the corrected candidate in
 the same two cases, one attempt each, under the existing bounds and oracle. Keep
 all previous runs and inspect final artifact delivery separately from machine
 pass totals. Live qualification and fresh CI/review remain pending; keep draft.
-
 
 ### Concurrency review and cancelled intermediate campaign
 

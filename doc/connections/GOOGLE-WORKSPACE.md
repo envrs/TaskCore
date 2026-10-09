@@ -62,17 +62,17 @@ Google makes Workspace MCP generally available.
 
 ## App matrix
 
-| App card | MCP endpoint | Capability choices |
-| --- | --- | --- |
-| Gmail | `https://gmailmcp.googleapis.com/mcp/v1` | Read only; read and create drafts |
-| Google Drive | `https://drivemcp.googleapis.com/mcp/v1` | Read only; read and create files |
-| Google Docs | `https://docsmcp.googleapis.com/mcp/v1` | Read only; read and edit |
-| Google Sheets | `https://sheetsmcp.googleapis.com/mcp/v1` | Read only; read and edit; share selected sheets with the robot account |
-| Google Slides | `https://slidesmcp.googleapis.com/mcp/v1` | Read only; read and edit |
-| Google Calendar | `https://calendarmcp.googleapis.com/mcp/v1` | Read only; read and manage events |
-| Google Chat | `https://chatmcp.googleapis.com/mcp/v1` | Read only; read and send messages |
-| Google People | `https://people.googleapis.com/mcp/v1` | Read contacts |
-| Google Workspace Search | `https://workspacemcp.googleapis.com/mcp/v1` | Search Workspace |
+| App card                | MCP endpoint                                 | Capability choices                                                     |
+| ----------------------- | -------------------------------------------- | ---------------------------------------------------------------------- |
+| Gmail                   | `https://gmailmcp.googleapis.com/mcp/v1`     | Read only; read and create drafts                                      |
+| Google Drive            | `https://drivemcp.googleapis.com/mcp/v1`     | Read only; read and create files                                       |
+| Google Docs             | `https://docsmcp.googleapis.com/mcp/v1`      | Read only; read and edit                                               |
+| Google Sheets           | `https://sheetsmcp.googleapis.com/mcp/v1`    | Read only; read and edit; share selected sheets with the robot account |
+| Google Slides           | `https://slidesmcp.googleapis.com/mcp/v1`    | Read only; read and edit                                               |
+| Google Calendar         | `https://calendarmcp.googleapis.com/mcp/v1`  | Read only; read and manage events                                      |
+| Google Chat             | `https://chatmcp.googleapis.com/mcp/v1`      | Read only; read and send messages                                      |
+| Google People           | `https://people.googleapis.com/mcp/v1`       | Read contacts                                                          |
+| Google Workspace Search | `https://workspacemcp.googleapis.com/mcp/v1` | Search Workspace                                                       |
 
 The setup flow asks for the capability first. When the managed method is
 available, it uses Taskcore by default. A small **Use your own Google OAuth app**
@@ -113,17 +113,17 @@ Google grants. Google's revocation endpoint can invalidate all grants for the
 same user and managed client, so Taskcore does not call it while removing one
 Workspace profile.
 
-| App | Read profile | Write profile |
-| --- | --- | --- |
-| Gmail | `gmail.read` | `gmail.draft` |
-| Drive | `drive.read` | `drive.write` |
-| Docs | `docs.read` | `docs.write` |
-| Sheets | `sheets.read` | `sheets.write` |
-| Slides | `slides.read` | `slides.write` |
-| Calendar | `calendar.read` | `calendar.write` |
-| Chat | `chat.read` | `chat.write` |
-| People | `people.read` | — |
-| Workspace Search | `workspace-search.read` | — |
+| App              | Read profile            | Write profile    |
+| ---------------- | ----------------------- | ---------------- |
+| Gmail            | `gmail.read`            | `gmail.draft`    |
+| Drive            | `drive.read`            | `drive.write`    |
+| Docs             | `docs.read`             | `docs.write`     |
+| Sheets           | `sheets.read`           | `sheets.write`   |
+| Slides           | `slides.read`           | `slides.write`   |
+| Calendar         | `calendar.read`         | `calendar.write` |
+| Chat             | `chat.read`             | `chat.write`     |
+| People           | `people.read`           | —                |
+| Workspace Search | `workspace-search.read` | —                |
 
 Every new signed request includes a profile. The Cloud broker rejects a request
 whose provider, profile, or exact scope set does not match its closed registry.

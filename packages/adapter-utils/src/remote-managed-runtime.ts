@@ -1,5 +1,8 @@
 import path from "node:path";
-import { GIT_ARCHIVE_EXCLUDES, PROJECT_REPOSITORIES_DIR } from "./git-workspace-sync.js";
+import {
+  GIT_ARCHIVE_EXCLUDES,
+  PROJECT_REPOSITORIES_DIR,
+} from "./git-workspace-sync.js";
 import {
   type SshRemoteExecutionSpec,
   prepareWorkspaceForSshExecution,
@@ -13,7 +16,10 @@ import {
   type SandboxAdditionalSource,
   type SandboxManagedRuntimeAssetRestoreContext,
 } from "./sandbox-managed-runtime.js";
-import { captureDirectorySnapshot, type DirectorySnapshot } from "./workspace-restore-merge.js";
+import {
+  captureDirectorySnapshot,
+  type DirectorySnapshot,
+} from "./workspace-restore-merge.js";
 import type { RuntimeProgressSink } from "./runtime-progress.js";
 
 // The fixed heavy-directory excludes every referenced project drops,
@@ -74,14 +80,23 @@ function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'"'"'`)}'`;
 }
 
-async function readRemoteFile(spec: SshRemoteExecutionSpec, remotePath: string): Promise<Buffer> {
-  const result = await runSshCommand(spec, `base64 < ${shellQuote(remotePath)}`, {
-    maxBuffer: 1024 * 1024,
-  });
+async function readRemoteFile(
+  spec: SshRemoteExecutionSpec,
+  remotePath: string,
+): Promise<Buffer> {
+  const result = await runSshCommand(
+    spec,
+    `base64 < ${shellQuote(remotePath)}`,
+    {
+      maxBuffer: 1024 * 1024,
+    },
+  );
   return Buffer.from(result.stdout.replace(/\s+/g, ""), "base64");
 }
 
-export function buildRemoteExecutionSessionIdentity(spec: SshRemoteExecutionSpec | null) {
+export function buildRemoteExecutionSessionIdentity(
+  spec: SshRemoteExecutionSpec | null,
+) {
   if (!spec) return null;
   return {
     transport: "ssh",
@@ -92,7 +107,10 @@ export function buildRemoteExecutionSessionIdentity(spec: SshRemoteExecutionSpec
   } as const;
 }
 
-export function remoteExecutionSessionMatches(saved: unknown, current: SshRemoteExecutionSpec | null): boolean {
+export function remoteExecutionSessionMatches(
+  saved: unknown,
+  current: SshRemoteExecutionSpec | null,
+): boolean {
   const currentIdentity = buildRemoteExecutionSessionIdentity(current);
   if (!currentIdentity) return false;
 
@@ -122,7 +140,8 @@ export async function prepareRemoteManagedRuntime(input: {
   // child task wires it into the workspace/asset transfers.
   onProgress?: RuntimeProgressSink;
 }): Promise<PreparedRemoteManagedRuntime> {
-  const baseWorkspaceRemoteDir = input.workspaceRemoteDir ?? input.spec.remoteCwd;
+  const baseWorkspaceRemoteDir =
+    input.workspaceRemoteDir ?? input.spec.remoteCwd;
   const syncWorkspace = input.syncWorkspace !== false;
   const workspaceRemoteDir = syncWorkspace
     ? path.posix.join(
@@ -133,7 +152,11 @@ export async function prepareRemoteManagedRuntime(input: {
         "workspace",
       )
     : baseWorkspaceRemoteDir;
-  const runtimeRootDir = path.posix.join(workspaceRemoteDir, ".taskcore-runtime", input.adapterKey);
+  const runtimeRootDir = path.posix.join(
+    workspaceRemoteDir,
+    ".taskcore-runtime",
+    input.adapterKey,
+  );
 
   const preparedWorkspace = syncWorkspace
     ? await prepareWorkspaceForSshExecution({
@@ -152,18 +175,31 @@ export async function prepareRemoteManagedRuntime(input: {
           ? [
               ...GIT_ARCHIVE_EXCLUDES,
               ".taskcore-runtime",
-              ...(projectRepositories.length > 0 ? [PROJECT_REPOSITORIES_DIR] : []),
+              ...(projectRepositories.length > 0
+                ? [PROJECT_REPOSITORIES_DIR]
+                : []),
             ]
-          : [".taskcore-runtime", ...(input.workspaceFileMode === "all" ? input.workspaceExclude ?? [] : [])],
+          : [
+              ".taskcore-runtime",
+              ...(input.workspaceFileMode === "all"
+                ? (input.workspaceExclude ?? [])
+                : []),
+            ],
       })
     : null;
-  const repositoryBaselines: Array<{ path: string; baselineSnapshot: DirectorySnapshot }> = [];
+  const repositoryBaselines: Array<{
+    path: string;
+    baselineSnapshot: DirectorySnapshot;
+  }> = [];
   for (const repository of projectRepositories) {
     repositoryBaselines.push({
       path: repository,
-      baselineSnapshot: await captureDirectorySnapshot(path.join(input.workspaceLocalDir, repository), {
-        exclude: [...GIT_ARCHIVE_EXCLUDES, ".taskcore-runtime"],
-      }),
+      baselineSnapshot: await captureDirectorySnapshot(
+        path.join(input.workspaceLocalDir, repository),
+        {
+          exclude: [...GIT_ARCHIVE_EXCLUDES, ".taskcore-runtime"],
+        },
+      ),
     });
   }
 
@@ -207,7 +243,9 @@ export async function prepareRemoteManagedRuntime(input: {
     const { localPath, projectId, ignoreResolution } = source;
     try {
       if (!path.posix.isAbsolute(localPath)) {
-        throw new Error(`additional source localPath is not an absolute path: ${localPath}`);
+        throw new Error(
+          `additional source localPath is not an absolute path: ${localPath}`,
+        );
       }
       if (
         projectId.length === 0 ||
@@ -215,12 +253,16 @@ export async function prepareRemoteManagedRuntime(input: {
         projectId.includes("\\") ||
         projectId.includes("..")
       ) {
-        throw new Error(`additional source projectId is not a simple path segment: ${projectId}`);
+        throw new Error(
+          `additional source projectId is not a simple path segment: ${projectId}`,
+        );
       }
       // Fail closed: a project whose ignore resolution failed is not staged at
       // all — the existing per-project skip-and-warn path below handles it.
       if (ignoreResolution.kind === "failed") {
-        throw new Error(`referenced project ignore resolution failed: ${ignoreResolution.reason}`);
+        throw new Error(
+          `referenced project ignore resolution failed: ${ignoreResolution.reason}`,
+        );
       }
       const remoteDir = path.posix.join(runtimeRootDir, `project-${projectId}`);
       const exclude = mergeExcludes(

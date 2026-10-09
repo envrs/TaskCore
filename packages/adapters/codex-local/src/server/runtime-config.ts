@@ -16,9 +16,11 @@ type ParsedCodexProvidersConfig = {
 // table header, while [model_providers.*] tables must not swallow the user's
 // root keys, so the managed content is split into a root block prepended to
 // the file and a tables block appended to it.
-const MANAGED_ROOT_BEGIN = "# >>> taskcore codex providers (root) -- managed, do not edit >>>";
+const MANAGED_ROOT_BEGIN =
+  "# >>> taskcore codex providers (root) -- managed, do not edit >>>";
 const MANAGED_ROOT_END = "# <<< taskcore codex providers (root) <<<";
-const MANAGED_TABLES_BEGIN = "# >>> taskcore codex providers (tables) -- managed, do not edit >>>";
+const MANAGED_TABLES_BEGIN =
+  "# >>> taskcore codex providers (tables) -- managed, do not edit >>>";
 const MANAGED_TABLES_END = "# <<< taskcore codex providers (tables) <<<";
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -31,15 +33,23 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 // named env var at request time); placeholder expansion exists for fields that
 // must carry a literal value (e.g. http_headers). Unresolvable placeholders are
 // left intact.
-function expandEnvPlaceholders<T>(value: T, resolve: (name: string) => string | undefined): T {
+function expandEnvPlaceholders<T>(
+  value: T,
+  resolve: (name: string) => string | undefined,
+): T {
   if (typeof value === "string") {
-    return value.replace(/\{env:([A-Za-z_][A-Za-z0-9_]*)\}/g, (match, name: string) => {
-      const resolved = resolve(name);
-      return resolved !== undefined && resolved.length > 0 ? resolved : match;
-    }) as unknown as T;
+    return value.replace(
+      /\{env:([A-Za-z_][A-Za-z0-9_]*)\}/g,
+      (match, name: string) => {
+        const resolved = resolve(name);
+        return resolved !== undefined && resolved.length > 0 ? resolved : match;
+      },
+    ) as unknown as T;
   }
   if (Array.isArray(value)) {
-    return value.map((entry) => expandEnvPlaceholders(entry, resolve)) as unknown as T;
+    return value.map((entry) =>
+      expandEnvPlaceholders(entry, resolve),
+    ) as unknown as T;
   }
   if (isPlainObject(value)) {
     const out: Record<string, unknown> = {};
@@ -85,11 +95,15 @@ function parseCodexProvidersConfig(
   } catch {
     // Surface the misconfiguration instead of silently dropping the provider
     // config; an unparseable value would otherwise be undiagnosable.
-    notes.push("TASKCORE_CODEX_PROVIDERS contains invalid JSON; custom providers ignored.");
+    notes.push(
+      "TASKCORE_CODEX_PROVIDERS contains invalid JSON; custom providers ignored.",
+    );
     return null;
   }
   if (!isPlainObject(parsed)) {
-    notes.push("TASKCORE_CODEX_PROVIDERS is set but is not a JSON object; custom providers ignored.");
+    notes.push(
+      "TASKCORE_CODEX_PROVIDERS is set but is not a JSON object; custom providers ignored.",
+    );
     return null;
   }
   const rawProviders = parsed.providers;
@@ -126,7 +140,8 @@ function parseCodexProvidersConfig(
     );
   }
   const modelProvider =
-    typeof parsed.model_provider === "string" && parsed.model_provider.trim().length > 0
+    typeof parsed.model_provider === "string" &&
+    parsed.model_provider.trim().length > 0
       ? parsed.model_provider.trim()
       : null;
   // A selector pointing at a provider that did not survive filtering (or was
@@ -175,7 +190,8 @@ function tomlKey(key: string): string {
 function tomlValue(value: unknown): string | null {
   if (typeof value === "string") return `"${escapeTomlString(value)}"`;
   if (typeof value === "boolean") return value ? "true" : "false";
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : null;
+  if (typeof value === "number")
+    return Number.isFinite(value) ? String(value) : null;
   if (Array.isArray(value)) {
     const entries = value.map((entry) => tomlValue(entry));
     if (entries.some((entry) => entry === null)) return null;
@@ -193,7 +209,10 @@ function tomlValue(value: unknown): string | null {
   return null;
 }
 
-function emitProviderTable(name: string, fields: Record<string, unknown>): string[] {
+function emitProviderTable(
+  name: string,
+  fields: Record<string, unknown>,
+): string[] {
   const lines = [`[model_providers.${tomlKey(name)}]`];
   for (const [key, value] of Object.entries(fields)) {
     const emitted = tomlValue(value);
@@ -203,7 +222,11 @@ function emitProviderTable(name: string, fields: Record<string, unknown>): strin
   return lines;
 }
 
-function stripManagedBlock(lines: string[], begin: string, end: string): string[] {
+function stripManagedBlock(
+  lines: string[],
+  begin: string,
+  end: string,
+): string[] {
   const out: string[] = [];
   let inBlock = false;
   for (const line of lines) {
@@ -239,7 +262,9 @@ function parseTableHeaderPath(line: string): string[] | null {
   return match[1]
     .split(".")
     .map((segment) => segment.trim())
-    .map((segment) => segment.replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1"));
+    .map((segment) =>
+      segment.replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1"),
+    );
 }
 
 // Remove pre-existing definitions that would conflict with (or override) the
@@ -269,7 +294,11 @@ function stripConflictingDefinitions(
     } else if (skippingSection) {
       continue;
     }
-    if (inRootRegion && removeRootModelProvider && /^\s*model_provider\s*=/.test(line)) {
+    if (
+      inRootRegion &&
+      removeRootModelProvider &&
+      /^\s*model_provider\s*=/.test(line)
+    ) {
       continue;
     }
     out.push(line);
@@ -277,7 +306,10 @@ function stripConflictingDefinitions(
   return out.join("\n");
 }
 
-function buildMergedConfigToml(base: string, parsed: ParsedCodexProvidersConfig): string {
+function buildMergedConfigToml(
+  base: string,
+  parsed: ParsedCodexProvidersConfig,
+): string {
   const sections: string[] = [];
   if (parsed.modelProvider) {
     sections.push(
@@ -337,7 +369,8 @@ export async function prepareCodexRuntimeConfig(input: {
   env: Record<string, string>;
   codexHome: string | null;
 }): Promise<PreparedCodexRuntimeConfig> {
-  const resolveEnv = (name: string): string | undefined => input.env[name] ?? process.env[name];
+  const resolveEnv = (name: string): string | undefined =>
+    input.env[name] ?? process.env[name];
   const notes: string[] = [];
   const parsed = parseCodexProvidersConfig(
     input.env.TASKCORE_CODEX_PROVIDERS ?? process.env.TASKCORE_CODEX_PROVIDERS,
@@ -349,7 +382,10 @@ export async function prepareCodexRuntimeConfig(input: {
     // Self-heal state left behind by a crashed run (cleanup() never ran).
     if (input.codexHome) {
       const configTomlPath = path.join(input.codexHome, "config.toml");
-      const reason = notes.length === 0 ? " (TASKCORE_CODEX_PROVIDERS is no longer set)" : "";
+      const reason =
+        notes.length === 0
+          ? " (TASKCORE_CODEX_PROVIDERS is no longer set)"
+          : "";
       const backupPath = configTomlBackupPath(configTomlPath);
       const backup = await readFileOrNull(backupPath);
       if (backup !== null) {
@@ -398,7 +434,9 @@ export async function prepareCodexRuntimeConfig(input: {
   const backupPath = configTomlBackupPath(configTomlPath);
   // A surviving backup from an interrupted run is the true pre-run content;
   // the current config.toml would still carry that run's managed blocks.
-  const original = (await readFileOrNull(backupPath)) ?? (await readFileOrNull(configTomlPath));
+  const original =
+    (await readFileOrNull(backupPath)) ??
+    (await readFileOrNull(configTomlPath));
   const providerNames = Object.keys(parsed.providers);
   const base = stripConflictingDefinitions(
     stripManagedCodexProviderBlocks(original ?? ""),
@@ -409,13 +447,19 @@ export async function prepareCodexRuntimeConfig(input: {
   // Persist the original BEFORE writing the merged file so a run that never
   // reaches cleanup() can be restored by the next prepare.
   await fs.writeFile(backupPath, original ?? "", "utf8");
-  await fs.writeFile(configTomlPath, buildMergedConfigToml(base, parsed), "utf8");
+  await fs.writeFile(
+    configTomlPath,
+    buildMergedConfigToml(base, parsed),
+    "utf8",
+  );
 
   return {
     notes: [
       ...notes,
       `Merged ${providerNames.length} custom Codex model provider(s) from TASKCORE_CODEX_PROVIDERS into "${configTomlPath}": ${providerNames.join(", ")}${
-        parsed.modelProvider ? `; selected model_provider "${parsed.modelProvider}"` : ""
+        parsed.modelProvider
+          ? `; selected model_provider "${parsed.modelProvider}"`
+          : ""
       }.`,
     ],
     cleanup: async () => {

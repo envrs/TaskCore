@@ -24,10 +24,10 @@ Design review is complete and the user authorized production integration and liv
 
 The review server uses the build from this worktree on port 6137:
 
-| Provider | Complete journey |
-| --- | --- |
-| Zapier | `apps-connections-zapier--complete-setup-journey` |
-| Arcade | `apps-connections-arcade--complete-setup-journey` |
+| Provider | Complete journey                                    |
+| -------- | --------------------------------------------------- |
+| Zapier   | `apps-connections-zapier--complete-setup-journey`   |
+| Arcade   | `apps-connections-arcade--complete-setup-journey`   |
 | Composio | `apps-connections-composio--complete-setup-journey` |
 | Executor | `apps-connections-executor--complete-setup-journey` |
 
@@ -79,12 +79,12 @@ node scripts/serve-storybook-static.mjs --port 6137
 
 ## Provider setup contracts
 
-| Provider | New setup | Permission boundary |
-| --- | --- | --- |
-| Zapier | Paste generated secret-bearing URL; alternatively endpoint plus bearer token. | Recommend Managed mode for individual action controls. Agentic mode exposes discovery/execution tools; permissions cover the whole exposed call. |
-| Arcade | Paste gateway URL and sign in through the gateway’s configured User Source. Advanced: bearer API key plus `Arcade-User-ID`. | Actual exposed gateway tools. Individual apps can require further authorization. |
-| Composio | Prefill `https://connect.composio.dev/mcp`, then authenticate. Advanced: externally configured session URL and headers. | Connect’s discovery, execution, connection-management and sandbox tools. Direct-tools sessions can expose individual actions. |
-| Executor | Paste hosted workspace URL or reachable self-hosted HTTP endpoint and authenticate. Advanced user API key when supported. | Execution and helper tools; action policies remain in Executor. Preserve execution and MCP session identity for resume. |
+| Provider | New setup                                                                                                                   | Permission boundary                                                                                                                              |
+| -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Zapier   | Paste generated secret-bearing URL; alternatively endpoint plus bearer token.                                               | Recommend Managed mode for individual action controls. Agentic mode exposes discovery/execution tools; permissions cover the whole exposed call. |
+| Arcade   | Paste gateway URL and sign in through the gateway’s configured User Source. Advanced: bearer API key plus `Arcade-User-ID`. | Actual exposed gateway tools. Individual apps can require further authorization.                                                                 |
+| Composio | Prefill `https://connect.composio.dev/mcp`, then authenticate. Advanced: externally configured session URL and headers.     | Connect’s discovery, execution, connection-management and sandbox tools. Direct-tools sessions can expose individual actions.                    |
+| Executor | Paste hosted workspace URL or reachable self-hosted HTTP endpoint and authenticate. Advanced user API key when supported.   | Execution and helper tools; action policies remain in Executor. Preserve execution and MCP session identity for resume.                          |
 
 The production catalog always comes from discovery, never the Storybook fixture.
 Only expose a pending-state recovery action when the actual provider response and

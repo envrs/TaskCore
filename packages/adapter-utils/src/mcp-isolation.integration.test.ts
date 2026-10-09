@@ -18,8 +18,14 @@ import {
 } from "./test-support/mcp-isolation-harness.js";
 
 const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
-const stdioFixturePath = path.join(repoRoot, "scripts/mcp-fixtures/servers/stdio-fixture.mjs");
-const acpFixturePath = path.join(repoRoot, "scripts/mcp-fixtures/servers/acp-isolation-agent.mjs");
+const stdioFixturePath = path.join(
+  repoRoot,
+  "scripts/mcp-fixtures/servers/stdio-fixture.mjs",
+);
+const acpFixturePath = path.join(
+  repoRoot,
+  "scripts/mcp-fixtures/servers/acp-isolation-agent.mjs",
+);
 const cleanupRoots: string[] = [];
 
 interface McpObservation {
@@ -31,7 +37,9 @@ type McpServer = NonNullable<AcpRuntimeOptions["mcpServers"]>[number];
 
 afterEach(async () => {
   await Promise.all(
-    cleanupRoots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true })),
+    cleanupRoots
+      .splice(0)
+      .map((root) => fs.rm(root, { recursive: true, force: true })),
   );
 });
 
@@ -51,7 +59,9 @@ async function runAcpxFixtureSession(
 ): Promise<McpObservation[]> {
   const runtime = createAcpRuntime({
     cwd: repoRoot,
-    sessionStore: createRuntimeStore({ stateDir: path.join(root, `acpx-${sessionName}`) }),
+    sessionStore: createRuntimeStore({
+      stateDir: path.join(root, `acpx-${sessionName}`),
+    }),
     agentRegistry: createAgentRegistry({
       overrides: {
         isolation_fixture: `${process.execPath} ${acpFixturePath}`,
@@ -76,7 +86,8 @@ async function runAcpxFixtureSession(
     mode: "prompt",
     requestId: `request-${sessionName}`,
   })) {
-    if (event.type === "text_delta" && event.stream !== "thought") output += event.text;
+    if (event.type === "text_delta" && event.stream !== "thought")
+      output += event.text;
   }
 
   await runtime.close({
@@ -93,14 +104,23 @@ async function startUnauthorizedAnthropicFixture(): Promise<{
 }> {
   const server = http.createServer((_request, response) => {
     response.writeHead(401, { "content-type": "application/json" });
-    response.end(JSON.stringify({ type: "error", error: { type: "authentication_error" } }));
+    response.end(
+      JSON.stringify({
+        type: "error",
+        error: { type: "authentication_error" },
+      }),
+    );
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
-  if (!address || typeof address === "string") throw new Error("Failed to bind Claude API fixture");
+  if (!address || typeof address === "string")
+    throw new Error("Failed to bind Claude API fixture");
   return {
     baseUrl: `http://127.0.0.1:${address.port}`,
-    close: () => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())),
+    close: () =>
+      new Promise((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      ),
   };
 }
 
@@ -169,7 +189,9 @@ describe("same-machine MCP isolation", () => {
           ANTHROPIC_BASE_URL: apiFixture.baseUrl,
         },
       });
-      expect(result.exitCode === 0 || result.timedOut || result.exitCode === 1).toBe(true);
+      expect(
+        result.exitCode === 0 || result.timedOut || result.exitCode === 1,
+      ).toBe(true);
       return fs.readFile(debugPath, "utf8");
     };
 
@@ -180,8 +202,12 @@ describe("same-machine MCP isolation", () => {
         runClaude("zero"),
       ]);
 
-      expect(alphaLog).toContain('MCP server "agent_alpha": Successfully connected');
-      expect(betaLog).toContain('MCP server "agent_beta": Successfully connected');
+      expect(alphaLog).toContain(
+        'MCP server "agent_alpha": Successfully connected',
+      );
+      expect(betaLog).toContain(
+        'MCP server "agent_beta": Successfully connected',
+      );
       expect(alphaLog).not.toContain('MCP server "agent_beta"');
       expect(betaLog).not.toContain('MCP server "agent_alpha"');
       for (const log of [alphaLog, betaLog, zeroLog]) {
@@ -235,7 +261,9 @@ describe("same-machine MCP isolation", () => {
     for (const result of [alpha, beta, zero, override]) {
       expect(result.timedOut).toBe(false);
       expect(result.exitCode).toBe(0);
-      expect(`${result.stdout}${result.stderr}`).not.toContain("user_pollution");
+      expect(`${result.stdout}${result.stderr}`).not.toContain(
+        "user_pollution",
+      );
     }
     expect(alpha.stdout).toContain("agent_alpha");
     expect(alpha.stdout).not.toContain("agent_beta");

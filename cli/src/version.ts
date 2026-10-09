@@ -18,7 +18,8 @@ export function resolveCliVersion(executablePath = process.argv[1]): string {
   try {
     const paths = resolveInstallStorePaths();
     const manifest = readInstallManifest(paths);
-    if (!manifest || !isManagedExecutable(executablePath, manifest, paths)) return packageVersion;
+    if (!manifest || !isManagedExecutable(executablePath, manifest, paths))
+      return packageVersion;
     const provenance =
       manifest.source === "git"
         ? `managed git ${manifest.ref ?? manifest.sha ?? "unknown"}`

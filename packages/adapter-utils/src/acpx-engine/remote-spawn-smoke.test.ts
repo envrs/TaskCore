@@ -4,7 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
 import type { AcpRuntimeOptions } from "acpx/runtime";
-import { createAcpRuntime, createAgentRegistry, createRuntimeStore } from "acpx/runtime";
+import {
+  createAcpRuntime,
+  createAgentRegistry,
+  createRuntimeStore,
+} from "acpx/runtime";
 
 // Load-bearing repro for the remote-ACP "process session" lane host-spawn bug.
 //
@@ -31,7 +35,13 @@ const repoRoot = fileURLToPath(new URL("../../../..", import.meta.url));
 // A dedicated ACP agent fixture that reports, on stderr, the working directory
 // the host actually spawned it in (`SPAWN_CWD`) and the `cwd` advertised on
 // `session/new` (`SESSION_NEW_CWD`).
-const fixturePath = path.join(repoRoot, "scripts", "mcp-fixtures", "servers", "acp-cwd-report-agent.mjs");
+const fixturePath = path.join(
+  repoRoot,
+  "scripts",
+  "mcp-fixtures",
+  "servers",
+  "acp-cwd-report-agent.mjs",
+);
 const tempRoots: string[] = [];
 
 type PatchedAcpRuntimeOptions = AcpRuntimeOptions & {
@@ -39,10 +49,16 @@ type PatchedAcpRuntimeOptions = AcpRuntimeOptions & {
   spawnCwd?: string;
 };
 
-type PatchedEnsureSessionOptions = Parameters<ReturnType<typeof createAcpRuntime>["ensureSession"]>[0];
+type PatchedEnsureSessionOptions = Parameters<
+  ReturnType<typeof createAcpRuntime>["ensureSession"]
+>[0];
 
 afterEach(async () => {
-  await Promise.all(tempRoots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true })));
+  await Promise.all(
+    tempRoots
+      .splice(0)
+      .map((root) => fs.rm(root, { recursive: true, force: true })),
+  );
 });
 
 async function makeTempDir(prefix: string): Promise<string> {
@@ -70,7 +86,9 @@ async function ensureRealAcpSession(input: {
     // `spawnCwd` is the host-only knob added by patches/acpx@0.12.0.patch; when
     // unset acpx falls back to `cwd`, so every non-proxy lane is byte-identical.
     ...(input.spawnCwd ? { spawnCwd: input.spawnCwd } : {}),
-    sessionStore: createRuntimeStore({ stateDir: path.join(stateRoot, "state") }),
+    sessionStore: createRuntimeStore({
+      stateDir: path.join(stateRoot, "state"),
+    }),
     agentRegistry: createAgentRegistry({ overrides: { custom: agentCommand } }),
     permissionMode: "approve-all",
     nonInteractivePermissions: "deny",
@@ -88,10 +106,16 @@ async function ensureRealAcpSession(input: {
       sessionOptions: { env: {} },
     };
     const handle = await runtime.ensureSession(sessionInput);
-    await (runtime as { close: (i: unknown) => Promise<void> }).close({ handle, reason: "done" }).catch(() => {});
+    await (runtime as { close: (i: unknown) => Promise<void> })
+      .close({ handle, reason: "done" })
+      .catch(() => {});
     return { resolved: true as const, stderr: stderrChunks.join("") };
   } catch (err) {
-    return { resolved: false as const, error: err as NodeJS.ErrnoException & { cause?: NodeJS.ErrnoException }, stderr: stderrChunks.join("") };
+    return {
+      resolved: false as const,
+      error: err as NodeJS.ErrnoException & { cause?: NodeJS.ErrnoException },
+      stderr: stderrChunks.join(""),
+    };
   }
 }
 
@@ -104,10 +128,14 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
-async function waitForProcessExit(pid: number, timeoutMs = 2_000): Promise<void> {
+async function waitForProcessExit(
+  pid: number,
+  timeoutMs = 2_000,
+): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (isProcessAlive(pid)) {
-    if (Date.now() >= deadline) throw new Error(`Timed out waiting for ACP agent ${pid} to exit`);
+    if (Date.now() >= deadline)
+      throw new Error(`Timed out waiting for ACP agent ${pid} to exit`);
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
 }
@@ -115,8 +143,14 @@ async function waitForProcessExit(pid: number, timeoutMs = 2_000): Promise<void>
 it("reproduces host-spawn ENOENT when the advertised session cwd is host-nonexistent", async () => {
   // The in-sandbox `remoteCwd` that does not exist on the host. Intentionally
   // NOT created: this is what trips the acpx host `spawn()` `chdir`.
-  const sandboxParent = await makeTempDir("taskcore-acpx-remote-spawn-sandbox-");
-  const remoteCwd = path.join(sandboxParent, "does-not-exist-on-host", "workspace");
+  const sandboxParent = await makeTempDir(
+    "taskcore-acpx-remote-spawn-sandbox-",
+  );
+  const remoteCwd = path.join(
+    sandboxParent,
+    "does-not-exist-on-host",
+    "workspace",
+  );
 
   const outcome = await ensureRealAcpSession({ cwd: remoteCwd });
 
@@ -130,19 +164,30 @@ it("reproduces host-spawn ENOENT when the advertised session cwd is host-nonexis
 });
 
 it("spawnCwd redirects the host spawn to a host-valid dir while the advertised session cwd stays remoteCwd", async () => {
-  const sandboxParent = await makeTempDir("taskcore-acpx-remote-spawn-sandbox-");
+  const sandboxParent = await makeTempDir(
+    "taskcore-acpx-remote-spawn-sandbox-",
+  );
   // Host-nonexistent in-sandbox cwd — the advertised `session/new` cwd.
-  const remoteCwd = path.join(sandboxParent, "does-not-exist-on-host", "workspace");
+  const remoteCwd = path.join(
+    sandboxParent,
+    "does-not-exist-on-host",
+    "workspace",
+  );
   // Host-valid dir the proxy actually spawns in (the engine's host `cwd`).
   const hostSpawnCwd = await makeTempDir("taskcore-acpx-remote-spawn-host-");
 
-  const outcome = await ensureRealAcpSession({ cwd: remoteCwd, spawnCwd: hostSpawnCwd });
+  const outcome = await ensureRealAcpSession({
+    cwd: remoteCwd,
+    spawnCwd: hostSpawnCwd,
+  });
 
   // With `spawnCwd` set the host `spawn()` `chdir`s into the host-valid dir, so
   // the session comes up instead of failing at `ensure_session`.
   expect(outcome.resolved, JSON.stringify(outcome)).toBe(true);
   // The host process really ran in `spawnCwd`...
-  expect(outcome.stderr).toContain(`SPAWN_CWD=${await fs.realpath(hostSpawnCwd)}`);
+  expect(outcome.stderr).toContain(
+    `SPAWN_CWD=${await fs.realpath(hostSpawnCwd)}`,
+  );
   // ...while the in-sandbox data path (the advertised `session/new` cwd) is
   // unchanged — still `remoteCwd`.
   expect(outcome.stderr).toContain(`SESSION_NEW_CWD=${remoteCwd}`);
@@ -162,7 +207,9 @@ it("kills the ACP agent when process identity persistence rejects", async () => 
 
   expect(outcome.resolved).toBe(false);
   if (outcome.resolved) return;
-  expect(outcome.error.message).toContain("process identity persistence failed");
+  expect(outcome.error.message).toContain(
+    "process identity persistence failed",
+  );
   expect(spawnedPid).not.toBeNull();
 
   try {

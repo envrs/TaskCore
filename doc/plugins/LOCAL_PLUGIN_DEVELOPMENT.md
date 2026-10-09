@@ -91,7 +91,7 @@ taskcore plugin install ~/dev/taskcore-plugins/hello-plugin
 
 The CLI auto-detects local paths (anything that looks absolute, starts with `./`, `../`, or `~`, or resolves to an existing folder relative to the current directory) and sends `{ isLocalPath: true }` to `POST /api/plugins/install` with the resolved absolute path. If you want to be explicit, pass `--local`.
 
-Before it installs, the CLI probes `GET /api/health` on the instance it is configured to talk to and prints the **target diagnostics** so you can confirm *which* Taskcore you are installing into. You will see a confirmation like:
+Before it installs, the CLI probes `GET /api/health` on the instance it is configured to talk to and prints the **target diagnostics** so you can confirm _which_ Taskcore you are installing into. You will see a confirmation like:
 
 ```
 Target Taskcore: http://127.0.0.1:3100
@@ -124,7 +124,7 @@ The five-step loop above assumes one Taskcore on `http://127.0.0.1:3100`. That b
 - a new field in an existing response the plugin reads,
 - a new managed-resource capability the worker reconciles.
 
-If you install the plugin into a long-lived control-plane host that is still on older code, the route or field is missing there. The plugin falls back or errors, and it *looks* like a plugin bug when the real problem is that you tested against the wrong runtime. To verify "what the published plugin will actually do," install into a Taskcore service that is **serving your branch**.
+If you install the plugin into a long-lived control-plane host that is still on older code, the route or field is missing there. The plugin falls back or errors, and it _looks_ like a plugin bug when the real problem is that you tested against the wrong runtime. To verify "what the published plugin will actually do," install into a Taskcore service that is **serving your branch**.
 
 ### How the CLI chooses its target
 
@@ -135,7 +135,7 @@ The CLI resolves the API base URL in this order (highest priority first):
 3. the active CLI context profile's `apiBase`,
 4. inferred default `http://<TASKCORE_SERVER_HOST|localhost>:<TASKCORE_SERVER_PORT|config.server.port|3100>`.
 
-So the API URL is explicit and overridable — the gap was never that you *couldn't* point at a branch server, it was that nothing told you which server you ended up on. `taskcore plugin target` and the pre-install probe close that gap.
+So the API URL is explicit and overridable — the gap was never that you _couldn't_ point at a branch server, it was that nothing told you which server you ended up on. `taskcore plugin target` and the pre-install probe close that gap.
 
 ### Run the branch service and install into it
 

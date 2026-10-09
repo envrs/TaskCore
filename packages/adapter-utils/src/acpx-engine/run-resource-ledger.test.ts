@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { createRunResourceLedger, createScopedCleanupRegistry } from "./run-resource-ledger.js";
+import {
+  createRunResourceLedger,
+  createScopedCleanupRegistry,
+} from "./run-resource-ledger.js";
 import { LedgerStateError } from "./run-contracts.js";
 import type { RunResourcePayloads } from "./run-contracts.js";
 
@@ -11,16 +14,28 @@ function stub<T>(): T {
 describe("run resource ledger", () => {
   it("test_register_throws_on_filled_slot", () => {
     const ledger = createRunResourceLedger();
-    ledger.register({ id: "staging_lease", scope: "per_run", payload: { release: () => {} } });
+    ledger.register({
+      id: "staging_lease",
+      scope: "per_run",
+      payload: { release: () => {} },
+    });
 
     expect(() =>
-      ledger.register({ id: "staging_lease", scope: "per_run", payload: { release: () => {} } }),
+      ledger.register({
+        id: "staging_lease",
+        scope: "per_run",
+        payload: { release: () => {} },
+      }),
     ).toThrow(LedgerStateError);
   });
 
   it("test_register_throws_after_seal_and_after_take", () => {
     const sealed = createRunResourceLedger();
-    sealed.register({ id: "staging_lease", scope: "per_run", payload: { release: () => {} } });
+    sealed.register({
+      id: "staging_lease",
+      scope: "per_run",
+      payload: { release: () => {} },
+    });
     sealed.seal(["staging_lease"]);
     expect(() =>
       sealed.register({
@@ -31,7 +46,11 @@ describe("run resource ledger", () => {
     ).toThrow(LedgerStateError);
 
     const taken = createRunResourceLedger();
-    taken.register({ id: "staging_lease", scope: "per_run", payload: { release: () => {} } });
+    taken.register({
+      id: "staging_lease",
+      scope: "per_run",
+      payload: { release: () => {} },
+    });
     taken.takeForSettlement();
     expect(() =>
       taken.register({
@@ -52,7 +71,9 @@ describe("run resource ledger", () => {
 
     // The site declares control_bridge required, but it is not registered, so
     // seal throws and leaves the ledger open.
-    expect(() => ledger.seal(["acp_runtime", "control_bridge"])).toThrow(LedgerStateError);
+    expect(() => ledger.seal(["acp_runtime", "control_bridge"])).toThrow(
+      LedgerStateError,
+    );
 
     // The failed seal left the ledger open, so the missing slot can be filled.
     ledger.register({
@@ -88,7 +109,11 @@ describe("run resource ledger", () => {
       payload: stub<RunResourcePayloads["acp_runtime"]>(),
     });
 
-    const ready = ledger.seal(["staged_runtime", "control_bridge", "acp_runtime"]);
+    const ready = ledger.seal([
+      "staged_runtime",
+      "control_bridge",
+      "acp_runtime",
+    ]);
 
     expect(ready.scopeOf("staged_runtime")).toBe("per_run");
     expect(ready.scopeOf("control_bridge")).toBe("startup_rollback");
@@ -107,7 +132,9 @@ describe("run resource ledger", () => {
 
     // Synchronous: the claim comes back directly, not as a promise.
     expect(consumed).not.toBeInstanceOf(Promise);
-    expect(consumed.entries().map((entry) => entry.id)).toContain("acp_runtime");
+    expect(consumed.entries().map((entry) => entry.id)).toContain(
+      "acp_runtime",
+    );
 
     // One-time: a second claim throws.
     expect(() => ledger.takeForSettlement()).toThrow(LedgerStateError);
@@ -178,7 +205,9 @@ describe("run resource ledger", () => {
       ran.push("third");
     });
 
-    await expect(registry.run("per_run")).rejects.toBeInstanceOf(AggregateError);
+    await expect(registry.run("per_run")).rejects.toBeInstanceOf(
+      AggregateError,
+    );
     // The failing cleanup did not skip the others.
     expect(ran).toEqual(["third", "first"]);
   });

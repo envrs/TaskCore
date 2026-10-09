@@ -1,6 +1,12 @@
 export interface TaskcoreChatFilePreparationDelivery {
   readonly provider:
-    "slack" | "github" | "discord" | "microsoft-teams" | "telegram" | "imessage-photon" | null;
+    | "slack"
+    | "github"
+    | "discord"
+    | "microsoft-teams"
+    | "telegram"
+    | "imessage-photon"
+    | null;
   readonly mode: "provider_attachment" | "taskcore_task_only" | "unknown";
   readonly preparationState: "prepared";
   readonly providerDeliveryConfirmed: false;

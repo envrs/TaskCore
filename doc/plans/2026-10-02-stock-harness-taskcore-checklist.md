@@ -59,14 +59,14 @@ configured cells alone do not qualify behavior.
 ## 1. Preserve the native Codex base instructions
 
 - [x] Trace every instruction path: backend composition, TypeScript driver,
-  runnerd bridge, and Rust provider; include fresh threads, resume, and recovery.
+      runnerd bridge, and Rust provider; include fresh threads, resume, and recovery.
 - [x] Record the chosen additive mechanism and the minimum Taskcore context it
-  needs to carry. Include fallback/direct execution paths.
+      needs to carry. Include fallback/direct execution paths.
 - [x] Remove default replacement of stock base instructions across those paths.
 - [x] Verify the actual app-server request and retained session instructions,
-  including resume; checking only a prompt builder is insufficient.
+      including resume; checking only a prompt builder is insufficient.
 - [x] Verify Taskcore task context, tools, auth, assigned skills, and completion
-  still work. Record applicable regressions and eval results.
+      still work. Record applicable regressions and eval results.
 
 Starting points: [Codex backend](../../packages/taskcore-runner/src/backends/codex-native-backend.ts),
 [app-server driver](../../packages/taskcore-runner/src/drivers/codex/codex-app-server-driver-impl.ts),
@@ -91,17 +91,17 @@ live campaign was run, and no task-quality improvement is claimed.
 ## 2. Reduce the default operating manual and shared prompt layers
 
 - [ ] Inventory what an agent actually receives: hire instructions, shared
-  prompt template, wake context, runtime prompt, bootstrap, and loaded skills.
-  Separate always-present text from content loaded on demand.
+      prompt template, wake context, runtime prompt, bootstrap, and loaded skills.
+      Separate always-present text from content loaded on demand.
 - [x] Agree on the tiny default: identity only, with no skill or native-tool
-  pointers. The harness supplies coordination instructions.
+      pointers. The harness supplies coordination instructions.
 - [x] Reduce the generic default hire `AGENTS.md` to the agreed sentence and
-  update the existing creation test to expect the minimal bundle.
+      update the existing creation test to expect the minimal bundle.
 - [ ] Remove repeated workflow rules and stock coding/style/autonomy guidance.
 - [ ] Move detailed planning, hiring, artifacts, and exceptional procedures to
-  discoverable references or tools where feasible.
+      discoverable references or tools where feasible.
 - [ ] Check fresh and resumed task/chat flows for instruction duplication and
-  contradictory completion or waiting rules.
+      contradictory completion or waiting rules.
 
 Starting points: [default hire instructions](../../server/src/onboarding-assets/default/AGENTS.md),
 [shared adapter utilities](../../packages/adapter-utils/src/server-utils.ts),
@@ -114,10 +114,10 @@ This replaces 602 words with eight. The shared loader supplies this default
 across instruction-bundle-capable adapters for non-CEO hires without explicit
 instructions. Existing saved bundles retain their content; CEO, first-agent,
 and role/team templates remain separate work under item 3. The common
-  prompt/wake reduction and legacy delivery repairs are merged in #14948;
-  additional carriers and uncommon native procedures remain open. Native
-  completion documentation and constraint/final-answer corrections are merged
-  separately in #14961 and #15151.
+prompt/wake reduction and legacy delivery repairs are merged in #14948;
+additional carriers and uncommon native procedures remain open. Native
+completion documentation and constraint/final-answer corrections are merged
+separately in #14961 and #15151.
 
 Verification: the existing agent-skills route suite passed all 54 tests,
 including default creation, custom bundles, and CEO/first-agent paths. The
@@ -130,67 +130,67 @@ and existing-test update.
 ### Shared prompt follow-ups
 
 - [x] **2.1 Reduce common legacy startup/resume instructions.** Keep
-  identity and connection guidance in the shared task/chat defaults; remove the
-  generic resumed-wake execution contract. Preserve current task/event data,
-  specialized wake contracts, custom templates, skills, and auth.
+      identity and connection guidance in the shared task/chat defaults; remove the
+      generic resumed-wake execution contract. Preserve current task/event data,
+      specialized wake contracts, custom templates, skills, and auth.
 - [ ] **2.2 Review additional legacy carriers.** Reduce Hermes local/gateway
-  wrappers, review Pi system delivery, and check OpenClaw fresh-wake framing.
-  Preserve transport facts and user configuration. Dotta deferred this item on
-  2026-10-02 for a later revisit; it remains open.
+      wrappers, review Pi system delivery, and check OpenClaw fresh-wake framing.
+      Preserve transport facts and user configuration. Dotta deferred this item on
+      2026-10-02 for a later revisit; it remains open.
 - [ ] **2.3 Reduce native Runner instructions and constraints.** Improve
-  discoverable tool documentation first, then shorten fixed guidance and
-  consolidate completion rules. Verify prompt revisions, digests, and session
-  compatibility across native Codex, ACPX, and OpenCode. Dotta approved the
-  native tool-documentation slice on 2026-10-02 in a separate worktree. Native
-  `taskcore_finish`/`taskcore_block` guidance must not leak into legacy
-  completion paths, which use the operational skill and API.
+      discoverable tool documentation first, then shorten fixed guidance and
+      consolidate completion rules. Verify prompt revisions, digests, and session
+      compatibility across native Codex, ACPX, and OpenCode. Dotta approved the
+      native tool-documentation slice on 2026-10-02 in a separate worktree. Native
+      `taskcore_finish`/`taskcore_block` guidance must not leak into legacy
+      completion paths, which use the operational skill and API.
 - [x] **2.3 completion slice.** Improve native finish/block documentation
-  (#14961), consolidate repeated completion constraints, and preserve useful
-  final replies, blocker explanations and working document links (#15151).
-  Native Codex, ACPX Claude and OpenCode have bounded live outcome coverage;
-  scripted start/resume/continuation and compatibility checks remain distinct
-  from live resume qualification.
+      (#14961), consolidate repeated completion constraints, and preserve useful
+      final replies, blocker explanations and working document links (#15151).
+      Native Codex, ACPX Claude and OpenCode have bounded live outcome coverage;
+      scripted start/resume/continuation and compatibility checks remain distinct
+      from live resume qualification.
 - [ ] **2.3 remaining procedures.** Review the fixed hiring, dependencies and
-  connection guidance; improve discoverable tool documentation and measure any
-  further reduction. #15151 intentionally did not change the fixed prompt.
-  Hiring/dependency relocation failed both corrected and readiness comparisons.
-  #15218 now retains measurement and eval coverage with production unchanged;
-  see [the comparison report](2026-10-05-native-procedure-guidance.md).
-  Connection procedures remain a separate follow-up.
+      connection guidance; improve discoverable tool documentation and measure any
+      further reduction. #15151 intentionally did not change the fixed prompt.
+      Hiring/dependency relocation failed both corrected and readiness comparisons.
+      #15218 now retains measurement and eval coverage with production unchanged;
+      see [the comparison report](2026-10-05-native-procedure-guidance.md).
+      Connection procedures remain a separate follow-up.
 - [x] **2.3 full-catalog measurement.** PR #15218 measures all 39 supplied
-  native tools and schemas with fixed instructions at start/resume/continuation.
-  The rejected corrected candidate reduced the normalized standing projection by 460 bytes
-  (48,781 to 48,321 in the paid context; 49,200 to 48,740 after master integration),
-  not a token/cost or upstream truncation claim. The rejected readiness repair
-  restored explicit delegation/review guidance and saved only 125 bytes.
-  Its larger unqualified controller repair increased the full projection.
-  Final #15218 restores production to baseline: 49,200 bytes, identical across
-  all 36 normalized components of nine scripted deliveries and the MCP catalog.
+      native tools and schemas with fixed instructions at start/resume/continuation.
+      The rejected corrected candidate reduced the normalized standing projection by 460 bytes
+      (48,781 to 48,321 in the paid context; 49,200 to 48,740 after master integration),
+      not a token/cost or upstream truncation claim. The rejected readiness repair
+      restored explicit delegation/review guidance and saved only 125 bytes.
+      Its larger unqualified controller repair increased the full projection.
+      Final #15218 restores production to baseline: 49,200 bytes, identical across
+      all 36 normalized components of nine scripted deliveries and the MCP catalog.
 - [ ] **2.3 hiring/dependency behavior qualification.** The original six-pair
-  campaign exposed three new overall failures, including Claude omitting
-  dependency recording and finalization. Preserve original grades and control
-  bugs. Corrected v7 candidate and a baseline with matching credential/budget
-  repairs completed: baseline 5/6 PASS, candidate 3/6 PASS; two new failures,
-  zero new passes, three unchanged passes and one unchanged failure. Codex's
-  parent remained blocked after the replacement deliverable. OpenCode hiring
-  exceeded the deadline before the revised delivery settled. Both OpenCode
-  delegation variants lacked parent review of the final child revision. Two
-  interrupted candidate cells had one bounded recovery each; incomplete
-  original accounting is retained. No rerolls of these completed source pairs.
-  After the human requested readiness fixes, candidate
-  `aba7ec219b588de02cf323b4ebca559a105e6d01` restores assigned-worker revisions
-  and latest-child review, returns actual dependency readiness, and separates
-  cancelled dependencies from tasks that can complete. Its 23 database-backed
-  tool tests and fresh 5/5 review pass. New candidate campaign `37348723829`
-  and integrated baseline `37348764875` completed with unchanged oracles and
-  bounds: candidate 3 PASS / 3 FAIL; baseline 3 PASS / 2 FAIL / one setup cell
-  without a behavioral grade. The five comparable pairs have two new failures,
-  two new passes and one unchanged pass; one pair remains uncomparable. The
-  new failures include parent completion before the latest child revision and
-  OpenCode credential persistence. The Codex candidate also lacks parent
-  continuation. Keep this item open. The final #15218 excludes the production
-  change, retains every failure, and adds measurement and eval coverage only.
-  Unqualified runtime fixes are preserved locally for separate follow-up.
+      campaign exposed three new overall failures, including Claude omitting
+      dependency recording and finalization. Preserve original grades and control
+      bugs. Corrected v7 candidate and a baseline with matching credential/budget
+      repairs completed: baseline 5/6 PASS, candidate 3/6 PASS; two new failures,
+      zero new passes, three unchanged passes and one unchanged failure. Codex's
+      parent remained blocked after the replacement deliverable. OpenCode hiring
+      exceeded the deadline before the revised delivery settled. Both OpenCode
+      delegation variants lacked parent review of the final child revision. Two
+      interrupted candidate cells had one bounded recovery each; incomplete
+      original accounting is retained. No rerolls of these completed source pairs.
+      After the human requested readiness fixes, candidate
+      `aba7ec219b588de02cf323b4ebca559a105e6d01` restores assigned-worker revisions
+      and latest-child review, returns actual dependency readiness, and separates
+      cancelled dependencies from tasks that can complete. Its 23 database-backed
+      tool tests and fresh 5/5 review pass. New candidate campaign `37348723829`
+      and integrated baseline `37348764875` completed with unchanged oracles and
+      bounds: candidate 3 PASS / 3 FAIL; baseline 3 PASS / 2 FAIL / one setup cell
+      without a behavioral grade. The five comparable pairs have two new failures,
+      two new passes and one unchanged pass; one pair remains uncomparable. The
+      new failures include parent completion before the latest child revision and
+      OpenCode credential persistence. The Codex candidate also lacks parent
+      continuation. Keep this item open. The final #15218 excludes the production
+      change, retains every failure, and adds measurement and eval coverage only.
+      Unqualified runtime fixes are preserved locally for separate follow-up.
 
 ### Remaining fixed-prompt audit — 2026-10-05
 
@@ -316,14 +316,14 @@ cover fixed source text, not complete assembled prompts or token counts. They
 exclude task data, assigned agent instructions, and skills. This inspection
 establishes instruction mechanics, not a performance result.
 
-| Layer | Delivery at initial inspection | Disposition |
-| --- | --- | --- |
-| Shared legacy task/chat templates | `DEFAULT_TASKCORE_AGENT_PROMPT_TEMPLATE` was 661 words and the conversation template was 205, including connection guidance. Used by Claude, Codex, Cursor local/cloud, Gemini, Grok, Kimi, OpenCode, Pi, and Hermes local. | Completed in 2.1: both defaults now 113 words. Repeated procedures removed, connection guidance retained, no replacement skill pointer. |
-| Generic resumed wake contract | `renderTaskcoreWakePrompt` added a 172-word execution contract on ordinary resumed turns. OpenClaw requested it on fresh turns too because it has no shared template. | Completed in 2.1: generic contract removed, including legacy opt-ins. Task/event data and conditional runtime contracts retained. |
-| Additional legacy carriers | Hermes local adds a 171-word identity/API/curl wrapper before the shared task template; Hermes gateway supplies its own four-rule execution contract. Pi carries shared defaults in its system extension and suppresses the wake copy when that extension owns policy. | Separate follow-up 2.2; changing the shared constants alone does not remove every wrapper. Preserve transport facts and custom configuration. |
-| Native fixed prompt | The 262-word `taskcore-execution.v5` prompt carries hiring, delegation/dependencies, connection setup, and finalization guidance across native Codex, ACPX, and OpenCode backends. | Keep one short native completion/dependency contract. Relocate uncommon procedures to the relevant tool documentation, improving that documentation where needed before removing instructions. Any change needs prompt revision/digest/session-compatibility verification. |
-| Native full-turn constraints | `nativeTaskConstraints` adds assigned-skill limits, current agent-file paths, document/file delivery, answered-question handling, and accepted completion/final-response sequencing. Codex/OpenCode add another completion reminder. Prepared constraints reach the model envelope through `native-session-runtime`; compact continuations avoid replaying prior task constraints. | Consolidate duplicate completion instructions. Keep current paths, answer scope, and the required result protocol. Move detailed file/document procedure to discoverable tool descriptions where adequately covered. |
-| Task/event-specific framing | Server task Markdown and wake rendering supply work mode, ordered comments, approved revisions, checkout/holds/blockers, recovery/review/watchdog roles, external-chat bookkeeping/delivery, and conversation handoff. | Retain the facts and mode boundaries in the first reduction. Use one authoritative owner for shared mode directives; review specialized wording separately. |
+| Layer                             | Delivery at initial inspection                                                                                                                                                                                                                                                                                                                                                     | Disposition                                                                                                                                                                                                                                                                |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared legacy task/chat templates | `DEFAULT_TASKCORE_AGENT_PROMPT_TEMPLATE` was 661 words and the conversation template was 205, including connection guidance. Used by Claude, Codex, Cursor local/cloud, Gemini, Grok, Kimi, OpenCode, Pi, and Hermes local.                                                                                                                                                        | Completed in 2.1: both defaults now 113 words. Repeated procedures removed, connection guidance retained, no replacement skill pointer.                                                                                                                                    |
+| Generic resumed wake contract     | `renderTaskcoreWakePrompt` added a 172-word execution contract on ordinary resumed turns. OpenClaw requested it on fresh turns too because it has no shared template.                                                                                                                                                                                                              | Completed in 2.1: generic contract removed, including legacy opt-ins. Task/event data and conditional runtime contracts retained.                                                                                                                                          |
+| Additional legacy carriers        | Hermes local adds a 171-word identity/API/curl wrapper before the shared task template; Hermes gateway supplies its own four-rule execution contract. Pi carries shared defaults in its system extension and suppresses the wake copy when that extension owns policy.                                                                                                             | Separate follow-up 2.2; changing the shared constants alone does not remove every wrapper. Preserve transport facts and custom configuration.                                                                                                                              |
+| Native fixed prompt               | The 262-word `taskcore-execution.v5` prompt carries hiring, delegation/dependencies, connection setup, and finalization guidance across native Codex, ACPX, and OpenCode backends.                                                                                                                                                                                                 | Keep one short native completion/dependency contract. Relocate uncommon procedures to the relevant tool documentation, improving that documentation where needed before removing instructions. Any change needs prompt revision/digest/session-compatibility verification. |
+| Native full-turn constraints      | `nativeTaskConstraints` adds assigned-skill limits, current agent-file paths, document/file delivery, answered-question handling, and accepted completion/final-response sequencing. Codex/OpenCode add another completion reminder. Prepared constraints reach the model envelope through `native-session-runtime`; compact continuations avoid replaying prior task constraints. | Consolidate duplicate completion instructions. Keep current paths, answer scope, and the required result protocol. Move detailed file/document procedure to discoverable tool descriptions where adequately covered.                                                       |
+| Task/event-specific framing       | Server task Markdown and wake rendering supply work mode, ordered comments, approved revisions, checkout/holds/blockers, recovery/review/watchdog roles, external-chat bookkeeping/delivery, and conversation handoff.                                                                                                                                                             | Retain the facts and mode boundaries in the first reduction. Use one authoritative owner for shared mode directives; review specialized wording separately.                                                                                                                |
 
 Custom `promptTemplate` and fresh-only `bootstrapPromptTemplate` configuration
 are distinct from shipped defaults and should not be silently rewritten.
@@ -355,21 +355,21 @@ tests or live evals.
 ## 3. Review every hiring and role template
 
 - [ ] Cover default hires, CEO, chief of staff, coder, QA, UX, security, CTO, and
-  every other shipped team/role instruction set.
+      every other shipped team/role instruction set.
 - [ ] Trace onboarding, API/UI/CLI hiring, team imports, and agent-creation skill
-  rules so a removed manual is not regenerated through another entry point.
+      rules so a removed manual is not regenerated through another entry point.
 - [ ] For each template, decide: remove it, retain a tiny role description, or
-  keep specific domain guidance with a stated reason.
+      keep specific domain guidance with a stated reason.
 - [ ] Review forced delegation, mandatory memory workflows, procedural review
-  routing, comment requirements, and old governance instructions.
+      routing, comment requirements, and old governance instructions.
 - [ ] Update hiring references and draft-review requirements alongside templates.
-  Native Runner agents must not be required to follow legacy skill/API procedures
-  that their runtime intentionally does not expose.
+      Native Runner agents must not be required to follow legacy skill/API procedures
+      that their runtime intentionally does not expose.
 - [ ] Decide rollout for new hires, existing managed bundles, imported teams,
-  and custom agent instructions.
+      and custom agent instructions.
 - [ ] If substantial behavioral instructions remain, identify the behavior they
-  should improve and add appropriate eval coverage. A tiny role paragraph may
-  need only creation/configuration coverage.
+      should improve and add appropriate eval coverage. A tiny role paragraph may
+      need only creation/configuration coverage.
 
 Starting points: [onboarding assets](../../server/src/onboarding-assets/),
 [default bundle service](../../server/src/services/default-agent-instructions.ts),
@@ -390,12 +390,12 @@ and eight team-catalog manuals. Hiring step 6, the 60–150-line role guide and
 review checklist would regenerate the removed operating policies.
 
 - [x] **3.1** Reduce role drafting rules, coder/adapted hire examples and matching
-  catalog coder, preserving metadata, auth, permissions and skill selections.
+      catalog coder, preserving metadata, auth, permissions and skill selections.
 - [x] **3.2** Reduce the CEO bundle/copy, including forced delegation, hiring,
-  memory and repeated API recipes.
+      memory and repeated API recipes.
 - [x] **3.3** Review remaining roles/catalog and CoS copy.
 - [ ] **3.4** Review specialized built-in/plugin contracts separately; retain
-  product-required behavior rather than assuming every rule is redundant.
+      product-required behavior rather than assuming every rule is redundant.
 
 Custom and existing bundles and governance remain deliberate rollout boundaries.
 Specialized Summarizer, Reflection Coach and Wiki Maintainer prompts remain
@@ -436,14 +436,14 @@ fresh rebased CI remains required before readiness.
 ## 4. Fix repository context while retaining Taskcore configuration
 
 - [ ] Map instruction discovery and precedence for each harness: repository
-  AGENTS.md/CLAUDE.md or equivalent, project/local settings, isolated homes, and
-  explicit Taskcore instruction injection.
+      AGENTS.md/CLAUDE.md or equivalent, project/local settings, isolated homes, and
+      explicit Taskcore instruction injection.
 - [ ] Distinguish repository instructions from settings that also load MCPs,
-  plugins, credentials, or skills; choose selective loading/injection as needed.
+      plugins, credentials, or skills; choose selective loading/injection as needed.
 - [ ] Verify repository instructions are available in the correct workspace,
-  including worktrees, remote execution, and resumed sessions.
+      including worktrees, remote execution, and resumed sessions.
 - [ ] Verify assigned skill discovery/pinning, authentication, Taskcore MCP
-  ownership, tool authorization, and configuration-change invalidation.
+      ownership, tool authorization, and configuration-change invalidation.
 - [ ] Record intentional isolation separately from accidental lost context.
 
 Claude starting points: [local adapter](../../packages/adapters/claude-local/src/server/execute.ts),
@@ -456,17 +456,17 @@ isolation is approved and should remain.
 ## 5. Let the runtime own bookkeeping
 
 - [x] **Native completion delivery slice.** Persist and present meaningful final
-  answers, saved document links and blocker details; settle accepted/rejected
-  OpenCode completion feedback correctly. Merged in #15151. This does not finish
-  the wider checkout, waiting, recovery and legacy ownership audit below.
+      answers, saved document links and blocker details; settle accepted/rejected
+      OpenCode completion feedback correctly. Merged in #15151. This does not finish
+      the wider checkout, waiting, recovery and legacy ownership audit below.
 - [ ] Map which runtime owns checkout, status transitions, completion comments,
-  artifacts, waiting/review states, and recovery; identify manual duplicates.
+      artifacts, waiting/review states, and recovery; identify manual duplicates.
 - [ ] Keep one valid completion path per runtime and preserve meaningful user
-  questions, approval requests, dependency waits, and final deliverables.
+      questions, approval requests, dependency waits, and final deliverables.
 - [ ] Remove agent instructions for operations the runtime already performs;
-  retain necessary coordination for legacy/external adapters.
+      retain necessary coordination for legacy/external adapters.
 - [ ] Verify durable task state, visible final answer, artifact access, audit,
-  and restart/recovery behavior through the real product paths.
+      and restart/recovery behavior through the real product paths.
 
 Decision: exact runtime responsibilities and legacy compatibility pending.
 
@@ -477,52 +477,52 @@ or qualified. Expand it from the registry and provider/profile definitions.
 For every numbered change, record applicability here or an explicit reason it
 does not apply.
 
-| Execution family | Paths to cover | Audit status |
-| --- | --- | --- |
-| Legacy Codex / Claude | Local adapters, managed auth and isolated configuration | Initial inspection only |
-| Other legacy local adapters | ACPX, OpenCode, Pi, Cursor, Gemini, Grok, Kimi, Hermes | Pending |
-| Other adapter transports | Cursor Cloud, Hermes/OpenClaw gateways, process, HTTP, external adapter plugins | Pending |
-| Runner Codex | App-server driver, runnerd bridge, Rust provider, direct/fallback paths | Additive instruction fix merged in PR #14920 |
-| Runner ACPX | Enabled profiles, especially Claude/Grok; declared or pending profiles tracked separately | Claude initial inspection; remaining audit pending |
-| Runner OpenCode | Native provider and configuration paths | Pending |
-| Hosted/remote providers | Claude Managed and AWS AgentCore; identify their own baseline rather than assuming CLI semantics | Pending |
+| Execution family            | Paths to cover                                                                                   | Audit status                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| Legacy Codex / Claude       | Local adapters, managed auth and isolated configuration                                          | Initial inspection only                            |
+| Other legacy local adapters | ACPX, OpenCode, Pi, Cursor, Gemini, Grok, Kimi, Hermes                                           | Pending                                            |
+| Other adapter transports    | Cursor Cloud, Hermes/OpenClaw gateways, process, HTTP, external adapter plugins                  | Pending                                            |
+| Runner Codex                | App-server driver, runnerd bridge, Rust provider, direct/fallback paths                          | Additive instruction fix merged in PR #14920       |
+| Runner ACPX                 | Enabled profiles, especially Claude/Grok; declared or pending profiles tracked separately        | Claude initial inspection; remaining audit pending |
+| Runner OpenCode             | Native provider and configuration paths                                                          | Pending                                            |
+| Hosted/remote providers     | Claude Managed and AWS AgentCore; identify their own baseline rather than assuming CLI semantics | Pending                                            |
 
 - [ ] Inventory supported profiles and qualification status from the
-  [adapter registry](../../server/src/adapters/registry.ts) and
-  [provider resolver](../../server/src/services/native-runtime/provider-profile.ts).
+      [adapter registry](../../server/src/adapters/registry.ts) and
+      [provider resolver](../../server/src/services/native-runtime/provider-profile.ts).
 - [ ] Cover local/remote environments, fresh/resumed sessions, managed/custom
-  hires, task/chat/planning flows, and auth/configuration variants as applicable.
+      hires, task/chat/planning flows, and auth/configuration variants as applicable.
 - [ ] Audit restrictions on tools, skills, subagents, memory, and other harness
-  capabilities. Trace effective provider configuration, not just intermediate
-  configuration objects; document intentional limits and decide accidental ones.
+      capabilities. Trace effective provider configuration, not just intermediate
+      configuration objects; document intentional limits and decide accidental ones.
 - [ ] Check shared fixes reach every relevant adapter; document provider-specific
-  exceptions instead of silently extending a Codex/Claude assumption.
+      exceptions instead of silently extending a Codex/Claude assumption.
 
 ## Verification and evals — apply to each item
 
 - [x] Repair strict retained-run accounting in #15007 and add bounded native
-  completion/final-answer coverage for #14961/#15151. Keep original failures;
-  ACPX host/provider action attribution and hiring source-read coverage remain
-  explicitly uncomparable where no authoritative mapping/receipt exists.
+      completion/final-answer coverage for #14961/#15151. Keep original failures;
+      ACPX host/provider action attribution and hiring source-read coverage remain
+      explicitly uncomparable where no authoritative mapping/receipt exists.
 - [x] Map existing coverage for all implemented changes before adding cases;
-  see the SH-1–SH-3 map below and [doc/evals.md](../evals.md).
-  Keep Runner protocol evals and Product E2E evals distinct.
+      see the SH-1–SH-3 map below and [doc/evals.md](../evals.md).
+      Keep Runner protocol evals and Product E2E evals distinct.
 - [x] Set up narrow deterministic checks for the implemented instruction layering,
-  hire, and shared-prompt changes. Future changes still need their own map for effective
-  configuration, skill/auth delivery, and session behavior where appropriate.
+      hire, and shared-prompt changes. Future changes still need their own map for effective
+      configuration, skill/auth delivery, and session behavior where appropriate.
 - [x] Reuse existing protocol tests for native Codex request layering and add Product
-  E2E for production-default hiring, skill delivery, task lifecycle, and chat
-  continuity. Repository context and additional artifact cases remain future work.
+      E2E for production-default hiring, skill delivery, task lifecycle, and chat
+      continuity. Repository context and additional artifact cases remain future work.
 - [x] Review existing suites for reusable coverage. Their custom QA manuals did
-  not exercise the tiny default hire; the new suite deliberately omits those
-  bundles and reuses independently graded skill, continuation, and chat journeys.
+      not exercise the tiny default hire; the new suite deliberately omits those
+      bundles and reuses independently graded skill, continuation, and chat journeys.
 - [ ] Compare task quality as well as Taskcore protocol compliance when claiming
-  that fewer instructions improve agent performance. Keep model, effort,
-  permissions, tools, and fixture comparable.
+      that fewer instructions improve agent performance. Keep model, effort,
+      permissions, tools, and fixture comparable.
 - [ ] Select narrow live cells when implementation is ready; retain revisions,
-  profile/environment, grader, retries, usage/cost, and failure classification.
+      profile/environment, grader, retries, usage/cost, and failure classification.
 - [ ] Run the relevant checks for each change and the repository's required full
-  verification before a PR-ready handoff. Record unrun checks and their reasons.
+      verification before a PR-ready handoff. Record unrun checks and their reasons.
 
 ### Coverage for changes implemented so far
 
@@ -535,11 +535,11 @@ check actual legacy prompts and both budget hard stops. The existing lifecycle
 oracles still own task/chat success. Models, auth, skills, permissions, and
 secret-reference plumbing are inherited from existing profiles.
 
-| Coverage ID | Implemented change | Executable coverage | Live status |
-| --- | --- | --- | --- |
-| SH-1 | Native Codex additive developer instructions, including start/resume/recovery | TypeScript driver, runnerd transport, Runner Lab/live-session, and Rust provider tests in `pnpm test:e2e:runner:stock-harness`; native Codex cells exercise real hires. | Native Codex passes all three matched journeys in both variants; #14920 held constant, so task success is not before/after vendor-base proof. |
-| SH-2 | Eight-word default hire `AGENTS.md` | Public creation/onboarding tests; exact independent public bundle oracle before and after provider execution for every stock-harness cell. | Candidate public tiny-bundle and budget receipts pass in all 24 retained cells. Behavioral delivery is not fully qualified; see F14–F17. |
-| SH-3 | Reduced shared task/chat defaults and removed generic resume contract | Shared renderer and ACPX/Codex/OpenCode/Pi/Hermes/Cursor Cloud regressions; actual legacy invocation prompts checked in the new suite. | Actual legacy prompts measured. Document-delivery regressions and clipped/missing receipts retained; additional carriers remain deferred item 2.2. |
+| Coverage ID | Implemented change                                                            | Executable coverage                                                                                                                                                     | Live status                                                                                                                                        |
+| ----------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SH-1        | Native Codex additive developer instructions, including start/resume/recovery | TypeScript driver, runnerd transport, Runner Lab/live-session, and Rust provider tests in `pnpm test:e2e:runner:stock-harness`; native Codex cells exercise real hires. | Native Codex passes all three matched journeys in both variants; #14920 held constant, so task success is not before/after vendor-base proof.      |
+| SH-2        | Eight-word default hire `AGENTS.md`                                           | Public creation/onboarding tests; exact independent public bundle oracle before and after provider execution for every stock-harness cell.                              | Candidate public tiny-bundle and budget receipts pass in all 24 retained cells. Behavioral delivery is not fully qualified; see F14–F17.           |
+| SH-3        | Reduced shared task/chat defaults and removed generic resume contract         | Shared renderer and ACPX/Codex/OpenCode/Pi/Hermes/Cursor Cloud regressions; actual legacy invocation prompts checked in the new suite.                                  | Actual legacy prompts measured. Document-delivery regressions and clipped/missing receipts retained; additional carriers remain deferred item 2.2. |
 
 The suite is explicit-only and excluded from `--all`; it does not add paid work
 to ordinary campaigns. Negative calibration covers manual regrowth, missing or
@@ -570,51 +570,51 @@ for exact source hashes, campaigns, failures and cost limitations.
 
 Confirmed mechanics below do not by themselves establish an effect on task quality.
 
-| ID | Finding | Work item / disposition |
-| --- | --- | --- |
-| F1 | Native Codex sent Taskcore text as `baseInstructions`. Probes on codex-cli 0.153.4 showed replacement; additive `developerInstructions` retained the stock base on start and cold resume. | 1; app-server fix merged in PR #14920 |
-| F2 | Default hires and role templates prescribe substantial operating procedures; common prompt and wake layers add further coordination text. | 2–3; mechanics confirmed, performance effect unmeasured |
-| F3 | Hiring references require legacy Taskcore skill/comment procedures, while native Runner intentionally omits that operational skill and uses semantic tools. | 2–3, 5; reconcile runtime contracts |
-| F4 | Local Claude appends instructions; Runner Claude preserves the Claude Code preset. Runner isolation excludes project/local settings, which can also exclude repository instruction discovery. | 4; selective context fix to design |
-| F5 | Some Codex capability settings differ between the direct driver and daemon path; an intermediate configuration does not prove the final provider behavior. | 6; effective-path audit pending |
-| F6 | Omitting or nulling `baseInstructions` on an old Codex thread's resume preserves its saved replacement; an empty string produces an empty base. | 1; document the required provider session reset; no automatic migration in this PR |
-| F7 | The isolated Codex-through-ACP dependency patch also sets `baseInstructions` on start/resume. It is a separate path from the native app-server backend. | 6; follow-up patch/profile audit pending |
-| F8 | The operational skill says target-bound confirmations default `supersedeOnUserComment` to true; the default manual and server normalizer say false. The server uses false. | 2; correct stale skill/reference guidance in a follow-up |
-| F9 | The default manual required a comment on every task, while the operational skill's verified external-chat shortcut delegates comments and lifecycle bookkeeping to the harness. | 2; unconditional manual rule removed; shared layers still need review |
-| F10 | Removing the default manual left the 661-word legacy task template and its 172-word resumed-wake execution contract. Hermes and Pi have additional policy carriers. | 2.1 complete locally: task/chat defaults 113 words, no generic resume contract; 2.2 wrappers pending |
-| F11 | Task Markdown and the wake renderer prescribe different accepted-plan behavior for planning-mode accepted-confirmation payloads; tests currently expect both. | 2; unify the directive owner; production reachability still to trace |
-| F12 | Native fixed instructions and full-turn constraints repeat completion and uncommon procedures, while reserved finish/block tool descriptions are only one sentence each. | 2; improve tool documentation before removing needed native protocol guidance |
-| F13 | Existing context-integrity/chat fixtures injected a QA manual, so their green results did not qualify the production tiny hire default. | Dedicated stock-harness suite measured real default hires; retained failures prevent blanket qualification. |
-| F14 | Historical classic Claude/OpenCode skill runs save one Taskcore document; reduced runs save none while completing the task. Legacy ACP Claude has the same behavior under a separate guard failure. Pinned skill storage wording is ambiguous. | Measured delivery failures; keep original oracle. Improve legacy skill/API delivery guidance separately, then compare both variants with preserved and storage-specific cases. |
-| F15 | Classic Claude restart chat fails its memory assertion in both variants. | Existing behavior, not attributable to this reduction from these trials. |
-| F16 | All six legacy ACP cells per variant fail the persisted-provider-credential guard. Three historical ACP cells also have clipped public prompt retrieval, and candidate ACP Codex chat lacks a complete invocation receipt. | Security/receipt qualification follow-ups; do not waive guard, expose raw sessions, or infer missing provider instructions from clipped receipts. |
-| F17 | Prerequisites beside the campaign root violate trusted artifact selection. A same-target pilot superseded 13 candidate cells; one historical AWS runner shut down without upload. | Packaging fixed at `1eb5ba420` and pilot passes. Directory-layout-only copies preserve every byte; missing cells alone recovered at unchanged source, completed failures never rerun. |
+| ID  | Finding                                                                                                                                                                                                                                        | Work item / disposition                                                                                                                                                               |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1  | Native Codex sent Taskcore text as `baseInstructions`. Probes on codex-cli 0.153.4 showed replacement; additive `developerInstructions` retained the stock base on start and cold resume.                                                      | 1; app-server fix merged in PR #14920                                                                                                                                                 |
+| F2  | Default hires and role templates prescribe substantial operating procedures; common prompt and wake layers add further coordination text.                                                                                                      | 2–3; mechanics confirmed, performance effect unmeasured                                                                                                                               |
+| F3  | Hiring references require legacy Taskcore skill/comment procedures, while native Runner intentionally omits that operational skill and uses semantic tools.                                                                                    | 2–3, 5; reconcile runtime contracts                                                                                                                                                   |
+| F4  | Local Claude appends instructions; Runner Claude preserves the Claude Code preset. Runner isolation excludes project/local settings, which can also exclude repository instruction discovery.                                                  | 4; selective context fix to design                                                                                                                                                    |
+| F5  | Some Codex capability settings differ between the direct driver and daemon path; an intermediate configuration does not prove the final provider behavior.                                                                                     | 6; effective-path audit pending                                                                                                                                                       |
+| F6  | Omitting or nulling `baseInstructions` on an old Codex thread's resume preserves its saved replacement; an empty string produces an empty base.                                                                                                | 1; document the required provider session reset; no automatic migration in this PR                                                                                                    |
+| F7  | The isolated Codex-through-ACP dependency patch also sets `baseInstructions` on start/resume. It is a separate path from the native app-server backend.                                                                                        | 6; follow-up patch/profile audit pending                                                                                                                                              |
+| F8  | The operational skill says target-bound confirmations default `supersedeOnUserComment` to true; the default manual and server normalizer say false. The server uses false.                                                                     | 2; correct stale skill/reference guidance in a follow-up                                                                                                                              |
+| F9  | The default manual required a comment on every task, while the operational skill's verified external-chat shortcut delegates comments and lifecycle bookkeeping to the harness.                                                                | 2; unconditional manual rule removed; shared layers still need review                                                                                                                 |
+| F10 | Removing the default manual left the 661-word legacy task template and its 172-word resumed-wake execution contract. Hermes and Pi have additional policy carriers.                                                                            | 2.1 complete locally: task/chat defaults 113 words, no generic resume contract; 2.2 wrappers pending                                                                                  |
+| F11 | Task Markdown and the wake renderer prescribe different accepted-plan behavior for planning-mode accepted-confirmation payloads; tests currently expect both.                                                                                  | 2; unify the directive owner; production reachability still to trace                                                                                                                  |
+| F12 | Native fixed instructions and full-turn constraints repeat completion and uncommon procedures, while reserved finish/block tool descriptions are only one sentence each.                                                                       | 2; improve tool documentation before removing needed native protocol guidance                                                                                                         |
+| F13 | Existing context-integrity/chat fixtures injected a QA manual, so their green results did not qualify the production tiny hire default.                                                                                                        | Dedicated stock-harness suite measured real default hires; retained failures prevent blanket qualification.                                                                           |
+| F14 | Historical classic Claude/OpenCode skill runs save one Taskcore document; reduced runs save none while completing the task. Legacy ACP Claude has the same behavior under a separate guard failure. Pinned skill storage wording is ambiguous. | Measured delivery failures; keep original oracle. Improve legacy skill/API delivery guidance separately, then compare both variants with preserved and storage-specific cases.        |
+| F15 | Classic Claude restart chat fails its memory assertion in both variants.                                                                                                                                                                       | Existing behavior, not attributable to this reduction from these trials.                                                                                                              |
+| F16 | All six legacy ACP cells per variant fail the persisted-provider-credential guard. Three historical ACP cells also have clipped public prompt retrieval, and candidate ACP Codex chat lacks a complete invocation receipt.                     | Security/receipt qualification follow-ups; do not waive guard, expose raw sessions, or infer missing provider instructions from clipped receipts.                                     |
+| F17 | Prerequisites beside the campaign root violate trusted artifact selection. A same-target pilot superseded 13 candidate cells; one historical AWS runner shut down without upload.                                                              | Packaging fixed at `1eb5ba420` and pilot passes. Directory-layout-only copies preserve every byte; missing cells alone recovered at unchanged source, completed failures never rerun. |
 
 Append new findings with evidence, affected paths, and the numbered item that
 will address them. Record intentional behavior explicitly rather than as a bug.
 
 ## Decision and completion log
 
-| Date | Decision / outcome | Evidence / follow-up |
-| --- | --- | --- |
-| 2026-10-05 | Dotta merged #15151; reconcile the saved roadmap with completed implementation/evidence notes. | Native completion slice complete; general hiring reductions and common legacy prompts also merged. 2.2, remaining fixed native procedures, 3.4 and the broader 4–6 audits stay open. Preserve old failures and bounded qualification limits; no new model run or public report publication in this checklist update. |
-| 2026-10-02 | Dotta approved preserving stock instructions, smaller defaults/templates, minimal coordination, runtime bookkeeping, and coverage across harnesses. | Implementation details to work through one item at a time. |
-| 2026-10-02 | Taskcore-owned MCP isolation and configuration changes/session resets are acceptable. | Preserve Taskcore auth and assigned skills while fixing repository context. |
-| 2026-10-02 | Dotta requested implementation and a PR for item 1. Native app-server paths now use additive developer instructions. | 139 targeted TypeScript tests and 91 Rust provider tests passed; repository typecheck/build passed. Remaining test/review results to record. |
-| 2026-10-02 | Verified actual Codex instruction layering using a localhost Responses stub, without paid inference. | codex-cli 0.153.4 sent identical 14,732-character stock base instructions on start and cold resume, with the Taskcore marker retained in developer input. This is protocol evidence, not a task-quality eval. |
-| 2026-10-02 | Dotta requested and confirmed the merge of item 1. | PR #14920 merged at `408f70e69f9c5e49cb4377f4886ac2001bfa67a2`, with all 55 checks passing and Greptile 5/5. |
-| 2026-10-02 | Dotta directed an identity-only default manual with no skill or runtime pointers; the harness already handles coordination. | Reduced the default to eight words. Existing hire and onboarding suites passed all 64 tests. Shared prompts and role templates remain pending. |
-| 2026-10-02 | Dotta requested three explicit shared-prompt follow-ups and selected common legacy startup/resume reduction first. | Follow-ups 2.1–2.3 recorded. 2.1 complete locally: both defaults 113 words; generic resume contract removed. 563 focused tests and shared utility typecheck/build passed. Extra carriers and native instruction reduction remain pending. |
-| 2026-10-02 | Dotta requested executable eval coverage for everything implemented so far and all subsequent changes before continuing. | Added SH-1–SH-3 coverage map, credential-free prerequisite, and 24 production-default-hire cells. 478 prerequisite and 860 support tests passed; E2E typecheck/discovery passed. Live provider results remain `not_run`; item 2.2/2.3 unchanged. |
-| 2026-10-02 | Dotta requested PRs and GitHub-runner before/after qualification while discussing subsequent work separately. | Draft [PR #14948](https://github.com/khulnasoft/taskcore/pull/14948); native Codex diagnostic [passed](https://github.com/khulnasoft/taskcore/actions/runs/37034213743), 34.745 s provider / 56.660 s cell. Comparison restores only the prior manual/shared prompts and holds #14920 constant; no general coding-quality claim. |
-| 2026-10-02 | Full candidate cold setup failed before provider admission; stopped and retained the attempt. | [Run 37037105491](https://github.com/khulnasoft/taskcore/actions/runs/37037105491), target `36e987246`: prerequisite imports lacked the plugin SDK build. Added ordinary dependency setup before credential-free prerequisites and exact-source coverage of connection guidance. Cold pilot and full matched campaigns pending. |
-| 2026-10-02 | Dotta deferred 2.2 additional legacy carriers and approved the first 2.3 native tool-description slice separately. | Keep wrappers open; native finish/block documentation must not be supplied to legacy skill/API completion paths. |
-| 2026-10-02 | Matched default-manual/shared-prompt campaigns measured failures, with #14920 constant. | Candidate `f02d8d0df`: 15/24 pass. Historical `12c5433c6`: 15/24 pass after the one runner-shutdown recovery also timed out. Classic Claude/OpenCode Taskcore document delivery regressed in observed trials; keep PR #14948 draft. [Live report](2026-10-02-stock-harness-live-comparison.md). |
-| 2026-10-02 | Cold prerequisite and packaging faults were repaired without weakening admission or behavioral graders. | Three setup attempts stopped before providers. Current `1eb5ba420` pilot passes 557 prerequisite checks and protected report publication; source/hash/cost evidence retained. Candidate cancellation and historical runner shutdown recovered only for missing cells. |
-| 2026-10-02 | Final bounded recovery completed; no further model reruns. | Both matched cohorts have all 24 results, 15 pass and nine fail. Two classic skill deliveries regress; two OpenCode ordered cases pass only with reduced instructions. Overall parity is not behavioral equivalence. All 48 retained result/receipt projections are hashed and sanitized; original interruptions and partial unknown spend remain recorded. |
-| 2026-10-02 | Dotta approved the measured legacy delivery repair and narrow follow-up qualification. | Early operational skill PUT/receipt/link guidance plus generic issue-document reference; eight-word manual retained. Focused original + explicit Taskcore-storage cases on classic Claude/OpenCode, with only the two skill sources varied. All four pairs completed: Claude original Fail → Pass, Claude explicit Pass → Pass, both OpenCode cases Fail → Fail. Explicit OpenCode handoff worsened beneath the unchanged machine grade (clickable API URL → code-formatted path). [Repair report](2026-10-02-legacy-document-skill-repair.md); no full matrix rerun. Claude chat-memory (F15) and ACP credential/receipt failures (F16) remain separate and unresolved. |
-| 2026-10-02 | Native tool-description comparison completed all six paired cases. | Zero newly failing cases, three unchanged completion passes, three unchanged blocker failures. Claude/OpenCode blocker API matchers pass in both variants; UI matcher wrongly demanded marker-only replies. Codex's exact-action punctuation failure is unchanged. Original failures retained; corrected 10-case browser calibration and separate retained-DOM replay pass all six visible replies. Exact Codex action failures remain. No native fixed-prompt removal measured. |
-| 2026-10-02 | Dotta approved minimal operational skill selection/link correction after retained OpenCode diagnosis. | Candidate `fe9dc1e3c` and baseline `0d7ecfa96d` have two matched Pass → Pass cases, zero new failures/passes and no pending pairs. All four exact-source gates pass 587 checks, all four provider runs and cleanup pass. Candidate original loads Taskcore/reference before delivery, but uses the wrong PAP prefix; baseline original saves publicly later within the same assignment and gives a bare path. Explicit clickable UI links are correct in both. [Complete report](2026-10-02-opencode-skill-routing-link-qualification.md); prior failures retained, no causal or broad quality claim. |
+| Date       | Decision / outcome                                                                                                                                  | Evidence / follow-up                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-05 | Dotta merged #15151; reconcile the saved roadmap with completed implementation/evidence notes.                                                      | Native completion slice complete; general hiring reductions and common legacy prompts also merged. 2.2, remaining fixed native procedures, 3.4 and the broader 4–6 audits stay open. Preserve old failures and bounded qualification limits; no new model run or public report publication in this checklist update.                                                                                                                                                                                                                                                                                                                                                     |
+| 2026-10-02 | Dotta approved preserving stock instructions, smaller defaults/templates, minimal coordination, runtime bookkeeping, and coverage across harnesses. | Implementation details to work through one item at a time.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2026-10-02 | Taskcore-owned MCP isolation and configuration changes/session resets are acceptable.                                                               | Preserve Taskcore auth and assigned skills while fixing repository context.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 2026-10-02 | Dotta requested implementation and a PR for item 1. Native app-server paths now use additive developer instructions.                                | 139 targeted TypeScript tests and 91 Rust provider tests passed; repository typecheck/build passed. Remaining test/review results to record.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2026-10-02 | Verified actual Codex instruction layering using a localhost Responses stub, without paid inference.                                                | codex-cli 0.153.4 sent identical 14,732-character stock base instructions on start and cold resume, with the Taskcore marker retained in developer input. This is protocol evidence, not a task-quality eval.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 2026-10-02 | Dotta requested and confirmed the merge of item 1.                                                                                                  | PR #14920 merged at `408f70e69f9c5e49cb4377f4886ac2001bfa67a2`, with all 55 checks passing and Greptile 5/5.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2026-10-02 | Dotta directed an identity-only default manual with no skill or runtime pointers; the harness already handles coordination.                         | Reduced the default to eight words. Existing hire and onboarding suites passed all 64 tests. Shared prompts and role templates remain pending.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 2026-10-02 | Dotta requested three explicit shared-prompt follow-ups and selected common legacy startup/resume reduction first.                                  | Follow-ups 2.1–2.3 recorded. 2.1 complete locally: both defaults 113 words; generic resume contract removed. 563 focused tests and shared utility typecheck/build passed. Extra carriers and native instruction reduction remain pending.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 2026-10-02 | Dotta requested executable eval coverage for everything implemented so far and all subsequent changes before continuing.                            | Added SH-1–SH-3 coverage map, credential-free prerequisite, and 24 production-default-hire cells. 478 prerequisite and 860 support tests passed; E2E typecheck/discovery passed. Live provider results remain `not_run`; item 2.2/2.3 unchanged.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2026-10-02 | Dotta requested PRs and GitHub-runner before/after qualification while discussing subsequent work separately.                                       | Draft [PR #14948](https://github.com/khulnasoft/taskcore/pull/14948); native Codex diagnostic [passed](https://github.com/khulnasoft/taskcore/actions/runs/37034213743), 34.745 s provider / 56.660 s cell. Comparison restores only the prior manual/shared prompts and holds #14920 constant; no general coding-quality claim.                                                                                                                                                                                                                                                                                                                                         |
+| 2026-10-02 | Full candidate cold setup failed before provider admission; stopped and retained the attempt.                                                       | [Run 37037105491](https://github.com/khulnasoft/taskcore/actions/runs/37037105491), target `36e987246`: prerequisite imports lacked the plugin SDK build. Added ordinary dependency setup before credential-free prerequisites and exact-source coverage of connection guidance. Cold pilot and full matched campaigns pending.                                                                                                                                                                                                                                                                                                                                          |
+| 2026-10-02 | Dotta deferred 2.2 additional legacy carriers and approved the first 2.3 native tool-description slice separately.                                  | Keep wrappers open; native finish/block documentation must not be supplied to legacy skill/API completion paths.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2026-10-02 | Matched default-manual/shared-prompt campaigns measured failures, with #14920 constant.                                                             | Candidate `f02d8d0df`: 15/24 pass. Historical `12c5433c6`: 15/24 pass after the one runner-shutdown recovery also timed out. Classic Claude/OpenCode Taskcore document delivery regressed in observed trials; keep PR #14948 draft. [Live report](2026-10-02-stock-harness-live-comparison.md).                                                                                                                                                                                                                                                                                                                                                                          |
+| 2026-10-02 | Cold prerequisite and packaging faults were repaired without weakening admission or behavioral graders.                                             | Three setup attempts stopped before providers. Current `1eb5ba420` pilot passes 557 prerequisite checks and protected report publication; source/hash/cost evidence retained. Candidate cancellation and historical runner shutdown recovered only for missing cells.                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-10-02 | Final bounded recovery completed; no further model reruns.                                                                                          | Both matched cohorts have all 24 results, 15 pass and nine fail. Two classic skill deliveries regress; two OpenCode ordered cases pass only with reduced instructions. Overall parity is not behavioral equivalence. All 48 retained result/receipt projections are hashed and sanitized; original interruptions and partial unknown spend remain recorded.                                                                                                                                                                                                                                                                                                              |
+| 2026-10-02 | Dotta approved the measured legacy delivery repair and narrow follow-up qualification.                                                              | Early operational skill PUT/receipt/link guidance plus generic issue-document reference; eight-word manual retained. Focused original + explicit Taskcore-storage cases on classic Claude/OpenCode, with only the two skill sources varied. All four pairs completed: Claude original Fail → Pass, Claude explicit Pass → Pass, both OpenCode cases Fail → Fail. Explicit OpenCode handoff worsened beneath the unchanged machine grade (clickable API URL → code-formatted path). [Repair report](2026-10-02-legacy-document-skill-repair.md); no full matrix rerun. Claude chat-memory (F15) and ACP credential/receipt failures (F16) remain separate and unresolved. |
+| 2026-10-02 | Native tool-description comparison completed all six paired cases.                                                                                  | Zero newly failing cases, three unchanged completion passes, three unchanged blocker failures. Claude/OpenCode blocker API matchers pass in both variants; UI matcher wrongly demanded marker-only replies. Codex's exact-action punctuation failure is unchanged. Original failures retained; corrected 10-case browser calibration and separate retained-DOM replay pass all six visible replies. Exact Codex action failures remain. No native fixed-prompt removal measured.                                                                                                                                                                                         |
+| 2026-10-02 | Dotta approved minimal operational skill selection/link correction after retained OpenCode diagnosis.                                               | Candidate `fe9dc1e3c` and baseline `0d7ecfa96d` have two matched Pass → Pass cases, zero new failures/passes and no pending pairs. All four exact-source gates pass 587 checks, all four provider runs and cleanup pass. Candidate original loads Taskcore/reference before delivery, but uses the wrong PAP prefix; baseline original saves publicly later within the same assignment and gives a bare path. Explicit clickable UI links are correct in both. [Complete report](2026-10-02-opencode-skill-routing-link-qualification.md); prior failures retained, no causal or broad quality claim.                                                                    |
 
 - F18: Native blocker browser assertion required a marker-only reply despite asking for owner/action/reason. Correct marker-plus-explanation checks symmetrically, calibrate contradictory and future-condition replies, retain original verdicts.
 - F19: Original prompt-removal cohorts loaded Taskcore; OpenCode skill truncation omitted the late API recipe. The early repair fixed Claude in one paired trial. In the repaired original OpenCode assignment, Taskcore was first loaded only during disposition recovery after a local-file write. Shared legacy operational-skill delivery/selection needs review before more recipe expansion.
@@ -626,7 +626,6 @@ will address them. Record intentional behavior explicitly rather than as a bug.
 For each completed item, add the chosen behavior, changed paths, verification
 results, remaining exceptions, and follow-ups here before checking it off.
 
-
 ### 2026-10-05 final PR #15218 scope
 
 - [x] Preserve all three experimental cohorts and failed original grades.
@@ -636,7 +635,6 @@ results, remaining exceptions, and follow-ups here before checking it off.
 - [x] Final head 2e7cef78eef7cdfe02265e0dcb03e855b8e50bd8: all 47 CI jobs pass; one initial annotation-test timeout retained and one targeted retry passed. Fresh Greptile 5/5, three threads resolved, published body verified, both ready-transition security scans pass, MERGEABLE and no longer draft.
 - [x] PR #15218 merged on 2026-10-06 at 01:03 UTC. The preceding approval hold is historical; the final merged scope is measurement and eval coverage with production unchanged.
 - [ ] Section 2.3 procedure relocation remains unshipped; the trials do not justify it. Runtime follow-up preserved separately and unqualified.
-
 
 ### 2026-10-06 roadmap update
 

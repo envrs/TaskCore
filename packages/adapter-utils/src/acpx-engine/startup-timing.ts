@@ -205,7 +205,10 @@ function hashLabelValue(value: string): string {
  * value for a hashed label returns `undefined` too (fail open — never a raw
  * value, never an empty attribute).
  */
-export function clampSpanLabel(name: string, value: string | undefined): string | undefined {
+export function clampSpanLabel(
+  name: string,
+  value: string | undefined,
+): string | undefined {
   switch (name) {
     case "command":
       return value !== undefined && KNOWN_COMMAND_LABELS.has(value)
@@ -337,7 +340,9 @@ export interface ActiveStepContext {
  * a module-level singleton, so the value propagates across `await` boundaries
  * and across package boundaries that share this module.
  */
-const activeStepContextStorage = new AsyncLocalStorage<ActiveStepContext | undefined>();
+const activeStepContextStorage = new AsyncLocalStorage<
+  ActiveStepContext | undefined
+>();
 
 /**
  * Return the active step context, or `null` when no measured step is running.
@@ -420,7 +425,10 @@ export function runWithRuntimeParent<T>(
  * opens no real span; it only runs `work` under the current run parent, so the
  * span path stays a no-op until the server injects a real tracer.
  */
-export type RuntimeSpanRunner = <T>(name: string, work: () => Promise<T>) => Promise<T>;
+export type RuntimeSpanRunner = <T>(
+  name: string,
+  work: () => Promise<T>,
+) => Promise<T>;
 
 /**
  * Build a {@link RuntimeSpanRunner} from a trace context and the run-parent
@@ -545,7 +553,9 @@ export interface StartupStepMeasureOptions {
    * a hard-coded attribute key, so a free-form key can never widen the closed
    * span allowlist. A non-finite value sets no attribute.
    */
-  spanWallTimes?: () => Partial<Record<"createRuntime" | "ensureSession", number>>;
+  spanWallTimes?: () => Partial<
+    Record<"createRuntime" | "ensureSession", number>
+  >;
 }
 
 function buildStepEvent(payload: Record<string, unknown>): AdapterRuntimeEvent {
@@ -596,14 +606,19 @@ export async function measureStartupStep<T>(
   const tracer = options.tracer ?? NOOP_TRACER;
   const startAttributes: Record<string, string> = {};
   if (options.provider !== undefined) {
-    startAttributes[SANDBOX_STARTUP_SPAN_ATTRS.provider] = normalizeProviderFamily(options.provider);
+    startAttributes[SANDBOX_STARTUP_SPAN_ATTRS.provider] =
+      normalizeProviderFamily(options.provider);
   }
   if (options.batch !== undefined) {
     startAttributes[SANDBOX_STARTUP_SPAN_ATTRS.batch] = options.batch;
   }
   let span: StartupSpan;
   try {
-    span = tracer.startSpan(step, { attributes: startAttributes }, options.parentContext);
+    span = tracer.startSpan(
+      step,
+      { attributes: startAttributes },
+      options.parentContext,
+    );
   } catch {
     // A throwing tracer must not change startup control flow.
     span = NOOP_SPAN;
@@ -653,14 +668,26 @@ export async function measureStartupStep<T>(
       // The step span carries only the step wall time and the outcome. The
       // per-execution `sandbox.exec` child spans now carry the round-trip and
       // provider-duration detail, so the step span no longer duplicates them.
-      setFiniteNumberAttr(span, SANDBOX_STARTUP_SPAN_ATTRS.stepWallMs, durationMs);
+      setFiniteNumberAttr(
+        span,
+        SANDBOX_STARTUP_SPAN_ATTRS.stepWallMs,
+        durationMs,
+      );
       span.setAttribute(SANDBOX_STARTUP_SPAN_ATTRS.outcome, outcome);
       if (options.spanWallTimes) {
         // Map each named sub-time to a hard-coded, closed attribute key, so a
         // caller cannot widen the span allowlist with a free-form key.
         const sub = options.spanWallTimes();
-        setFiniteNumberAttr(span, SANDBOX_STARTUP_SPAN_ATTRS.handshakeCreateRuntimeWallMs, sub.createRuntime);
-        setFiniteNumberAttr(span, SANDBOX_STARTUP_SPAN_ATTRS.handshakeEnsureSessionWallMs, sub.ensureSession);
+        setFiniteNumberAttr(
+          span,
+          SANDBOX_STARTUP_SPAN_ATTRS.handshakeCreateRuntimeWallMs,
+          sub.createRuntime,
+        );
+        setFiniteNumberAttr(
+          span,
+          SANDBOX_STARTUP_SPAN_ATTRS.handshakeEnsureSessionWallMs,
+          sub.ensureSession,
+        );
       }
       span.end();
     } catch {
@@ -722,7 +749,8 @@ export function setSandboxRootSpanAttributes(
   setFiniteNumberAttr(span, A.rootWallMs, timings.wallMs);
   setFiniteNumberAttr(span, A.rootWorkMs, timings.workMs);
   setFiniteNumberAttr(span, A.rootDiffMs, timings.workMs - timings.wallMs);
-  if (context.coldStart !== undefined) span.setAttribute(A.coldStart, context.coldStart);
+  if (context.coldStart !== undefined)
+    span.setAttribute(A.coldStart, context.coldStart);
   if (context.provider !== undefined) {
     span.setAttribute(A.provider, normalizeProviderFamily(context.provider));
   }
@@ -768,24 +796,36 @@ export async function emitSkippedStartupStep(
   const tracer = options.tracer ?? NOOP_TRACER;
   const startAttributes: Record<string, string> = {};
   if (options.provider !== undefined) {
-    startAttributes[SANDBOX_STARTUP_SPAN_ATTRS.provider] = normalizeProviderFamily(options.provider);
+    startAttributes[SANDBOX_STARTUP_SPAN_ATTRS.provider] =
+      normalizeProviderFamily(options.provider);
   }
   let span: StartupSpan;
   try {
-    span = tracer.startSpan(step, { attributes: startAttributes }, options.parentContext);
+    span = tracer.startSpan(
+      step,
+      { attributes: startAttributes },
+      options.parentContext,
+    );
   } catch {
     span = NOOP_SPAN;
   }
   try {
     span.setAttribute(SANDBOX_STARTUP_SPAN_ATTRS.stepWallMs, 0);
-    span.setAttribute(SANDBOX_STARTUP_SPAN_ATTRS.outcome, SANDBOX_STARTUP_OUTCOME.skipped);
+    span.setAttribute(
+      SANDBOX_STARTUP_SPAN_ATTRS.outcome,
+      SANDBOX_STARTUP_OUTCOME.skipped,
+    );
     span.end();
   } catch {
     // Observability must not change startup control flow.
   }
   try {
     await ctx.onEvent?.(
-      buildStepEvent({ step, durationMs: 0, outcome: SANDBOX_STARTUP_OUTCOME.skipped }),
+      buildStepEvent({
+        step,
+        durationMs: 0,
+        outcome: SANDBOX_STARTUP_OUTCOME.skipped,
+      }),
     );
   } catch {
     // Observability must not change startup control flow.
@@ -847,7 +887,8 @@ export async function emitRunPhaseTiming(
   outcome: RunPhaseOutcome,
 ): Promise<void> {
   if (!RUN_PHASE_NAME_SET.has(phase)) return;
-  const safeDuration = Number.isFinite(durationMs) && durationMs > 0 ? durationMs : 0;
+  const safeDuration =
+    Number.isFinite(durationMs) && durationMs > 0 ? durationMs : 0;
   const event: AdapterRuntimeEvent = {
     eventType: RUN_PHASE_TIMING_EVENT_TYPE,
     stream: "system",

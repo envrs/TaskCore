@@ -84,7 +84,9 @@ export interface RunPlan<TResult> {
  * Run the attempt through the routing table. The coordinator is the one owner of
  * the startup-to-settlement order.
  */
-export async function runAttempt<TResult>(plan: RunPlan<TResult>): Promise<TResult> {
+export async function runAttempt<TResult>(
+  plan: RunPlan<TResult>,
+): Promise<TResult> {
   let startupResult: StartupResult;
   try {
     startupResult = await plan.startup();
@@ -102,7 +104,10 @@ export async function runAttempt<TResult>(plan: RunPlan<TResult>): Promise<TResu
   if (startupResult.kind === "settle") {
     // A pre-turn failure after the ledger acquired resources. Settle the
     // resources, then reproduce the error result AFTER settlement.
-    const reason: SettlementReason = { kind: "pre_turn", cause: startupResult.cause };
+    const reason: SettlementReason = {
+      kind: "pre_turn",
+      cause: startupResult.cause,
+    };
     const settled = plan.settle(reason);
     if (settled) await settled;
     return plan.reproduceResult(reason);
@@ -118,8 +123,12 @@ export async function runAttempt<TResult>(plan: RunPlan<TResult>): Promise<TResu
 }
 
 /** Build a disposition report that marks every claimed entry `finalized`. */
-function finalizedReport(consumed: ConsumedRunResources): SettlementDispositionReport {
+function finalizedReport(
+  consumed: ConsumedRunResources,
+): SettlementDispositionReport {
   return {
-    records: consumed.entries().map((entry) => ({ id: entry.id, disposition: "finalized" as const })),
+    records: consumed
+      .entries()
+      .map((entry) => ({ id: entry.id, disposition: "finalized" as const })),
   };
 }

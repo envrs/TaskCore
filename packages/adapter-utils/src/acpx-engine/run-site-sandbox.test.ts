@@ -34,7 +34,10 @@ function makeStagedRuntime(id: string): PreparedAdapterExecutionTargetRuntime {
   } as unknown as PreparedAdapterExecutionTargetRuntime;
 }
 
-function makeLedger(): { ledger: AcquiredRunResources; registered: RunResourceRegistration[] } {
+function makeLedger(): {
+  ledger: AcquiredRunResources;
+  registered: RunResourceRegistration[];
+} {
   const registered: RunResourceRegistration[] = [];
   const ledger: AcquiredRunResources = {
     register(registration) {
@@ -90,7 +93,10 @@ function makeSite(overrides: Partial<SandboxRunSiteOptions> = {}) {
     onReuseLog: async () => {},
     startTaskcoreBridge: async () => {
       bridgeCalls.push("taskcore:start");
-      return { env: { TASKCORE_API_KEY: "run-token" }, stop: async () => {} } as never;
+      return {
+        env: { TASKCORE_API_KEY: "run-token" },
+        stop: async () => {},
+      } as never;
     },
     startProcessSessionBridge: async ({ launchEnv }) => {
       bridgeCalls.push("process-session:start");
@@ -100,7 +106,8 @@ function makeSite(overrides: Partial<SandboxRunSiteOptions> = {}) {
     measureBridgeStep: (_step, run) => run(),
     finalizeLaunchEnv: (contributions) => {
       const merged = { ...env };
-      for (const contribution of contributions) Object.assign(merged, contribution.env);
+      for (const contribution of contributions)
+        Object.assign(merged, contribution.env);
       return merged;
     },
     onTaskcoreBridgeLog: async () => {},
@@ -108,12 +115,27 @@ function makeSite(overrides: Partial<SandboxRunSiteOptions> = {}) {
     ...overrides,
   };
   const site = createSandboxRunSite(options);
-  return { site, ledger, registered, env, stagedRuntimes, stagingLocks, freshStaged, bridgeCalls, options };
+  return {
+    site,
+    ledger,
+    registered,
+    env,
+    stagedRuntimes,
+    stagingLocks,
+    freshStaged,
+    bridgeCalls,
+    options,
+  };
 }
 
 /** A minimal `ReadyRunResources` that resolves a single staged runtime. */
-function makeReady(stagedRuntime: PreparedAdapterExecutionTargetRuntime): ReadyRunResources {
-  const staged: StagedRuntimeResource = { stagedRuntime, disposeStaged: async () => {} };
+function makeReady(
+  stagedRuntime: PreparedAdapterExecutionTargetRuntime,
+): ReadyRunResources {
+  const staged: StagedRuntimeResource = {
+    stagedRuntime,
+    disposeStaged: async () => {},
+  };
   return {
     get: (id: ResourceId) => (id === "staged_runtime" ? staged : undefined),
     scopeOf: () => undefined,
@@ -132,11 +154,18 @@ describe("sandbox run site", () => {
     // Staging registers the staged runtime, the managed-home copy-back, and the
     // per-session staging lease. Both bridge starts register their handles.
     expect(byId).toEqual(
-      new Set<ResourceId>(["staged_runtime", "managed_home", "staging_lease", "control_bridge", "agent_bridge"]),
+      new Set<ResourceId>([
+        "staged_runtime",
+        "managed_home",
+        "staging_lease",
+        "control_bridge",
+        "agent_bridge",
+      ]),
     );
     // The staged runtime is startup-rollback until a clean turn promotes it; the
     // copy-back, the lease, and the bridges live through the whole run.
-    const scopeOf = (id: ResourceId) => registered.find((entry) => entry.id === id)?.scope;
+    const scopeOf = (id: ResourceId) =>
+      registered.find((entry) => entry.id === id)?.scope;
     expect(scopeOf("staged_runtime")).toBe("startup_rollback");
     expect(scopeOf("managed_home")).toBe("per_run");
     expect(scopeOf("staging_lease")).toBe("per_run");
@@ -150,14 +179,18 @@ describe("sandbox run site", () => {
     const failedStaged = {
       runtimeRootDir: "/remote/fail/.taskcore-runtime/acpx",
       additionalSourceDirs: {},
-      additionalSourceFailures: [{ projectId: "proj-x", error: "extract failed: boom" }],
+      additionalSourceFailures: [
+        { projectId: "proj-x", error: "extract failed: boom" },
+      ],
     } as unknown as PreparedAdapterExecutionTargetRuntime;
     const { site } = makeSite({ stage: async () => failedStaged });
 
     const placed = await site.placeWorkspace(makeContext("s"));
 
     expect(placed).toEqual({
-      referencedProjectStagingFailures: [{ projectId: "proj-x", error: "extract failed: boom" }],
+      referencedProjectStagingFailures: [
+        { projectId: "proj-x", error: "extract failed: boom" },
+      ],
     });
   });
 
@@ -173,7 +206,10 @@ describe("sandbox run site", () => {
         events.push("taskcore:start");
         await taskcoreGate;
         events.push("taskcore:env-ready");
-        return { env: { TASKCORE_API_KEY: "run-token" }, stop: async () => {} } as never;
+        return {
+          env: { TASKCORE_API_KEY: "run-token" },
+          stop: async () => {},
+        } as never;
       },
       startProcessSessionBridge: async ({ launchEnv }) => {
         events.push("process-session:start");
@@ -197,8 +233,14 @@ describe("sandbox run site", () => {
     // merged run-scoped env (the single sequencing point).
     releaseTaskcore();
     const transport = await transportPromise;
-    expect(events.indexOf("taskcore:env-ready")).toBeLessThan(events.indexOf("process-session:launch"));
-    expect(processLaunchEnv).toEqual({ BASE: "1", CODEX_HOME: "/remote/home", TASKCORE_API_KEY: "run-token" });
+    expect(events.indexOf("taskcore:env-ready")).toBeLessThan(
+      events.indexOf("process-session:launch"),
+    );
+    expect(processLaunchEnv).toEqual({
+      BASE: "1",
+      CODEX_HOME: "/remote/home",
+      TASKCORE_API_KEY: "run-token",
+    });
     expect(transport.launchEnv).toEqual(processLaunchEnv);
   });
 
@@ -256,7 +298,10 @@ describe("sandbox run site", () => {
         },
       ],
     ]);
-    const { site, env } = makeSite({ stagedRuntimes, isCompatibleResume: true });
+    const { site, env } = makeSite({
+      stagedRuntimes,
+      isCompatibleResume: true,
+    });
 
     // A borrow reads the staged entry without removal, so an overlapping run of
     // the same session still reads it.
@@ -272,7 +317,9 @@ describe("sandbox run site", () => {
     expect(site.staged?.reused).toBe(true);
     expect(site.staged?.stagedRuntime).toBe(cachedRuntime);
     expect(env.CODEX_HOME).toBe("/remote/home");
-    const candidate: SandboxReuseCandidate = site.reuseCandidate(makeReady(cachedRuntime));
+    const candidate: SandboxReuseCandidate = site.reuseCandidate(
+      makeReady(cachedRuntime),
+    );
     expect(candidate).toEqual({ stagedRuntime: cachedRuntime });
     expect("runtime" in candidate).toBe(false);
     expect("sessionHandle" in candidate).toBe(false);
@@ -300,7 +347,9 @@ describe("sandbox run site", () => {
     expect(control?.payload).toBe(transport.controlBridge);
     // The staged reuse payload carries the staged files only — no credential
     // material and no bridge token.
-    const candidate = site.reuseCandidate(makeReady(site.staged!.stagedRuntime));
+    const candidate = site.reuseCandidate(
+      makeReady(site.staged!.stagedRuntime),
+    );
     expect(Object.keys(candidate)).toEqual(["stagedRuntime"]);
 
     // Compile-time (Amendment B): a run-scoped contribution is not assignable to

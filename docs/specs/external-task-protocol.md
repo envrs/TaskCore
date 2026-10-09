@@ -154,18 +154,18 @@ operator-visible observability.
 This protocol deliberately defers to Symphony's semantics wherever Symphony solves the same
 problem, and maps them onto existing host primitives:
 
-| Symphony concept | This protocol |
-| --- | --- |
-| Tracker client + normalized issue | Task Source Adapter + `ExternalTask` (Section 5) |
-| Active / terminal states | Connector state mapping (Section 7.2) |
-| Claim | Taskcore issue checkout + execution lock (Section 9.2) |
-| Running map / live session | Heartbeat runs + issue liveness state (Section 9.3) |
-| Retry queued | Host retry/recovery + scheduled wakes (Section 9.3) |
-| Released | Issue terminal/review/blocked, or external task no longer active (Section 9.3) |
-| Per-issue workspace | Execution workspace / worktree (Section 9.4) |
-| `WORKFLOW.md` | Workflow policy document (Section 9.5) |
-| Tracker writes via agent tools, not orchestrator | Outbound Write Engine + connector tools (Section 10.1) |
-| Status surface | Issue/run/connector health UI (Section 12) |
+| Symphony concept                                 | This protocol                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Tracker client + normalized issue                | Task Source Adapter + `ExternalTask` (Section 5)                               |
+| Active / terminal states                         | Connector state mapping (Section 7.2)                                          |
+| Claim                                            | Taskcore issue checkout + execution lock (Section 9.2)                         |
+| Running map / live session                       | Heartbeat runs + issue liveness state (Section 9.3)                            |
+| Retry queued                                     | Host retry/recovery + scheduled wakes (Section 9.3)                            |
+| Released                                         | Issue terminal/review/blocked, or external task no longer active (Section 9.3) |
+| Per-issue workspace                              | Execution workspace / worktree (Section 9.4)                                   |
+| `WORKFLOW.md`                                    | Workflow policy document (Section 9.5)                                         |
+| Tracker writes via agent tools, not orchestrator | Outbound Write Engine + connector tools (Section 10.1)                         |
+| Status surface                                   | Issue/run/connector health UI (Section 12)                                     |
 
 Where Symphony is intentionally narrow — single repository, coding agents only, one tracker, no
 multi-tenant control plane — this protocol extends it with company scoping, multi-agent routing,
@@ -526,7 +526,7 @@ Before creating an issue or external task, the connector MUST check, in order:
 2. Taskcore backlink already present on the external task (custom field/comment marker).
 3. External URL/key reference already present on a Taskcore issue in the same company.
 
-Title-similarity matching MAY be used to *warn* in import UX; it MUST NOT silently merge.
+Title-similarity matching MAY be used to _warn_ in import UX; it MUST NOT silently merge.
 
 ### 6.4 Unlink and External Deletion Semantics
 
@@ -549,7 +549,7 @@ A connector MUST implement at least one push or pull channel, and MUST implement
 
 Webhooks are RECOMMENDED where the provider offers them. They are verified per Section 5.1(5).
 Events are queued, deduplicated by idempotency key, and applied in per-task order. Webhooks are
-treated as *hints*: on any doubt, re-read via the adapter.
+treated as _hints_: on any doubt, re-read via the adapter.
 
 #### 7.1.2 Polling
 
@@ -672,7 +672,7 @@ Comment commands give external users explicit control without new UI in the prov
 - Outbound writes use one connector service account per connector instance (Section 10.4), with
   agent attribution carried in message content ("CodexCoder via Taskcore").
 - `user_mapping` rules MAY map specific provider users to Taskcore users (for `assign it back to
-  me` flows) and to agents, but every such mapping is explicit configuration.
+me` flows) and to agents, but every such mapping is explicit configuration.
 
 ## 9. Execution Orchestration: Symphony Profile
 
@@ -798,15 +798,15 @@ Every outbound write MUST be:
 
 Per link (with connector-instance defaults):
 
-| Toggle | Default | Meaning |
-| --- | --- | --- |
-| `postBacklink` | on | Taskcore URL on the external task (field or pinned comment). |
-| `postProgressComments` | on | Concise milestone comments: claimed, plan ready, PR opened, review requested, done. |
-| `postArtifactLinks` | on | PR/work-product/document links when produced. |
-| `mirrorAgentComments` | off | Full Taskcore comment thread mirrored externally. |
-| `postTranscripts` | off | Run logs/transcripts externally. SHOULD remain off; transcripts may contain sensitive context. |
-| `projectStatus` | on | Status projection per Section 10.3. |
-| `mirrorExternalComments` | on (import side) | External comments imported per Section 7.3. |
+| Toggle                   | Default          | Meaning                                                                                        |
+| ------------------------ | ---------------- | ---------------------------------------------------------------------------------------------- |
+| `postBacklink`           | on               | Taskcore URL on the external task (field or pinned comment).                                   |
+| `postProgressComments`   | on               | Concise milestone comments: claimed, plan ready, PR opened, review requested, done.            |
+| `postArtifactLinks`      | on               | PR/work-product/document links when produced.                                                  |
+| `mirrorAgentComments`    | off              | Full Taskcore comment thread mirrored externally.                                              |
+| `postTranscripts`        | off              | Run logs/transcripts externally. SHOULD remain off; transcripts may contain sensitive context. |
+| `projectStatus`          | on               | Status projection per Section 10.3.                                                            |
+| `mirrorExternalComments` | on (import side) | External comments imported per Section 7.3.                                                    |
 
 Progress comments MUST be concise and milestone-based, not per-heartbeat chatter. Connectors
 SHOULD batch/debounce outbound comments (RECOMMENDED minimum interval 5 minutes per link except
@@ -1168,27 +1168,27 @@ constraints. Profiles are informative; the normative contract is Sections 4–14
 
 ## Appendix B. Symphony Spec Crosswalk
 
-| Symphony SPEC.md section | This document |
-| --- | --- |
-| 1 Problem Statement | 1 |
-| 2 Goals / Non-Goals | 2 |
-| 3 System Overview | 3 |
-| 4 Core Domain Model (Issue, Run Attempt, Retry Entry, Runtime State) | 4 (`ExternalTask`, `TaskLink`, host run state via 9.3) |
-| 5 Workflow Specification (`WORKFLOW.md`) | 9.5 (layered workflow policy) |
-| 6 Configuration Specification | connector instance configuration (3.4, 5.2, 7.2, 10.2) |
-| 7 Orchestration State Machine | 6.1 (link), 9.3 (claim/run/retry/release on host primitives) |
-| 8 Polling, Scheduling, Reconciliation | 7.1, 9.1, 15.4 |
-| 9 Workspace Management and Safety | 9.4 (host execution workspaces) |
-| 10 Agent Runner Protocol | host heartbeat runtime (out of scope here; see 9.1 boundary) |
-| 11 Issue Tracker Integration Contract | 5 (Task Source Adapter contract) |
-| 11.5 Tracker Writes boundary | 10.1 |
-| 12 Prompt Construction | 9.5.1 (task packet rendering) |
-| 13 Logging, Status, Observability | 12 |
-| 14 Failure Model and Recovery | 13 |
-| 15 Security and Operational Safety | 14 |
-| 16 Reference Algorithms | 15 |
-| 17–18 Test Matrix / Implementation Checklist | 16 |
-| Appendix A SSH Worker | not applicable (host owns execution substrate) |
+| Symphony SPEC.md section                                             | This document                                                |
+| -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1 Problem Statement                                                  | 1                                                            |
+| 2 Goals / Non-Goals                                                  | 2                                                            |
+| 3 System Overview                                                    | 3                                                            |
+| 4 Core Domain Model (Issue, Run Attempt, Retry Entry, Runtime State) | 4 (`ExternalTask`, `TaskLink`, host run state via 9.3)       |
+| 5 Workflow Specification (`WORKFLOW.md`)                             | 9.5 (layered workflow policy)                                |
+| 6 Configuration Specification                                        | connector instance configuration (3.4, 5.2, 7.2, 10.2)       |
+| 7 Orchestration State Machine                                        | 6.1 (link), 9.3 (claim/run/retry/release on host primitives) |
+| 8 Polling, Scheduling, Reconciliation                                | 7.1, 9.1, 15.4                                               |
+| 9 Workspace Management and Safety                                    | 9.4 (host execution workspaces)                              |
+| 10 Agent Runner Protocol                                             | host heartbeat runtime (out of scope here; see 9.1 boundary) |
+| 11 Issue Tracker Integration Contract                                | 5 (Task Source Adapter contract)                             |
+| 11.5 Tracker Writes boundary                                         | 10.1                                                         |
+| 12 Prompt Construction                                               | 9.5.1 (task packet rendering)                                |
+| 13 Logging, Status, Observability                                    | 12                                                           |
+| 14 Failure Model and Recovery                                        | 13                                                           |
+| 15 Security and Operational Safety                                   | 14                                                           |
+| 16 Reference Algorithms                                              | 15                                                           |
+| 17–18 Test Matrix / Implementation Checklist                         | 16                                                           |
+| Appendix A SSH Worker                                                | not applicable (host owns execution substrate)               |
 
 Differences are deliberate: Symphony assumes one tracker, one repo, and coding agents only, with
 the orchestrator as a standalone daemon. This protocol assumes a multi-tenant control plane that

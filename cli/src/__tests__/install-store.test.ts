@@ -85,12 +85,20 @@ describe("managed install store", () => {
       }),
     ).toThrow("simulated crash");
 
-    expect(fs.realpathSync(paths.currentPath)).toBe(fs.realpathSync(oldPayload));
-    expect(fs.readdirSync(paths.cliRoot).filter((entry) => entry.startsWith(".current-"))).toEqual([]);
+    expect(fs.realpathSync(paths.currentPath)).toBe(
+      fs.realpathSync(oldPayload),
+    );
+    expect(
+      fs
+        .readdirSync(paths.cliRoot)
+        .filter((entry) => entry.startsWith(".current-")),
+    ).toEqual([]);
   });
 
   it("retains current plus two previous payloads and prunes older entries", () => {
-    const payloads = ["1", "2", "3", "4"].map((version) => payloadPathFor(paths, "npm", version));
+    const payloads = ["1", "2", "3", "4"].map((version) =>
+      payloadPathFor(paths, "npm", version),
+    );
     for (const payload of payloads) fs.mkdirSync(payload, { recursive: true });
     const previousManifest: InstallManifest = {
       schemaVersion: INSTALL_MANIFEST_VERSION,
@@ -102,7 +110,9 @@ describe("managed install store", () => {
     expect(next.previous.map((entry) => entry.version)).toEqual(["3", "2"]);
     expect(pruneInstallPayloads(next, paths)).toEqual([payloads[0]]);
     expect(fs.existsSync(payloads[0])).toBe(false);
-    expect(payloads.slice(1).every((payload) => fs.existsSync(payload))).toBe(true);
+    expect(payloads.slice(1).every((payload) => fs.existsSync(payload))).toBe(
+      true,
+    );
   });
 
   it("writes a stable shim with the validated runtime and custom store path", () => {
@@ -118,26 +128,48 @@ describe("managed install store", () => {
     expect(addManagedPathBlock(rcPath)).toBe(false);
     fs.chmodSync(rcPath, 0o640);
     expect(removeManagedPathBlock(rcPath)).toBe(true);
-    expect(fs.readFileSync(rcPath, "utf8")).not.toContain("taskcore managed PATH");
+    expect(fs.readFileSync(rcPath, "utf8")).not.toContain(
+      "taskcore managed PATH",
+    );
     expect(fs.statSync(rcPath).mode & 0o777).toBe(0o640);
   });
 
   it("uses the pinned Node for child tools even with an older node first on the service PATH", () => {
-    const entrypoint = path.join(paths.currentPath, "node_modules", "taskcore", "dist", "index.js");
+    const entrypoint = path.join(
+      paths.currentPath,
+      "node_modules",
+      "taskcore",
+      "dist",
+      "index.js",
+    );
     fs.mkdirSync(path.dirname(entrypoint), { recursive: true });
-    fs.writeFileSync(entrypoint, `console.log(require("node:child_process").execFileSync("node", ["-p", "process.execPath"], {encoding: "utf8"}).trim())`);
+    fs.writeFileSync(
+      entrypoint,
+      `console.log(require("node:child_process").execFileSync("node", ["-p", "process.execPath"], {encoding: "utf8"}).trim())`,
+    );
     const oldBin = path.join(root, "old-bin");
     fs.mkdirSync(oldBin);
-    fs.writeFileSync(path.join(oldBin, "node"), "#!/bin/sh\nexit 42\n", { mode: 0o755 });
+    fs.writeFileSync(path.join(oldBin, "node"), "#!/bin/sh\nexit 42\n", {
+      mode: 0o755,
+    });
     writeManagedShim(paths);
-    const output = execFileSync(paths.shimPath, [], { env: { ...process.env, PATH: oldBin }, encoding: "utf8" });
-    expect(fs.realpathSync(output.trim())).toBe(fs.realpathSync(process.execPath));
+    const output = execFileSync(paths.shimPath, [], {
+      env: { ...process.env, PATH: oldBin },
+      encoding: "utf8",
+    });
+    expect(fs.realpathSync(output.trim())).toBe(
+      fs.realpathSync(process.execPath),
+    );
     expect(removeManagedShim(paths)).toBe(true);
   });
 
   it("upgrades and removes the original managed shim format", () => {
     writeManagedShim(paths);
-    const original = fs.readFileSync(paths.shimPath, "utf8").split("\n").filter((line) => !line.startsWith("export PATH=")).join("\n");
+    const original = fs
+      .readFileSync(paths.shimPath, "utf8")
+      .split("\n")
+      .filter((line) => !line.startsWith("export PATH="))
+      .join("\n");
     fs.writeFileSync(paths.shimPath, original);
     writeManagedShim(paths);
     expect(fs.readFileSync(paths.shimPath, "utf8")).toContain("export PATH=");
@@ -147,7 +179,10 @@ describe("managed install store", () => {
 
   it("rejects marker substrings that are not the exact managed shim format", () => {
     fs.mkdirSync(path.dirname(paths.shimPath), { recursive: true });
-    fs.writeFileSync(paths.shimPath, `#!/bin/sh\necho '${MANAGED_SHIM_MARKER}'\n`);
+    fs.writeFileSync(
+      paths.shimPath,
+      `#!/bin/sh\necho '${MANAGED_SHIM_MARKER}'\n`,
+    );
 
     expect(removeManagedShim(paths)).toBe(false);
     expect(fs.existsSync(paths.shimPath)).toBe(true);
@@ -169,14 +204,22 @@ describe("managed install store", () => {
     await withInstallStoreLock(async () => undefined, paths);
     fs.writeFileSync(paths.lockPath, `${staleToken}\n`, { mode: 0o600 });
 
-    await expect(withInstallStoreLock(async () => undefined, paths)).resolves.toBeUndefined();
+    await expect(
+      withInstallStoreLock(async () => undefined, paths),
+    ).resolves.toBeUndefined();
     expect(fs.existsSync(paths.lockPath)).toBe(false);
   });
 
   it("reports managed provenance only for the payload selected by current", () => {
     const manifestPayload = payloadPathFor(paths, "npm", "1.0.0");
     const currentPayload = payloadPathFor(paths, "npm", "2.0.0");
-    const executable = path.join(manifestPayload, "node_modules", "taskcore", "dist", "index.js");
+    const executable = path.join(
+      manifestPayload,
+      "node_modules",
+      "taskcore",
+      "dist",
+      "index.js",
+    );
     fs.mkdirSync(path.dirname(executable), { recursive: true });
     fs.writeFileSync(executable, "");
     fs.mkdirSync(currentPayload, { recursive: true });
@@ -197,7 +240,9 @@ describe("managed install store", () => {
     fs.symlinkSync(outside, path.join(paths.installsRoot, "npm"), "dir");
     const escapedPayload = path.join(paths.installsRoot, "npm", "1.2.3");
     fs.mkdirSync(path.join(outside, "1.2.3"));
-    expect(() => flipCurrentAtomic(escapedPayload, paths)).toThrow("resolves outside");
+    expect(() => flipCurrentAtomic(escapedPayload, paths)).toThrow(
+      "resolves outside",
+    );
 
     fs.mkdirSync(path.dirname(paths.shimPath), { recursive: true });
     fs.writeFileSync(paths.shimPath, "#!/bin/sh\necho other-command\n");
@@ -210,8 +255,12 @@ describe("managed install store", () => {
     const rcPath = path.join(root, "home", ".bashrc");
     fs.mkdirSync(path.dirname(rcPath), { recursive: true });
     fs.symlinkSync(outsideRc, rcPath);
-    expect(() => addManagedPathBlock(rcPath)).toThrow("non-regular shell rc file");
-    expect(() => removeManagedPathBlock(rcPath)).toThrow("non-regular shell rc file");
+    expect(() => addManagedPathBlock(rcPath)).toThrow(
+      "non-regular shell rc file",
+    );
+    expect(() => removeManagedPathBlock(rcPath)).toThrow(
+      "non-regular shell rc file",
+    );
     expect(fs.readFileSync(outsideRc, "utf8")).toBe("keep\n");
 
     fs.rmSync(rcPath);

@@ -16,13 +16,13 @@ remain separate follow-ups.
 
 ## Coverage matrix
 
-| Layer | Cases |
-|---|---|
-| Classifier | Every old trigger word in title/description; missing, null, standard, ask, skill-test and planning modes; actual saved plan and completion in standard mode |
-| Prompt/runner input | Neutral, planning-sounding and execution-sounding requests under standard, ask and planning; full/resumed task context; native execution-mode projection |
-| Database service | Default mode at creation; title/body edits preserve mode; explicit updates change it; saved canonical plan preserves standard; ledger backfill reads persisted mode |
-| Heartbeat | Standard/planning wording pairs preserve mode, repair allowance/instruction, wakes and final completion |
-| Real-provider Product E2E | New paired plan deliverables on legacy/native; persisted mode, exact output, completion and no extra work/wait; existing explicit plan-revision/approval controls |
+| Layer                     | Cases                                                                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Classifier                | Every old trigger word in title/description; missing, null, standard, ask, skill-test and planning modes; actual saved plan and completion in standard mode         |
+| Prompt/runner input       | Neutral, planning-sounding and execution-sounding requests under standard, ask and planning; full/resumed task context; native execution-mode projection            |
+| Database service          | Default mode at creation; title/body edits preserve mode; explicit updates change it; saved canonical plan preserves standard; ledger backfill reads persisted mode |
+| Heartbeat                 | Standard/planning wording pairs preserve mode, repair allowance/instruction, wakes and final completion                                                             |
+| Real-provider Product E2E | New paired plan deliverables on legacy/native; persisted mode, exact output, completion and no extra work/wait; existing explicit plan-revision/approval controls   |
 
 Use the existing isolated worktree and baseline inventory. Keep prior results
 immutable. Run cheap checks first, then six relevant live cells in parallel

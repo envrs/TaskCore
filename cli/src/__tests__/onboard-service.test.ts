@@ -7,12 +7,14 @@ import {
   shouldOfferForegroundStart,
 } from "../onboard-service.js";
 
-function dashboardConfig(overrides: {
-  host?: string;
-  port?: number;
-  baseUrlMode?: "auto" | "explicit";
-  publicBaseUrl?: string;
-} = {}) {
+function dashboardConfig(
+  overrides: {
+    host?: string;
+    port?: number;
+    baseUrlMode?: "auto" | "explicit";
+    publicBaseUrl?: string;
+  } = {},
+) {
   return {
     server: {
       host: overrides.host ?? "127.0.0.1",
@@ -21,7 +23,9 @@ function dashboardConfig(overrides: {
     auth: {
       baseUrlMode: overrides.baseUrlMode ?? "auto",
       disableSignUp: false,
-      ...(overrides.publicBaseUrl ? { publicBaseUrl: overrides.publicBaseUrl } : {}),
+      ...(overrides.publicBaseUrl
+        ? { publicBaseUrl: overrides.publicBaseUrl }
+        : {}),
     },
   };
 }
@@ -61,12 +65,18 @@ describe("onboard service policy", () => {
 
     const installed = await handleOnboardService(
       { yes: true },
-      { detect: vi.fn(async () => detection), isInteractive: () => false, info },
+      {
+        detect: vi.fn(async () => detection),
+        isInteractive: () => false,
+        info,
+      },
     );
 
     expect(installed).toBe(false);
     expect(detection.manager.install).not.toHaveBeenCalled();
-    expect(info).toHaveBeenCalledWith(expect.stringContaining("--install-service"));
+    expect(info).toHaveBeenCalledWith(
+      expect.stringContaining("--install-service"),
+    );
   });
 
   it("installs when --yes explicitly opts in", async () => {
@@ -77,12 +87,18 @@ describe("onboard service policy", () => {
       {
         detect: vi.fn(async () => detection),
         isInteractive: () => false,
-        ensureServiceShim: vi.fn(async () => ({ ok: true, installedNow: false })),
+        ensureServiceShim: vi.fn(async () => ({
+          ok: true,
+          installedNow: false,
+        })),
       },
     );
 
     expect(installed).toBe(true);
-    expect(detection.manager.install).toHaveBeenCalledWith({ startNow: true, startOnLogin: true });
+    expect(detection.manager.install).toHaveBeenCalledWith({
+      startNow: true,
+      startOnLogin: true,
+    });
   });
 
   it("asks during interactive onboarding", async () => {
@@ -95,7 +111,10 @@ describe("onboard service policy", () => {
         detect: vi.fn(async () => detection),
         isInteractive: () => true,
         confirm,
-        ensureServiceShim: vi.fn(async () => ({ ok: true, installedNow: false })),
+        ensureServiceShim: vi.fn(async () => ({
+          ok: true,
+          installedNow: false,
+        })),
       },
     );
 
@@ -120,17 +139,30 @@ describe("onboard service policy", () => {
   it("materializes the managed shim before installing the service", async () => {
     const detection = supportedDetection();
     const success = vi.fn();
-    const ensureServiceShim = vi.fn(async () => ({ ok: true, installedNow: true }));
+    const ensureServiceShim = vi.fn(async () => ({
+      ok: true,
+      installedNow: true,
+    }));
 
     const installed = await handleOnboardService(
       { yes: true, installService: true },
-      { detect: vi.fn(async () => detection), isInteractive: () => false, ensureServiceShim, success },
+      {
+        detect: vi.fn(async () => detection),
+        isInteractive: () => false,
+        ensureServiceShim,
+        success,
+      },
     );
 
     expect(installed).toBe(true);
     expect(ensureServiceShim).toHaveBeenCalledOnce();
-    expect(success).toHaveBeenCalledWith(expect.stringContaining("managed taskcore payload"));
-    expect(detection.manager.install).toHaveBeenCalledWith({ startNow: true, startOnLogin: true });
+    expect(success).toHaveBeenCalledWith(
+      expect.stringContaining("managed taskcore payload"),
+    );
+    expect(detection.manager.install).toHaveBeenCalledWith({
+      startNow: true,
+      startOnLogin: true,
+    });
   });
 
   it("declines instead of installing a service without a binary", async () => {
@@ -142,7 +174,11 @@ describe("onboard service policy", () => {
       {
         detect: vi.fn(async () => detection),
         isInteractive: () => false,
-        ensureServiceShim: vi.fn(async () => ({ ok: false, installedNow: false, reason: "npm exploded" })),
+        ensureServiceShim: vi.fn(async () => ({
+          ok: false,
+          installedNow: false,
+          reason: "npm exploded",
+        })),
         warn,
       },
     );
@@ -150,9 +186,10 @@ describe("onboard service policy", () => {
     expect(installed).toBe(false);
     expect(detection.manager.install).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("npm exploded"));
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("taskcore install"));
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("taskcore install"),
+    );
   });
-
 });
 
 describe("isInstallableReleaseVersion", () => {
@@ -166,17 +203,25 @@ describe("isInstallableReleaseVersion", () => {
 
 describe("onboarded service dashboard handoff", () => {
   it("resolves a reachable local dashboard URL", () => {
-    expect(resolveOnboardServiceDashboardUrl(dashboardConfig({ host: "0.0.0.0", port: 4321 })))
-      .toBe("http://127.0.0.1:4321");
-    expect(resolveOnboardServiceDashboardUrl(dashboardConfig({ host: "::1" })))
-      .toBe("http://[::1]:3100");
+    expect(
+      resolveOnboardServiceDashboardUrl(
+        dashboardConfig({ host: "0.0.0.0", port: 4321 }),
+      ),
+    ).toBe("http://127.0.0.1:4321");
+    expect(
+      resolveOnboardServiceDashboardUrl(dashboardConfig({ host: "::1" })),
+    ).toBe("http://[::1]:3100");
   });
 
   it("uses the configured public URL when auth requires one", () => {
-    expect(resolveOnboardServiceDashboardUrl(dashboardConfig({
-      baseUrlMode: "explicit",
-      publicBaseUrl: "https://taskcore.example.com/",
-    }))).toBe("https://taskcore.example.com");
+    expect(
+      resolveOnboardServiceDashboardUrl(
+        dashboardConfig({
+          baseUrlMode: "explicit",
+          publicBaseUrl: "https://taskcore.example.com/",
+        }),
+      ),
+    ).toBe("https://taskcore.example.com");
   });
 
   it("prints the dashboard URL without opening a browser in non-interactive runs", async () => {
@@ -199,7 +244,9 @@ describe("onboarded service dashboard handoff", () => {
       info,
     });
 
-    expect(info).toHaveBeenCalledWith(expect.stringContaining("http://127.0.0.1:3100"));
+    expect(info).toHaveBeenCalledWith(
+      expect.stringContaining("http://127.0.0.1:3100"),
+    );
     expect(waitUntilReady).toHaveBeenCalledOnce();
     expect(openDashboard).not.toHaveBeenCalled();
   });
@@ -243,30 +290,45 @@ describe("onboarded service dashboard handoff", () => {
     });
 
     expect(openDashboard).not.toHaveBeenCalled();
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("taskcore service logs"));
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("taskcore service logs"),
+    );
   });
 });
 
 describe("shouldOfferForegroundStart", () => {
-  const base = { serviceInstalled: false, startAlreadyDecided: false, invokedByRun: false, interactive: true };
+  const base = {
+    serviceInstalled: false,
+    startAlreadyDecided: false,
+    invokedByRun: false,
+    interactive: true,
+  };
 
   it("offers a foreground start on a plain interactive onboard", () => {
     expect(shouldOfferForegroundStart(base)).toBe(true);
   });
 
   it("never prompts after the service was installed and started", () => {
-    expect(shouldOfferForegroundStart({ ...base, serviceInstalled: true })).toBe(false);
+    expect(
+      shouldOfferForegroundStart({ ...base, serviceInstalled: true }),
+    ).toBe(false);
   });
 
   it("never prompts when the start decision was already made by flags", () => {
-    expect(shouldOfferForegroundStart({ ...base, startAlreadyDecided: true })).toBe(false);
+    expect(
+      shouldOfferForegroundStart({ ...base, startAlreadyDecided: true }),
+    ).toBe(false);
   });
 
   it("never prompts when run itself invoked onboarding", () => {
-    expect(shouldOfferForegroundStart({ ...base, invokedByRun: true })).toBe(false);
+    expect(shouldOfferForegroundStart({ ...base, invokedByRun: true })).toBe(
+      false,
+    );
   });
 
   it("never prompts without an interactive terminal", () => {
-    expect(shouldOfferForegroundStart({ ...base, interactive: false })).toBe(false);
+    expect(shouldOfferForegroundStart({ ...base, interactive: false })).toBe(
+      false,
+    );
   });
 });

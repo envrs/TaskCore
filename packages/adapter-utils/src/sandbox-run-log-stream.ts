@@ -24,7 +24,10 @@ const TAIL_MARKER_STDOUT = "__TASKCORE_RUN_LOG_STDOUT__";
 const TAIL_MARKER_STDERR = "__TASKCORE_RUN_LOG_STDERR__";
 const TAIL_MARKER_END = "__TASKCORE_RUN_LOG_END__";
 
-export type SandboxRunLogSink = (stream: "stdout" | "stderr", chunk: string) => Promise<void>;
+export type SandboxRunLogSink = (
+  stream: "stdout" | "stderr",
+  chunk: string,
+) => Promise<void>;
 
 export interface SandboxRunLogTailHandle {
   /**
@@ -33,7 +36,10 @@ export interface SandboxRunLogTailHandle {
    * provider result must keep the full stdout for adapter parsing) and the
    * original exit code.
    */
-  wrapCommand(command: string, args: string[]): { command: string; args: string[] };
+  wrapCommand(
+    command: string,
+    args: string[],
+  ): { command: string; args: string[] };
   /** Start the host-side poll loop that tails the log files via the runner. */
   start(onLog: SandboxRunLogSink): void;
   /**
@@ -63,7 +69,10 @@ export interface SandboxRunLogTailFactoryOptions {
   maxConsecutiveFailures?: number | null;
 }
 
-function normalizePositiveInt(value: number | null | undefined, fallback: number): number {
+function normalizePositiveInt(
+  value: number | null | undefined,
+  fallback: number,
+): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0
     ? Math.trunc(value)
     : fallback;
@@ -86,9 +95,18 @@ export function createSandboxRunLogTailFactory(
   options: SandboxRunLogTailFactoryOptions,
 ): SandboxRunLogTailFactory {
   const shellCommand = preferredShellForSandbox(options.shellCommand);
-  const pollIntervalMs = normalizePositiveInt(options.pollIntervalMs, DEFAULT_TAIL_POLL_INTERVAL_MS);
-  const maxChunkBytes = normalizePositiveInt(options.maxChunkBytesPerTick, DEFAULT_TAIL_MAX_CHUNK_BYTES);
-  const tickTimeoutMs = normalizePositiveInt(options.tickTimeoutMs, DEFAULT_TAIL_TICK_TIMEOUT_MS);
+  const pollIntervalMs = normalizePositiveInt(
+    options.pollIntervalMs,
+    DEFAULT_TAIL_POLL_INTERVAL_MS,
+  );
+  const maxChunkBytes = normalizePositiveInt(
+    options.maxChunkBytesPerTick,
+    DEFAULT_TAIL_MAX_CHUNK_BYTES,
+  );
+  const tickTimeoutMs = normalizePositiveInt(
+    options.tickTimeoutMs,
+    DEFAULT_TAIL_TICK_TIMEOUT_MS,
+  );
   const maxConsecutiveFailures = normalizePositiveInt(
     options.maxConsecutiveFailures,
     DEFAULT_TAIL_MAX_CONSECUTIVE_FAILURES,
@@ -99,13 +117,29 @@ export function createSandboxRunLogTailFactory(
   function createHandle(): SandboxRunLogTailHandle {
     sequence += 1;
     const baseName = `run-${sequence}`;
-    const stdoutLog = path.posix.join(options.logsDir, `${baseName}-stdout.log`);
-    const stderrLog = path.posix.join(options.logsDir, `${baseName}-stderr.log`);
+    const stdoutLog = path.posix.join(
+      options.logsDir,
+      `${baseName}-stdout.log`,
+    );
+    const stderrLog = path.posix.join(
+      options.logsDir,
+      `${baseName}-stderr.log`,
+    );
     const statusFile = path.posix.join(options.logsDir, `${baseName}-status`);
 
     const streams: [TailStreamState, TailStreamState] = [
-      { stream: "stdout", logFile: stdoutLog, offset: 0, decoder: new StringDecoder("utf8") },
-      { stream: "stderr", logFile: stderrLog, offset: 0, decoder: new StringDecoder("utf8") },
+      {
+        stream: "stdout",
+        logFile: stdoutLog,
+        offset: 0,
+        decoder: new StringDecoder("utf8"),
+      },
+      {
+        stream: "stderr",
+        logFile: stderrLog,
+        offset: 0,
+        decoder: new StringDecoder("utf8"),
+      },
     ];
 
     let sink: SandboxRunLogSink | null = null;
@@ -129,7 +163,9 @@ export function createSandboxRunLogTailFactory(
     }
 
     function buildTickScript(): string {
-      const lines: string[] = [`printf '%s\\n' ${shellQuote(TAIL_MARKER_STDOUT)}`];
+      const lines: string[] = [
+        `printf '%s\\n' ${shellQuote(TAIL_MARKER_STDOUT)}`,
+      ];
       for (const state of streams) {
         if (state.stream === "stderr") {
           lines.push(`printf '%s\\n' ${shellQuote(TAIL_MARKER_STDERR)}`);
@@ -142,12 +178,18 @@ export function createSandboxRunLogTailFactory(
       return lines.join("\n");
     }
 
-    function parseTickOutput(stdout: string): { stdout: Buffer; stderr: Buffer } | null {
+    function parseTickOutput(
+      stdout: string,
+    ): { stdout: Buffer; stderr: Buffer } | null {
       const lines = stdout.split(/\r?\n/);
       const stdoutIndex = lines.indexOf(TAIL_MARKER_STDOUT);
       const stderrIndex = lines.indexOf(TAIL_MARKER_STDERR);
       const endIndex = lines.indexOf(TAIL_MARKER_END);
-      if (stdoutIndex < 0 || stderrIndex < stdoutIndex || endIndex < stderrIndex) {
+      if (
+        stdoutIndex < 0 ||
+        stderrIndex < stdoutIndex ||
+        endIndex < stderrIndex
+      ) {
         return null;
       }
       return {
@@ -156,7 +198,10 @@ export function createSandboxRunLogTailFactory(
       };
     }
 
-    async function emitBytes(state: TailStreamState, bytes: Buffer): Promise<void> {
+    async function emitBytes(
+      state: TailStreamState,
+      bytes: Buffer,
+    ): Promise<void> {
       if (bytes.length === 0) return;
       state.offset += bytes.length;
       const text = state.decoder.write(bytes);

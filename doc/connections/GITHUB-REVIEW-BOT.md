@@ -87,14 +87,14 @@ and submits the reviewed commit, findings, rationale, and coverage. Taskcore
 validates the result and computes the **Taskcore Review** check. The default
 threshold is 5/5; choose 1–5 or report-only as needed.
 
-| Score | Assessment rubric |
-| --- | --- |
-| 0 | No usable assessment; explain what prevented evaluation. |
-| 1 | Critical defects make the change unsafe to ship. |
-| 2 | Major defects require substantial correction. |
-| 3 | Meaningful defects require correction before merging. |
-| 4 | Minor concerns remain; explain impact and remaining risk. |
-| 5 | No actionable defects found within the stated coverage and limitations. |
+| Score | Assessment rubric                                                       |
+| ----- | ----------------------------------------------------------------------- |
+| 0     | No usable assessment; explain what prevented evaluation.                |
+| 1     | Critical defects make the change unsafe to ship.                        |
+| 2     | Major defects require substantial correction.                           |
+| 3     | Meaningful defects require correction before merging.                   |
+| 4     | Minor concerns remain; explain impact and remaining risk.               |
+| 5     | No actionable defects found within the stated coverage and limitations. |
 
 Incomplete coverage cannot pass. Filtering which findings become inline comments
 does not remove them from the assessment. A new head requires a new assessment;

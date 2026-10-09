@@ -31,23 +31,23 @@ Success means one operator can run a small AI-native company end-to-end with cle
 
 These decisions close open questions from `SPEC.md` for V1.
 
-| Topic | V1 Decision |
-|---|---|
-| Tenancy | Single-tenant deployment, multi-company data model |
-| Company model | Company is first-order; all business entities are company-scoped |
-| Board | Single human board operator per deployment |
-| Org graph | Strict tree (`reports_to` nullable root); no multi-manager reporting |
-| Visibility | Issues remain company-open by default. Opt-in `private` issues use task ACLs; deployment exposure flags remain independent of work-object privacy. |
-| Communication | Tasks + comments only (no separate chat system) |
-| Task ownership | Single assignee; atomic checkout required for `in_progress` transition |
-| Task watchdogs | A task watchdog is an explicitly configured, issue-subtree-scoped verification and recovery capacity. It may restore live task paths inside the watched subtree; for issue-thread interaction resolution it is an ordinary agent subject to the same audience and containment checks, not board authority, active-run output monitoring, or general liveness recovery. |
-| Recovery | Liveness/watchdog recovery preserves explicit ownership: continue interrupted local conversations with bounded fresh turns and preserved history, never replay tool calls automatically; retain native ownership and real execution gates; preserve verified stop evidence and reconsider saved post-stop user messages after cleanup; otherwise open visible source-scoped recovery actions by default, use issue-backed recovery only for independent repair work, or require human escalation (see `doc/execution-semantics.md`) |
-| Agent adapters | Built-in `process`, `http`, local CLI/session adapters, and OpenClaw gateway support; external adapters can also be loaded through the adapter plugin flow |
-| Plugin framework | Local/self-hosted early plugin runtime is in scope; cloud marketplace and packaged public distribution remain out of scope |
-| Auth | Mode-dependent human auth (`local_trusted` implicit board in current code; authenticated mode uses sessions), API keys for agents |
-| Budget period | Monthly UTC calendar window |
-| Budget enforcement | Soft alerts + hard limit auto-pause |
-| Deployment modes | Canonical model is `local_trusted` + `authenticated` with `private/public` exposure policy (see `doc/DEPLOYMENT-MODES.md`) |
+| Topic              | V1 Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tenancy            | Single-tenant deployment, multi-company data model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Company model      | Company is first-order; all business entities are company-scoped                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Board              | Single human board operator per deployment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Org graph          | Strict tree (`reports_to` nullable root); no multi-manager reporting                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Visibility         | Issues remain company-open by default. Opt-in `private` issues use task ACLs; deployment exposure flags remain independent of work-object privacy.                                                                                                                                                                                                                                                                                                                                                                                  |
+| Communication      | Tasks + comments only (no separate chat system)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Task ownership     | Single assignee; atomic checkout required for `in_progress` transition                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Task watchdogs     | A task watchdog is an explicitly configured, issue-subtree-scoped verification and recovery capacity. It may restore live task paths inside the watched subtree; for issue-thread interaction resolution it is an ordinary agent subject to the same audience and containment checks, not board authority, active-run output monitoring, or general liveness recovery.                                                                                                                                                              |
+| Recovery           | Liveness/watchdog recovery preserves explicit ownership: continue interrupted local conversations with bounded fresh turns and preserved history, never replay tool calls automatically; retain native ownership and real execution gates; preserve verified stop evidence and reconsider saved post-stop user messages after cleanup; otherwise open visible source-scoped recovery actions by default, use issue-backed recovery only for independent repair work, or require human escalation (see `doc/execution-semantics.md`) |
+| Agent adapters     | Built-in `process`, `http`, local CLI/session adapters, and OpenClaw gateway support; external adapters can also be loaded through the adapter plugin flow                                                                                                                                                                                                                                                                                                                                                                          |
+| Plugin framework   | Local/self-hosted early plugin runtime is in scope; cloud marketplace and packaged public distribution remain out of scope                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Auth               | Mode-dependent human auth (`local_trusted` implicit board in current code; authenticated mode uses sessions), API keys for agents                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Budget period      | Monthly UTC calendar window                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Budget enforcement | Soft alerts + hard limit auto-pause                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Deployment modes   | Canonical model is `local_trusted` + `authenticated` with `private/public` exposure policy (see `doc/DEPLOYMENT-MODES.md`)                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 Low-trust agent presets are containment controls for hostile automated work, not
 general project or issue privacy controls. The core preset resolver contract is
@@ -674,20 +674,20 @@ continues to insert missing grants without replacing custom scopes.
 
 ## 9.3 Permission Matrix (V1)
 
-| Action | Board | Agent |
-|---|---|---|
-| Create company | yes | no |
-| Hire/create agent | yes (direct) | new standard agents: direct via `canCreateAgents`; low-trust policy or approval gates can restrict |
-| Pause/resume agent | yes | pause: no; resume: direct `agents:configure` grant only |
-| Create/update task | yes | yes |
-| Force reassign task | yes | limited |
-| Approve strategy/hire requests | yes | no |
-| Report cost | yes | yes |
-| Set company budget | yes | no |
-| Set subordinate budget | yes | yes (manager subtree only) |
-| Manage responsible user's inbox state | yes | yes (default-open policy) |
-| Manage another user's inbox state | yes | saved target-user opt-in or scoped `inbox:manage` grant |
-| Set work-object visibility (issue/project) | no | no (pro gate) |
+| Action                                     | Board        | Agent                                                                                              |
+| ------------------------------------------ | ------------ | -------------------------------------------------------------------------------------------------- |
+| Create company                             | yes          | no                                                                                                 |
+| Hire/create agent                          | yes (direct) | new standard agents: direct via `canCreateAgents`; low-trust policy or approval gates can restrict |
+| Pause/resume agent                         | yes          | pause: no; resume: direct `agents:configure` grant only                                            |
+| Create/update task                         | yes          | yes                                                                                                |
+| Force reassign task                        | yes          | limited                                                                                            |
+| Approve strategy/hire requests             | yes          | no                                                                                                 |
+| Report cost                                | yes          | yes                                                                                                |
+| Set company budget                         | yes          | no                                                                                                 |
+| Set subordinate budget                     | yes          | yes (manager subtree only)                                                                         |
+| Manage responsible user's inbox state      | yes          | yes (default-open policy)                                                                          |
+| Manage another user's inbox state          | yes          | saved target-user opt-in or scoped `inbox:manage` grant                                            |
+| Set work-object visibility (issue/project) | no           | no (pro gate)                                                                                      |
 
 Agent resume is the only grant-gated exception in the lifecycle-route group. An
 agent actor calling `POST /agents/:agentId/resume` must pass the protected
@@ -786,18 +786,18 @@ The approved term set is:
 
 ## 9.6 V1 vs Pro/Enterprise Controls (recommended target split)
 
-| Permission area | Free / V1 default | Pro / Enterprise |
-|---|---|---|
-| Company boundary | Hard boundary only (`company_id`) | Multi-company policy overlays (`membership`, `project`, and `task` scopes) |
-| Simple roles | Board + agent roles with existing approval/budget gates | Additional role aliases + scoped approver roles |
-| Profile visibility | Full profile visibility for coordination and audit | Optional profile redaction / selective sharing for external surfaces |
-| Config visibility | Board full read with redacted secret fields; agent config read/write constrained by own agent identity | Scoped config visibility controls and central policy enforcement |
-| Assignment/invocation | Assignment creates execution authority; board can reassign or force release | Delegation policies and scoped invokers with deny-listed tool classes |
-| Work-object visibility | Company-open by default; opt-in private issues/projects with explicit user or agent access | Policy-driven ACLs and reviewer-only channels |
-| Tool/secret policy | Secret refs, log redaction, and adapter-level command/webhook restrictions | Tool allowlists with centralized policy evaluation |
-| Company skills | Open to authenticated company agents; core enforces invariants and any stored restriction policy | Taskcore EE policy editor, protected-skill controls, presets, simulation, and policy audit UX |
-| Inbox management | Responsible agent may archive/unarchive its responsible user's Mine items under a default-open user policy; explicit cross-user access requires saved target-user opt-in or `inbox:manage`; all mutations are audited | Policy administration UX, organization presets, simulations, bulk controls, and richer audit/reporting surfaces |
-| Escalation | Escalate from agent to manager to board; board approval/budget gates remain authoritative | Escalation routing and SLA windows |
+| Permission area        | Free / V1 default                                                                                                                                                                                                     | Pro / Enterprise                                                                                                |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Company boundary       | Hard boundary only (`company_id`)                                                                                                                                                                                     | Multi-company policy overlays (`membership`, `project`, and `task` scopes)                                      |
+| Simple roles           | Board + agent roles with existing approval/budget gates                                                                                                                                                               | Additional role aliases + scoped approver roles                                                                 |
+| Profile visibility     | Full profile visibility for coordination and audit                                                                                                                                                                    | Optional profile redaction / selective sharing for external surfaces                                            |
+| Config visibility      | Board full read with redacted secret fields; agent config read/write constrained by own agent identity                                                                                                                | Scoped config visibility controls and central policy enforcement                                                |
+| Assignment/invocation  | Assignment creates execution authority; board can reassign or force release                                                                                                                                           | Delegation policies and scoped invokers with deny-listed tool classes                                           |
+| Work-object visibility | Company-open by default; opt-in private issues/projects with explicit user or agent access                                                                                                                            | Policy-driven ACLs and reviewer-only channels                                                                   |
+| Tool/secret policy     | Secret refs, log redaction, and adapter-level command/webhook restrictions                                                                                                                                            | Tool allowlists with centralized policy evaluation                                                              |
+| Company skills         | Open to authenticated company agents; core enforces invariants and any stored restriction policy                                                                                                                      | Taskcore EE policy editor, protected-skill controls, presets, simulation, and policy audit UX                   |
+| Inbox management       | Responsible agent may archive/unarchive its responsible user's Mine items under a default-open user policy; explicit cross-user access requires saved target-user opt-in or `inbox:manage`; all mutations are audited | Policy administration UX, organization presets, simulations, bulk controls, and richer audit/reporting surfaces |
+| Escalation             | Escalate from agent to manager to board; board approval/budget gates remain authoritative                                                                                                                             | Escalation routing and SLA windows                                                                              |
 
 ## 9.7 Recommended first-slice implementation order
 
@@ -1399,7 +1399,7 @@ Config shape:
   "command": "string",
   "args": ["string"],
   "cwd": "string",
-  "env": {"KEY": "VALUE"},
+  "env": { "KEY": "VALUE" },
   "timeoutSec": 900,
   "graceSec": 15
 }
@@ -1420,9 +1420,9 @@ Config shape:
 {
   "url": "https://...",
   "method": "POST",
-  "headers": {"Authorization": "Bearer ..."},
+  "headers": { "Authorization": "Bearer ..." },
   "timeoutMs": 15000,
-  "payloadTemplate": {"agentId": "{{agent.id}}", "runId": "{{run.id}}"}
+  "payloadTemplate": { "agentId": "{{agent.id}}", "runId": "{{run.id}}" }
 }
 ```
 
@@ -1811,6 +1811,7 @@ Agent appearances are stable, versioned ClipLab end-cap personas, separate from
 behavioral instructions. Compact surfaces use on-demand cached PNG URLs; larger
 placements may use a lazy live character. See [agent-personas.md](agent-personas.md)
 for persistence, migration, rendering, and integration contracts.
+
 ### Experimental task-backed agent chat (2026-09-10)
 
 `enableAgentChat` is an instance experimental flag, default false. Conversation containers remain issues, unique by `(company_id, conversation_agent_id, conversation_user_id)`. The authenticated board actor supplies ownership; local trusted mode uses `local-board`. Ordinary company task access applies. A conversation's agent assignment and identity are immutable through ordinary updates; terminal status mutations are rejected.

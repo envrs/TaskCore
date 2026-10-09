@@ -3,7 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { createPromptContextFixture } from "@taskcore/adapter-utils/test-fixtures/prompt-context";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { AdapterExecutionContext, AdapterInvocationMeta } from "@taskcore/adapter-utils";
+import type {
+  AdapterExecutionContext,
+  AdapterInvocationMeta,
+} from "@taskcore/adapter-utils";
 import { runChildProcess } from "@taskcore/adapter-utils/server-utils";
 
 // Wrap the shared staging seam in a call-recording spy that still delegates to
@@ -12,10 +15,15 @@ import { runChildProcess } from "@taskcore/adapter-utils/server-utils";
 // `assets` the Claude remote managed-home seam sends it without changing any
 // real behavior for the other tests.
 vi.mock("@taskcore/adapter-utils/execution-target", async (importActual) => {
-  const actual = await importActual<typeof import("@taskcore/adapter-utils/execution-target")>();
+  const actual =
+    await importActual<
+      typeof import("@taskcore/adapter-utils/execution-target")
+    >();
   return {
     ...actual,
-    prepareAdapterExecutionTargetRuntime: vi.fn(actual.prepareAdapterExecutionTargetRuntime),
+    prepareAdapterExecutionTargetRuntime: vi.fn(
+      actual.prepareAdapterExecutionTargetRuntime,
+    ),
   };
 });
 import { prepareAdapterExecutionTargetRuntime } from "@taskcore/adapter-utils/execution-target";
@@ -46,20 +54,33 @@ function createLocalSandboxRunner() {
     }) => {
       counter += 1;
       const command = input.command === "bash" ? "/bin/bash" : input.command;
-      return await runChildProcess(`claude-acp-sandbox-run-${counter}`, command, input.args ?? [], {
-        cwd: input.cwd ?? process.cwd(),
-        env: input.env ?? {},
-        stdin: input.stdin,
-        timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-        graceSec: 5,
-        onLog: input.onLog ?? (async () => {}),
-      });
+      return await runChildProcess(
+        `claude-acp-sandbox-run-${counter}`,
+        command,
+        input.args ?? [],
+        {
+          cwd: input.cwd ?? process.cwd(),
+          env: input.env ?? {},
+          stdin: input.stdin,
+          timeoutSec: Math.max(
+            1,
+            Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+          ),
+          graceSec: 5,
+          onLog: input.onLog ?? (async () => {}),
+        },
+      );
     },
   };
 }
 
 type FakeRuntimeOptions = Record<string, unknown>;
-type FakeRuntimeEvent = { type: string; text?: string; stream?: string; tag?: string };
+type FakeRuntimeEvent = {
+  type: string;
+  text?: string;
+  stream?: string;
+  tag?: string;
+};
 type FakeRuntimeHandle = {
   sessionKey: string;
   backend: string;
@@ -69,7 +90,10 @@ type FakeRuntimeHandle = {
   backendSessionId: string;
   agentSessionId: string;
 };
-type FakeRuntimeTurnResult = { status: "completed" | "failed" | "cancelled"; stopReason?: string };
+type FakeRuntimeTurnResult = {
+  status: "completed" | "failed" | "cancelled";
+  stopReason?: string;
+};
 type FakeRuntimeTurn = {
   requestId: string;
   events: AsyncIterable<FakeRuntimeEvent>;
@@ -106,7 +130,14 @@ afterEach(async () => {
   await Promise.all(
     tempRoots
       .splice(0)
-      .map((root) => fs.rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })),
+      .map((root) =>
+        fs.rm(root, {
+          recursive: true,
+          force: true,
+          maxRetries: 10,
+          retryDelay: 200,
+        }),
+      ),
   );
 });
 
@@ -118,17 +149,38 @@ class FakeRuntime {
     cwd?: string;
     resumeSessionId?: string;
   }> = [];
-  startInputs: Array<{ handle: FakeRuntimeHandle; text: string; requestId: string; timeoutMs?: number }> = [];
-  closeInputs: Array<{ handle: FakeRuntimeHandle; reason: string; discardPersistentState?: boolean }> = [];
-  setConfigInputs: Array<{ handle: FakeRuntimeHandle; key: string; value: string }> = [];
+  startInputs: Array<{
+    handle: FakeRuntimeHandle;
+    text: string;
+    requestId: string;
+    timeoutMs?: number;
+  }> = [];
+  closeInputs: Array<{
+    handle: FakeRuntimeHandle;
+    reason: string;
+    discardPersistentState?: boolean;
+  }> = [];
+  setConfigInputs: Array<{
+    handle: FakeRuntimeHandle;
+    key: string;
+    value: string;
+  }> = [];
   ensureCount = 0;
 
   constructor(
     readonly options: FakeRuntimeOptions,
     readonly events: FakeRuntimeEvent[] = [
-      { type: "text_delta", text: "hello", stream: "output", tag: "agent_message_chunk" },
+      {
+        type: "text_delta",
+        text: "hello",
+        stream: "output",
+        tag: "agent_message_chunk",
+      },
     ],
-    readonly terminal: FakeRuntimeTurnResult = { status: "completed", stopReason: "end_turn" },
+    readonly terminal: FakeRuntimeTurnResult = {
+      status: "completed",
+      stopReason: "end_turn",
+    },
   ) {}
 
   async ensureSession(input: {
@@ -185,7 +237,11 @@ class FakeRuntime {
     return Promise.resolve({});
   }
 
-  async setConfigOption(input: { handle: FakeRuntimeHandle; key: string; value: string }) {
+  async setConfigOption(input: {
+    handle: FakeRuntimeHandle;
+    key: string;
+    value: string;
+  }) {
     this.setConfigInputs.push(input);
   }
 
@@ -193,7 +249,11 @@ class FakeRuntime {
 
   async cancel() {}
 
-  async close(input: { handle: FakeRuntimeHandle; reason: string; discardPersistentState?: boolean }) {
+  async close(input: {
+    handle: FakeRuntimeHandle;
+    reason: string;
+    discardPersistentState?: boolean;
+  }) {
     this.closeInputs.push(input);
   }
 }
@@ -223,7 +283,11 @@ async function makeTempRoot(prefix: string) {
 async function createRuntimeSkill(root: string) {
   const source = path.join(root, "skills", "review");
   await fs.mkdir(source, { recursive: true });
-  await fs.writeFile(path.join(source, "SKILL.md"), "---\n---\nUse the review skill.\n", "utf8");
+  await fs.writeFile(
+    path.join(source, "SKILL.md"),
+    "---\n---\nUse the review skill.\n",
+    "utf8",
+  );
   return {
     key: "company/review",
     runtimeName: "review",
@@ -231,7 +295,10 @@ async function createRuntimeSkill(root: string) {
   };
 }
 
-function buildContext(root: string, overrides: Partial<AdapterExecutionContext> = {}): AdapterExecutionContext {
+function buildContext(
+  root: string,
+  overrides: Partial<AdapterExecutionContext> = {},
+): AdapterExecutionContext {
   return {
     runId: "run-1",
     agent: {
@@ -272,33 +339,55 @@ describe("claude_local ACP lane", () => {
     const root = await makeTempRoot("taskcore-claude-acp-default-");
     const meta: AdapterInvocationMeta[] = [];
     const execute = createClaudeAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
-    const result = await execute(buildContext(root, {
-      onMeta: async (payload) => { meta.push(payload); },
-    }));
+    const result = await execute(
+      buildContext(root, {
+        onMeta: async (payload) => {
+          meta.push(payload);
+        },
+      }),
+    );
     expect(result.exitCode).toBe(0);
     expect(meta[0]?.env?.ANTHROPIC_MODEL).toBe("claude-opus-5");
   });
 
   it("keeps ACP model precedence consistent with CLI and provider overrides", () => {
-    expect(buildClaudeAcpConfig({ model: "claude-sonnet-4-5", env: { ANTHROPIC_MODEL: "opus" } }))
-      .toMatchObject({ model: "claude-sonnet-4-5", env: { ANTHROPIC_MODEL: "claude-sonnet-4-5" } });
-    expect(buildClaudeAcpConfig({}, { ANTHROPIC_MODEL: "custom-model" }))
-      .toMatchObject({ model: "custom-model", env: { ANTHROPIC_MODEL: "custom-model" } });
-    expect(buildClaudeAcpConfig({}, { CLAUDE_CODE_USE_BEDROCK: "1" }).model).toBe("");
-    expect(buildClaudeAcpConfig({ env: { CLAUDE_CODE_USE_VERTEX: "1" } }).model).toBe("");
+    expect(
+      buildClaudeAcpConfig({
+        model: "claude-sonnet-4-5",
+        env: { ANTHROPIC_MODEL: "opus" },
+      }),
+    ).toMatchObject({
+      model: "claude-sonnet-4-5",
+      env: { ANTHROPIC_MODEL: "claude-sonnet-4-5" },
+    });
+    expect(
+      buildClaudeAcpConfig({}, { ANTHROPIC_MODEL: "custom-model" }),
+    ).toMatchObject({
+      model: "custom-model",
+      env: { ANTHROPIC_MODEL: "custom-model" },
+    });
+    expect(
+      buildClaudeAcpConfig({}, { CLAUDE_CODE_USE_BEDROCK: "1" }).model,
+    ).toBe("");
+    expect(
+      buildClaudeAcpConfig({ env: { CLAUDE_CODE_USE_VERTEX: "1" } }).model,
+    ).toBe("");
   });
 
   it("maps Claude config to the ACPX Claude target", () => {
-    expect(buildClaudeAcpConfig({
-      engine: "acp",
-      cwd: "/repo",
-      model: "claude-opus-4-7",
-      effort: "high",
-      agentCommand: "custom-claude-acp",
-      warmHandleIdleMs: 25,
-    })).toMatchObject({
+    expect(
+      buildClaudeAcpConfig({
+        engine: "acp",
+        cwd: "/repo",
+        model: "claude-opus-4-7",
+        effort: "high",
+        agentCommand: "custom-claude-acp",
+        warmHandleIdleMs: 25,
+      }),
+    ).toMatchObject({
       agent: "claude",
       cwd: "/repo",
       model: "claude-opus-4-7",
@@ -325,7 +414,10 @@ describe("claude_local ACP lane", () => {
     await fs.writeFile(commandPath, "#!/usr/bin/env sh\n", "utf8");
     setNodeVersion("v24.11.0");
 
-    expect(resolveClaudeExecutionEngine({})).toEqual({ engine: "acp", explicit: false });
+    expect(resolveClaudeExecutionEngine({})).toEqual({
+      engine: "acp",
+      explicit: false,
+    });
     await expect(
       resolveClaudeExecutionEngineForRun({
         config: { agentCommand: commandPath },
@@ -355,7 +447,11 @@ describe("claude_local ACP lane", () => {
         config: { engine: "acp", agentCommand: "/missing/claude-agent-acp" },
         executionTarget: null,
       }),
-    ).resolves.toMatchObject({ engine: "acp", explicit: true, unavailableReason: expect.stringContaining("Node") });
+    ).resolves.toMatchObject({
+      engine: "acp",
+      explicit: true,
+      unavailableReason: expect.stringContaining("Node"),
+    });
   });
 
   it("requires explicit CLI selection for local filesystem or network scope", async () => {
@@ -374,7 +470,12 @@ describe("claude_local ACP lane", () => {
         config: { engine: "acp", filesystemScope: "workspace" },
         executionTarget: null,
       }),
-    ).resolves.toMatchObject({ engine: "acp", unavailableReason: expect.stringContaining("ACP confinement is not supported") });
+    ).resolves.toMatchObject({
+      engine: "acp",
+      unavailableReason: expect.stringContaining(
+        "ACP confinement is not supported",
+      ),
+    });
     await expect(
       resolveClaudeExecutionEngineForRun({
         config: { networkScope: "deny" },
@@ -434,7 +535,9 @@ describe("claude_local ACP lane", () => {
     ).resolves.toMatchObject({
       engine: "acp",
       explicit: false,
-      unavailableReason: expect.stringContaining("bidirectional remote process"),
+      unavailableReason: expect.stringContaining(
+        "bidirectional remote process",
+      ),
     });
   });
 
@@ -466,27 +569,54 @@ describe("claude_local ACP lane", () => {
     });
   });
 
-  it.each([undefined, "/sandbox/configured-workspace"])("checks sandbox directories on the sandbox (configured cwd=%s)", async (configuredCwd) => {
-    const remoteCwd = "/sandbox/workspace";
-    const mkdir = vi.spyOn(fs, "mkdir").mockRejectedValue(new Error("Host filesystem must not be used"));
-    const execute = vi.fn(async () => ({
-      exitCode: 0, signal: null, timedOut: false, stdout: "", stderr: "",
-      pid: null, startedAt: new Date().toISOString(),
-    }));
-    try {
-      const result = await testClaudeAcpEnvironment({
-        companyId: "company-1", adapterType: "claude_local",
-        config: { cwd: configuredCwd, agentCommand: "claude-agent-acp", env: { ANTHROPIC_API_KEY: "fixture" } },
-        executionTarget: { kind: "remote", transport: "sandbox", remoteCwd, runner: { execute } },
-      });
-      expect(result.status, JSON.stringify(result.checks)).toBe("pass");
-      expect(result.checks).toContainEqual(expect.objectContaining({
-        code: "claude_acp_cwd_valid", message: `Working directory is valid: ${configuredCwd ?? remoteCwd}`,
+  it.each([undefined, "/sandbox/configured-workspace"])(
+    "checks sandbox directories on the sandbox (configured cwd=%s)",
+    async (configuredCwd) => {
+      const remoteCwd = "/sandbox/workspace";
+      const mkdir = vi
+        .spyOn(fs, "mkdir")
+        .mockRejectedValue(new Error("Host filesystem must not be used"));
+      const execute = vi.fn(async () => ({
+        exitCode: 0,
+        signal: null,
+        timedOut: false,
+        stdout: "",
+        stderr: "",
+        pid: null,
+        startedAt: new Date().toISOString(),
       }));
-      expect(mkdir).not.toHaveBeenCalled();
-      expect(JSON.stringify(execute.mock.calls)).toContain(`mkdir -p '${configuredCwd ?? remoteCwd}'`);
-    } finally { mkdir.mockRestore(); }
-  });
+      try {
+        const result = await testClaudeAcpEnvironment({
+          companyId: "company-1",
+          adapterType: "claude_local",
+          config: {
+            cwd: configuredCwd,
+            agentCommand: "claude-agent-acp",
+            env: { ANTHROPIC_API_KEY: "fixture" },
+          },
+          executionTarget: {
+            kind: "remote",
+            transport: "sandbox",
+            remoteCwd,
+            runner: { execute },
+          },
+        });
+        expect(result.status, JSON.stringify(result.checks)).toBe("pass");
+        expect(result.checks).toContainEqual(
+          expect.objectContaining({
+            code: "claude_acp_cwd_valid",
+            message: `Working directory is valid: ${configuredCwd ?? remoteCwd}`,
+          }),
+        );
+        expect(mkdir).not.toHaveBeenCalled();
+        expect(JSON.stringify(execute.mock.calls)).toContain(
+          `mkdir -p '${configuredCwd ?? remoteCwd}'`,
+        );
+      } finally {
+        mkdir.mockRestore();
+      }
+    },
+  );
 
   it("reports ACP prerequisites for the ACP lane", async () => {
     const root = await makeTempRoot("taskcore-claude-acp-env-");
@@ -551,21 +681,23 @@ describe("claude_local ACP lane", () => {
       },
     });
 
-    const result = await execute(buildContext(root, {
-      config: {
-        engine: "acp",
-        cwd: root,
-        stateDir: path.join(root, "state"),
-        model: "claude-opus-4-7",
-        effort: "high",
-        promptTemplate: "Do the assigned work.",
-        taskcoreRuntimeSkills: [skill],
-        taskcoreSkillSync: { desiredSkills: [skill.key] },
-      },
-      onMeta: async (payload: AdapterInvocationMeta) => {
-        meta.push(payload);
-      },
-    }));
+    const result = await execute(
+      buildContext(root, {
+        config: {
+          engine: "acp",
+          cwd: root,
+          stateDir: path.join(root, "state"),
+          model: "claude-opus-4-7",
+          effort: "high",
+          promptTemplate: "Do the assigned work.",
+          taskcoreRuntimeSkills: [skill],
+          taskcoreSkillSync: { desiredSkills: [skill.key] },
+        },
+        onMeta: async (payload: AdapterInvocationMeta) => {
+          meta.push(payload);
+        },
+      }),
+    );
 
     expect(result.exitCode).toBe(0);
     expect(result.sessionParams).toMatchObject({
@@ -578,15 +710,29 @@ describe("claude_local ACP lane", () => {
       mode: "claude",
       selectedSkills: ["review"],
     });
-    const skillRoot = (result.sessionParams?.skills as { skillRoot?: string }).skillRoot;
+    const skillRoot = (result.sessionParams?.skills as { skillRoot?: string })
+      .skillRoot;
     expect(skillRoot).toBeTruthy();
-    await expect(fs.readFile(path.join(skillRoot!, "review", "SKILL.md"), "utf8")).resolves.toContain("review skill");
-    expect(runtimes[0]?.setConfigInputs.map((input) => [input.key, input.value])).toEqual([["effort", "high"]]);
-    expect(meta[0]?.commandNotes?.join("\n")).toContain("set via ANTHROPIC_MODEL");
+    await expect(
+      fs.readFile(path.join(skillRoot!, "review", "SKILL.md"), "utf8"),
+    ).resolves.toContain("review skill");
+    expect(
+      runtimes[0]?.setConfigInputs.map((input) => [input.key, input.value]),
+    ).toEqual([["effort", "high"]]);
+    expect(meta[0]?.commandNotes?.join("\n")).toContain(
+      "set via ANTHROPIC_MODEL",
+    );
     expect(meta[0]?.env?.ANTHROPIC_MODEL).toBe("claude-opus-4-7");
-    const settings = JSON.parse(await fs.readFile(path.join(root, ".claude", "settings.local.json"), "utf8"));
+    const settings = JSON.parse(
+      await fs.readFile(
+        path.join(root, ".claude", "settings.local.json"),
+        "utf8",
+      ),
+    );
     expect(settings.permissions.defaultMode).toBe("default");
-    expect(settings.permissions.allow).toEqual(expect.arrayContaining(["Bash(curl:*)", "Bash(env)"]));
+    expect(settings.permissions.allow).toEqual(
+      expect.arrayContaining(["Bash(curl:*)", "Bash(env)"]),
+    );
   });
 
   it("stages the skill bundle as a no-follow-symlinks asset for a remote ACP run, and points the prompt at the in-sandbox skill root", async () => {
@@ -621,7 +767,11 @@ describe("claude_local ACP lane", () => {
         context: {
           issueId: "issue-1",
           taskcoreTaskMarkdown: "Task context",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -641,8 +791,11 @@ describe("claude_local ACP lane", () => {
     // files, so staging never needs to carry a symbolic link's target
     // content, and a link planted in the bundle after materialization must
     // not cross into the sandbox.
-    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock.calls[0]![0];
-    const skillsAsset = stageArgs.assets?.find((asset) => asset.key === "skills");
+    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock
+      .calls[0]![0];
+    const skillsAsset = stageArgs.assets?.find(
+      (asset) => asset.key === "skills",
+    );
     expect(skillsAsset).toMatchObject({ followSymlinks: false });
 
     // The prompt names the in-sandbox skill root, not the host bundle dir...
@@ -692,7 +845,11 @@ describe("claude_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -706,9 +863,14 @@ describe("claude_local ACP lane", () => {
     );
 
     expect(result.exitCode).toBe(0);
-    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock.calls[0]![0];
-    expect((stageArgs.assets ?? []).some((asset) => asset.key === "skills")).toBe(false);
-    expect(String(runtimes[0]?.startInputs[0]?.text ?? "")).not.toContain("Skill root:");
+    const stageArgs = vi.mocked(prepareAdapterExecutionTargetRuntime).mock
+      .calls[0]![0];
+    expect(
+      (stageArgs.assets ?? []).some((asset) => asset.key === "skills"),
+    ).toBe(false);
+    expect(String(runtimes[0]?.startInputs[0]?.text ?? "")).not.toContain(
+      "Skill root:",
+    );
   });
 
   it("stages the skill bundle inside the sandbox but never syncs it back into the host workspace", async () => {
@@ -747,7 +909,11 @@ describe("claude_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -765,36 +931,45 @@ describe("claude_local ACP lane", () => {
     // during the run, under the in-sandbox skill root the prompt names.
     const prompt = String(runtimes[0]?.startInputs[0]?.text ?? "");
     const inSandboxSkillRoot = prompt.match(/Skill root: (\S+)/)![1]!;
-    expect(inSandboxSkillRoot).toContain(path.join(remoteCwd, ".taskcore-runtime"));
+    expect(inSandboxSkillRoot).toContain(
+      path.join(remoteCwd, ".taskcore-runtime"),
+    );
     await expect(
       fs.readFile(path.join(inSandboxSkillRoot, "review", "SKILL.md"), "utf8"),
     ).resolves.toContain("review skill");
     // After the run's workspace restore, the host worktree carries the file the
     // run wrote inside the workspace proper...
-    await expect(fs.readFile(path.join(localCwd, "hello.txt"), "utf8")).resolves.toBe("hi");
+    await expect(
+      fs.readFile(path.join(localCwd, "hello.txt"), "utf8"),
+    ).resolves.toBe("hi");
     // ...but not the staged runtime directory the skill bundle staged into.
-    await expect(fs.access(path.join(localCwd, ".taskcore-runtime"))).rejects.toThrow();
+    await expect(
+      fs.access(path.join(localCwd, ".taskcore-runtime")),
+    ).rejects.toThrow();
   });
 
   it("passes the exact configured Fable 5.1 ID through ANTHROPIC_MODEL on the ACP lane", async () => {
     const root = await makeTempRoot("taskcore-claude-acp-fable51-");
     const meta: AdapterInvocationMeta[] = [];
     const execute = createClaudeAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
 
-    const result = await execute(buildContext(root, {
-      config: {
-        engine: "acp",
-        cwd: root,
-        stateDir: path.join(root, "state"),
-        model: "claude-fable-5-1",
-        promptTemplate: "Do the assigned work.",
-      },
-      onMeta: async (payload: AdapterInvocationMeta) => {
-        meta.push(payload);
-      },
-    }));
+    const result = await execute(
+      buildContext(root, {
+        config: {
+          engine: "acp",
+          cwd: root,
+          stateDir: path.join(root, "state"),
+          model: "claude-fable-5-1",
+          promptTemplate: "Do the assigned work.",
+        },
+        onMeta: async (payload: AdapterInvocationMeta) => {
+          meta.push(payload);
+        },
+      }),
+    );
 
     expect(result.exitCode).toBe(0);
     expect(meta[0]?.env?.ANTHROPIC_MODEL).toBe("claude-fable-5-1");
@@ -831,7 +1006,11 @@ describe("claude_local ACP lane", () => {
         context: {
           issueId: "issue-1",
           taskcoreTaskMarkdown: "Task context",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -845,7 +1024,9 @@ describe("claude_local ACP lane", () => {
     );
 
     expect(result.exitCode).toBe(0);
-    await expect(fs.readFile(path.join(remoteCwd, "hello.txt"), "utf8")).resolves.toBe("hi");
+    await expect(
+      fs.readFile(path.join(remoteCwd, "hello.txt"), "utf8"),
+    ).resolves.toBe("hi");
     expect(runtimes[0]?.ensureInputs[0]?.cwd).toBe(remoteCwd);
     expect(runtimes[0]?.ensureInputs[0]?.cwd).not.toBe(localCwd);
   });
@@ -864,14 +1045,19 @@ describe("claude_local ACP lane", () => {
       JSON.stringify({ permissions: { defaultMode: "acceptEdits" } }),
       "utf8",
     );
-    await fs.writeFile(path.join(sharedClaudeConfig, "CLAUDE.md"), "# shared guidance\n", "utf8");
+    await fs.writeFile(
+      path.join(sharedClaudeConfig, "CLAUDE.md"),
+      "# shared guidance\n",
+      "utf8",
+    );
     process.env.TASKCORE_HOME = path.join(root, "taskcore-home");
     process.env.TASKCORE_INSTANCE_ID = "test";
     process.env.CLAUDE_CONFIG_DIR = sharedClaudeConfig;
 
     const meta: AdapterInvocationMeta[] = [];
     const execute = createClaudeAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
     const result = await execute(
       buildContext(localCwd, {
@@ -884,7 +1070,11 @@ describe("claude_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -909,11 +1099,13 @@ describe("claude_local ACP lane", () => {
     expect(remappedConfigDir.endsWith("/config")).toBe(true);
     // Seeded: settings.json was materialized into the in-sandbox config dir (the
     // local runner uses the host FS, so this is a real host path).
-    await expect(fs.readFile(path.join(remappedConfigDir, "settings.json"), "utf8")).resolves.toContain(
-      "permissions",
-    );
+    await expect(
+      fs.readFile(path.join(remappedConfigDir, "settings.json"), "utf8"),
+    ).resolves.toContain("permissions");
     // C4 — no XDG_* variable is introduced for in-sandbox credential discovery.
-    expect(Object.keys(meta[0]?.env ?? {}).filter((key) => key.startsWith("XDG_"))).toEqual([]);
+    expect(
+      Object.keys(meta[0]?.env ?? {}).filter((key) => key.startsWith("XDG_")),
+    ).toEqual([]);
   });
 
   it("test_claude_acp_seam_registers_workspace_sync_back", async () => {
@@ -930,7 +1122,11 @@ describe("claude_local ACP lane", () => {
       JSON.stringify({ permissions: { defaultMode: "acceptEdits" } }),
       "utf8",
     );
-    await fs.writeFile(path.join(sharedClaudeConfig, "CLAUDE.md"), "# shared guidance\n", "utf8");
+    await fs.writeFile(
+      path.join(sharedClaudeConfig, "CLAUDE.md"),
+      "# shared guidance\n",
+      "utf8",
+    );
     process.env.TASKCORE_HOME = path.join(root, "taskcore-home");
     process.env.TASKCORE_INSTANCE_ID = "test";
     process.env.CLAUDE_CONFIG_DIR = sharedClaudeConfig;
@@ -946,7 +1142,11 @@ describe("claude_local ACP lane", () => {
       return {
         ...turn,
         result: (async () => {
-          await fs.writeFile(path.join(remoteWorkspaceCwd, "from-sandbox.txt"), "synced", "utf8");
+          await fs.writeFile(
+            path.join(remoteWorkspaceCwd, "from-sandbox.txt"),
+            "synced",
+            "utf8",
+          );
           return await turn.result;
         })(),
       };
@@ -970,7 +1170,11 @@ describe("claude_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -986,7 +1190,9 @@ describe("claude_local ACP lane", () => {
     expect(result.exitCode).toBe(0);
     // The teardown fired `restoreWorkspace`, so the sandbox-authored file is now
     // in the host worktree.
-    await expect(fs.readFile(path.join(localCwd, "from-sandbox.txt"), "utf8")).resolves.toBe("synced");
+    await expect(
+      fs.readFile(path.join(localCwd, "from-sandbox.txt"), "utf8"),
+    ).resolves.toBe("synced");
   });
 
   it("test_claude_acp_teardown_restore_failure_sanitizes_the_run_log", async () => {
@@ -1018,7 +1224,11 @@ describe("claude_local ACP lane", () => {
       return {
         ...turn,
         result: (async () => {
-          await fs.writeFile(path.join(remoteWorkspaceCwd, "from-sandbox.txt"), "synced", "utf8");
+          await fs.writeFile(
+            path.join(remoteWorkspaceCwd, "from-sandbox.txt"),
+            "synced",
+            "utf8",
+          );
           await fs.chmod(localCwd, 0o500);
           return await turn.result;
         })(),
@@ -1045,7 +1255,11 @@ describe("claude_local ACP lane", () => {
           },
           context: {
             issueId: "issue-1",
-            taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+            taskcoreWorkspace: {
+              cwd: localCwd,
+              source: "project_workspace",
+              workspaceId: "workspace-1",
+            },
           },
           executionTarget: {
             kind: "remote",
@@ -1064,16 +1278,27 @@ describe("claude_local ACP lane", () => {
       // Preserve the execution's exit code while reporting the restore failure.
       // Only a fixed diagnostic may contain the errno, never the raw error.
       expect(result.exitCode).toBe(0);
-      expect(result.resultJson?.workspaceRestoreFailure).toBe("restore_permission_denied");
+      expect(result.resultJson?.workspaceRestoreFailure).toBe(
+        "restore_permission_denied",
+      );
       expect(result.resultJson?.workspaceRestoreDiagnostic).toEqual({
-        phase: "workspace", step: "directory_merge", errorCode: "EACCES",
+        phase: "workspace",
+        step: "directory_merge",
+        errorCode: "EACCES",
       });
       const allLogs = loggedLines.join("");
       expect(allLogs).not.toContain("SENTINEL-HOST-PATH-marker");
       expect(allLogs).not.toContain(localCwd);
-      const diagnostic = '[taskcore] Workspace restore diagnostic: {"phase":"workspace","step":"directory_merge","errorCode":"EACCES"}\n';
-      expect(loggedLines.filter((line) => line.includes("Workspace restore diagnostic:"))).toEqual([diagnostic]);
-      expect(loggedLines.filter((line) => line !== diagnostic).join("")).not.toContain("EACCES");
+      const diagnostic =
+        '[taskcore] Workspace restore diagnostic: {"phase":"workspace","step":"directory_merge","errorCode":"EACCES"}\n';
+      expect(
+        loggedLines.filter((line) =>
+          line.includes("Workspace restore diagnostic:"),
+        ),
+      ).toEqual([diagnostic]);
+      expect(
+        loggedLines.filter((line) => line !== diagnostic).join(""),
+      ).not.toContain("EACCES");
       expect(allLogs).toContain("permission denied");
     } finally {
       await fs.chmod(localCwd, 0o700).catch(() => undefined);
@@ -1081,7 +1306,9 @@ describe("claude_local ACP lane", () => {
   });
 
   it("remaps a workspace-relative explicit CLAUDE_CONFIG_DIR onto the in-sandbox workspace path", async () => {
-    const root = await makeTempRoot("taskcore-claude-acp-explicit-inworkspace-");
+    const root = await makeTempRoot(
+      "taskcore-claude-acp-explicit-inworkspace-",
+    );
     const localCwd = path.join(root, "worktree");
     const remoteCwd = path.join(root, "remote-workspace");
     await fs.mkdir(localCwd, { recursive: true });
@@ -1102,7 +1329,8 @@ describe("claude_local ACP lane", () => {
     const meta: AdapterInvocationMeta[] = [];
     const logs: string[] = [];
     const execute = createClaudeAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
     const result = await execute(
       buildContext(localCwd, {
@@ -1116,7 +1344,11 @@ describe("claude_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -1137,10 +1369,14 @@ describe("claude_local ACP lane", () => {
 
     expect(result.exitCode).toBe(0);
     // Prefix remapped host→sandbox: same relative subpath, in-sandbox workspace root.
-    expect(meta[0]?.env?.CLAUDE_CONFIG_DIR).toBe(path.posix.join(remoteCwd, ".claude-config"));
+    expect(meta[0]?.env?.CLAUDE_CONFIG_DIR).toBe(
+      path.posix.join(remoteCwd, ".claude-config"),
+    );
     expect(meta[0]?.env?.CLAUDE_CONFIG_DIR).not.toBe(operatorConfigDir);
     // No managed config seed is materialized — the operator dir is authoritative.
-    expect(String(meta[0]?.env?.CLAUDE_CONFIG_DIR ?? "")).not.toContain(".taskcore-runtime");
+    expect(String(meta[0]?.env?.CLAUDE_CONFIG_DIR ?? "")).not.toContain(
+      ".taskcore-runtime",
+    );
     expect(logs.join("")).toContain(
       `Remapped operator CLAUDE_CONFIG_DIR from host path ${operatorConfigDir}`,
     );
@@ -1163,7 +1399,11 @@ describe("claude_local ACP lane", () => {
       JSON.stringify({ permissions: { defaultMode: "acceptEdits" } }),
       "utf8",
     );
-    await fs.writeFile(path.join(sharedClaudeConfig, "CLAUDE.md"), "# shared guidance\n", "utf8");
+    await fs.writeFile(
+      path.join(sharedClaudeConfig, "CLAUDE.md"),
+      "# shared guidance\n",
+      "utf8",
+    );
     process.env.TASKCORE_HOME = path.join(root, "taskcore-home");
     process.env.TASKCORE_INSTANCE_ID = "test";
     process.env.CLAUDE_CONFIG_DIR = sharedClaudeConfig;
@@ -1171,7 +1411,8 @@ describe("claude_local ACP lane", () => {
     const meta: AdapterInvocationMeta[] = [];
     const logs: string[] = [];
     const execute = createClaudeAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
     const result = await execute(
       buildContext(localCwd, {
@@ -1187,7 +1428,11 @@ describe("claude_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -1212,9 +1457,9 @@ describe("claude_local ACP lane", () => {
     expect(remappedConfigDir).not.toBe(operatorConfigDir);
     expect(remappedConfigDir).toContain(".taskcore-runtime");
     expect(remappedConfigDir.endsWith("/config")).toBe(true);
-    await expect(fs.readFile(path.join(remappedConfigDir, "settings.json"), "utf8")).resolves.toContain(
-      "permissions",
-    );
+    await expect(
+      fs.readFile(path.join(remappedConfigDir, "settings.json"), "utf8"),
+    ).resolves.toContain("permissions");
     // Observability: the un-portable override is flagged so the substitution is diagnosable.
     expect(logs.join("")).toContain(
       `operator-provided CLAUDE_CONFIG_DIR=${operatorConfigDir} is outside the staged workspace`,
@@ -1236,7 +1481,9 @@ describe("claude_local ACP lane", () => {
     ).resolves.toMatchObject({
       engine: "acp",
       explicit: false,
-      unavailableReason: expect.stringContaining("bidirectional remote process"),
+      unavailableReason: expect.stringContaining(
+        "bidirectional remote process",
+      ),
     });
   });
 
@@ -1266,46 +1513,62 @@ describe("claude_local ACP lane", () => {
       "Taskcore task context:",
       `- Issue: ${JSON.stringify(issue.identifier)}`,
       `- Title: ${JSON.stringify(issue.title)}`,
-      "", "Issue description:", "```text", issue.description, "```",
+      "",
+      "Issue description:",
+      "```text",
+      issue.description,
+      "```",
     ].join("\n");
     const historicalMarkdown = [
       assignmentMarkdown,
       ...comments.map((comment) => `${comment.id}: ${comment.body}`),
     ].join("\n");
-    const result = await execute(buildContext(root, {
-      context: {
-        issueId: issue.id,
-        taskcoreTaskMarkdown: historicalMarkdown,
-        taskcoreTaskMarkdownAssignment: assignmentMarkdown,
-        taskcoreWake: {
-          reason: "issue_commented",
-          issue: { ...issue, status: "in_progress" },
-          comments: comments.map((comment, index) => ({
-            ...comment,
-            issueId: issue.id,
-            createdAt: `2026-09-21T00:0${index}:00.000Z`,
-          })),
-          commentWindow: { requestedCount: 2, includedCount: 2, missingCount: 0 },
-          fallbackFetchNeeded: false,
-        },
-        taskcoreTurnContext: {
-          version: 1,
-          assignment: { owner: "task_markdown" },
-          events: {
-            owner: "wake_prompt",
-            comments: [
-              { id: "comment-a", revision: "a" },
-              { id: "comment-b", revision: "b" },
-            ],
+    const result = await execute(
+      buildContext(root, {
+        context: {
+          issueId: issue.id,
+          taskcoreTaskMarkdown: historicalMarkdown,
+          taskcoreTaskMarkdownAssignment: assignmentMarkdown,
+          taskcoreWake: {
+            reason: "issue_commented",
+            issue: { ...issue, status: "in_progress" },
+            comments: comments.map((comment, index) => ({
+              ...comment,
+              issueId: issue.id,
+              createdAt: `2026-09-21T00:0${index}:00.000Z`,
+            })),
+            commentWindow: {
+              requestedCount: 2,
+              includedCount: 2,
+              missingCount: 0,
+            },
+            fallbackFetchNeeded: false,
+          },
+          taskcoreTurnContext: {
+            version: 1,
+            assignment: { owner: "task_markdown" },
+            events: {
+              owner: "wake_prompt",
+              comments: [
+                { id: "comment-a", revision: "a" },
+                { id: "comment-b", revision: "b" },
+              ],
+            },
+          },
+          taskcoreWorkspace: {
+            cwd: root,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
           },
         },
-        taskcoreWorkspace: { cwd: root, source: "project_workspace", workspaceId: "workspace-1" },
-      },
-    }));
+      }),
+    );
     expect(result.exitCode).toBe(0);
     const prompt = String(runtimes[0]?.startInputs[0]?.text ?? "");
     expect(prompt.split("Same event body.")).toHaveLength(3);
-    expect(prompt.indexOf("comment comment-a")).toBeLessThan(prompt.indexOf("comment comment-b"));
+    expect(prompt.indexOf("comment comment-a")).toBeLessThan(
+      prompt.indexOf("comment comment-b"),
+    );
     expect(prompt).toContain("Repeat phrase Repeat phrase");
   });
 
@@ -1316,7 +1579,11 @@ describe("claude_local ACP lane", () => {
     const context = {
       ...fixture,
       issueId: "issue-1",
-      taskcoreWorkspace: { cwd: root, source: "project_workspace", workspaceId: "workspace-1" },
+      taskcoreWorkspace: {
+        cwd: root,
+        source: "project_workspace",
+        workspaceId: "workspace-1",
+      },
     };
     const execute = createClaudeAcpExecutor({
       createRuntime: (options: FakeRuntimeOptions) => {
@@ -1330,58 +1597,92 @@ describe("claude_local ACP lane", () => {
     const freshPrompt = String(runtimes[0]?.startInputs[0]?.text ?? "");
     expect(fresh.exitCode).toBe(0);
     expect(freshPrompt).toContain(context.taskcoreTaskMarkdownAssignment);
-    expect(freshPrompt.split(context.taskcoreTaskMarkdownAssignment).length).toBe(2);
+    expect(
+      freshPrompt.split(context.taskcoreTaskMarkdownAssignment).length,
+    ).toBe(2);
     expect(freshPrompt).toContain(context.taskcoreTaskCommunicationGuidance);
-    expect(freshPrompt).not.toContain(context.taskcoreTaskMarkdownAssignmentCompact);
-    expect(freshPrompt).toContain("\"id\":\"comment-first\"");
-    expect(freshPrompt).toContain("\"id\":\"comment-second\"");
-    expect(freshPrompt).toContain("\"id\":\"comment-scope\"");
-    expect(freshPrompt.indexOf("\"id\":\"comment-first\"")).toBeLessThan(freshPrompt.indexOf("\"id\":\"comment-second\""));
-    expect(freshPrompt.indexOf("\"id\":\"comment-second\"")).toBeLessThan(freshPrompt.indexOf("\"id\":\"comment-scope\""));
+    expect(freshPrompt).not.toContain(
+      context.taskcoreTaskMarkdownAssignmentCompact,
+    );
+    expect(freshPrompt).toContain('"id":"comment-first"');
+    expect(freshPrompt).toContain('"id":"comment-second"');
+    expect(freshPrompt).toContain('"id":"comment-scope"');
+    expect(freshPrompt.indexOf('"id":"comment-first"')).toBeLessThan(
+      freshPrompt.indexOf('"id":"comment-second"'),
+    );
+    expect(freshPrompt.indexOf('"id":"comment-second"')).toBeLessThan(
+      freshPrompt.indexOf('"id":"comment-scope"'),
+    );
     expect(freshPrompt.split("Append the same ledger entry.")).toHaveLength(3);
-    expect(freshPrompt.split(fixture.taskcoreWake.issue.description)).toHaveLength(2);
+    expect(
+      freshPrompt.split(fixture.taskcoreWake.issue.description),
+    ).toHaveLength(2);
     expect(freshPrompt).not.toContain('"objective":"');
     expect(freshPrompt).toContain("Untrusted continuation evidence");
     expect(freshPrompt).toContain("receipt-1");
 
-    const resumed = await execute(buildContext(root, {
-      runtime: {
-        sessionId: fresh.sessionId ?? null,
-        sessionParams: fresh.sessionParams ?? null,
-        sessionDisplayId: fresh.sessionDisplayId ?? null,
-        taskKey: "PAP-1",
-      },
-      context,
-    }));
+    const resumed = await execute(
+      buildContext(root, {
+        runtime: {
+          sessionId: fresh.sessionId ?? null,
+          sessionParams: fresh.sessionParams ?? null,
+          sessionDisplayId: fresh.sessionDisplayId ?? null,
+          taskKey: "PAP-1",
+        },
+        context,
+      }),
+    );
     const resumedPrompt = String(runtimes[1]?.startInputs[0]?.text ?? "");
     expect(resumed.exitCode).toBe(0);
     expect(runtimes[1]?.ensureInputs[0]?.resumeSessionId).toBe("acp-1");
-    expect(resumedPrompt).toContain(context.taskcoreTaskMarkdownAssignmentCompact);
-    expect(resumedPrompt).not.toContain(context.taskcoreTaskCommunicationGuidance);
-    expect(resumedPrompt).not.toContain("\"id\":\"comment-first\"");
-    expect(resumedPrompt).toContain("\"id\":\"comment-second\"");
-    expect(resumedPrompt).toContain("\"id\":\"comment-scope\"");
-    expect(resumedPrompt.indexOf("\"id\":\"comment-second\"")).toBeLessThan(resumedPrompt.indexOf("\"id\":\"comment-scope\""));
+    expect(resumedPrompt).toContain(
+      context.taskcoreTaskMarkdownAssignmentCompact,
+    );
+    expect(resumedPrompt).not.toContain(
+      context.taskcoreTaskCommunicationGuidance,
+    );
+    expect(resumedPrompt).not.toContain('"id":"comment-first"');
+    expect(resumedPrompt).toContain('"id":"comment-second"');
+    expect(resumedPrompt).toContain('"id":"comment-scope"');
+    expect(resumedPrompt.indexOf('"id":"comment-second"')).toBeLessThan(
+      resumedPrompt.indexOf('"id":"comment-scope"'),
+    );
   });
 
   it("restores the full assignment and current event history when a resume session is missing", async () => {
-    const root = await makeTempRoot("taskcore-claude-acp-missing-resume-context-");
+    const root = await makeTempRoot(
+      "taskcore-claude-acp-missing-resume-context-",
+    );
     const runtimes: MissingResumeRuntime[] = [];
-    const assignment = "## Owned assignment\n\nRebuild the launch card. Rebuild the launch card.";
+    const assignment =
+      "## Owned assignment\n\nRebuild the launch card. Rebuild the launch card.";
     const compact = "## Compact assignment";
     const context = {
       issueId: "issue-1",
       taskcoreTaskMarkdownAssignment: assignment,
       taskcoreTaskMarkdownAssignmentCompact: compact,
-      taskcoreTaskCommunicationGuidance: "Explain the next step before starting work.",
+      taskcoreTaskCommunicationGuidance:
+        "Explain the next step before starting work.",
       taskcoreWake: {
         reason: "issue_commented",
-        issue: { id: "issue-1", identifier: "PAP-1", title: "Launch card", description: "Rebuild the launch card.", status: "in_progress" },
-        comments: [{ id: "comment-retry", body: "Preserve this retry request." }],
+        issue: {
+          id: "issue-1",
+          identifier: "PAP-1",
+          title: "Launch card",
+          description: "Rebuild the launch card.",
+          status: "in_progress",
+        },
+        comments: [
+          { id: "comment-retry", body: "Preserve this retry request." },
+        ],
         commentWindow: { requestedCount: 1, includedCount: 1, missingCount: 0 },
         fallbackFetchNeeded: false,
       },
-      taskcoreWorkspace: { cwd: root, source: "project_workspace", workspaceId: "workspace-1" },
+      taskcoreWorkspace: {
+        cwd: root,
+        source: "project_workspace",
+        workspaceId: "workspace-1",
+      },
     };
     const execute = createClaudeAcpExecutor({
       createRuntime: (options: FakeRuntimeOptions) => {
@@ -1392,18 +1693,22 @@ describe("claude_local ACP lane", () => {
     });
 
     const first = await execute(buildContext(root, { context }));
-    const retry = await execute(buildContext(root, {
-      runtime: {
-        sessionId: first.sessionId ?? null,
-        sessionParams: first.sessionParams ?? null,
-        sessionDisplayId: first.sessionDisplayId ?? null,
-        taskKey: "PAP-1",
-      },
-      context,
-    }));
+    const retry = await execute(
+      buildContext(root, {
+        runtime: {
+          sessionId: first.sessionId ?? null,
+          sessionParams: first.sessionParams ?? null,
+          sessionDisplayId: first.sessionDisplayId ?? null,
+          taskKey: "PAP-1",
+        },
+        context,
+      }),
+    );
     const retryPrompt = String(runtimes[1]?.startInputs[0]?.text ?? "");
     expect(retry.exitCode).toBe(0);
-    expect(runtimes[1]?.ensureInputs.map(({ resumeSessionId }) => resumeSessionId)).toEqual(["acp-1", undefined]);
+    expect(
+      runtimes[1]?.ensureInputs.map(({ resumeSessionId }) => resumeSessionId),
+    ).toEqual(["acp-1", undefined]);
     expect(retryPrompt).toContain(assignment);
     expect(retryPrompt).not.toContain(compact);
     expect(retryPrompt).toContain("Preserve this retry request.");
@@ -1420,11 +1725,12 @@ describe("claude_local ACP lane", () => {
       },
     });
 
-    const description = "Update launch-card.svg and change the CTA to Try Team free.";
+    const description =
+      "Update launch-card.svg and change the CTA to Try Team free.";
     const fullTaskMarkdown = [
       "Taskcore task context:",
-      "- Issue: \"PAP-15271\"",
-      "- Title: \"Preserve the task brief\"",
+      '- Issue: "PAP-15271"',
+      '- Title: "Preserve the task brief"',
       "",
       "Issue description:",
       "```text",
@@ -1433,8 +1739,8 @@ describe("claude_local ACP lane", () => {
     ].join("\n");
     const compactTaskMarkdown = [
       "Taskcore task context:",
-      "- Issue: \"PAP-15271\"",
-      "- Title: \"Preserve the task brief\"",
+      '- Issue: "PAP-15271"',
+      '- Title: "Preserve the task brief"',
     ].join("\n");
     const wakeContext = (reason: string) => ({
       issueId: "issue-1",
@@ -1461,20 +1767,24 @@ describe("claude_local ACP lane", () => {
       },
     });
 
-    const first = await execute(buildContext(root, { context: wakeContext("issue_assigned") }));
+    const first = await execute(
+      buildContext(root, { context: wakeContext("issue_assigned") }),
+    );
     const freshPrompt = runtimes[0]?.startInputs[0]?.text ?? "";
     expect(freshPrompt.split(description)).toHaveLength(2);
     expect(freshPrompt).toContain("Taskcore task context:");
 
-    const second = await execute(buildContext(root, {
-      runtime: {
-        sessionId: first.sessionId ?? null,
-        sessionParams: first.sessionParams ?? null,
-        sessionDisplayId: first.sessionDisplayId ?? null,
-        taskKey: "PAP-1",
-      },
-      context: wakeContext("issue_commented"),
-    }));
+    const second = await execute(
+      buildContext(root, {
+        runtime: {
+          sessionId: first.sessionId ?? null,
+          sessionParams: first.sessionParams ?? null,
+          sessionDisplayId: first.sessionDisplayId ?? null,
+          taskKey: "PAP-1",
+        },
+        context: wakeContext("issue_commented"),
+      }),
+    );
     expect(second.exitCode).toBe(0);
     const resumePrompt = runtimes[1]?.startInputs[0]?.text ?? "";
     expect(resumePrompt).not.toContain(description);
@@ -1496,14 +1806,16 @@ describe("claude_local ACP lane", () => {
     });
 
     const first = await execute(buildContext(root));
-    const second = await execute(buildContext(root, {
-      runtime: {
-        sessionId: first.sessionId ?? null,
-        sessionParams: first.sessionParams ?? null,
-        sessionDisplayId: first.sessionDisplayId ?? null,
-        taskKey: "PAP-1",
-      },
-    }));
+    const second = await execute(
+      buildContext(root, {
+        runtime: {
+          sessionId: first.sessionId ?? null,
+          sessionParams: first.sessionParams ?? null,
+          sessionDisplayId: first.sessionDisplayId ?? null,
+          taskKey: "PAP-1",
+        },
+      }),
+    );
 
     expect(second.exitCode).toBe(0);
     expect(runtimes).toHaveLength(2);
@@ -1519,22 +1831,36 @@ describe("resolveClaudeAcpBillingIdentity", () => {
   afterEach(() => {
     if (originalApiKey === undefined) delete process.env.ANTHROPIC_API_KEY;
     else process.env.ANTHROPIC_API_KEY = originalApiKey;
-    if (originalBedrock === undefined) delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    if (originalBedrock === undefined)
+      delete process.env.CLAUDE_CODE_USE_BEDROCK;
     else process.env.CLAUDE_CODE_USE_BEDROCK = originalBedrock;
-    if (originalBedrockBase === undefined) delete process.env.ANTHROPIC_BEDROCK_BASE_URL;
+    if (originalBedrockBase === undefined)
+      delete process.env.ANTHROPIC_BEDROCK_BASE_URL;
     else process.env.ANTHROPIC_BEDROCK_BASE_URL = originalBedrockBase;
   });
 
   it("classifies an adapter-config API key as api billing", () => {
     expect(
-      resolveClaudeAcpBillingIdentity({ config: { env: { ANTHROPIC_API_KEY: "sk-ant-test" } } }),
-    ).toEqual({ provider: "anthropic", biller: "anthropic", billingType: "api" });
+      resolveClaudeAcpBillingIdentity({
+        config: { env: { ANTHROPIC_API_KEY: "sk-ant-test" } },
+      }),
+    ).toEqual({
+      provider: "anthropic",
+      biller: "anthropic",
+      billingType: "api",
+    });
   });
 
   it("classifies Bedrock auth as metered_api billed to aws_bedrock", () => {
     expect(
-      resolveClaudeAcpBillingIdentity({ config: { env: { CLAUDE_CODE_USE_BEDROCK: "1" } } }),
-    ).toEqual({ provider: "anthropic", biller: "aws_bedrock", billingType: "metered_api" });
+      resolveClaudeAcpBillingIdentity({
+        config: { env: { CLAUDE_CODE_USE_BEDROCK: "1" } },
+      }),
+    ).toEqual({
+      provider: "anthropic",
+      biller: "aws_bedrock",
+      billingType: "metered_api",
+    });
   });
 
   it("falls back to subscription without API-key or Bedrock auth", () => {
@@ -1553,7 +1879,11 @@ describe("resolveClaudeAcpBillingIdentity", () => {
     expect(
       resolveClaudeAcpBillingIdentity({
         config: {},
-        executionTarget: { kind: "remote", transport: "sandbox", remoteCwd: "/work" },
+        executionTarget: {
+          kind: "remote",
+          transport: "sandbox",
+          remoteCwd: "/work",
+        },
       } as never).billingType,
     ).toBe("subscription");
   });

@@ -15,6 +15,7 @@ Container images for running coding-agent harnesses in sandboxed environments (f
 ## Base Image Contents
 
 **OS & Runtime:**
+
 - Ubuntu 22.04
 - Node.js 24 (via NodeSource APT repo)
 - git
@@ -30,9 +31,11 @@ exec path sources `nvm`. For the full exec-path contract, see
 `packages/plugins/sandbox-providers/SANDBOX-REQUIREMENTS.md`.
 
 **Taskcore Binaries:**
+
 - `/usr/local/bin/taskcore-agent-shim`: Go binary compiled from `tools/agent-shim/`. Reads `/run/taskcore/runtime-command.json` and `syscall.Exec`s the harness CLI.
 
 **Defaults:**
+
 - `USER`: 1000:1000 (taskcore, non-root)
 - `WORKDIR`: `/workspace` (mount workspace volumes here)
 - `ENTRYPOINT`: `/usr/bin/tini --` (PID-1 reaper, forwards signals)
@@ -72,6 +75,7 @@ The main agent process runs as the shim (PID 1 under tini). The shim:
 4. SIGTERM from the kubelet propagates directly to the harness (no zombie processes)
 
 **runtime-command.json Contract:**
+
 ```json
 {
   "command": "claude-code",

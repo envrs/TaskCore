@@ -55,13 +55,23 @@ export function createCodexJsonlParser() {
 
       const type = asString(event.type, "");
       if (type) sawProtocolEvent = true;
-      if (type === "error" || type === "turn.completed" || type === "turn.failed") {
+      if (
+        type === "error" ||
+        type === "turn.completed" ||
+        type === "turn.failed"
+      ) {
         sawProtocolTerminalEvent = true;
         const reported = parseObject(event.usage);
-        const validCount = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+        const validCount = (value: unknown): value is number =>
+          typeof value === "number" &&
+          Number.isSafeInteger(value) &&
+          value >= 0;
         const cached = reported.cached_input_tokens ?? 0;
-        usageComplete = validCount(reported.input_tokens) && validCount(reported.output_tokens)
-          && validCount(cached) && cached <= reported.input_tokens;
+        usageComplete =
+          validCount(reported.input_tokens) &&
+          validCount(reported.output_tokens) &&
+          validCount(cached) &&
+          cached <= reported.input_tokens;
         if (usageComplete) {
           usage.inputTokens = reported.input_tokens as number;
           usage.cachedInputTokens = cached as number;
@@ -101,7 +111,10 @@ export function createCodexJsonlParser() {
       sessionId,
       summary: finalMessage?.trim() ?? "",
       // Codex includes cache hits in input_tokens; Taskcore stores them separately.
-      usage: { ...usage, inputTokens: Math.max(0, usage.inputTokens - usage.cachedInputTokens) },
+      usage: {
+        ...usage,
+        inputTokens: Math.max(0, usage.inputTokens - usage.cachedInputTokens),
+      },
       usageBasis: "per_run" as const,
       errorMessage,
       sawProtocolEvent,
@@ -131,7 +144,10 @@ export function isCodexHarnessCrash(input: {
   return input.sawProtocolEvent && !input.sawProtocolTerminalEvent;
 }
 
-export function isCodexUnknownSessionError(stdout: string, stderr: string): boolean {
+export function isCodexUnknownSessionError(
+  stdout: string,
+  stderr: string,
+): boolean {
   const haystack = `${stdout}\n${stderr}`
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -147,11 +163,7 @@ function buildCodexErrorHaystack(input: {
   stderr?: string | null;
   errorMessage?: string | null;
 }): string {
-  return [
-    input.errorMessage ?? "",
-    input.stdout ?? "",
-    input.stderr ?? "",
-  ]
+  return [input.errorMessage ?? "", input.stdout ?? "", input.stderr ?? ""]
     .join("\n")
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -166,11 +178,16 @@ export function classifyCodexAuthRefreshFailure(input: {
 }): CodexAuthRefreshFailureClass | null {
   const haystack = buildCodexErrorHaystack(input);
 
-  if (CODEX_REFRESH_TOKEN_REUSED_RE.test(haystack)) return "refresh_token_reused";
-  if (CODEX_REFRESH_TOKEN_EXPIRED_RE.test(haystack)) return "refresh_token_expired";
-  if (CODEX_REFRESH_TOKEN_INVALIDATED_RE.test(haystack)) return "refresh_token_invalidated";
-  if (CODEX_OAUTH_INVALID_GRANT_RE.test(haystack)) return "refresh_token_invalidated";
-  if (CODEX_CONTEXTUAL_REFRESH_AUTH_INVALIDATED_RE.test(haystack)) return "refresh_token_invalidated";
+  if (CODEX_REFRESH_TOKEN_REUSED_RE.test(haystack))
+    return "refresh_token_reused";
+  if (CODEX_REFRESH_TOKEN_EXPIRED_RE.test(haystack))
+    return "refresh_token_expired";
+  if (CODEX_REFRESH_TOKEN_INVALIDATED_RE.test(haystack))
+    return "refresh_token_invalidated";
+  if (CODEX_OAUTH_INVALID_GRANT_RE.test(haystack))
+    return "refresh_token_invalidated";
+  if (CODEX_CONTEXTUAL_REFRESH_AUTH_INVALIDATED_RE.test(haystack))
+    return "refresh_token_invalidated";
   return null;
 }
 
@@ -184,7 +201,9 @@ function readTimeZoneParts(date: Date, timeZone: string) {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
-    }).formatToParts(date).map((part) => [part.type, part.value]),
+    })
+      .formatToParts(date)
+      .map((part) => [part.type, part.value]),
   );
   return {
     year: Number.parseInt(values.get("year") ?? "", 10),
@@ -195,13 +214,17 @@ function readTimeZoneParts(date: Date, timeZone: string) {
   };
 }
 
-function normalizeResetTimeZone(timeZoneHint: string | null | undefined): string | null {
+function normalizeResetTimeZone(
+  timeZoneHint: string | null | undefined,
+): string | null {
   const normalized = timeZoneHint?.trim();
   if (!normalized) return null;
   if (/^(?:utc|gmt)$/i.test(normalized)) return "UTC";
 
   try {
-    new Intl.DateTimeFormat("en-US", { timeZone: normalized }).format(new Date(0));
+    new Intl.DateTimeFormat("en-US", { timeZone: normalized }).format(
+      new Date(0),
+    );
     return normalized;
   } catch {
     return null;
@@ -216,12 +239,38 @@ function dateFromTimeZoneWallClock(input: {
   minute: number;
   timeZone: string;
 }): Date | null {
-  let candidate = new Date(Date.UTC(input.year, input.month - 1, input.day, input.hour, input.minute, 0, 0));
-  const targetUtc = Date.UTC(input.year, input.month - 1, input.day, input.hour, input.minute, 0, 0);
+  let candidate = new Date(
+    Date.UTC(
+      input.year,
+      input.month - 1,
+      input.day,
+      input.hour,
+      input.minute,
+      0,
+      0,
+    ),
+  );
+  const targetUtc = Date.UTC(
+    input.year,
+    input.month - 1,
+    input.day,
+    input.hour,
+    input.minute,
+    0,
+    0,
+  );
 
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const actual = readTimeZoneParts(candidate, input.timeZone);
-    const actualUtc = Date.UTC(actual.year, actual.month - 1, actual.day, actual.hour, actual.minute, 0, 0);
+    const actualUtc = Date.UTC(
+      actual.year,
+      actual.month - 1,
+      actual.day,
+      actual.hour,
+      actual.minute,
+      0,
+      0,
+    );
     const offsetMs = targetUtc - actualUtc;
     if (offsetMs === 0) break;
     candidate = new Date(candidate.getTime() + offsetMs);
@@ -262,7 +311,9 @@ function nextClockTimeInTimeZone(input: {
   if (!retryAt) return null;
 
   if (retryAt.getTime() <= input.now.getTime()) {
-    const nextDay = new Date(Date.UTC(nowParts.year, nowParts.month - 1, nowParts.day + 1, 0, 0, 0, 0));
+    const nextDay = new Date(
+      Date.UTC(nowParts.year, nowParts.month - 1, nowParts.day + 1, 0, 0, 0, 0),
+    );
     retryAt = dateFromTimeZoneWallClock({
       year: nextDay.getUTCFullYear(),
       month: nextDay.getUTCMonth() + 1,
@@ -278,7 +329,9 @@ function nextClockTimeInTimeZone(input: {
 
 function parseLocalClockTime(clockText: string, now: Date): Date | null {
   const normalized = clockText.trim();
-  const match = normalized.match(/^(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?(?:\s*\(([^)]+)\)|\s+([A-Z]{2,5}))?$/i);
+  const match = normalized.match(
+    /^(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?(?:\s*\(([^)]+)\)|\s+([A-Z]{2,5}))?$/i,
+  );
   if (!match) return null;
 
   const hour12 = Number.parseInt(match[1] ?? "", 10);
@@ -308,11 +361,14 @@ function parseLocalClockTime(clockText: string, now: Date): Date | null {
   return retryAt;
 }
 
-export function extractCodexRetryNotBefore(input: {
-  stdout?: string | null;
-  stderr?: string | null;
-  errorMessage?: string | null;
-}, now = new Date()): Date | null {
+export function extractCodexRetryNotBefore(
+  input: {
+    stdout?: string | null;
+    stderr?: string | null;
+    errorMessage?: string | null;
+  },
+  now = new Date(),
+): Date | null {
   const haystack = buildCodexErrorHaystack(input);
   const usageLimitMatch = haystack.match(CODEX_USAGE_LIMIT_RE);
   if (!usageLimitMatch) return null;
@@ -330,7 +386,10 @@ export function isCodexTransientUpstreamError(input: {
   if (!CODEX_TRANSIENT_UPSTREAM_RE.test(haystack)) return false;
   // Keep automatic retries scoped to the observed remote-compaction/high-demand
   // failure shape.
-  return CODEX_REMOTE_COMPACTION_RE.test(haystack) || /high\s+demand|temporary\s+errors/i.test(haystack);
+  return (
+    CODEX_REMOTE_COMPACTION_RE.test(haystack) ||
+    /high\s+demand|temporary\s+errors/i.test(haystack)
+  );
 }
 
 export function isCodexProviderQuotaError(input: {
@@ -339,5 +398,8 @@ export function isCodexProviderQuotaError(input: {
   errorMessage?: string | null;
 }): boolean {
   const haystack = buildCodexErrorHaystack(input);
-  return CODEX_PROVIDER_QUOTA_RE.test(haystack) || extractCodexRetryNotBefore(input) != null;
+  return (
+    CODEX_PROVIDER_QUOTA_RE.test(haystack) ||
+    extractCodexRetryNotBefore(input) != null
+  );
 }

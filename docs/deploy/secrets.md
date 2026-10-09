@@ -208,11 +208,11 @@ npx taskcore secrets doctor --company-id <company-id>
 
 ### Environment Overrides
 
-| Variable | Description |
-|----------|-------------|
-| `TASKCORE_SECRETS_MASTER_KEY` | 32-byte key as base64, hex, or raw string |
-| `TASKCORE_SECRETS_MASTER_KEY_FILE` | Custom key file path |
-| `TASKCORE_SECRETS_STRICT_MODE` | Set to `true` to enforce secret refs |
+| Variable                           | Description                               |
+| ---------------------------------- | ----------------------------------------- |
+| `TASKCORE_SECRETS_MASTER_KEY`      | 32-byte key as base64, hex, or raw string |
+| `TASKCORE_SECRETS_MASTER_KEY_FILE` | Custom key file path                      |
+| `TASKCORE_SECRETS_STRICT_MODE`     | Set to `true` to enforce secret refs      |
 
 ## Strict Mode
 
@@ -245,7 +245,7 @@ backup/rotation/incident runbooks — in `doc/SECRETS-AWS-PROVIDER.md`.
 
 ## Provider Vaults
 
-A *provider vault* is a named, company-scoped configuration that points secret
+A _provider vault_ is a named, company-scoped configuration that points secret
 material at one of the supported provider backends. Each company can configure
 multiple vaults, including more than one vault per provider family, and pick a
 default vault per family for new secret operations. Existing secrets created
@@ -289,12 +289,12 @@ development. Do not paste long-lived API keys into the vault config.
 
 Each vault carries a status that drives what the runtime can do with it:
 
-| Status        | Meaning                                                                                       |
-|---------------|-----------------------------------------------------------------------------------------------|
-| `ready`       | Selectable for create/rotate/resolve. Eligible to be the default.                             |
+| Status        | Meaning                                                                                         |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| `ready`       | Selectable for create/rotate/resolve. Eligible to be the default.                               |
 | `warning`     | Saved config exists but health needs attention (for example missing AWS env). Still selectable. |
-| `coming_soon` | Visible and editable as draft metadata, but locked out of all runtime operations.            |
-| `disabled`    | Soft-deleted. Hidden from the secret create/rotate flow.                                      |
+| `coming_soon` | Visible and editable as draft metadata, but locked out of all runtime operations.               |
+| `disabled`    | Soft-deleted. Hidden from the secret create/rotate flow.                                        |
 
 `gcp_secret_manager` and `vault` are pinned to `coming_soon` until their
 runtime modules ship. The settings UI lets you save draft configuration for

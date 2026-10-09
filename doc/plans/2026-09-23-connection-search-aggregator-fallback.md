@@ -4,13 +4,13 @@ One detail: Jira already exists in Taskcore’s catalog, so it should take the b
 
 1. **Define the routing rules**
 
-   | Search outcome | Agent behavior |
-   |---|---|
-   | Matching Taskcore connection is ready | Use it. |
-   | Taskcore supports the service but needs setup | Show the existing connection card directly. |
-   | No matching Taskcore connector | Find supported aggregator routes and ask which provider to use. |
-   | Nothing supports it | Explain that no supported connection was found. |
-   | An administrator denied access | Explain the restriction; don’t route around it through an aggregator. |
+   | Search outcome                                | Agent behavior                                                        |
+   | --------------------------------------------- | --------------------------------------------------------------------- |
+   | Matching Taskcore connection is ready         | Use it.                                                               |
+   | Taskcore supports the service but needs setup | Show the existing connection card directly.                           |
+   | No matching Taskcore connector                | Find supported aggregator routes and ask which provider to use.       |
+   | Nothing supports it                           | Explain that no supported connection was found.                       |
+   | An administrator denied access                | Explain the restriction; don’t route around it through an aggregator. |
 
    Rank eligible aggregator routes **Composio → Arcade → Executor → Zapier**. Match the actual service, including aliases; an unrelated fuzzy-search result must not suppress fallback.
 
@@ -38,12 +38,12 @@ One detail: Jira already exists in Taskcore’s catalog, so it should take the b
 
    We cannot discover every provider’s capabilities by simply calling MCP `tools/list`.
 
-   | Provider | Discovery and setup implications |
-   |---|---|
-   | **Composio** | Its meta-tools search app capabilities and initiate underlying app authorization. Connecting Composio alone does not connect the requested app. [Documentation](https://docs.composio.dev/docs/composio-connect) |
-   | **Arcade** | A gateway exposes its selected tools. Arcade supporting an app does not mean the user’s gateway includes it; setup may require adding those tools. [Documentation](https://docs.arcade.dev/en/operate/governance/mcp-gateways) |
-   | **Executor** | Availability depends on the workspace’s integrations. Being able to register an arbitrary upstream server is not evidence that an app is already supported. [Documentation](https://executor.sh/docs/mcp-proxy) |
-   | **Zapier** | Agentic mode can discover and enable actions; Managed mode exposes the chosen actions. Discovery must account for the server’s mode. [Documentation](https://docs.zapier.com/mcp/overview/how-tools-work) |
+   | Provider     | Discovery and setup implications                                                                                                                                                                                               |
+   | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | **Composio** | Its meta-tools search app capabilities and initiate underlying app authorization. Connecting Composio alone does not connect the requested app. [Documentation](https://docs.composio.dev/docs/composio-connect)               |
+   | **Arcade**   | A gateway exposes its selected tools. Arcade supporting an app does not mean the user’s gateway includes it; setup may require adding those tools. [Documentation](https://docs.arcade.dev/en/operate/governance/mcp-gateways) |
+   | **Executor** | Availability depends on the workspace’s integrations. Being able to register an arbitrary upstream server is not evidence that an app is already supported. [Documentation](https://executor.sh/docs/mcp-proxy)                |
+   | **Zapier**   | Agentic mode can discover and enable actions; Managed mode exposes the chosen actions. Discovery must account for the server’s mode. [Documentation](https://docs.zapier.com/mcp/overview/how-tools-work)                      |
 
    For users without aggregator accounts connected, use a maintained support index derived from official catalogs or verified integration recipes. Each entry carries its source, verification date, supported capabilities, and setup requirements. Validate available catalog feeds first; don’t assume these services share an anonymous discovery API.
 
@@ -69,18 +69,18 @@ One detail: Jira already exists in Taskcore’s catalog, so it should take the b
 
    Use the existing **Product E2E eval harness**, with real agents, browser interactions, server, and database. Deterministic aggregator fixtures make the routing scenarios reproducible.
 
-   | Eval | Required proof |
-   |---|---|
-   | Built-in and aggregator both support the service | Built-in card; no provider-choice question. |
-   | Only aggregators support it | Correct ordering and explicit external-service disclosure. |
-   | User chooses the second provider | Only that provider’s setup opens and receives subsequent calls. |
-   | User chooses None | No setup, authorization, execution, or repeated question. |
-   | Aggregator already connected | Reuse eligible account; authorize the underlying app if needed. |
-   | Gateway lacks the requested tools | Accurate configuration guidance; no false “ready” claim. |
-   | Provider search fails or support is stale | Honest recovery; no invented support or silent provider switch. |
-   | Reload/restart during selection or OAuth | Durable choice, one setup intent, correct continuation. |
-   | Denied access, wrong identity, or experiment disabled | No fallback bypass or cross-account disclosure. |
-   | Successful completion | Requested read returns a fixture marker verified independently. |
+   | Eval                                                  | Required proof                                                  |
+   | ----------------------------------------------------- | --------------------------------------------------------------- |
+   | Built-in and aggregator both support the service      | Built-in card; no provider-choice question.                     |
+   | Only aggregators support it                           | Correct ordering and explicit external-service disclosure.      |
+   | User chooses the second provider                      | Only that provider’s setup opens and receives subsequent calls. |
+   | User chooses None                                     | No setup, authorization, execution, or repeated question.       |
+   | Aggregator already connected                          | Reuse eligible account; authorize the underlying app if needed. |
+   | Gateway lacks the requested tools                     | Accurate configuration guidance; no false “ready” claim.        |
+   | Provider search fails or support is stale             | Honest recovery; no invented support or silent provider switch. |
+   | Reload/restart during selection or OAuth              | Durable choice, one setup intent, correct continuation.         |
+   | Denied access, wrong identity, or experiment disabled | No fallback bypass or cross-account disclosure.                 |
+   | Successful completion                                 | Requested read returns a fixture marker verified independently. |
 
    Grade persisted choices, cards, grants, gateway calls, and results—not just the agent saying it worked. Include deliberately wrong traces to verify graders reject premature execution and undisclosed routing.
 

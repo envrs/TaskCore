@@ -4,7 +4,12 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { writeContext } from "../client/context.js";
 import { setStoredBoardCredential } from "../client/board-auth.js";
-import { apiPath, inferContentTypeFromPath, resolveApiBase, resolveCommandContext } from "../commands/client/common.js";
+import {
+  apiPath,
+  inferContentTypeFromPath,
+  resolveApiBase,
+  resolveCommandContext,
+} from "../commands/client/common.js";
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -46,7 +51,10 @@ describe("resolveCommandContext", () => {
     );
     process.env.AGENT_KEY = "key-from-env";
 
-    const resolved = resolveCommandContext({ context: contextPath }, { requireCompany: true });
+    const resolved = resolveCommandContext(
+      { context: contextPath },
+      { requireCompany: true },
+    );
     expect(resolved.api.apiBase).toBe("http://127.0.0.1:9999");
     expect(resolved.companyId).toBe("company-profile");
     expect(resolved.api.apiKey).toBe("key-from-env");
@@ -95,28 +103,53 @@ describe("resolveCommandContext", () => {
     );
 
     expect(() =>
-      resolveCommandContext({ context: contextPath, apiBase: "http://localhost:3100" }, { requireCompany: true }),
+      resolveCommandContext(
+        { context: contextPath, apiBase: "http://localhost:3100" },
+        { requireCompany: true },
+      ),
     ).toThrow(/Company ID is required/);
   });
 
   it("resolves api base by explicit, env, profile, then config/default precedence", () => {
     const configPath = createTempPath("config.json");
-    fs.writeFileSync(configPath, JSON.stringify({
-      $meta: { version: 1, updatedAt: "2026-05-23T00:00:00.000Z", source: "onboard" },
-      database: { mode: "embedded-postgres" },
-      logging: { mode: "file" },
-      server: { deploymentMode: "local_trusted", exposure: "private", host: "127.0.0.1", port: 4111 },
-    }));
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({
+        $meta: {
+          version: 1,
+          updatedAt: "2026-05-23T00:00:00.000Z",
+          source: "onboard",
+        },
+        database: { mode: "embedded-postgres" },
+        logging: { mode: "file" },
+        server: {
+          deploymentMode: "local_trusted",
+          exposure: "private",
+          host: "127.0.0.1",
+          port: 4111,
+        },
+      }),
+    );
 
-    expect(resolveApiBase({ apiBase: "http://explicit:1", config: configPath }, { apiBase: "http://profile:2" }))
-      .toBe("http://explicit:1");
+    expect(
+      resolveApiBase(
+        { apiBase: "http://explicit:1", config: configPath },
+        { apiBase: "http://profile:2" },
+      ),
+    ).toBe("http://explicit:1");
 
     process.env.TASKCORE_API_URL = "http://env:3/";
-    expect(resolveApiBase({ config: configPath }, { apiBase: "http://profile:2" })).toBe("http://env:3");
+    expect(
+      resolveApiBase({ config: configPath }, { apiBase: "http://profile:2" }),
+    ).toBe("http://env:3");
 
     delete process.env.TASKCORE_API_URL;
-    expect(resolveApiBase({ config: configPath }, { apiBase: "http://profile:2/" })).toBe("http://profile:2");
-    expect(resolveApiBase({ config: configPath }, {})).toBe("http://localhost:4111");
+    expect(
+      resolveApiBase({ config: configPath }, { apiBase: "http://profile:2/" }),
+    ).toBe("http://profile:2");
+    expect(resolveApiBase({ config: configPath }, {})).toBe(
+      "http://localhost:4111",
+    );
   });
 
   it("prefers explicit and env tokens over profile env and stored board auth", () => {
@@ -153,7 +186,10 @@ describe("resolveCommandContext", () => {
     expect(envResolved.api.apiKey).toBe("env-token");
     expect(envResolved.authSource).toBe("env");
 
-    const explicitResolved = resolveCommandContext({ context: contextPath, apiKey: "explicit-token" });
+    const explicitResolved = resolveCommandContext({
+      context: contextPath,
+      apiKey: "explicit-token",
+    });
     expect(explicitResolved.api.apiKey).toBe("explicit-token");
     expect(explicitResolved.authSource).toBe("explicit");
   });
@@ -188,14 +224,23 @@ describe("inferContentTypeFromPath", () => {
 
 describe("apiPath", () => {
   it("encodes dynamic path segments", () => {
-    expect(apiPath`/api/issues/${"PAP-1/child"}/comments/${"needs review?"}`)
-      .toBe("/api/issues/PAP-1%2Fchild/comments/needs%20review%3F");
+    expect(
+      apiPath`/api/issues/${"PAP-1/child"}/comments/${"needs review?"}`,
+    ).toBe("/api/issues/PAP-1%2Fchild/comments/needs%20review%3F");
   });
 
   it("rejects empty dynamic path segments", () => {
-    expect(() => apiPath`/api/issues/${""}`).toThrow("Cannot build API path with an empty path segment.");
-    expect(() => apiPath`/api/issues/${undefined}`).toThrow("Cannot build API path with an empty path segment.");
-    expect(() => apiPath`/api/issues/${null}`).toThrow("Cannot build API path with an empty path segment.");
-    expect(() => apiPath`/api/issues/${" "}`).toThrow("Cannot build API path with an empty path segment.");
+    expect(() => apiPath`/api/issues/${""}`).toThrow(
+      "Cannot build API path with an empty path segment.",
+    );
+    expect(() => apiPath`/api/issues/${undefined}`).toThrow(
+      "Cannot build API path with an empty path segment.",
+    );
+    expect(() => apiPath`/api/issues/${null}`).toThrow(
+      "Cannot build API path with an empty path segment.",
+    );
+    expect(() => apiPath`/api/issues/${" "}`).toThrow(
+      "Cannot build API path with an empty path segment.",
+    );
   });
 });

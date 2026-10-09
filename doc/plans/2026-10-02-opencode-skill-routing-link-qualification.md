@@ -4,10 +4,10 @@
 
 The narrow correction expands the operational skill's stock discovery description to include Taskcore task/heartbeat work and document/file delivery. The early API recipe asks for a clickable Markdown link, and the reference shows a canonical UI-link example. The full skill stays on disk; the eight-word manual and shared prompts remain reduced. No full-body injection, adapter policy override or native tool guidance is added to legacy runs.
 
-| Classic OpenCode case | Pre-correction skill | Corrected skill | Independent evidence and limitation |
-| --- | --- | --- | --- |
-| Original assigned skill, verbatim request | Pass | Pass | Exactly one saved document with skill-only marker and persisted revision in each. Both handoff paths are deficient and outside this case's link-free oracle. |
-| Explicit Taskcore storage with clarified clickable UI link | Pass | Pass | Saved revision/content and exact clickable `/RUN/issues/RUN-1#document-context-integrity-output` in both. |
+| Classic OpenCode case                                      | Pre-correction skill | Corrected skill | Independent evidence and limitation                                                                                                                          |
+| ---------------------------------------------------------- | -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Original assigned skill, verbatim request                  | Pass                 | Pass            | Exactly one saved document with skill-only marker and persisted revision in each. Both handoff paths are deficient and outside this case's link-free oracle. |
+| Explicit Taskcore storage with clarified clickable UI link | Pass                 | Pass            | Saved revision/content and exact clickable `/RUN/issues/RUN-1#document-context-integrity-output` in both.                                                    |
 
 Original machine results, source/configuration proof, tool-read sequence, costs and evidence hashes are preserved in the [safe evidence projection](2026-10-02-opencode-skill-routing-link-qualification.json). All four cells clean up successfully; none uses automatic disposition recovery or an extra attempt. No provider was rerun to improve these results.
 
@@ -33,10 +33,10 @@ The candidate original comment has an actual Markdown href `/PAP/issues/RUN-1#do
 
 Four provider turns were expected and four assignment runs occurred. All four ledger receipts contain token usage and reported LLM cost. Local runtime remains unmetered; actual external billing is not established.
 
-| Case | Baseline provider seconds | Candidate provider seconds | Baseline cell seconds | Candidate cell seconds | Baseline reported USD | Candidate reported USD |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Original | 25.870 | 67.897 | 46.285 | 89.455 | 0.0058472545 | 0.0041383700 |
-| Explicit clickable storage | 73.984 | 82.751 | 94.804 | 102.901 | 0.0049436470 | 0.0066440790 |
+| Case                       | Baseline provider seconds | Candidate provider seconds | Baseline cell seconds | Candidate cell seconds | Baseline reported USD | Candidate reported USD |
+| -------------------------- | ------------------------: | -------------------------: | --------------------: | ---------------------: | --------------------: | ---------------------: |
+| Original                   |                    25.870 |                     67.897 |                46.285 |                 89.455 |          0.0058472545 |           0.0041383700 |
+| Explicit clickable storage |                    73.984 |                     82.751 |                94.804 |                102.901 |          0.0049436470 |           0.0066440790 |
 
 Reported LLM totals are **$0.0107909015 baseline** and **$0.0107824490 candidate**. The candidate original case takes longer in this trial; these single observations, different cache/token receipts and unmetered runtime do not establish general speed, cost or quality equivalence.
 

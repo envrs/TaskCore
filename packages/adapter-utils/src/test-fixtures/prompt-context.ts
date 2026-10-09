@@ -3,12 +3,16 @@ import type { ExecutionContinuationEnvelope } from "@taskcore/shared";
 
 /** Credential-free semantic input shared by actual adapter-boundary tests. */
 export function createPromptContextFixture() {
-  const description = "Keep this deliberate repetition. Keep this deliberate repetition.";
+  const description =
+    "Keep this deliberate repetition. Keep this deliberate repetition.";
   const revision = createHash("sha256").update(description).digest("hex");
   const messages = [
     { id: "comment-first", body: "Append the same ledger entry." },
     { id: "comment-second", body: "Append the same ledger entry." },
-    { id: "comment-scope", body: "Change the final scope to the launch checklist." },
+    {
+      id: "comment-scope",
+      body: "Change the final scope to the launch checklist.",
+    },
   ].map((message) => ({
     ...message,
     authorType: "user" as const,
@@ -22,7 +26,11 @@ export function createPromptContextFixture() {
     version: 1,
     companyId: "company-1",
     issueId: "issue-1",
-    trigger: { reason: "issue_commented", interactionId: null, sourceRunId: null },
+    trigger: {
+      reason: "issue_commented",
+      interactionId: null,
+      sourceRunId: null,
+    },
     originCommentIds: messages.map(({ id }) => id),
     objective: description,
     objectiveSource: { kind: "description", id: "issue-1", revision },
@@ -30,23 +38,52 @@ export function createPromptContextFixture() {
     resumeDelta: { baseRunId: "prior-run", messages: messages.slice(1) },
     interactionOutcomes: [],
     completedWork: null,
-    completedActions: [{ runId: "prior-run", receiptId: "receipt-1", operationId: "published-action", result: { published: true } }],
+    completedActions: [
+      {
+        runId: "prior-run",
+        receiptId: "receipt-1",
+        operationId: "published-action",
+        result: { published: true },
+      },
+    ],
     unresolvedInteractionIds: [],
-    coverage: { kind: "full_task_history", throughCommentId: "comment-scope", summaryThroughCommentId: null },
+    coverage: {
+      kind: "full_task_history",
+      throughCommentId: "comment-scope",
+      summaryThroughCommentId: null,
+    },
   };
   return {
     taskcoreTaskMarkdownAssignment: `## Owned assignment\n\n${description}\n\nPlan revision: approved-revision-2`,
-    taskcoreTaskMarkdownAssignmentCompact: "## Compact assignment\n\nPlan revision: approved-revision-2",
-    taskcoreTaskCommunicationGuidance: "Explain the next step before starting work.",
+    taskcoreTaskMarkdownAssignmentCompact:
+      "## Compact assignment\n\nPlan revision: approved-revision-2",
+    taskcoreTaskCommunicationGuidance:
+      "Explain the next step before starting work.",
     taskcoreTurnContext: {
       version: 1,
-      assignment: { owner: "task_markdown", description: { id: "issue-1", revision } },
-      events: { owner: "wake_prompt", comments: messages.map(({ id, updatedAt }) => ({ id, revision: updatedAt })) },
+      assignment: {
+        owner: "task_markdown",
+        description: { id: "issue-1", revision },
+      },
+      events: {
+        owner: "wake_prompt",
+        comments: messages.map(({ id, updatedAt }) => ({
+          id,
+          revision: updatedAt,
+        })),
+      },
     },
     executionContinuation,
     taskcoreWake: {
       reason: "issue_commented",
-      issue: { id: "issue-1", identifier: "PAP-1", title: "Release ledger", description, status: "in_progress", workMode: "standard" },
+      issue: {
+        id: "issue-1",
+        identifier: "PAP-1",
+        title: "Release ledger",
+        description,
+        status: "in_progress",
+        workMode: "standard",
+      },
       comments: messages,
       commentWindow: { requestedCount: 3, includedCount: 3, missingCount: 0 },
       fallbackFetchNeeded: false,

@@ -103,7 +103,9 @@ export type WorktreeSeedMarkerPaths = {
   lock: string;
 };
 
-export function resolveWorktreeSeedMarkerPaths(configPath: string): WorktreeSeedMarkerPaths {
+export function resolveWorktreeSeedMarkerPaths(
+  configPath: string,
+): WorktreeSeedMarkerPaths {
   const configDir = path.dirname(path.resolve(configPath));
   return {
     manifest: path.resolve(configDir, WORKTREE_SEED_MANIFEST),
@@ -118,7 +120,9 @@ export function isWorktreeSeedMode(value: string): value is WorktreeSeedMode {
   return (WORKTREE_SEED_MODES as readonly string[]).includes(value);
 }
 
-export function resolveWorktreeSeedPlan(mode: WorktreeSeedMode): WorktreeSeedPlan {
+export function resolveWorktreeSeedPlan(
+  mode: WorktreeSeedMode,
+): WorktreeSeedPlan {
   if (mode === "full") {
     return {
       mode,
@@ -136,7 +140,9 @@ export function resolveWorktreeSeedPlan(mode: WorktreeSeedMode): WorktreeSeedPla
 }
 
 function nonEmpty(value: string | null | undefined): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 export function sanitizeWorktreeInstanceId(rawValue: string): string {
@@ -148,7 +154,10 @@ export function sanitizeWorktreeInstanceId(rawValue: string): string {
   return normalized || "worktree";
 }
 
-export function resolveSuggestedWorktreeName(cwd: string, explicitName?: string): string {
+export function resolveSuggestedWorktreeName(
+  cwd: string,
+  explicitName?: string,
+): string {
   return nonEmpty(explicitName) ?? path.basename(path.resolve(cwd));
 }
 
@@ -161,10 +170,10 @@ function hslComponentToHex(n: number): string {
 function hslToHex(hue: number, saturation: number, lightness: number): string {
   const s = Math.max(0, Math.min(100, saturation)) / 100;
   const l = Math.max(0, Math.min(100, lightness)) / 100;
-  const c = (1 - Math.abs((2 * l) - 1)) * s;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
   const h = ((hue % 360) + 360) % 360;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = l - (c / 2);
+  const m = l - c / 2;
 
   let r = 0;
   let g = 0;
@@ -203,7 +212,9 @@ export function resolveWorktreeLocalPaths(opts: {
   instanceId: string;
 }): WorktreeLocalPaths {
   const cwd = path.resolve(opts.cwd);
-  const homeDir = path.resolve(expandHomePrefix(opts.homeDir ?? DEFAULT_WORKTREE_HOME));
+  const homeDir = path.resolve(
+    expandHomePrefix(opts.homeDir ?? DEFAULT_WORKTREE_HOME),
+  );
   const instanceRoot = path.resolve(homeDir, "instances", opts.instanceId);
   const repoConfigDir = path.resolve(cwd, ".taskcore");
   return {
@@ -223,7 +234,10 @@ export function resolveWorktreeLocalPaths(opts: {
   };
 }
 
-export function rewriteLocalUrlPort(rawUrl: string | undefined, port: number): string | undefined {
+export function rewriteLocalUrlPort(
+  rawUrl: string | undefined,
+  port: number,
+): string | undefined {
   if (!rawUrl) return undefined;
   try {
     const parsed = new URL(rawUrl);
@@ -247,7 +261,10 @@ export function buildWorktreeConfig(input: {
   const nowIso = (input.now ?? new Date()).toISOString();
 
   const source = sourceConfig;
-  const authPublicBaseUrl = rewriteLocalUrlPort(source?.auth.publicBaseUrl, serverPort);
+  const authPublicBaseUrl = rewriteLocalUrlPort(
+    source?.auth.publicBaseUrl,
+    serverPort,
+  );
 
   return {
     $meta: {
@@ -275,7 +292,9 @@ export function buildWorktreeConfig(input: {
       deploymentMode: source?.server.deploymentMode ?? "local_trusted",
       exposure: source?.server.exposure ?? "private",
       ...(source?.server.bind ? { bind: source.server.bind } : {}),
-      ...(source?.server.customBindHost ? { customBindHost: source.server.customBindHost } : {}),
+      ...(source?.server.customBindHost
+        ? { customBindHost: source.server.customBindHost }
+        : {}),
       host: source?.server.host ?? "127.0.0.1",
       port: serverPort,
       allowedHostnames: source?.server.allowedHostnames ?? [],

@@ -28,7 +28,10 @@ import { registerFeedbackCommands } from "./commands/client/feedback.js";
 import { registerSecretCommands } from "./commands/client/secrets.js";
 import { registerSkillsCommands } from "./commands/client/skills.js";
 import { registerTeamCommands } from "./commands/client/teams.js";
-import { applyDataDirOverride, type DataDirOptionLike } from "./config/data-dir.js";
+import {
+  applyDataDirOverride,
+  type DataDirOptionLike,
+} from "./config/data-dir.js";
 import { loadTaskcoreEnvFile } from "./config/env.js";
 import { initTelemetryFromConfigFile, flushTelemetry } from "./telemetry.js";
 import { registerWorktreeCommands } from "./commands/worktree.js";
@@ -78,8 +81,14 @@ program
   .option("--canary", "Install the npm canary channel")
   .option("--version <version>", "Install an exact published npm version")
   .option("--ref <ref>", "Install a GitHub branch, tag, or commit SHA")
-  .option("--repo <owner/name>", "Override the GitHub repository used with --ref")
-  .option("-y, --yes", "Consent to git-ref code execution and supported shell PATH updates without prompting")
+  .option(
+    "--repo <owner/name>",
+    "Override the GitHub repository used with --ref",
+  )
+  .option(
+    "-y, --yes",
+    "Consent to git-ref code execution and supported shell PATH updates without prompting",
+  )
   .action(installCommand);
 
 program
@@ -103,7 +112,8 @@ program
   .action(updateCommand);
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
-  const options = actionCommand.optsWithGlobals() as DataDirOptionLike & TestDriveOptions;
+  const options = actionCommand.optsWithGlobals() as DataDirOptionLike &
+    TestDriveOptions;
   let dataDirOptions: DataDirOptionLike = options;
   if (actionCommand.name() === "test-drive") {
     redactTestDriveArgv(options.apiKey);
@@ -113,7 +123,9 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
     });
     dataDirOptions = { ...options, dataDir: prepared.dataDir };
   }
-  const optionNames = new Set(actionCommand.options.map((option) => option.attributeName()));
+  const optionNames = new Set(
+    actionCommand.options.map((option) => option.attributeName()),
+  );
   applyDataDirOverride(dataDirOptions, {
     hasConfigOption: optionNames.has("config"),
     hasContextOption: optionNames.has("context"),
@@ -132,10 +144,23 @@ program
   .description("Interactive first-run setup wizard")
   .option("-c, --config <path>", "Path to config file")
   .option("-d, --data-dir <path>", DATA_DIR_OPTION_HELP)
-  .option("--bind <mode>", "Quickstart reachability preset (loopback, lan, tailnet)")
-  .option("-y, --yes", "Accept quickstart defaults (trusted local loopback unless --bind is set) and start immediately", false)
-  .option("--install-service", "Install and start the background service after onboarding")
-  .option("--no-install-service", "Do not install or suggest the background service")
+  .option(
+    "--bind <mode>",
+    "Quickstart reachability preset (loopback, lan, tailnet)",
+  )
+  .option(
+    "-y, --yes",
+    "Accept quickstart defaults (trusted local loopback unless --bind is set) and start immediately",
+    false,
+  )
+  .option(
+    "--install-service",
+    "Install and start the background service after onboarding",
+  )
+  .option(
+    "--no-install-service",
+    "Do not install or suggest the background service",
+  )
   .option("--run", "Start Taskcore immediately after saving config", false)
   .action(onboard);
 
@@ -171,7 +196,10 @@ program
   .description("Update configuration sections")
   .option("-c, --config <path>", "Path to config file")
   .option("-d, --data-dir <path>", DATA_DIR_OPTION_HELP)
-  .option("-s, --section <section>", "Section to configure (llm, database, logging, server, storage, secrets)")
+  .option(
+    "-s, --section <section>",
+    "Section to configure (llm, database, logging, server, storage, secrets)",
+  )
   .action(configure);
 
 program
@@ -180,7 +208,11 @@ program
   .option("-c, --config <path>", "Path to config file")
   .option("-d, --data-dir <path>", DATA_DIR_OPTION_HELP)
   .option("--dir <path>", "Backup output directory (overrides config)")
-  .option("--retention-days <days>", "Retention window used for pruning", (value) => Number(value))
+  .option(
+    "--retention-days <days>",
+    "Retention window used for pruning",
+    (value) => Number(value),
+  )
   .option("--filename-prefix <prefix>", "Backup filename prefix", "taskcore")
   .option("--json", "Print backup metadata as JSON")
   .action(async (opts) => {
@@ -201,16 +233,24 @@ const run = program
   .option("-c, --config <path>", "Path to config file")
   .option("-d, --data-dir <path>", DATA_DIR_OPTION_HELP)
   .option("-i, --instance <id>", "Local instance id (default: default)")
-  .option("--bind <mode>", "On first run, use onboarding reachability preset (loopback, lan, tailnet)")
+  .option(
+    "--bind <mode>",
+    "On first run, use onboarding reachability preset (loopback, lan, tailnet)",
+  )
   .option("--repair", "Attempt automatic repairs during doctor", true)
   .option("--no-repair", "Disable automatic repairs during doctor")
-  .option("--force", "Run even when the same instance is active under the service manager")
+  .option(
+    "--force",
+    "Run even when the same instance is active under the service manager",
+  )
   .action(runCommand);
 
 registerRunCommands(run);
 registerServiceCommands(program);
 
-const heartbeat = program.command("heartbeat").description("Heartbeat utilities");
+const heartbeat = program
+  .command("heartbeat")
+  .description("Heartbeat utilities");
 
 heartbeat
   .command("run")
@@ -227,7 +267,11 @@ heartbeat
     "Invocation source (timer | assignment | on_demand | automation)",
     "on_demand",
   )
-  .option("--trigger <trigger>", "Trigger detail (manual | ping | callback | system)", "manual")
+  .option(
+    "--trigger <trigger>",
+    "Trigger detail (manual | ping | callback | system)",
+    "manual",
+  )
   .option("--timeout-ms <ms>", "Max time to wait before giving up", "0")
   .option("--json", "Output raw JSON where applicable")
   .option("--debug", "Show raw adapter stdout/stderr JSON chunks")
@@ -266,15 +310,23 @@ registerRuntimeCommands(program);
 registerEnvLabCommands(program);
 registerPluginCommands(program);
 
-const auth = program.command("auth").description("Authentication and bootstrap utilities");
+const auth = program
+  .command("auth")
+  .description("Authentication and bootstrap utilities");
 
 auth
   .command("bootstrap-ceo")
-  .description("Create a one-time bootstrap invite URL for first instance admin")
+  .description(
+    "Create a one-time bootstrap invite URL for first instance admin",
+  )
   .option("-c, --config <path>", "Path to config file")
   .option("-d, --data-dir <path>", DATA_DIR_OPTION_HELP)
   .option("--force", "Create new invite even if admin already exists", false)
-  .option("--expires-hours <hours>", "Invite expiration window in hours", (value) => Number(value))
+  .option(
+    "--expires-hours <hours>",
+    "Invite expiration window in hours",
+    (value) => Number(value),
+  )
   .option("--base-url <url>", "Public base URL used to print invite link")
   .action(bootstrapCeoInvite);
 
@@ -282,7 +334,9 @@ registerClientAuthCommands(auth);
 registerMcpCommands(program);
 
 async function main(): Promise<void> {
-  warnIfUnsupportedNodeVersion(process.versions.node, (message) => console.warn(message));
+  warnIfUnsupportedNodeVersion(process.versions.node, (message) =>
+    console.warn(message),
+  );
 
   let failed = false;
   try {

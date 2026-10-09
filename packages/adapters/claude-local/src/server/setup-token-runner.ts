@@ -82,7 +82,10 @@ export interface SetupTokenPtyDriver extends LoginRunnerDisposable {
    * memory. Resolves with the child exit code when the child ends. A driver must
    * not persist the raw output to any durable log.
    */
-  start(command: string, onData: (chunk: string) => void): Promise<{ exitCode: number | null }>;
+  start(
+    command: string,
+    onData: (chunk: string) => void,
+  ): Promise<{ exitCode: number | null }>;
   /**
    * Writes `input` to the child PTY. The runner writes the browser code plus the
    * submission terminator one time, only after it matches the prompt.
@@ -175,7 +178,10 @@ function settleDelay(ms: number, signal: AbortSignal): Promise<void> {
  * the driver. A stop error or a dispose error must not leak or mask the result,
  * so the function swallows each error and logs a fixed line.
  */
-async function stopAndDispose(driver: SetupTokenPtyDriver, log: (line: string) => void): Promise<void> {
+async function stopAndDispose(
+  driver: SetupTokenPtyDriver,
+  log: (line: string) => void,
+): Promise<void> {
   try {
     driver.stop();
   } catch {
@@ -203,7 +209,8 @@ export async function runSetupTokenLogin(
 ): Promise<SetupTokenLoginResult> {
   const { onPrompt, provideCode, onCredential, timeoutMs, signal } = options;
   const command = options.command ?? CLAUDE_SETUP_TOKEN_COMMAND;
-  const codeSubmitSettleMs = options.codeSubmitSettleMs ?? CODE_SUBMIT_SETTLE_MS;
+  const codeSubmitSettleMs =
+    options.codeSubmitSettleMs ?? CODE_SUBMIT_SETTLE_MS;
   const log = options.log ?? (() => {});
 
   // A private controller that fans a timeout or a cancellation into the
@@ -297,10 +304,14 @@ export async function runSetupTokenLogin(
     try {
       if (!onCredential) return false;
       await onCredential(bytes);
-      log("[taskcore] Setup-token login: delivered the credential to the sink.");
+      log(
+        "[taskcore] Setup-token login: delivered the credential to the sink.",
+      );
       return true;
     } catch {
-      log("[taskcore] Setup-token login: the credential delivery step errored.");
+      log(
+        "[taskcore] Setup-token login: the credential delivery step errored.",
+      );
       return false;
     } finally {
       bytes.fill(0);
@@ -325,7 +336,9 @@ export async function runSetupTokenLogin(
         return;
       }
       if (buffer.length > CLAUDE_SETUP_TOKEN_MAX_BUFFER_CHARS) {
-        buffer = buffer.slice(buffer.length - CLAUDE_SETUP_TOKEN_MAX_BUFFER_CHARS);
+        buffer = buffer.slice(
+          buffer.length - CLAUDE_SETUP_TOKEN_MAX_BUFFER_CHARS,
+        );
       }
       return;
     }
@@ -335,12 +348,20 @@ export async function runSetupTokenLogin(
     if (!onCredential || tokenBytes) return;
     tokenBuffer += chunk;
     captureCredential();
-    if (!tokenBytes && tokenBuffer.length > CLAUDE_SETUP_TOKEN_MAX_BUFFER_CHARS) {
-      tokenBuffer = tokenBuffer.slice(tokenBuffer.length - CLAUDE_SETUP_TOKEN_MAX_BUFFER_CHARS);
+    if (
+      !tokenBytes &&
+      tokenBuffer.length > CLAUDE_SETUP_TOKEN_MAX_BUFFER_CHARS
+    ) {
+      tokenBuffer = tokenBuffer.slice(
+        tokenBuffer.length - CLAUDE_SETUP_TOKEN_MAX_BUFFER_CHARS,
+      );
     }
   };
 
-  const result = (outcome: SetupTokenOutcome, exitCode: number | null): SetupTokenLoginResult => ({
+  const result = (
+    outcome: SetupTokenOutcome,
+    exitCode: number | null,
+  ): SetupTokenLoginResult => ({
     outcome,
     exitCode,
     promptSurfaced,
@@ -355,7 +376,11 @@ export async function runSetupTokenLogin(
     }
 
     const start = driver.start(command, onData);
-    const raced = await raceLoginRunnerExit(start, timeoutMs, controller.signal);
+    const raced = await raceLoginRunnerExit(
+      start,
+      timeoutMs,
+      controller.signal,
+    );
     // Release a pending code-input routine, then let it settle. The routine is
     // self-guarding, so this await never rejects.
     controller.abort();
@@ -372,7 +397,9 @@ export async function runSetupTokenLogin(
 
     const exitCode = raced.exitCode;
     if (exitCode !== 0) {
-      log("[taskcore] Setup-token login command ended with a non-zero exit code.");
+      log(
+        "[taskcore] Setup-token login command ended with a non-zero exit code.",
+      );
       return result("failure", exitCode);
     }
 
@@ -382,7 +409,9 @@ export async function runSetupTokenLogin(
     // reports success only after the sink resolves.
     const delivered = await deliverCredential();
     if (!delivered) {
-      log("[taskcore] Setup-token login: the credential did not land; treating the run as a failure.");
+      log(
+        "[taskcore] Setup-token login: the credential did not land; treating the run as a failure.",
+      );
       return result("failure", exitCode);
     }
     credentialDelivered = true;
@@ -392,7 +421,9 @@ export async function runSetupTokenLogin(
   } catch {
     // Convert any driver error to a fixed, non-secret error. The original error
     // may embed streamed bytes, so the runner never propagates its message.
-    throw new Error("setup-token login failed: the sandbox login command errored.");
+    throw new Error(
+      "setup-token login failed: the sandbox login command errored.",
+    );
   } finally {
     if (signal) signal.removeEventListener("abort", onExternalAbort);
     // Zero any bound token bytes that the delivery path did not consume, so a

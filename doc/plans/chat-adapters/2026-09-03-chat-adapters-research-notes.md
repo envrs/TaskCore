@@ -89,11 +89,11 @@ This validates a future managed provisioning path, but Taskcore cannot depend on
 
 ## One bot per agent versus shared bot
 
-| Model                                    | Strength                                                                              | Failure in Taskcore                                                                             | Decision                                            |
-| ---------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| One shared bot dispatches to many agents | One installation and credential set                                                   | Hidden addressing grammar, ambiguous identity, mixed permissions/audit, unclear output ownership | Do not use for v1                                   |
-| One bot identity per Taskcore agent     | Native addressing, visible role, clean task ownership, separate permissions and audit | More provider installations and credential lifecycle                                             | Adopt                                               |
-| One fixed product persona                | Simple, Claude Tag/OpenTag-like experience                                            | Does not expose the Taskcore company roster                                                     | Allow only as one ordinary Taskcore agent endpoint |
+| Model                                    | Strength                                                                              | Failure in Taskcore                                                                              | Decision                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| One shared bot dispatches to many agents | One installation and credential set                                                   | Hidden addressing grammar, ambiguous identity, mixed permissions/audit, unclear output ownership | Do not use for v1                                  |
+| One bot identity per Taskcore agent      | Native addressing, visible role, clean task ownership, separate permissions and audit | More provider installations and credential lifecycle                                             | Adopt                                              |
+| One fixed product persona                | Simple, Claude Tag/OpenTag-like experience                                            | Does not expose the Taskcore company roster                                                      | Allow only as one ordinary Taskcore agent endpoint |
 
 Within a shared Slack channel, `@Researcher` and `@Engineer` are separate apps. A root mention creates the native thread and one issue owned by the addressed endpoint; human replies in that thread continue it without another mention. If a second Taskcore bot participates through an explicit route, Taskcore records a separate related single-assignee issue and guarded route provenance rather than stealing or sharing the first issue.
 
@@ -122,17 +122,17 @@ These findings produce a strict UI rule: if an operator cannot act on informatio
 
 ## Feature-to-Taskcore mapping
 
-| Chat SDK feature           | Taskcore source/target               | Required guard                                       |
-| -------------------------- | ------------------------------------- | ---------------------------------------------------- |
-| Mention/subscribed message | Task create/comment/wakeup            | Endpoint/resource activation policy                  |
-| Reaction                   | Receipt or explicit reaction event    | Self/loop suppression and capability check           |
-| Streaming                  | Safe public run projection            | No raw traces; rate/edit limits                      |
-| Card                       | Artifact, status, interaction, or URL | Safe renderer and text fallback                      |
-| Button/dropdown/modal      | Typed interaction resolution          | Current identity, resolver audience, exact once      |
-| Slash command              | Explicit channel command              | Command allowlist and normal authorization           |
-| File                       | Issue attachment/work product         | Bounded download, type/hash/sanitize                 |
-| DM                         | Conversation-bound task               | DM policy and stable provider identity               |
-| Ephemeral reply            | Denial/link/receipt                   | DM or safe normal-message fallback                   |
+| Chat SDK feature           | Taskcore source/target                | Required guard                                      |
+| -------------------------- | ------------------------------------- | --------------------------------------------------- |
+| Mention/subscribed message | Task create/comment/wakeup            | Endpoint/resource activation policy                 |
+| Reaction                   | Receipt or explicit reaction event    | Self/loop suppression and capability check          |
+| Streaming                  | Safe public run projection            | No raw traces; rate/edit limits                     |
+| Card                       | Artifact, status, interaction, or URL | Safe renderer and text fallback                     |
+| Button/dropdown/modal      | Typed interaction resolution          | Current identity, resolver audience, exact once     |
+| Slash command              | Explicit channel command              | Command allowlist and normal authorization          |
+| File                       | Issue attachment/work product         | Bounded download, type/hash/sanitize                |
+| DM                         | Conversation-bound task               | DM policy and stable provider identity              |
+| Ephemeral reply            | Denial/link/receipt                   | DM or safe normal-message fallback                  |
 | Overlapping messages       | Comment queue or steer/new run        | Taskcore task/run concurrency remains authoritative |
 
 ## Resulting recommendation

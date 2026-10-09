@@ -351,7 +351,8 @@ export interface TaskcorePluginManifestV1 {
   ui?: {
     launchers?: PluginLauncherDeclaration[];
     slots: Array<{
-      type: "page"
+      type:
+        | "page"
         | "detailTab"
         | "taskDetailView"
         | "dashboardWidget"
@@ -743,15 +744,30 @@ export interface PluginContext {
     get(companyId: string): Promise<Record<string, unknown>>;
   };
   secrets: {
-    resolve(secretRef: { type: "secret_ref"; secretId: string; version?: number | "latest" }, options: { companyId: string; configPath?: string }): Promise<string>;
+    resolve(
+      secretRef: {
+        type: "secret_ref";
+        secretId: string;
+        version?: number | "latest";
+      },
+      options: { companyId: string; configPath?: string },
+    ): Promise<string>;
   };
   events: {
     on(name: string, fn: (event: unknown) => Promise<void>): void;
-    on(name: string, filter: EventFilter, fn: (event: unknown) => Promise<void>): void;
+    on(
+      name: string,
+      filter: EventFilter,
+      fn: (event: unknown) => Promise<void>,
+    ): void;
     emit(name: string, payload: unknown): Promise<void>;
   };
   jobs: {
-    register(key: string, input: { cron: string }, fn: (job: PluginJobContext) => Promise<void>): void;
+    register(
+      key: string,
+      input: { cron: string },
+      fn: (job: PluginJobContext) => Promise<void>,
+    ): void;
   };
   state: {
     get(input: ScopeKey): Promise<unknown | null>;
@@ -763,13 +779,23 @@ export interface PluginContext {
     list(input: PluginEntityQuery): Promise<PluginEntityRecord[]>;
   };
   data: {
-    register(key: string, handler: (params: Record<string, unknown>) => Promise<unknown>): void;
+    register(
+      key: string,
+      handler: (params: Record<string, unknown>) => Promise<unknown>,
+    ): void;
   };
   actions: {
-    register(key: string, handler: (params: Record<string, unknown>) => Promise<unknown>): void;
+    register(
+      key: string,
+      handler: (params: Record<string, unknown>) => Promise<unknown>,
+    ): void;
   };
   tools: {
-    register(name: string, input: PluginToolDeclaration, fn: (params: unknown, runCtx: ToolRunContext) => Promise<ToolResult>): void;
+    register(
+      name: string,
+      input: PluginToolDeclaration,
+      fn: (params: unknown, runCtx: ToolRunContext) => Promise<ToolResult>,
+    ): void;
   };
   logger: {
     info(message: string, meta?: Record<string, unknown>): void;
@@ -1020,21 +1046,34 @@ The plugin's UI bundle exports:
 
 ```tsx
 // dist/ui/index.tsx
-import { usePluginData, usePluginAction, MetricCard, StatusBadge } from "@taskcore/plugin-sdk/ui";
+import {
+  usePluginData,
+  usePluginAction,
+  MetricCard,
+  StatusBadge,
+} from "@taskcore/plugin-sdk/ui";
 
 export function DashboardWidget({ context }: PluginWidgetProps) {
-  const { data, loading } = usePluginData("sync-health", { companyId: context.companyId });
+  const { data, loading } = usePluginData("sync-health", {
+    companyId: context.companyId,
+  });
   const resync = usePluginAction("resync");
 
   if (loading) return <Spinner />;
 
   return (
     <div>
-      <MetricCard label="Synced Issues" value={data.syncedCount} trend={data.trend} />
-      {data.mappings.map(m => (
+      <MetricCard
+        label="Synced Issues"
+        value={data.syncedCount}
+        trend={data.trend}
+      />
+      {data.mappings.map((m) => (
         <StatusBadge key={m.id} label={m.label} status={m.status} />
       ))}
-      <button onClick={() => resync({ companyId: context.companyId })}>Resync Now</button>
+      <button onClick={() => resync({ companyId: context.companyId })}>
+        Resync Now
+      </button>
     </div>
   );
 }
@@ -1159,7 +1198,7 @@ otherwise attempt to collapse the app sidebar from a `routeSidebar` — the host
 applies the collapse while the route is mounted and restores the previous state
 on navigation away. The collapse is a **hard invariant**: while a secondary
 sidebar is shown the app rail is forced collapsed and its expand/toggle
-affordance is hidden, *overriding* any user pin. Crucially, this force is
+affordance is hidden, _overriding_ any user pin. Crucially, this force is
 ephemeral — it never mutates the user's persisted expanded/collapsed preference,
 so navigating back to a normal route restores exactly what the user chose.
 Precedence is therefore: secondary-sidebar force > explicit user pin >
@@ -1169,23 +1208,23 @@ route-requested collapse (`RequestCollapsedSidebar`) > default expanded.
 
 The host SDK ships shared components that plugins can import to quickly build UIs that match the host's look and feel. These are convenience building blocks, not a requirement.
 
-| Component | What it renders | Typical use |
-|---|---|---|
-| `MetricCard` | Single number with label, optional trend/sparkline | KPIs, counts, rates |
-| `StatusBadge` | Inline status indicator (ok/warning/error/info) | Sync health, connection status |
-| `DataTable` | Rows and columns with optional sorting and pagination | Issue lists, job history, process lists |
-| `TimeseriesChart` | Line or bar chart with timestamped data points | Revenue trends, sync volume, error rates |
-| `MarkdownBlock` | Rendered markdown text | Descriptions, help text, notes |
-| `KeyValueList` | Label/value pairs in a definition-list layout | Entity metadata, config summary |
-| `ActionBar` | Row of buttons wired to `usePluginAction` | Resync, create branch, restart process |
-| `LogView` | Scrollable log output with timestamps | Webhook deliveries, job output, process logs |
-| `JsonTree` | Collapsible JSON tree for debugging | Raw API responses, plugin state inspection |
-| `Spinner` | Loading indicator | Data fetch states |
-| `FileTree` | Host-styled file/directory tree | Wiki pages, workspace files, import previews |
-| `IssuesList` | Host issue list | Plugin pages that need a native issue view |
-| `AssigneePicker` | Host assignee picker for agents and board users | Creating issues, assigning routines, filtering work |
-| `ProjectPicker` | Host project picker | Creating issues, scoping dashboards, filtering work |
-| `ManagedRoutinesList` | Host routine list | Plugin settings pages that manage routines |
+| Component             | What it renders                                       | Typical use                                         |
+| --------------------- | ----------------------------------------------------- | --------------------------------------------------- |
+| `MetricCard`          | Single number with label, optional trend/sparkline    | KPIs, counts, rates                                 |
+| `StatusBadge`         | Inline status indicator (ok/warning/error/info)       | Sync health, connection status                      |
+| `DataTable`           | Rows and columns with optional sorting and pagination | Issue lists, job history, process lists             |
+| `TimeseriesChart`     | Line or bar chart with timestamped data points        | Revenue trends, sync volume, error rates            |
+| `MarkdownBlock`       | Rendered markdown text                                | Descriptions, help text, notes                      |
+| `KeyValueList`        | Label/value pairs in a definition-list layout         | Entity metadata, config summary                     |
+| `ActionBar`           | Row of buttons wired to `usePluginAction`             | Resync, create branch, restart process              |
+| `LogView`             | Scrollable log output with timestamps                 | Webhook deliveries, job output, process logs        |
+| `JsonTree`            | Collapsible JSON tree for debugging                   | Raw API responses, plugin state inspection          |
+| `Spinner`             | Loading indicator                                     | Data fetch states                                   |
+| `FileTree`            | Host-styled file/directory tree                       | Wiki pages, workspace files, import previews        |
+| `IssuesList`          | Host issue list                                       | Plugin pages that need a native issue view          |
+| `AssigneePicker`      | Host assignee picker for agents and board users       | Creating issues, assigning routines, filtering work |
+| `ProjectPicker`       | Host project picker                                   | Creating issues, scoping dashboards, filtering work |
+| `ManagedRoutinesList` | Host routine list                                     | Plugin settings pages that manage routines          |
 
 Plugins may also use entirely custom components. The shared components exist to reduce boilerplate and keep visual consistency, not to limit what plugins can render.
 
@@ -1209,7 +1248,12 @@ The bridge hooks must return structured errors so plugin UI can handle failures 
 
 ```ts
 interface PluginBridgeError {
-  code: "WORKER_UNAVAILABLE" | "CAPABILITY_DENIED" | "WORKER_ERROR" | "TIMEOUT" | "UNKNOWN";
+  code:
+    | "WORKER_UNAVAILABLE"
+    | "CAPABILITY_DENIED"
+    | "WORKER_ERROR"
+    | "TIMEOUT"
+    | "UNKNOWN";
   message: string;
   /** Original error details from the worker, if available */
   details?: unknown;
@@ -1664,14 +1708,23 @@ import { createTestHarness } from "@taskcore/plugin-test-harness";
 import manifest from "../dist/manifest.js";
 import { register } from "../dist/worker.js";
 
-const harness = createTestHarness({ manifest, capabilities: manifest.capabilities });
+const harness = createTestHarness({
+  manifest,
+  capabilities: manifest.capabilities,
+});
 await register(harness.ctx);
 
 // Simulate an event
 await harness.emit("issue.created", { issueId: "iss-1", projectId: "proj-1" });
 
 // Verify state was written
-const state = await harness.state.get({ pluginId: manifest.id, scopeKind: "issue", scopeId: "iss-1", namespace: "sync", stateKey: "external-id" });
+const state = await harness.state.get({
+  pluginId: manifest.id,
+  scopeKind: "issue",
+  scopeId: "iss-1",
+  namespace: "sync",
+  stateKey: "external-id",
+});
 expect(state).toBeDefined();
 
 // Simulate a UI data request
@@ -1755,10 +1808,10 @@ Versioning rules:
 The host should publish a compatibility matrix:
 
 | Host Version | Supported API Versions | SDK Range |
-|---|---|---|
-| 1.0 | 1 | 1.x |
-| 2.0 | 1, 2 | 1.x, 2.x |
-| 3.0 | 2, 3 | 2.x, 3.x |
+| ------------ | ---------------------- | --------- |
+| 1.0          | 1                      | 1.x       |
+| 2.0          | 1, 2                   | 1.x, 2.x  |
+| 3.0          | 2, 3                   | 2.x, 3.x  |
 
 This matrix is published in the host docs and queryable via `GET /api/plugins/compatibility`.
 

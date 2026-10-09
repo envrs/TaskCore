@@ -235,7 +235,7 @@ apiRoutes: [
     checkoutPolicy: "required-for-agent-in-progress",
     companyResolution: { from: "issue", param: "issueId" },
   },
-]
+];
 ```
 
 The host resolves the plugin, checks that it is ready, enforces
@@ -302,7 +302,8 @@ const manifest: TaskcorePluginManifestV1 = {
   apiVersion: 1,
   version: "0.1.0",
   displayName: "Research Plugin",
-  description: "Creates a managed research agent and scheduled research routine.",
+  description:
+    "Creates a managed research agent and scheduled research routine.",
   author: "Example",
   categories: ["automation"],
   capabilities: [
@@ -325,7 +326,8 @@ const manifest: TaskcorePluginManifestV1 = {
       capabilities: "Runs recurring research briefs for this company.",
       adapterPreference: ["codex_local", "claude_local", "process"],
       instructions: {
-        content: "Follow the Taskcore heartbeat and produce concise research briefs.",
+        content:
+          "Follow the Taskcore heartbeat and produce concise research briefs.",
       },
     },
   ],
@@ -390,10 +392,19 @@ export default definePlugin({
       const companyId = String(params.companyId ?? "");
       if (!companyId) throw new Error("companyId is required");
 
-      const project = await ctx.projects.managed.reconcile("research", companyId);
+      const project = await ctx.projects.managed.reconcile(
+        "research",
+        companyId,
+      );
       const agent = await ctx.agents.managed.reconcile("researcher", companyId);
-      const routine = await ctx.routines.managed.reconcile("weekly-brief", companyId);
-      const skill = await ctx.skills.managed.reconcile("weekly-brief-skills", companyId);
+      const routine = await ctx.routines.managed.reconcile(
+        "weekly-brief",
+        companyId,
+      );
+      const skill = await ctx.skills.managed.reconcile(
+        "weekly-brief-skills",
+        companyId,
+      );
 
       return { project, agent, routine, skill };
     });
@@ -528,10 +539,7 @@ board's icons, indent, focus ring, and dark-mode styling without importing host
 internals.
 
 ```tsx
-import {
-  FileTree,
-  type FileTreeNode,
-} from "@taskcore/plugin-sdk/ui";
+import { FileTree, type FileTreeNode } from "@taskcore/plugin-sdk/ui";
 
 const nodes: FileTreeNode[] = [
   { name: "AGENTS.md", path: "AGENTS.md", kind: "file", children: [] },
@@ -546,7 +554,9 @@ const nodes: FileTreeNode[] = [
 ];
 
 export function WikiTree() {
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["wiki"]));
+  const [expanded, setExpanded] = useState<Set<string>>(
+    () => new Set(["wiki"]),
+  );
   const [selected, setSelected] = useState<string | null>(null);
 
   return (

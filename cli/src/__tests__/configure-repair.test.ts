@@ -36,8 +36,14 @@ let originalStdoutIsTTY: boolean | undefined;
 beforeEach(() => {
   originalStdinIsTTY = process.stdin.isTTY;
   originalStdoutIsTTY = process.stdout.isTTY;
-  Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: true });
-  Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: true });
+  Object.defineProperty(process.stdin, "isTTY", {
+    configurable: true,
+    value: true,
+  });
+  Object.defineProperty(process.stdout, "isTTY", {
+    configurable: true,
+    value: true,
+  });
   vi.mocked(prompts.confirm).mockResolvedValue(true);
   vi.spyOn(console, "log").mockImplementation(() => undefined);
 });
@@ -57,7 +63,9 @@ afterEach(() => {
 
 describe("configure invalid-config repair", () => {
   it("repairs only after confirmation and commits the staged config atomically", async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-configure-repair-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-configure-repair-"),
+    );
     const configPath = path.join(root, "config.json");
     const invalidBytes = Buffer.from('{"server": invalid}\n', "utf8");
     fs.writeFileSync(configPath, invalidBytes);

@@ -37,7 +37,9 @@ export const ACPX_ADAPTER_AGENT_IDS = {
 export type AcpxAdapterType = keyof typeof ACPX_ADAPTER_AGENT_IDS;
 export type AcpxAgentId = (typeof ACPX_ADAPTER_AGENT_IDS)[AcpxAdapterType];
 
-export function acpxAgentIdForAdapterType(adapterType: string | null | undefined): AcpxAgentId | null {
+export function acpxAgentIdForAdapterType(
+  adapterType: string | null | undefined,
+): AcpxAgentId | null {
   if (!adapterType) return null;
   return ACPX_ADAPTER_AGENT_IDS[adapterType as AcpxAdapterType] ?? null;
 }

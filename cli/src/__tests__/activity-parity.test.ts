@@ -14,7 +14,16 @@ function createProgram(): Command {
 }
 
 async function run(args: string[]): Promise<void> {
-  await createProgram().parseAsync([...args, "--api-base", "http://localhost:3100", "--api-key", "board-token"], { from: "user" });
+  await createProgram().parseAsync(
+    [
+      ...args,
+      "--api-base",
+      "http://localhost:3100",
+      "--api-key",
+      "board-token",
+    ],
+    { from: "user" },
+  );
 }
 
 describe("activity parity commands", () => {
@@ -36,18 +45,40 @@ describe("activity parity commands", () => {
       .mockImplementation(() => Promise.resolve(jsonResponse()));
     vi.stubGlobal("fetch", fetchMock);
 
-    await run(["activity", "list", "--company-id", COMPANY_ID, "--agent-id", "agent-1"]);
-    await run(["activity", "create", "--company-id", COMPANY_ID, "--payload-json", "{}"]);
+    await run([
+      "activity",
+      "list",
+      "--company-id",
+      COMPANY_ID,
+      "--agent-id",
+      "agent-1",
+    ]);
+    await run([
+      "activity",
+      "create",
+      "--company-id",
+      COMPANY_ID,
+      "--payload-json",
+      "{}",
+    ]);
     await run(["activity", "issue", ISSUE_ID]);
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
-      ["GET", `http://localhost:3100/api/companies/${COMPANY_ID}/activity?agentId=agent-1`],
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
+      [
+        "GET",
+        `http://localhost:3100/api/companies/${COMPANY_ID}/activity?agentId=agent-1`,
+      ],
       ["POST", `http://localhost:3100/api/companies/${COMPANY_ID}/activity`],
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/activity`],
     ]);
   });
 });
 
-function jsonResponse(body: unknown = { ok: true }, init: ResponseInit = { status: 200 }): Response {
+function jsonResponse(
+  body: unknown = { ok: true },
+  init: ResponseInit = { status: 200 },
+): Response {
   return new Response(JSON.stringify(body), init);
 }

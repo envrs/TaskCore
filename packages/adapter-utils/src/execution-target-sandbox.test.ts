@@ -5,7 +5,15 @@ import http2 from "node:http2";
 import net from "node:net";
 import { duplexPair, type Duplex } from "node:stream";
 import { execFile, spawn } from "node:child_process";
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -51,7 +59,10 @@ import {
   type StartupTraceContext,
   type StartupTracer,
 } from "./acpx-engine/startup-timing.js";
-import { createSandboxRunLogTailFactory, type SandboxRunLogTailFactory } from "./sandbox-run-log-stream.js";
+import {
+  createSandboxRunLogTailFactory,
+  type SandboxRunLogTailFactory,
+} from "./sandbox-run-log-stream.js";
 import { runChildProcess, type RunProcessResult } from "./server-utils.js";
 import { shellQuote } from "./ssh.js";
 import type { CommandManagedDuplexChannel } from "./command-managed-runtime.js";
@@ -96,7 +107,11 @@ function createRecordingTraceContext(): {
   const tracer: StartupTracer = {
     startSpan(name, _options, context) {
       const parent = context as RecordedSpan | undefined;
-      const record: RecordedSpan = { name, parentName: parent?.name ?? null, ended: false };
+      const record: RecordedSpan = {
+        name,
+        parentName: parent?.name ?? null,
+        ended: false,
+      };
       spans.push(record);
       const handle: StartupSpan = {
         setAttribute() {},
@@ -120,10 +135,22 @@ describe("sandbox adapter execution targets", () => {
   const cleanupDirs: string[] = [];
 
   it("records successful issue comment ids for attribution recovery", () => {
-    expect(postedIssueCommentLogMarker("POST", "/api/issues/issue-1/comments", 201, '{"id":"comment-1"}'))
-      .toBe("comment id: comment-1\n");
-    expect(postedIssueCommentLogMarker("POST", "/api/issues/issue-1/comments", 401, '{"id":"comment-1"}'))
-      .toBeNull();
+    expect(
+      postedIssueCommentLogMarker(
+        "POST",
+        "/api/issues/issue-1/comments",
+        201,
+        '{"id":"comment-1"}',
+      ),
+    ).toBe("comment id: comment-1\n");
+    expect(
+      postedIssueCommentLogMarker(
+        "POST",
+        "/api/issues/issue-1/comments",
+        401,
+        '{"id":"comment-1"}',
+      ),
+    ).toBeNull();
   });
 
   afterEach(async () => {
@@ -150,28 +177,39 @@ describe("sandbox adapter execution targets", () => {
       }) => {
         counter += 1;
         const command = input.command === "bash" ? "/bin/bash" : input.command;
-        return runChildProcess(`sandbox-run-${counter}`, command, input.args ?? [], {
-          cwd: input.cwd ?? process.cwd(),
-          env: input.env ?? {},
-          stdin: input.stdin,
-          timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-          graceSec: 5,
-          onLog: input.onLog ?? (async () => {}),
-          onSpawn: input.onSpawn
-            ? async (meta) => input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
-            : undefined,
-        });
+        return runChildProcess(
+          `sandbox-run-${counter}`,
+          command,
+          input.args ?? [],
+          {
+            cwd: input.cwd ?? process.cwd(),
+            env: input.env ?? {},
+            stdin: input.stdin,
+            timeoutSec: Math.max(
+              1,
+              Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+            ),
+            graceSec: 5,
+            onLog: input.onLog ?? (async () => {}),
+            onSpawn: input.onSpawn
+              ? async (meta) =>
+                  input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
+              : undefined,
+          },
+        );
       },
     };
   }
 
   async function readRuntimeTextFiles(rootDir: string): Promise<string[]> {
-    const entries = await readdir(rootDir, { withFileTypes: true }).catch(() => []);
+    const entries = await readdir(rootDir, { withFileTypes: true }).catch(
+      () => [],
+    );
     const contents: string[] = [];
     for (const entry of entries) {
       const entryPath = path.join(rootDir, entry.name);
       if (entry.isDirectory()) {
-        contents.push(...await readRuntimeTextFiles(entryPath));
+        contents.push(...(await readRuntimeTextFiles(entryPath)));
       } else if (entry.isFile()) {
         contents.push(await readFile(entryPath, "utf8").catch(() => ""));
       }
@@ -190,7 +228,11 @@ describe("sandbox adapter execution targets", () => {
     ].join("\n");
   }
 
-  async function waitForCondition(predicate: () => boolean, message: string, timeoutMs = 1000): Promise<void> {
+  async function waitForCondition(
+    predicate: () => boolean,
+    message: string,
+    timeoutMs = 1000,
+  ): Promise<void> {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (predicate()) return;
@@ -213,7 +255,11 @@ describe("sandbox adapter execution targets", () => {
     elapsedMs: number;
   };
 
-  async function runProxyWithInput(command: string, input: string, keepStdinOpen = false): Promise<ProxyRunResult> {
+  async function runProxyWithInput(
+    command: string,
+    input: string,
+    keepStdinOpen = false,
+  ): Promise<ProxyRunResult> {
     const startedAt = performance.now();
     const child = spawn(command, [], { stdio: ["pipe", "pipe", "pipe"] });
     let stdout = "";
@@ -242,7 +288,12 @@ describe("sandbox adapter execution targets", () => {
         resolve(exitCode);
       });
     });
-    return { stdout, stderr, code, elapsedMs: Math.round(performance.now() - startedAt) };
+    return {
+      stdout,
+      stderr,
+      code,
+      elapsedMs: Math.round(performance.now() - startedAt),
+    };
   }
 
   /**
@@ -259,7 +310,10 @@ describe("sandbox adapter execution targets", () => {
    * says whether the frame was never written, written and never consumed, or
    * consumed normally and the reply lost on the way back.
    */
-  async function describeProxyRun(result: ProxyRunResult, runtimeRootDir: string): Promise<string> {
+  async function describeProxyRun(
+    result: ProxyRunResult,
+    runtimeRootDir: string,
+  ): Promise<string> {
     const lines = [
       `proxy exit=${result.code} elapsedMs=${result.elapsedMs}`,
       `proxy stdout=${JSON.stringify(result.stdout)}`,
@@ -275,10 +329,14 @@ describe("sandbox adapter execution targets", () => {
       try {
         entries = await readdir(dir, { withFileTypes: true });
       } catch (error) {
-        lines.push(`${"  ".repeat(depth)}<unreadable ${dir}: ${(error as Error).message}>`);
+        lines.push(
+          `${"  ".repeat(depth)}<unreadable ${dir}: ${(error as Error).message}>`,
+        );
         return;
       }
-      for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      for (const entry of entries.sort((a, b) =>
+        a.name.localeCompare(b.name),
+      )) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) {
           lines.push(`${"  ".repeat(depth)}${entry.name}/`);
@@ -291,7 +349,8 @@ describe("sandbox adapter execution targets", () => {
         let detail = "";
         try {
           const raw = await readFile(full, "utf8");
-          detail = raw.length <= 400 ? ` ${JSON.stringify(raw)}` : ` <${raw.length}B>`;
+          detail =
+            raw.length <= 400 ? ` ${JSON.stringify(raw)}` : ` <${raw.length}B>`;
         } catch (error) {
           detail = ` <unreadable: ${(error as Error).message}>`;
         }
@@ -307,30 +366,65 @@ describe("sandbox adapter execution targets", () => {
     events: Array<{ stream: "stdout" | "stderr"; chunk: string }>,
     stream: "stdout" | "stderr",
   ): string {
-    return events.filter((event) => event.stream === stream).map((event) => event.chunk).join("");
+    return events
+      .filter((event) => event.stream === stream)
+      .map((event) => event.chunk)
+      .join("");
   }
 
   it("delivers cryptographic identity through a remote sandbox process transport", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "identity-remote-process-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "identity-remote-process-"),
+    );
     cleanupDirs.push(rootDir);
     const keys = generateKeyPairSync("ed25519");
     const identity = {
       keyId: "sha256:remote-identity",
-      publicKeyPem: keys.publicKey.export({ type: "spki", format: "pem" }).toString(),
-      privateKeyPem: keys.privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
+      publicKeyPem: keys.publicKey
+        .export({ type: "spki", format: "pem" })
+        .toString(),
+      privateKeyPem: keys.privateKey
+        .export({ type: "pkcs8", format: "pem" })
+        .toString(),
     };
     const target: AdapterSandboxExecutionTarget = {
-      kind: "remote", transport: "sandbox", providerKey: "local-test", remoteCwd: rootDir,
-      timeoutMs: 30_000, runner: createLocalSandboxRunner(),
+      kind: "remote",
+      transport: "sandbox",
+      providerKey: "local-test",
+      remoteCwd: rootDir,
+      timeoutMs: 30_000,
+      runner: createLocalSandboxRunner(),
     };
     const challenge = randomBytes(32);
-    const result = await runAdapterExecutionTargetProcess("identity-remote", target, process.execPath,
-      ["-e", `const {sign}=require('node:crypto');process.stdout.write(sign(null,Buffer.from(process.argv[1],'hex'),process.env.TASKCORE_AGENT_PRIVATE_KEY).toString('base64'));`, challenge.toString("hex")], {
-        cwd: rootDir, env: buildAgentIdentityEnv(identity), timeoutSec: 5, graceSec: 1, onLog: async () => {},
-      });
+    const result = await runAdapterExecutionTargetProcess(
+      "identity-remote",
+      target,
+      process.execPath,
+      [
+        "-e",
+        `const {sign}=require('node:crypto');process.stdout.write(sign(null,Buffer.from(process.argv[1],'hex'),process.env.TASKCORE_AGENT_PRIVATE_KEY).toString('base64'));`,
+        challenge.toString("hex"),
+      ],
+      {
+        cwd: rootDir,
+        env: buildAgentIdentityEnv(identity),
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
+      },
+    );
     expect(result.exitCode).toBe(0);
-    expect(verify(null, challenge, keys.publicKey, Buffer.from(result.stdout, "base64"))).toBe(true);
-    expect((await readRuntimeTextFiles(rootDir)).join("\n")).not.toContain(identity.privateKeyPem.split("\n")[1]);
+    expect(
+      verify(
+        null,
+        challenge,
+        keys.publicKey,
+        Buffer.from(result.stdout, "base64"),
+      ),
+    ).toBe(true);
+    expect((await readRuntimeTextFiles(rootDir)).join("\n")).not.toContain(
+      identity.privateKeyPem.split("\n")[1],
+    );
   });
 
   it("executes through the provider-neutral runner without a remote spec", async () => {
@@ -358,24 +452,32 @@ describe("sandbox adapter execution targets", () => {
 
     expect(adapterExecutionTargetToRemoteSpec(target)).toBeNull();
 
-    const result = await runAdapterExecutionTargetProcess("run-1", target, "agent-cli", ["--json"], {
-      cwd: "/local/workspace",
-      env: { TOKEN: "token" },
-      stdin: "prompt",
-      timeoutSec: 5,
-      graceSec: 1,
-      onLog: async () => {},
-    });
+    const result = await runAdapterExecutionTargetProcess(
+      "run-1",
+      target,
+      "agent-cli",
+      ["--json"],
+      {
+        cwd: "/local/workspace",
+        env: { TOKEN: "token" },
+        stdin: "prompt",
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
+      },
+    );
 
     expect(result.stdout).toBe("ok\n");
-    expect(runner.execute).toHaveBeenCalledWith(expect.objectContaining({
-      command: "agent-cli",
-      args: ["--json"],
-      cwd: "/workspace",
-      env: { TOKEN: "token" },
-      stdin: "prompt",
-      timeoutMs: 5000,
-    }));
+    expect(runner.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "agent-cli",
+        args: ["--json"],
+        cwd: "/workspace",
+        env: { TOKEN: "token" },
+        stdin: "prompt",
+        timeoutMs: 5000,
+      }),
+    );
     expect(adapterExecutionTargetSessionIdentity(target)).toEqual({
       transport: "sandbox",
       providerKey: "acme-sandbox",
@@ -386,7 +488,9 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("preserves stdin when wrapping sandbox adapter commands for run-log streaming", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-run-log-stdin-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-run-log-stdin-"),
+    );
     cleanupDirs.push(rootDir);
     const target: AdapterSandboxExecutionTarget = {
       kind: "remote",
@@ -397,7 +501,12 @@ describe("sandbox adapter execution targets", () => {
       streamRunLogs: true,
       runner: createLocalSandboxRunner(),
     };
-    const logsDir = path.posix.join(rootDir, ".taskcore-runtime", "bridge", "logs");
+    const logsDir = path.posix.join(
+      rootDir,
+      ".taskcore-runtime",
+      "bridge",
+      "logs",
+    );
     const runLogTail = createSandboxRunLogTailFactory({
       runner: target.runner!,
       remoteCwd: rootDir,
@@ -410,7 +519,10 @@ describe("sandbox adapter execution targets", () => {
       "run-log-stdin",
       target,
       process.execPath,
-      ["-e", "process.stdin.setEncoding('utf8'); let s=''; process.stdin.on('data', c => s += c); process.stdin.on('end', () => process.stdout.write('stdin=' + s));"],
+      [
+        "-e",
+        "process.stdin.setEncoding('utf8'); let s=''; process.stdin.on('data', c => s += c); process.stdin.on('end', () => process.stdout.write('stdin=' + s));",
+      ],
       {
         cwd: rootDir,
         env: {},
@@ -418,17 +530,23 @@ describe("sandbox adapter execution targets", () => {
         timeoutSec: 5,
         graceSec: 1,
         runLogTail: { create: () => runLogTail },
-        onLog: async (stream, chunk) => { events.push({ stream, chunk }); },
+        onLog: async (stream, chunk) => {
+          events.push({ stream, chunk });
+        },
       },
     );
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toBe("stdin=hello-through-wrapper");
-    expect(combinedStream(events, "stdout")).toContain("stdin=hello-through-wrapper");
+    expect(combinedStream(events, "stdout")).toContain(
+      "stdin=hello-through-wrapper",
+    );
   });
 
   it("creates the process session directories only in the launch exec, not in upfront makeDir execs", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-makedir-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-makedir-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "noop-acp-child.mjs");
     await writeFile(childPath, "process.stdin.on('data', () => {});\n", "utf8");
@@ -473,7 +591,9 @@ describe("sandbox adapter execution targets", () => {
 
       // The launch exec creates both directories in one `mkdir -p` line.
       const launchExecs = execScripts.filter(
-        (script) => script.includes("nohup") && /mkdir -p [^\n]*\/stdin[^\n]*\/events/.test(script),
+        (script) =>
+          script.includes("nohup") &&
+          /mkdir -p [^\n]*\/stdin[^\n]*\/events/.test(script),
       );
       expect(launchExecs.length).toBe(1);
     } finally {
@@ -505,15 +625,14 @@ describe("sandbox adapter execution targets", () => {
 
       const delegate = createLocalSandboxRunner();
       const runner = {
-        execute: vi.fn(
-          async (input: Parameters<typeof delegate.execute>[0]) =>
-            delegate.execute({
-              ...input,
-              // The local fake otherwise inherits the test host PATH. Give the
-              // wrapper a distinct sandbox-native PATH so the child proves the
-              // explicit equal-to-host value survived payload serialization.
-              env: { ...input.env, PATH: sandboxNativePath },
-            }),
+        execute: vi.fn(async (input: Parameters<typeof delegate.execute>[0]) =>
+          delegate.execute({
+            ...input,
+            // The local fake otherwise inherits the test host PATH. Give the
+            // wrapper a distinct sandbox-native PATH so the child proves the
+            // explicit equal-to-host value survived payload serialization.
+            env: { ...input.env, PATH: sandboxNativePath },
+          }),
         ),
       };
       const target: AdapterSandboxExecutionTarget = {
@@ -550,71 +669,138 @@ describe("sandbox adapter execution targets", () => {
     },
   );
 
-  it.each([false, true])("launches a large environment without oversized exec arguments (streamed=%s)", async (streamOutputViaSession) => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-large-process-env-"));
-    cleanupDirs.push(rootDir);
-    const value = "x".repeat(110_000);
-    const childPath = path.join(rootDir, "child.mjs");
-    await writeFile(childPath, 'process.stdout.write(process.env.LARGE_CONTEXT ?? "missing");\n');
-    const delegate = createLocalSandboxRunner();
-    let checkedPrivatePayload = false;
-    const runner = {
-      execute: async (input: Parameters<typeof delegate.execute>[0]) => {
-        // Linux limits each argument and environment string to 128 KiB on
-        // systems with 4 KiB pages. Enforce that boundary on macOS too.
-        const strings = [...(input.args ?? []), ...Object.entries(input.env ?? {}).map(([k, v]) => `${k}=${v}`)];
-        if (strings.some((text) => Buffer.byteLength(text) >= 131_072)) {
-          return { exitCode: 127, stdout: "", stderr: "argument list too long: env\n", timedOut: false, signal: null, pid: null, startedAt: null };
+  it.each([false, true])(
+    "launches a large environment without oversized exec arguments (streamed=%s)",
+    async (streamOutputViaSession) => {
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-large-process-env-"),
+      );
+      cleanupDirs.push(rootDir);
+      const value = "x".repeat(110_000);
+      const childPath = path.join(rootDir, "child.mjs");
+      await writeFile(
+        childPath,
+        'process.stdout.write(process.env.LARGE_CONTEXT ?? "missing");\n',
+      );
+      const delegate = createLocalSandboxRunner();
+      let checkedPrivatePayload = false;
+      const runner = {
+        execute: async (input: Parameters<typeof delegate.execute>[0]) => {
+          // Linux limits each argument and environment string to 128 KiB on
+          // systems with 4 KiB pages. Enforce that boundary on macOS too.
+          const strings = [
+            ...(input.args ?? []),
+            ...Object.entries(input.env ?? {}).map(([k, v]) => `${k}=${v}`),
+          ];
+          if (strings.some((text) => Buffer.byteLength(text) >= 131_072)) {
+            return {
+              exitCode: 127,
+              stdout: "",
+              stderr: "argument list too long: env\n",
+              timedOut: false,
+              signal: null,
+              pid: null,
+              startedAt: null,
+            };
+          }
+          if (
+            input.env?.TASKCORE_PROCESS_SESSION_DIR ||
+            input.args?.[1]?.includes("nohup node")
+          ) {
+            const sessionRoot = path.join(runtimeRootDir, "process-sessions");
+            const entries = await readdir(sessionRoot, { withFileTypes: true });
+            const sessionDir = path.join(
+              sessionRoot,
+              entries.find((entry) => entry.isDirectory())!.name,
+            );
+            expect((await stat(sessionDir)).mode & 0o777).toBe(0o700);
+            expect(
+              (await stat(path.join(sessionDir, "command.b64"))).mode & 0o777,
+            ).toBe(0o600);
+            checkedPrivatePayload = true;
+          }
+          return delegate.execute(input);
+        },
+      };
+      const runtimeRootDir = path.join(rootDir, ".taskcore-runtime");
+      const bridge = await startAdapterExecutionTargetProcessSessionBridge({
+        runId: "large-process-env",
+        adapterKey: "acpx",
+        runtimeRootDir,
+        target: {
+          kind: "remote",
+          transport: "sandbox",
+          providerKey: "local-test",
+          remoteCwd: rootDir,
+          runner,
+        },
+        command: process.execPath,
+        args: [childPath],
+        cwd: rootDir,
+        env: { LARGE_CONTEXT: value },
+        timeoutSec: 10,
+        streamOutputViaSession,
+      });
+      try {
+        const result = await runProxyWithInput(bridge!.agentCommand, "", true);
+        expect(result.code).toBe(0);
+        expect(result.stdout).toBe(value);
+        expect(checkedPrivatePayload).toBe(true);
+        const sessionRoot = path.join(runtimeRootDir, "process-sessions");
+        const sessionDirs = (
+          await readdir(sessionRoot, { withFileTypes: true })
+        ).filter((entry) => entry.isDirectory());
+        for (const entry of sessionDirs) {
+          await expect(
+            readFile(path.join(sessionRoot, entry.name, "command.b64")),
+          ).rejects.toThrow();
         }
-        if (input.env?.TASKCORE_PROCESS_SESSION_DIR || input.args?.[1]?.includes("nohup node")) {
-          const sessionRoot = path.join(runtimeRootDir, "process-sessions");
-          const entries = await readdir(sessionRoot, { withFileTypes: true });
-          const sessionDir = path.join(sessionRoot, entries.find((entry) => entry.isDirectory())!.name);
-          expect((await stat(sessionDir)).mode & 0o777).toBe(0o700);
-          expect((await stat(path.join(sessionDir, "command.b64"))).mode & 0o777).toBe(0o600);
-          checkedPrivatePayload = true;
-        }
-        return delegate.execute(input);
-      },
-    };
-    const runtimeRootDir = path.join(rootDir, ".taskcore-runtime");
-    const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "large-process-env", adapterKey: "acpx", runtimeRootDir,
-      target: { kind: "remote", transport: "sandbox", providerKey: "local-test", remoteCwd: rootDir, runner },
-      command: process.execPath, args: [childPath], cwd: rootDir,
-      env: { LARGE_CONTEXT: value }, timeoutSec: 10, streamOutputViaSession,
-    });
-    try {
-      const result = await runProxyWithInput(bridge!.agentCommand, "", true);
-      expect(result.code).toBe(0);
-      expect(result.stdout).toBe(value);
-      expect(checkedPrivatePayload).toBe(true);
-      const sessionRoot = path.join(runtimeRootDir, "process-sessions");
-      const sessionDirs = (await readdir(sessionRoot, { withFileTypes: true })).filter((entry) => entry.isDirectory());
-      for (const entry of sessionDirs) {
-        await expect(readFile(path.join(sessionRoot, entry.name, "command.b64"))).rejects.toThrow();
+      } finally {
+        await bridge?.stop();
       }
-    } finally {
-      await bridge?.stop();
-    }
-  });
+    },
+  );
 
   it("logs a streamed wrapper launch failure before forwarding its exit", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-wrapper-launch-error-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-wrapper-launch-error-"),
+    );
     cleanupDirs.push(rootDir);
     const delegate = createLocalSandboxRunner();
     const logs: string[] = [];
     const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "wrapper-launch-error", adapterKey: "acpx", runtimeRootDir: rootDir,
+      runId: "wrapper-launch-error",
+      adapterKey: "acpx",
+      runtimeRootDir: rootDir,
       target: {
-        kind: "remote", transport: "sandbox", providerKey: "local-test", remoteCwd: rootDir,
-        runner: { execute: async (input) => input.useSession
-          ? { exitCode: 127, stdout: "", stderr: "argument list too long: env\n", timedOut: false, signal: null, pid: null, startedAt: null }
-          : delegate.execute(input) },
+        kind: "remote",
+        transport: "sandbox",
+        providerKey: "local-test",
+        remoteCwd: rootDir,
+        runner: {
+          execute: async (input) =>
+            input.useSession
+              ? {
+                  exitCode: 127,
+                  stdout: "",
+                  stderr: "argument list too long: env\n",
+                  timedOut: false,
+                  signal: null,
+                  pid: null,
+                  startedAt: null,
+                }
+              : delegate.execute(input),
+        },
       },
-      command: process.execPath, args: [], cwd: rootDir, env: {}, timeoutSec: 5,
+      command: process.execPath,
+      args: [],
+      cwd: rootDir,
+      env: {},
+      timeoutSec: 5,
       streamOutputViaSession: true,
-      onLog: async (stream, chunk) => { if (stream === "stderr") logs.push(chunk); },
+      onLog: async (stream, chunk) => {
+        if (stream === "stderr") logs.push(chunk);
+      },
     });
     try {
       const result = await runProxyWithInput(bridge!.agentCommand, "", true);
@@ -626,25 +812,46 @@ describe("sandbox adapter execution targets", () => {
   }, 10_000);
 
   it("removes an incomplete private command payload when upload fails", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-payload-upload-error-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-payload-upload-error-"),
+    );
     cleanupDirs.push(rootDir);
     const delegate = createLocalSandboxRunner();
-    await expect(startAdapterExecutionTargetProcessSessionBridge({
-      runId: "payload-upload-error", adapterKey: "acpx", runtimeRootDir: rootDir,
-      target: {
-        kind: "remote", transport: "sandbox", providerKey: "local-test", remoteCwd: rootDir,
-        runner: { execute: async (input) => {
-          if (/command\.b64\.[^/]+\.taskcore-upload\.b64/.test(input.args?.[1] ?? "") && input.args![1].includes(">>")) {
-            throw new Error("Upload interrupted");
-          }
-          return delegate.execute(input);
-        } },
-      },
-      command: process.execPath, args: [], cwd: rootDir,
-      env: { LARGE_CONTEXT: "x".repeat(110_000) }, timeoutSec: 5,
-      streamOutputViaSession: true,
-    })).rejects.toThrow("Upload interrupted");
-    const entries = await readdir(path.join(rootDir, "process-sessions"), { withFileTypes: true });
+    await expect(
+      startAdapterExecutionTargetProcessSessionBridge({
+        runId: "payload-upload-error",
+        adapterKey: "acpx",
+        runtimeRootDir: rootDir,
+        target: {
+          kind: "remote",
+          transport: "sandbox",
+          providerKey: "local-test",
+          remoteCwd: rootDir,
+          runner: {
+            execute: async (input) => {
+              if (
+                /command\.b64\.[^/]+\.taskcore-upload\.b64/.test(
+                  input.args?.[1] ?? "",
+                ) &&
+                input.args![1].includes(">>")
+              ) {
+                throw new Error("Upload interrupted");
+              }
+              return delegate.execute(input);
+            },
+          },
+        },
+        command: process.execPath,
+        args: [],
+        cwd: rootDir,
+        env: { LARGE_CONTEXT: "x".repeat(110_000) },
+        timeoutSec: 5,
+        streamOutputViaSession: true,
+      }),
+    ).rejects.toThrow("Upload interrupted");
+    const entries = await readdir(path.join(rootDir, "process-sessions"), {
+      withFileTypes: true,
+    });
     expect(entries.filter((entry) => entry.isDirectory())).toEqual([]);
   });
 
@@ -653,38 +860,68 @@ describe("sandbox adapter execution targets", () => {
     { streamed: false, corrupt: true },
     { streamed: true, corrupt: false },
     { streamed: true, corrupt: true },
-  ])("reports payload read failures without hanging (streamed=$streamed, corrupt=$corrupt)", async ({ streamed, corrupt }) => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-payload-read-error-"));
-    cleanupDirs.push(rootDir);
-    const delegate = createLocalSandboxRunner();
-    const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "payload-read-error", adapterKey: "acpx", runtimeRootDir: rootDir,
-      target: {
-        kind: "remote", transport: "sandbox", providerKey: "local-test", remoteCwd: rootDir,
-        runner: { execute: async (input) => {
-          if (input.env?.TASKCORE_PROCESS_SESSION_DIR || input.args?.[1]?.includes("nohup node")) {
-            const sessionRoot = path.join(rootDir, "process-sessions");
-            const entries = await readdir(sessionRoot, { withFileTypes: true });
-            const payloadPath = path.join(sessionRoot, entries.find((entry) => entry.isDirectory())!.name, "command.b64");
-            if (corrupt) await writeFile(payloadPath, Buffer.from("private-payload-text").toString("base64"));
-            else await rm(payloadPath);
-          }
-          return delegate.execute(input);
-        } },
-      },
-      command: process.execPath, args: [], cwd: rootDir,
-      env: { LARGE_CONTEXT: "x".repeat(110_000) }, timeoutSec: 10,
-      streamOutputViaSession: streamed,
-    });
-    try {
-      const result = await runProxyWithInput(bridge!.agentCommand, "", true);
-      expect(result.code).toBe(1);
-      expect(result.stderr).toContain("Failed to read sandbox process session command payload.");
-      expect(result.stderr).not.toContain("private-payload-text");
-    } finally {
-      await bridge?.stop();
-    }
-  });
+  ])(
+    "reports payload read failures without hanging (streamed=$streamed, corrupt=$corrupt)",
+    async ({ streamed, corrupt }) => {
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-payload-read-error-"),
+      );
+      cleanupDirs.push(rootDir);
+      const delegate = createLocalSandboxRunner();
+      const bridge = await startAdapterExecutionTargetProcessSessionBridge({
+        runId: "payload-read-error",
+        adapterKey: "acpx",
+        runtimeRootDir: rootDir,
+        target: {
+          kind: "remote",
+          transport: "sandbox",
+          providerKey: "local-test",
+          remoteCwd: rootDir,
+          runner: {
+            execute: async (input) => {
+              if (
+                input.env?.TASKCORE_PROCESS_SESSION_DIR ||
+                input.args?.[1]?.includes("nohup node")
+              ) {
+                const sessionRoot = path.join(rootDir, "process-sessions");
+                const entries = await readdir(sessionRoot, {
+                  withFileTypes: true,
+                });
+                const payloadPath = path.join(
+                  sessionRoot,
+                  entries.find((entry) => entry.isDirectory())!.name,
+                  "command.b64",
+                );
+                if (corrupt)
+                  await writeFile(
+                    payloadPath,
+                    Buffer.from("private-payload-text").toString("base64"),
+                  );
+                else await rm(payloadPath);
+              }
+              return delegate.execute(input);
+            },
+          },
+        },
+        command: process.execPath,
+        args: [],
+        cwd: rootDir,
+        env: { LARGE_CONTEXT: "x".repeat(110_000) },
+        timeoutSec: 10,
+        streamOutputViaSession: streamed,
+      });
+      try {
+        const result = await runProxyWithInput(bridge!.agentCommand, "", true);
+        expect(result.code).toBe(1);
+        expect(result.stderr).toContain(
+          "Failed to read sandbox process session command payload.",
+        );
+        expect(result.stderr).not.toContain("private-payload-text");
+      } finally {
+        await bridge?.stop();
+      }
+    },
+  );
 
   it("test_process_session_poll_exec_parents_to_run_context", async () => {
     // The poll timer runs run-time execs for the whole run. Its `sandbox.exec`
@@ -693,7 +930,9 @@ describe("sandbox adapter execution targets", () => {
     // that token. This test drives the bridge with a getter that returns a known
     // token, lets the first poll tick fire, and proves the poll exec reads that
     // token from the active step store.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-poll-parent-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-poll-parent-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "noop-acp-child.mjs");
     await writeFile(childPath, "process.stdin.on('data', () => {});\n", "utf8");
@@ -750,7 +989,9 @@ describe("sandbox adapter execution targets", () => {
       // to the run token, not to a detached root or an ended startup step.
       expect(pollStep).not.toBe("unset");
       expect(pollStep).not.toBeNull();
-      expect((pollStep as { parentContext?: unknown }).parentContext).toBe(runParentToken);
+      expect((pollStep as { parentContext?: unknown }).parentContext).toBe(
+        runParentToken,
+      );
       expect((pollStep as { criticalPath?: boolean }).criticalPath).toBe(false);
     } finally {
       await bridge?.stop();
@@ -761,7 +1002,9 @@ describe("sandbox adapter execution targets", () => {
     // With no `getRuntimeParentContext`, the poll tick runs with an empty active
     // step store, exactly like the earlier `runWithoutActiveStep` behavior. So a
     // poll `sandbox.exec` span opens unparented with no stale startup flag.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-poll-nogetter-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-poll-nogetter-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "noop-acp-child.mjs");
     await writeFile(childPath, "process.stdin.on('data', () => {});\n", "utf8");
@@ -823,7 +1066,9 @@ describe("sandbox adapter execution targets", () => {
     // message in the `data` handler, not once at connect time. This test opens a
     // socket while `connectParent` is live, switches the getter to `turnParent`,
     // sends one stdin line, and proves the stdin write ran under `turnParent`.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stdin-parent-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-stdin-parent-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "noop-acp-child.mjs");
     await writeFile(childPath, "process.stdin.on('data', () => {});\n", "utf8");
@@ -832,7 +1077,8 @@ describe("sandbox adapter execution targets", () => {
     const turnParent = { marker: "process-session-turn-parent" };
     let currentParent: unknown = connectParent;
 
-    let stdinWriteStep: ReturnType<typeof getActiveStepContext> | "unset" = "unset";
+    let stdinWriteStep: ReturnType<typeof getActiveStepContext> | "unset" =
+      "unset";
     let resolveStdinWrite: () => void = () => {};
     const stdinWriteObserved = new Promise<void>((resolve) => {
       resolveStdinWrite = resolve;
@@ -845,7 +1091,10 @@ describe("sandbox adapter execution targets", () => {
         // The `.taskcore-upload` temp path under the `stdin` directory is unique
         // to the stdin-write path; the poll loop reads the `events` directory.
         const script = (input.args ?? []).join("\n");
-        if (stdinWriteStep === "unset" && /\/stdin\/[^\s']*taskcore-upload/.test(script)) {
+        if (
+          stdinWriteStep === "unset" &&
+          /\/stdin\/[^\s']*taskcore-upload/.test(script)
+        ) {
           stdinWriteStep = getActiveStepContext();
           resolveStdinWrite();
         }
@@ -902,16 +1151,24 @@ describe("sandbox adapter execution targets", () => {
 
       // Send one stdin line. The first token-bearing message authenticates and
       // writes the stdin file. That write must read `turnParent` at send time.
-      peerSocket.write(`${JSON.stringify({ token, type: "stdin", data: Buffer.from("hi").toString("base64") })}\n`);
+      peerSocket.write(
+        `${JSON.stringify({ token, type: "stdin", data: Buffer.from("hi").toString("base64") })}\n`,
+      );
 
       await stdinWriteObserved;
       // The stdin write ran under the send-time parent, not the connect-time
       // parent captured when the socket opened.
       expect(stdinWriteStep).not.toBe("unset");
       expect(stdinWriteStep).not.toBeNull();
-      expect((stdinWriteStep as { parentContext?: unknown }).parentContext).toBe(turnParent);
-      expect((stdinWriteStep as { parentContext?: unknown }).parentContext).not.toBe(connectParent);
-      expect((stdinWriteStep as { criticalPath?: boolean }).criticalPath).toBe(false);
+      expect(
+        (stdinWriteStep as { parentContext?: unknown }).parentContext,
+      ).toBe(turnParent);
+      expect(
+        (stdinWriteStep as { parentContext?: unknown }).parentContext,
+      ).not.toBe(connectParent);
+      expect((stdinWriteStep as { criticalPath?: boolean }).criticalPath).toBe(
+        false,
+      );
     } finally {
       peer?.destroy();
       await bridge?.stop();
@@ -923,7 +1180,9 @@ describe("sandbox adapter execution targets", () => {
     // message to the agent in a `sandbox.agentSession.sendInput` span. This test
     // connects a socket, sends one stdin line, and proves the handler opens that
     // wrapper span around the write.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-sendinput-span-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-sendinput-span-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "noop-acp-child.mjs");
     await writeFile(childPath, "process.stdin.on('data', () => {});\n", "utf8");
@@ -995,7 +1254,9 @@ describe("sandbox adapter execution targets", () => {
     // With a span runner injected, the poll timer wraps each 100 ms poll tick in
     // a `sandbox.agentSession.pollOutput` span. This test lets the first poll tick
     // fire and proves the timer opens that wrapper span.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-poll-span-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-poll-span-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "noop-acp-child.mjs");
     await writeFile(childPath, "process.stdin.on('data', () => {});\n", "utf8");
@@ -1044,7 +1305,9 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("bridges bidirectional sandbox process sessions through a local ACPX-spawnable proxy", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "fake-acp-child.mjs");
     await writeFile(
@@ -1082,7 +1345,10 @@ describe("sandbox adapter execution targets", () => {
 
     try {
       const result = await runProxyWithInput(bridge!.agentCommand, "hello\n");
-      const report = await describeProxyRun(result, path.posix.join(rootDir, ".taskcore-runtime", "acpx"));
+      const report = await describeProxyRun(
+        result,
+        path.posix.join(rootDir, ".taskcore-runtime", "acpx"),
+      );
       expect(result.code, report).toBe(0);
       expect(result.stdout, report).toBe("out:hello\n");
       expect(result.stderr, report).toBe("err:hello\n");
@@ -1098,57 +1364,76 @@ describe("sandbox adapter execution targets", () => {
     { streamOutputViaSession: true, exitCode: 7 },
     { streamOutputViaSession: false, exitCode: null },
     { streamOutputViaSession: true, exitCode: null },
-  ])("exits with stdin open after remote exit (stream=$streamOutputViaSession, code=$exitCode)", async ({
-    streamOutputViaSession,
-    exitCode,
-  }) => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-open-stdin-"));
-    cleanupDirs.push(rootDir);
-    // ACP keeps stdin open while it waits for a handshake. A remote child can
-    // exit before replying; that must close the proxy and fail the handshake.
-    const output = "final output\n".repeat(16_384);
-    const logs: string[] = [];
-    const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "run-open-stdin",
-      target: {
-        kind: "remote",
-        transport: "sandbox",
-        providerKey: "local-test",
-        remoteCwd: rootDir,
-        runner: createLocalSandboxRunner(),
-      },
-      runtimeRootDir: path.posix.join(rootDir, ".taskcore-runtime", "acpx"),
-      adapterKey: "acpx",
-      command: exitCode === null ? path.join(rootDir, "missing-agent") : process.execPath,
-      args: ["-e", `process.stdout.write("final output\\n".repeat(16_384)); process.stderr.write("final diagnostic\\n"); process.exitCode = ${exitCode};`],
-      cwd: rootDir,
-      env: {},
-      timeoutSec: 10,
-      streamOutputViaSession,
-      onLog: async (stream, chunk) => { if (stream === "stderr") logs.push(chunk); },
-    });
-    expect(bridge).not.toBeNull();
-    try {
-      const result = await runProxyWithInput(bridge!.agentCommand, "initialize\n", true);
-      expect(result.code).toBe(exitCode ?? 1);
-      const terminal = logs.filter((line) => line.includes("ACP process session terminal:"));
-      expect(terminal).toEqual([
-        `[taskcore] ACP process session terminal: source=remote_event outcome=${exitCode === null ? "error" : "exit"} exitCode=${exitCode ?? "unknown"} signal=unknown.\n`,
-      ]);
-      if (exitCode === null) {
-        expect(result.stdout).toBe("");
-        expect(result.stderr).toContain("ENOENT");
-      } else {
-        expect(result.stdout).toBe(output);
-        expect(result.stderr).toBe("final diagnostic\n");
+  ])(
+    "exits with stdin open after remote exit (stream=$streamOutputViaSession, code=$exitCode)",
+    async ({ streamOutputViaSession, exitCode }) => {
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-open-stdin-"),
+      );
+      cleanupDirs.push(rootDir);
+      // ACP keeps stdin open while it waits for a handshake. A remote child can
+      // exit before replying; that must close the proxy and fail the handshake.
+      const output = "final output\n".repeat(16_384);
+      const logs: string[] = [];
+      const bridge = await startAdapterExecutionTargetProcessSessionBridge({
+        runId: "run-open-stdin",
+        target: {
+          kind: "remote",
+          transport: "sandbox",
+          providerKey: "local-test",
+          remoteCwd: rootDir,
+          runner: createLocalSandboxRunner(),
+        },
+        runtimeRootDir: path.posix.join(rootDir, ".taskcore-runtime", "acpx"),
+        adapterKey: "acpx",
+        command:
+          exitCode === null
+            ? path.join(rootDir, "missing-agent")
+            : process.execPath,
+        args: [
+          "-e",
+          `process.stdout.write("final output\\n".repeat(16_384)); process.stderr.write("final diagnostic\\n"); process.exitCode = ${exitCode};`,
+        ],
+        cwd: rootDir,
+        env: {},
+        timeoutSec: 10,
+        streamOutputViaSession,
+        onLog: async (stream, chunk) => {
+          if (stream === "stderr") logs.push(chunk);
+        },
+      });
+      expect(bridge).not.toBeNull();
+      try {
+        const result = await runProxyWithInput(
+          bridge!.agentCommand,
+          "initialize\n",
+          true,
+        );
+        expect(result.code).toBe(exitCode ?? 1);
+        const terminal = logs.filter((line) =>
+          line.includes("ACP process session terminal:"),
+        );
+        expect(terminal).toEqual([
+          `[taskcore] ACP process session terminal: source=remote_event outcome=${exitCode === null ? "error" : "exit"} exitCode=${exitCode ?? "unknown"} signal=unknown.\n`,
+        ]);
+        if (exitCode === null) {
+          expect(result.stdout).toBe("");
+          expect(result.stderr).toContain("ENOENT");
+        } else {
+          expect(result.stdout).toBe(output);
+          expect(result.stderr).toBe("final diagnostic\n");
+        }
+      } finally {
+        await bridge?.stop();
       }
-    } finally {
-      await bridge?.stop();
-    }
-  }, 15_000);
+    },
+    15_000,
+  );
 
   it("flushes remote errors under backpressure and retains only bounded terminal evidence", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-terminal-flush-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-terminal-flush-"),
+    );
     cleanupDirs.push(rootDir);
     const delegate = createLocalSandboxRunner();
     const logs: string[] = [];
@@ -1156,74 +1441,127 @@ describe("sandbox adapter execution targets", () => {
     let complete!: () => void;
     let failInput!: (error: Error) => void;
     let inputStarted = false;
-    const inputFailure = new Promise<never>((_resolve, reject) => { failInput = reject; });
+    const inputFailure = new Promise<never>((_resolve, reject) => {
+      failInput = reject;
+    });
     void inputFailure.catch(() => {});
-    const commandComplete = new Promise<void>((resolve) => { complete = resolve; });
+    const commandComplete = new Promise<void>((resolve) => {
+      complete = resolve;
+    });
     const frame = {
-      type: "error", message: "synthetic-private-detail".repeat(200_000),
-      code: 1e100, signal: "untrusted-private-signal",
+      type: "error",
+      message: "synthetic-private-detail".repeat(200_000),
+      code: 1e100,
+      signal: "untrusted-private-signal",
     };
     const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "terminal-flush", adapterKey: "acpx", runtimeRootDir: rootDir,
+      runId: "terminal-flush",
+      adapterKey: "acpx",
+      runtimeRootDir: rootDir,
       target: {
-        kind: "remote", transport: "sandbox", remoteCwd: rootDir,
-        runner: { execute: async (input) => {
-          if (!input.useSession) {
-            const script = input.args?.[1] ?? "";
-            if (script.startsWith("mkdir -p") && script.includes("/stdin/000000000001.json")) {
-              inputStarted = true;
-              return inputFailure;
+        kind: "remote",
+        transport: "sandbox",
+        remoteCwd: rootDir,
+        runner: {
+          execute: async (input) => {
+            if (!input.useSession) {
+              const script = input.args?.[1] ?? "";
+              if (
+                script.startsWith("mkdir -p") &&
+                script.includes("/stdin/000000000001.json")
+              ) {
+                inputStarted = true;
+                return inputFailure;
+              }
+              return delegate.execute(input);
             }
-            return delegate.execute(input);
-          }
-          emit = async (text) => { await input.onLog?.("stdout", text); };
-          await commandComplete;
-          return { exitCode: 1, stdout: "", stderr: "", timedOut: false, signal: null, pid: null, startedAt: null };
-        } },
+            emit = async (text) => {
+              await input.onLog?.("stdout", text);
+            };
+            await commandComplete;
+            return {
+              exitCode: 1,
+              stdout: "",
+              stderr: "",
+              timedOut: false,
+              signal: null,
+              pid: null,
+              startedAt: null,
+            };
+          },
+        },
       },
-      command: "cat", args: [], cwd: rootDir, env: {}, streamOutputViaSession: true,
-      onLog: async (stream, chunk) => { if (stream === "stderr") logs.push(chunk); },
+      command: "cat",
+      args: [],
+      cwd: rootDir,
+      env: {},
+      streamOutputViaSession: true,
+      onLog: async (stream, chunk) => {
+        if (stream === "stderr") logs.push(chunk);
+      },
     });
     let peer: net.Socket | undefined;
     try {
       const source = await readFile(bridge!.agentCommand, "utf8");
       const port = Number(/port: (\d+)/.exec(source)![1]);
-      const token = JSON.parse(/const token = (".*?");/.exec(source)![1]) as string;
+      const token = JSON.parse(
+        /const token = (".*?");/.exec(source)![1],
+      ) as string;
       peer = net.createConnection({ host: "127.0.0.1", port });
       peer.on("error", () => {});
       peer.setEncoding("utf8");
       let output = "";
-      peer.on("data", (chunk) => { output += chunk; });
-      const closed = new Promise<void>((resolve) => peer!.once("close", resolve));
+      peer.on("data", (chunk) => {
+        output += chunk;
+      });
+      const closed = new Promise<void>((resolve) =>
+        peer!.once("close", resolve),
+      );
       await new Promise<void>((resolve) => peer!.once("connect", resolve));
       peer.write(JSON.stringify({ token, type: "hello" }) + "\n");
       // Confirm authentication by receiving a marker before applying backpressure.
-      await emit(JSON.stringify({ type: "data", stream: "stdout", data: "" }) + "\n");
-      await waitForCondition(() => output.length > 0, "Missing authenticated marker.");
+      await emit(
+        JSON.stringify({ type: "data", stream: "stdout", data: "" }) + "\n",
+      );
+      await waitForCondition(
+        () => output.length > 0,
+        "Missing authenticated marker.",
+      );
       output = "";
-      peer.write(JSON.stringify({ token, type: "stdin", data: "aW5wdXQ=" }) + "\n");
+      peer.write(
+        JSON.stringify({ token, type: "stdin", data: "aW5wdXQ=" }) + "\n",
+      );
       await waitForCondition(() => inputStarted, "Input write did not start.");
       peer.pause();
       // The real wrapper emits error then exit when a child fails to spawn.
       // A later frame must not write after end() and abort the pending error.
-      await emit([
-        frame,
-        { type: "exit", code: 1 },
-        { type: "data", stream: "stdout", data: "bGF0ZQ==" },
-        { type: "shutdownAck" },
-      ].map((event) => JSON.stringify(event) + "\n").join(""));
+      await emit(
+        [
+          frame,
+          { type: "exit", code: 1 },
+          { type: "data", stream: "stdout", data: "bGF0ZQ==" },
+          { type: "shutdownAck" },
+        ]
+          .map((event) => JSON.stringify(event) + "\n")
+          .join(""),
+      );
       // The reverse race matters too: an already-accepted input write can
       // reject after the remote error started draining. Its end(data) must
       // not abort or replace the first terminal frame.
       failInput(new Error("synthetic-private-input-detail"));
       await waitForCondition(
-        () => logs.some((line) => line.includes("ACP process session input delivery failed.")),
+        () =>
+          logs.some((line) =>
+            line.includes("ACP process session input delivery failed."),
+          ),
         "Input failure was not handled.",
       );
       peer.resume();
       await closed;
       expect(JSON.parse(output)).toEqual(frame);
-      expect(logs.filter((line) => line.includes("ACP process session terminal:"))).toEqual([
+      expect(
+        logs.filter((line) => line.includes("ACP process session terminal:")),
+      ).toEqual([
         "[taskcore] ACP process session terminal: source=remote_event outcome=error exitCode=unknown signal=unknown.\n",
       ]);
     } finally {
@@ -1235,24 +1573,42 @@ describe("sandbox adapter execution targets", () => {
   }, 15_000);
 
   it("reports a streamed transport failure even when diagnostic persistence stalls", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-terminal-stream-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-terminal-stream-"),
+    );
     cleanupDirs.push(rootDir);
     const delegate = createLocalSandboxRunner();
     const logs: string[] = [];
     let releaseLog!: () => void;
-    const stalledLog = new Promise<void>((resolve) => { releaseLog = resolve; });
+    const stalledLog = new Promise<void>((resolve) => {
+      releaseLog = resolve;
+    });
     const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "terminal-stream", adapterKey: "acpx", runtimeRootDir: rootDir,
+      runId: "terminal-stream",
+      adapterKey: "acpx",
+      runtimeRootDir: rootDir,
       target: {
-        kind: "remote", transport: "sandbox", remoteCwd: rootDir,
-        runner: { execute: async (input) => {
-          if (input.useSession) throw new Error("synthetic-private-provider-detail");
-          return delegate.execute(input);
-        } },
+        kind: "remote",
+        transport: "sandbox",
+        remoteCwd: rootDir,
+        runner: {
+          execute: async (input) => {
+            if (input.useSession)
+              throw new Error("synthetic-private-provider-detail");
+            return delegate.execute(input);
+          },
+        },
       },
-      command: "cat", args: [], cwd: rootDir, env: {}, streamOutputViaSession: true,
+      command: "cat",
+      args: [],
+      cwd: rootDir,
+      env: {},
+      streamOutputViaSession: true,
       onLog: async (stream, chunk) => {
-        if (stream === "stderr") { logs.push(chunk); await stalledLog; }
+        if (stream === "stderr") {
+          logs.push(chunk);
+          await stalledLog;
+        }
       },
     });
     try {
@@ -1268,25 +1624,42 @@ describe("sandbox adapter execution targets", () => {
   }, 10_000);
 
   it("closes a failed output poll without waiting for the run log", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-terminal-poll-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-terminal-poll-"),
+    );
     cleanupDirs.push(rootDir);
     const delegate = createLocalSandboxRunner();
     const logs: string[] = [];
     let releaseLog!: () => void;
-    const stalledLog = new Promise<void>((resolve) => { releaseLog = resolve; });
+    const stalledLog = new Promise<void>((resolve) => {
+      releaseLog = resolve;
+    });
     const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "terminal-poll", adapterKey: "acpx", runtimeRootDir: rootDir,
+      runId: "terminal-poll",
+      adapterKey: "acpx",
+      runtimeRootDir: rootDir,
       target: {
-        kind: "remote", transport: "sandbox", remoteCwd: rootDir,
-        runner: { execute: async (input) => {
-          const script = input.args?.[1] ?? "";
-          if (script.includes("/events'/*.json")) throw new Error("synthetic-private-provider-detail");
-          return delegate.execute(input);
-        } },
+        kind: "remote",
+        transport: "sandbox",
+        remoteCwd: rootDir,
+        runner: {
+          execute: async (input) => {
+            const script = input.args?.[1] ?? "";
+            if (script.includes("/events'/*.json"))
+              throw new Error("synthetic-private-provider-detail");
+            return delegate.execute(input);
+          },
+        },
       },
-      command: "cat", args: [], cwd: rootDir, env: {},
+      command: "cat",
+      args: [],
+      cwd: rootDir,
+      env: {},
       onLog: async (stream, chunk) => {
-        if (stream === "stderr") { logs.push(chunk); await stalledLog; }
+        if (stream === "stderr") {
+          logs.push(chunk);
+          await stalledLog;
+        }
       },
     });
     try {
@@ -1302,32 +1675,56 @@ describe("sandbox adapter execution targets", () => {
   }, 10_000);
 
   it("records an unexpected authenticated proxy close once and ignores unauthenticated peers", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-terminal-proxy-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-terminal-proxy-"),
+    );
     cleanupDirs.push(rootDir);
     const logs: string[] = [];
     const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "terminal-proxy", adapterKey: "acpx", runtimeRootDir: rootDir,
-      target: { kind: "remote", transport: "sandbox", remoteCwd: rootDir, runner: createLocalSandboxRunner() },
-      command: "cat", args: [], cwd: rootDir, env: {},
-      onLog: async (stream, chunk) => { if (stream === "stderr") logs.push(chunk); },
+      runId: "terminal-proxy",
+      adapterKey: "acpx",
+      runtimeRootDir: rootDir,
+      target: {
+        kind: "remote",
+        transport: "sandbox",
+        remoteCwd: rootDir,
+        runner: createLocalSandboxRunner(),
+      },
+      command: "cat",
+      args: [],
+      cwd: rootDir,
+      env: {},
+      onLog: async (stream, chunk) => {
+        if (stream === "stderr") logs.push(chunk);
+      },
     });
     try {
       const source = await readFile(bridge!.agentCommand, "utf8");
       const port = Number(/port: (\d+)/.exec(source)![1]);
-      const token = JSON.parse(/const token = (".*?");/.exec(source)![1]) as string;
+      const token = JSON.parse(
+        /const token = (".*?");/.exec(source)![1],
+      ) as string;
       for (const authenticated of [false, true]) {
         const peer = net.createConnection({ host: "127.0.0.1", port });
         peer.on("error", () => {});
-        const closed = new Promise<void>((resolve) => peer.once("close", resolve));
+        const closed = new Promise<void>((resolve) =>
+          peer.once("close", resolve),
+        );
         await new Promise<void>((resolve) => peer.once("connect", resolve));
-        if (authenticated) peer.end(JSON.stringify({ token, type: "hello" }) + "\n");
+        if (authenticated)
+          peer.end(JSON.stringify({ token, type: "hello" }) + "\n");
         else peer.end();
         await closed;
         if (!authenticated) expect(logs).toEqual([]);
       }
-      await waitForCondition(() => logs.length === 1, "Missing proxy-close diagnostic.");
+      await waitForCondition(
+        () => logs.length === 1,
+        "Missing proxy-close diagnostic.",
+      );
       await bridge!.stop();
-      expect(logs.filter((line) => line.includes("ACP process session terminal:"))).toEqual([
+      expect(
+        logs.filter((line) => line.includes("ACP process session terminal:")),
+      ).toEqual([
         "[taskcore] ACP process session terminal: source=proxy_close outcome=error exitCode=unknown signal=unknown.\n",
       ]);
     } finally {
@@ -1336,7 +1733,9 @@ describe("sandbox adapter execution targets", () => {
   }, 10_000);
 
   it("buffers sandbox process session output until the local proxy connects", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-buffer-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-buffer-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "fast-acp-child.mjs");
     await writeFile(
@@ -1383,7 +1782,9 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("delivers full output when the sandbox child exits immediately after writing", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-fast-exit-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-fast-exit-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "instant-exit-acp-child.mjs");
     await writeFile(
@@ -1428,10 +1829,16 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("ignores unauthenticated connections to the process session bridge", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-auth-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-auth-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "guarded-acp-child.mjs");
-    await writeFile(childPath, "process.stdout.write('guarded-out\\n');", "utf8");
+    await writeFile(
+      childPath,
+      "process.stdout.write('guarded-out\\n');",
+      "utf8",
+    );
     const target: AdapterSandboxExecutionTarget = {
       kind: "remote",
       transport: "sandbox",
@@ -1478,8 +1885,14 @@ describe("sandbox adapter execution targets", () => {
       // A peer presenting the wrong token is disconnected outright.
       const badPeer = net.createConnection({ host: "127.0.0.1", port });
       badPeer.on("error", () => undefined);
-      const badPeerClosed = new Promise<void>((resolve) => badPeer.once("close", () => resolve()));
-      badPeer.once("connect", () => badPeer.write(`${JSON.stringify({ token: "wrong-token", type: "stdinEnd" })}\n`));
+      const badPeerClosed = new Promise<void>((resolve) =>
+        badPeer.once("close", () => resolve()),
+      );
+      badPeer.once("connect", () =>
+        badPeer.write(
+          `${JSON.stringify({ token: "wrong-token", type: "stdinEnd" })}\n`,
+        ),
+      );
       await badPeerClosed;
 
       // The authenticated proxy still attaches and receives the buffered output.
@@ -1494,7 +1907,9 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("streams sandbox process session output before the remote child exits", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-process-session-stream-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "streaming-acp-child.mjs");
     await writeFile(
@@ -1535,7 +1950,9 @@ describe("sandbox adapter execution targets", () => {
     });
     expect(bridge).not.toBeNull();
 
-    const child = spawn(bridge!.agentCommand, [], { stdio: ["pipe", "pipe", "pipe"] });
+    const child = spawn(bridge!.agentCommand, [], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
     let stdout = "";
     let stderr = "";
     let exited = false;
@@ -1550,7 +1967,9 @@ describe("sandbox adapter execution targets", () => {
     const exitPromise = new Promise<number | null>((resolve, reject) => {
       const timeout = setTimeout(() => {
         child.kill("SIGKILL");
-        reject(new Error("Timed out waiting for streaming process session proxy."));
+        reject(
+          new Error("Timed out waiting for streaming process session proxy."),
+        );
       }, 5000);
       child.on("error", (error) => {
         clearTimeout(timeout);
@@ -1566,7 +1985,8 @@ describe("sandbox adapter execution targets", () => {
     try {
       child.stdin.write("ping\n");
       await waitForCondition(
-        () => stdout.includes("delta:ping\n") && stderr.includes("trace:ping\n"),
+        () =>
+          stdout.includes("delta:ping\n") && stderr.includes("trace:ping\n"),
         "Timed out waiting for live process session output.",
         3000,
       );
@@ -1585,7 +2005,9 @@ describe("sandbox adapter execution targets", () => {
 
   describe("streamed output (streamOutputViaSession)", () => {
     it("bridges bidirectional sessions when the wrapper streams output to stdout", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-echo-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-stream-echo-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "echo-acp-child.mjs");
       await writeFile(
@@ -1624,7 +2046,10 @@ describe("sandbox adapter execution targets", () => {
 
       try {
         const result = await runProxyWithInput(bridge!.agentCommand, "hello\n");
-        const report = await describeProxyRun(result, path.posix.join(rootDir, ".taskcore-runtime", "acpx"));
+        const report = await describeProxyRun(
+          result,
+          path.posix.join(rootDir, ".taskcore-runtime", "acpx"),
+        );
         expect(result.code, report).toBe(0);
         expect(result.stdout, report).toBe("out:hello\n");
         expect(result.stderr, report).toBe("err:hello\n");
@@ -1639,7 +2064,9 @@ describe("sandbox adapter execution targets", () => {
       // step) and stay open around the launch. Record the opened span names and
       // prove `sandbox.agentProcess` is among them, and that a normal exchange
       // still works through the wrap.
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-span-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-stream-span-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "echo-acp-child.mjs");
       await writeFile(
@@ -1686,7 +2113,10 @@ describe("sandbox adapter execution targets", () => {
         // frame flows, so it is observable as soon as the handle resolves.
         expect(spanNames).toContain("sandbox.agentProcess");
         const result = await runProxyWithInput(bridge!.agentCommand, "hello\n");
-        const report = await describeProxyRun(result, path.posix.join(rootDir, ".taskcore-runtime", "acpx"));
+        const report = await describeProxyRun(
+          result,
+          path.posix.join(rootDir, ".taskcore-runtime", "acpx"),
+        );
         expect(result.code, report).toBe(0);
         expect(result.stdout, report).toBe("out:hello\n");
       } finally {
@@ -1700,10 +2130,16 @@ describe("sandbox adapter execution targets", () => {
       // `bridge.process-session` bring-up step — otherwise it dangles past its
       // parent and overlaps `agent.turn`. Build the real run-rooted runner from a
       // recording trace context and assert the recorded parent.
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-parent-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-stream-parent-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "noop-acp-child.mjs");
-      await writeFile(childPath, "process.stdin.on('data', () => {});\n", "utf8");
+      await writeFile(
+        childPath,
+        "process.stdin.on('data', () => {});\n",
+        "utf8",
+      );
       const target: AdapterSandboxExecutionTarget = {
         kind: "remote",
         transport: "sandbox",
@@ -1716,9 +2152,16 @@ describe("sandbox adapter execution targets", () => {
       const { traceContext, spans } = createRecordingTraceContext();
       // The run root stands in for `task.run` — the parent the run-rooted runner
       // resolves at launch time, since no turn has started yet.
-      const runRoot = traceContext.tracer.startSpan("task.run", undefined, undefined);
+      const runRoot = traceContext.tracer.startSpan(
+        "task.run",
+        undefined,
+        undefined,
+      );
       const runRootContext = traceContext.contextWithSpan(runRoot);
-      const runtimeSpan = createRuntimeSpanRunner(traceContext, () => runRootContext);
+      const runtimeSpan = createRuntimeSpanRunner(
+        traceContext,
+        () => runRootContext,
+      );
 
       const bridge = await startAdapterExecutionTargetProcessSessionBridge({
         runId: "run-stream-parent",
@@ -1737,7 +2180,9 @@ describe("sandbox adapter execution targets", () => {
       expect(bridge).not.toBeNull();
 
       try {
-        const agentProcess = spans.find((span) => span.name === "sandbox.agentProcess");
+        const agentProcess = spans.find(
+          (span) => span.name === "sandbox.agentProcess",
+        );
         expect(agentProcess).toBeDefined();
         expect(agentProcess!.parentName).toBe("task.run");
       } finally {
@@ -1751,7 +2196,9 @@ describe("sandbox adapter execution targets", () => {
       // at `stop()`, which the caller awaits before it ends `task.run`. Use a
       // child that ignores stdin and never exits on its own, so the launch
       // command stays pending across `stop()`, and prove the span ends anyway.
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-linger-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-stream-linger-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "linger-acp-child.mjs");
       await writeFile(
@@ -1804,7 +2251,9 @@ describe("sandbox adapter execution targets", () => {
       });
       expect(bridge).not.toBeNull();
 
-      const record = spanRecords.find((span) => span.name === "sandbox.agentProcess");
+      const record = spanRecords.find(
+        (span) => span.name === "sandbox.agentProcess",
+      );
       expect(record).toBeDefined();
       // The launch command is still running, so the span is still open.
       expect(record!.ended).toBe(false);
@@ -1816,7 +2265,9 @@ describe("sandbox adapter execution targets", () => {
     });
 
     it("buffers streamed output until the local proxy connects", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-buffer-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-stream-buffer-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "fast-stream-child.mjs");
       await writeFile(
@@ -1866,7 +2317,9 @@ describe("sandbox adapter execution targets", () => {
     });
 
     it("delivers full streamed output when the sandbox child exits immediately", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-fast-exit-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-stream-fast-exit-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "instant-stream-child.mjs");
       await writeFile(
@@ -1912,7 +2365,9 @@ describe("sandbox adapter execution targets", () => {
     });
 
     it("streams live output before the child exits and never writes output event files", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-live-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-stream-live-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "live-stream-child.mjs");
       await writeFile(
@@ -1954,7 +2409,9 @@ describe("sandbox adapter execution targets", () => {
       });
       expect(bridge).not.toBeNull();
 
-      const child = spawn(bridge!.agentCommand, [], { stdio: ["pipe", "pipe", "pipe"] });
+      const child = spawn(bridge!.agentCommand, [], {
+        stdio: ["pipe", "pipe", "pipe"],
+      });
       let stdout = "";
       let stderr = "";
       let exited = false;
@@ -1969,7 +2426,9 @@ describe("sandbox adapter execution targets", () => {
       const exitPromise = new Promise<number | null>((resolve, reject) => {
         const timeout = setTimeout(() => {
           child.kill("SIGKILL");
-          reject(new Error("Timed out waiting for streamed process session proxy."));
+          reject(
+            new Error("Timed out waiting for streamed process session proxy."),
+          );
         }, 5000);
         child.on("error", (error) => {
           clearTimeout(timeout);
@@ -1985,7 +2444,8 @@ describe("sandbox adapter execution targets", () => {
       try {
         child.stdin.write("ping\n");
         await waitForCondition(
-          () => stdout.includes("delta:ping\n") && stderr.includes("trace:ping\n"),
+          () =>
+            stdout.includes("delta:ping\n") && stderr.includes("trace:ping\n"),
           "Timed out waiting for live streamed process session output.",
           3000,
         );
@@ -1997,10 +2457,19 @@ describe("sandbox adapter execution targets", () => {
         // The streamed path uses the stdout wrapper, not the output-file poll, so
         // no `events` directory is ever created under the session runtime tree.
         const hasEventsDir = await readdir(
-          path.posix.join(rootDir, ".taskcore-runtime", "acpx", "process-sessions"),
+          path.posix.join(
+            rootDir,
+            ".taskcore-runtime",
+            "acpx",
+            "process-sessions",
+          ),
           { withFileTypes: true, recursive: true },
         )
-          .then((entries) => entries.some((entry) => entry.isDirectory() && entry.name === "events"))
+          .then((entries) =>
+            entries.some(
+              (entry) => entry.isDirectory() && entry.name === "events",
+            ),
+          )
           .catch(() => false);
         expect(hasEventsDir).toBe(false);
       } finally {
@@ -2020,7 +2489,9 @@ describe("sandbox adapter execution targets", () => {
       // teardown) must run concurrently with the agent, so each must force
       // itself off the session. On the session they queue behind the agent
       // command that never returns, and the first handshake write never drains.
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-process-session-stream-isolation-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-process-session-stream-isolation-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "echo-acp-child.mjs");
       await writeFile(
@@ -2034,7 +2505,12 @@ describe("sandbox adapter execution targets", () => {
       );
 
       const delegate = createLocalSandboxRunner();
-      const execs: Array<{ useSession?: boolean; bypassSession?: boolean; timeoutMs?: number; script: string }> = [];
+      const execs: Array<{
+        useSession?: boolean;
+        bypassSession?: boolean;
+        timeoutMs?: number;
+        script: string;
+      }> = [];
       const runner = {
         execute: vi.fn(
           async (
@@ -2083,7 +2559,10 @@ describe("sandbox adapter execution targets", () => {
         const result = await runProxyWithInput(bridge!.agentCommand, "hello\n");
         expect(
           result.stdout,
-          await describeProxyRun(result, path.posix.join(rootDir, ".taskcore-runtime", "acpx")),
+          await describeProxyRun(
+            result,
+            path.posix.join(rootDir, ".taskcore-runtime", "acpx"),
+          ),
         ).toBe("out:hello\n");
 
         // Exactly one exec runs on the persistent session: the long-lived agent
@@ -2110,42 +2589,72 @@ describe("sandbox adapter execution targets", () => {
     });
   });
 
-  it.each(["launch", "payload setup"])("bounds a hung process-session %s", async (stage) => {
-    vi.useFakeTimers();
-    try {
-      const runner = {
-        execute: vi.fn(async (input: { args?: string[] }) => {
-          const script = input.args?.[1] ?? "";
-          if ((stage === "launch" && script.includes("nohup")) ||
-              (stage === "payload setup" && script.startsWith("chmod 600"))) {
-            return new Promise<RunProcessResult>(() => {});
-          }
-          return {
-            exitCode: 0, signal: null, timedOut: false, stdout: '{"uploaded":true}', stderr: "",
-            pid: null, startedAt: new Date().toISOString(),
-          };
-        }),
-      };
-      let error: unknown;
-      const operation = startAdapterExecutionTargetProcessSessionBridge({
-        runId: "run-hung-setup",
-        runtimeRootDir: "/workspace/runtime",
-        target: { kind: "remote", transport: "sandbox", remoteCwd: "/workspace", runner },
-        adapterKey: "acpx", command: "cat", args: [], cwd: "/workspace",
-        env: stage === "payload setup" ? { LARGE_VALUE: "x".repeat(70_000) } : {},
-        timeoutSec: 4 * 60 * 60,
-      }).catch((caught) => { error = caught; });
-      await vi.advanceTimersByTimeAsync(30_000);
-      expect(error).toEqual(new Error("Sandbox bridge control command timed out after 30000ms."));
-      await operation;
-      expect(runner.execute.mock.calls.filter(([input]) => input.args?.[1]?.includes("nohup")))
-        .toHaveLength(stage === "launch" ? 1 : 0);
-      expect(runner.execute).toHaveBeenLastCalledWith(expect.objectContaining({ timeoutMs: 30_000 }));
-      expect(vi.getTimerCount()).toBe(0);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
+  it.each(["launch", "payload setup"])(
+    "bounds a hung process-session %s",
+    async (stage) => {
+      vi.useFakeTimers();
+      try {
+        const runner = {
+          execute: vi.fn(async (input: { args?: string[] }) => {
+            const script = input.args?.[1] ?? "";
+            if (
+              (stage === "launch" && script.includes("nohup")) ||
+              (stage === "payload setup" && script.startsWith("chmod 600"))
+            ) {
+              return new Promise<RunProcessResult>(() => {});
+            }
+            return {
+              exitCode: 0,
+              signal: null,
+              timedOut: false,
+              stdout: '{"uploaded":true}',
+              stderr: "",
+              pid: null,
+              startedAt: new Date().toISOString(),
+            };
+          }),
+        };
+        let error: unknown;
+        const operation = startAdapterExecutionTargetProcessSessionBridge({
+          runId: "run-hung-setup",
+          runtimeRootDir: "/workspace/runtime",
+          target: {
+            kind: "remote",
+            transport: "sandbox",
+            remoteCwd: "/workspace",
+            runner,
+          },
+          adapterKey: "acpx",
+          command: "cat",
+          args: [],
+          cwd: "/workspace",
+          env:
+            stage === "payload setup"
+              ? { LARGE_VALUE: "x".repeat(70_000) }
+              : {},
+          timeoutSec: 4 * 60 * 60,
+        }).catch((caught) => {
+          error = caught;
+        });
+        await vi.advanceTimersByTimeAsync(30_000);
+        expect(error).toEqual(
+          new Error("Sandbox bridge control command timed out after 30000ms."),
+        );
+        await operation;
+        expect(
+          runner.execute.mock.calls.filter(([input]) =>
+            input.args?.[1]?.includes("nohup"),
+          ),
+        ).toHaveLength(stage === "launch" ? 1 : 0);
+        expect(runner.execute).toHaveBeenLastCalledWith(
+          expect.objectContaining({ timeoutMs: 30_000 }),
+        );
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
 
   it("applies the remote sandbox fallback when adapter timeoutSec is unset", () => {
     const sandboxTarget: AdapterSandboxExecutionTarget = {
@@ -2162,22 +2671,29 @@ describe("sandbox adapter execution targets", () => {
       DEFAULT_REMOTE_SANDBOX_ADAPTER_TIMEOUT_SEC,
     );
     expect(resolveAdapterExecutionTargetTimeoutSec(sandboxTarget, 90)).toBe(90);
-    expect(resolveAdapterExecutionTargetTimeoutSec({
-      kind: "remote",
-      transport: "ssh",
-      remoteCwd: "/workspace",
-      spec: {
-        host: "127.0.0.1",
-        port: 22,
-        username: "fixture",
-        remoteWorkspacePath: "/workspace",
-        remoteCwd: "/workspace",
-        privateKey: "KEY",
-        knownHosts: "host key",
-        strictHostKeyChecking: true,
-      },
-    }, 0)).toBe(0);
-    expect(resolveAdapterExecutionTargetTimeoutSec({ kind: "local" }, 0)).toBe(0);
+    expect(
+      resolveAdapterExecutionTargetTimeoutSec(
+        {
+          kind: "remote",
+          transport: "ssh",
+          remoteCwd: "/workspace",
+          spec: {
+            host: "127.0.0.1",
+            port: 22,
+            username: "fixture",
+            remoteWorkspacePath: "/workspace",
+            remoteCwd: "/workspace",
+            privateKey: "KEY",
+            knownHosts: "host key",
+            strictHostKeyChecking: true,
+          },
+        },
+        0,
+      ),
+    ).toBe(0);
+    expect(resolveAdapterExecutionTargetTimeoutSec({ kind: "local" }, 0)).toBe(
+      0,
+    );
   });
 
   it("reports which knob produced the resolved timeout", () => {
@@ -2202,7 +2718,9 @@ describe("sandbox adapter execution targets", () => {
     });
     // Fractional (sub-second) configured timeouts are preserved rather than
     // floored to 0, which would silently mean "no timeout".
-    expect(resolveAdapterExecutionTargetTimeout({ kind: "local" }, 0.01)).toEqual({
+    expect(
+      resolveAdapterExecutionTargetTimeout({ kind: "local" }, 0.01),
+    ).toEqual({
       timeoutSec: 0.01,
       source: "configured",
     });
@@ -2224,10 +2742,12 @@ describe("sandbox adapter execution targets", () => {
       timeoutSec: 0,
       source: "configured",
     });
-    expect(resolveAdapterExecutionTargetTimeout({ kind: "local" }, -1)).toEqual({
-      timeoutSec: 0,
-      source: "configured",
-    });
+    expect(resolveAdapterExecutionTargetTimeout({ kind: "local" }, -1)).toEqual(
+      {
+        timeoutSec: 0,
+        source: "configured",
+      },
+    );
     expect(resolveAdapterExecutionTargetTimeoutSec(sandboxTarget, -1)).toBe(0);
 
     // Explicit zero intentionally does NOT opt out: the adapter config UI
@@ -2239,11 +2759,15 @@ describe("sandbox adapter execution targets", () => {
       source: "sandbox_default",
     });
     // Unset behaves like zero.
-    expect(resolveAdapterExecutionTargetTimeout(sandboxTarget, undefined)).toEqual({
+    expect(
+      resolveAdapterExecutionTargetTimeout(sandboxTarget, undefined),
+    ).toEqual({
       timeoutSec: DEFAULT_REMOTE_SANDBOX_ADAPTER_TIMEOUT_SEC,
       source: "sandbox_default",
     });
-    expect(resolveAdapterExecutionTargetTimeout({ kind: "local" }, undefined)).toEqual({
+    expect(
+      resolveAdapterExecutionTargetTimeout({ kind: "local" }, undefined),
+    ).toEqual({
       timeoutSec: 0,
       source: "unlimited",
     });
@@ -2260,7 +2784,10 @@ describe("sandbox adapter execution targets", () => {
         "Set adapterConfig.timeoutSec to raise it.",
     );
     expect(
-      formatAdapterExecutionTimeoutErrorMessage({ timeoutSec: 1800, source: "configured" }),
+      formatAdapterExecutionTimeoutErrorMessage({
+        timeoutSec: 1800,
+        source: "configured",
+      }),
     ).toBe(
       "Run exceeded the adapter execution timeout (timeoutSec=1800, configured via adapterConfig.timeoutSec). " +
         "Set adapterConfig.timeoutSec to raise it.",
@@ -2277,18 +2804,27 @@ describe("sandbox adapter execution targets", () => {
       "Adapter execution timeout: timeoutSec=14400 (sandbox default; set adapterConfig.timeoutSec to override).",
     );
     expect(
-      formatAdapterExecutionTimeoutStartLogLine({ timeoutSec: 900, source: "configured" }),
+      formatAdapterExecutionTimeoutStartLogLine({
+        timeoutSec: 900,
+        source: "configured",
+      }),
     ).toBe(
       "Adapter execution timeout: timeoutSec=900 (configured via adapterConfig.timeoutSec; set adapterConfig.timeoutSec to override).",
     );
     expect(
-      formatAdapterExecutionTimeoutStartLogLine({ timeoutSec: 0, source: "unlimited" }),
+      formatAdapterExecutionTimeoutStartLogLine({
+        timeoutSec: 0,
+        source: "unlimited",
+      }),
     ).toBe(
       "Adapter execution timeout: none (no adapter wall-clock timeout for this target; set adapterConfig.timeoutSec to add one).",
     );
     // Negative opt-out resolves to { timeoutSec: 0, source: "configured" }.
     expect(
-      formatAdapterExecutionTimeoutStartLogLine({ timeoutSec: 0, source: "configured" }),
+      formatAdapterExecutionTimeoutStartLogLine({
+        timeoutSec: 0,
+        source: "configured",
+      }),
     ).toBe(
       "Adapter execution timeout: none (explicitly disabled via adapterConfig.timeoutSec; set it to a positive value to add one).",
     );
@@ -2296,7 +2832,8 @@ describe("sandbox adapter execution targets", () => {
 
   it("uses the caller timeout override when installing a missing sandbox command", async () => {
     const runner = {
-      execute: vi.fn()
+      execute: vi
+        .fn()
         .mockResolvedValueOnce({
           exitCode: 1,
           signal: null,
@@ -2341,11 +2878,14 @@ describe("sandbox adapter execution targets", () => {
       { installCommand: "npm install -g opencode", timeoutSec: 1800 },
     );
 
-    expect(runner.execute).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      command: "sh",
-      args: ["-c", "npm install -g opencode"],
-      timeoutMs: 1_800_000,
-    }));
+    expect(runner.execute).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        command: "sh",
+        args: ["-c", "npm install -g opencode"],
+        timeoutMs: 1_800_000,
+      }),
+    );
   });
 
   it("runs shell commands through the same runner", async () => {
@@ -2367,18 +2907,25 @@ describe("sandbox adapter execution targets", () => {
       runner,
     };
 
-    await runAdapterExecutionTargetShellCommand("run-2", target, 'printf %s "$HOME"', {
-      cwd: "/local/workspace",
-      env: {},
-      timeoutSec: 7,
-    });
+    await runAdapterExecutionTargetShellCommand(
+      "run-2",
+      target,
+      'printf %s "$HOME"',
+      {
+        cwd: "/local/workspace",
+        env: {},
+        timeoutSec: 7,
+      },
+    );
 
-    expect(runner.execute).toHaveBeenCalledWith(expect.objectContaining({
-      command: "sh",
-      args: ["-c", 'printf %s "$HOME"'],
-      cwd: "/workspace",
-      timeoutMs: 7000,
-    }));
+    expect(runner.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "sh",
+        args: ["-c", 'printf %s "$HOME"'],
+        cwd: "/workspace",
+        timeoutMs: 7000,
+      }),
+    );
   });
 
   it("strips inherited host identity env before sandbox execution", async () => {
@@ -2404,24 +2951,32 @@ describe("sandbox adapter execution targets", () => {
       runner,
     };
 
-    await runAdapterExecutionTargetProcess("run-1b", target, "agent-cli", ["--json"], {
-      cwd: "/local/workspace",
-      env: {
-        PATH: "/host/bin:/usr/bin",
-        HOME: "/Users/local",
-        TMPDIR: "/var/folders/local/T",
-        SAFE_VALUE: "visible",
+    await runAdapterExecutionTargetProcess(
+      "run-1b",
+      target,
+      "agent-cli",
+      ["--json"],
+      {
+        cwd: "/local/workspace",
+        env: {
+          PATH: "/host/bin:/usr/bin",
+          HOME: "/Users/local",
+          TMPDIR: "/var/folders/local/T",
+          SAFE_VALUE: "visible",
+        },
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
       },
-      timeoutSec: 5,
-      graceSec: 1,
-      onLog: async () => {},
-    });
+    );
 
-    expect(runner.execute).toHaveBeenCalledWith(expect.objectContaining({
-      env: {
-        SAFE_VALUE: "visible",
-      },
-    }));
+    expect(runner.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        env: {
+          SAFE_VALUE: "visible",
+        },
+      }),
+    );
   });
 
   it("preserves explicit remote identity env overrides for sandbox execution", async () => {
@@ -2446,25 +3001,33 @@ describe("sandbox adapter execution targets", () => {
       runner,
     };
 
-    await runAdapterExecutionTargetProcess("run-1c", target, "agent-cli", ["--json"], {
-      cwd: "/local/workspace",
-      env: {
-        PATH: "/custom/remote/bin:/usr/bin",
-        HOME: "/home/sandbox",
-        SAFE_VALUE: "visible",
+    await runAdapterExecutionTargetProcess(
+      "run-1c",
+      target,
+      "agent-cli",
+      ["--json"],
+      {
+        cwd: "/local/workspace",
+        env: {
+          PATH: "/custom/remote/bin:/usr/bin",
+          HOME: "/home/sandbox",
+          SAFE_VALUE: "visible",
+        },
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
       },
-      timeoutSec: 5,
-      graceSec: 1,
-      onLog: async () => {},
-    });
+    );
 
-    expect(runner.execute).toHaveBeenCalledWith(expect.objectContaining({
-      env: {
-        PATH: "/custom/remote/bin:/usr/bin",
-        HOME: "/home/sandbox",
-        SAFE_VALUE: "visible",
-      },
-    }));
+    expect(runner.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        env: {
+          PATH: "/custom/remote/bin:/usr/bin",
+          HOME: "/home/sandbox",
+          SAFE_VALUE: "visible",
+        },
+      }),
+    );
   });
 
   it("treats SSH targets as bridge-only", () => {
@@ -2515,34 +3078,51 @@ describe("sandbox adapter execution targets", () => {
       runner,
     };
 
-    await runAdapterExecutionTargetShellCommand("run-2b", target, 'printf %s "$HOME"', {
-      cwd: "/local/workspace",
-      env: {},
-      timeoutSec: 7,
-    });
+    await runAdapterExecutionTargetShellCommand(
+      "run-2b",
+      target,
+      'printf %s "$HOME"',
+      {
+        cwd: "/local/workspace",
+        env: {},
+        timeoutSec: 7,
+      },
+    );
 
-    expect(runner.execute).toHaveBeenCalledWith(expect.objectContaining({
-      command: "bash",
-      args: ["-c", 'printf %s "$HOME"'],
-      cwd: "/workspace",
-      timeoutMs: 7000,
-    }));
+    expect(runner.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "bash",
+        args: ["-c", 'printf %s "$HOME"'],
+        cwd: "/workspace",
+        timeoutMs: 7000,
+      }),
+    );
   });
 
   it("starts a localhost Taskcore bridge for sandbox targets in bridge mode", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "codex");
     await mkdir(runtimeRootDir, { recursive: true });
 
-    const requests: Array<{ method: string; url: string; auth: string | null; runId: string | null }> = [];
+    const requests: Array<{
+      method: string;
+      url: string;
+      auth: string | null;
+      runId: string | null;
+    }> = [];
     const apiServer = createServer((req, res) => {
       requests.push({
         method: req.method ?? "GET",
         url: req.url ?? "/",
         auth: req.headers.authorization ?? null,
-        runId: typeof req.headers["x-taskcore-run-id"] === "string" ? req.headers["x-taskcore-run-id"] : null,
+        runId:
+          typeof req.headers["x-taskcore-run-id"] === "string"
+            ? req.headers["x-taskcore-run-id"]
+            : null,
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
@@ -2553,7 +3133,9 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the bridge test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the bridge test API server to listen on a TCP port.",
+      );
     }
 
     const target: AdapterSandboxExecutionTarget = {
@@ -2577,25 +3159,32 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge).not.toBeNull();
-      expect(bridge?.env.TASKCORE_API_URL).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+      expect(bridge?.env.TASKCORE_API_URL).toMatch(
+        /^http:\/\/127\.0\.0\.1:\d+$/,
+      );
       expect(bridge?.env.TASKCORE_API_KEY).not.toBe("real-run-jwt");
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
 
-      const response = await fetch(`${bridge!.env.TASKCORE_API_URL}/api/agents/me`, {
-        headers: {
-          authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
-          accept: "application/json",
+      const response = await fetch(
+        `${bridge!.env.TASKCORE_API_URL}/api/agents/me`,
+        {
+          headers: {
+            authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
+            accept: "application/json",
+          },
         },
-      });
+      );
 
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ ok: true });
-      expect(requests).toEqual([{
-        method: "GET",
-        url: "/api/agents/me",
-        auth: "Bearer real-run-jwt",
-        runId: "run-bridge",
-      }]);
+      expect(requests).toEqual([
+        {
+          method: "GET",
+          url: "/api/agents/me",
+          auth: "Bearer real-run-jwt",
+          runId: "run-bridge",
+        },
+      ]);
     } finally {
       await bridge?.stop();
       await new Promise<void>((resolve) => apiServer.close(() => resolve()));
@@ -2603,7 +3192,9 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("creates a sandbox run log tail factory when bridge streaming is enabled", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-stream-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-stream-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "codex");
@@ -2635,9 +3226,13 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.runLogTail).toBeTruthy();
-      expect(combinedStream(logs, "stdout")).toContain("Sandbox run log streaming enabled");
+      expect(combinedStream(logs, "stdout")).toContain(
+        "Sandbox run log streaming enabled",
+      );
 
-      const wrapped = bridge!.runLogTail!.create().wrapCommand("agent-cli", ["--message", "hello world"]);
+      const wrapped = bridge!
+        .runLogTail!.create()
+        .wrapCommand("agent-cli", ["--message", "hello world"]);
       expect(wrapped.command).toBe("sh");
       expect(wrapped.args.join("\n")).toContain("tee -a");
       expect(wrapped.args.join("\n")).toContain("agent-cli");
@@ -2647,7 +3242,12 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("defaults sandbox run log streaming on and honors the explicit opt-out", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-stream-default-"));
+    const rootDir = await mkdtemp(
+      path.join(
+        os.tmpdir(),
+        "taskcore-execution-target-bridge-stream-default-",
+      ),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "codex");
@@ -2703,32 +3303,36 @@ describe("sandbox adapter execution targets", () => {
     const events: Array<{ stream: "stdout" | "stderr"; chunk: string }> = [];
 
     const runner = {
-      execute: vi.fn(async (input: {
-        command: string;
-        args?: string[];
-        cwd?: string;
-        env?: Record<string, string>;
-        timeoutMs?: number;
-      }) => {
-        const script = input.args?.[1] ?? "";
-        const offsets = [...script.matchAll(/tail -c \+(\d+) /g)].map((match) => Number(match[1]));
-        const stdoutStart = Math.max(0, (offsets[0] ?? 1) - 1);
-        const stderrStart = Math.max(0, (offsets[1] ?? 1) - 1);
-        stdoutOffsets.push(stdoutStart + 1);
-        stderrOffsets.push(stderrStart + 1);
-        return {
-          exitCode: 0,
-          signal: null,
-          timedOut: false,
-          stdout: encodeTailTick(
-            stdoutBytes.subarray(stdoutStart, stdoutStart + 4),
-            stderrBytes.subarray(stderrStart, stderrStart + 4),
-          ),
-          stderr: "",
-          pid: null,
-          startedAt: new Date().toISOString(),
-        };
-      }),
+      execute: vi.fn(
+        async (input: {
+          command: string;
+          args?: string[];
+          cwd?: string;
+          env?: Record<string, string>;
+          timeoutMs?: number;
+        }) => {
+          const script = input.args?.[1] ?? "";
+          const offsets = [...script.matchAll(/tail -c \+(\d+) /g)].map(
+            (match) => Number(match[1]),
+          );
+          const stdoutStart = Math.max(0, (offsets[0] ?? 1) - 1);
+          const stderrStart = Math.max(0, (offsets[1] ?? 1) - 1);
+          stdoutOffsets.push(stdoutStart + 1);
+          stderrOffsets.push(stderrStart + 1);
+          return {
+            exitCode: 0,
+            signal: null,
+            timedOut: false,
+            stdout: encodeTailTick(
+              stdoutBytes.subarray(stdoutStart, stdoutStart + 4),
+              stderrBytes.subarray(stderrStart, stderrStart + 4),
+            ),
+            stderr: "",
+            pid: null,
+            startedAt: new Date().toISOString(),
+          };
+        },
+      ),
     };
 
     const tail = createSandboxRunLogTailFactory({
@@ -2745,7 +3349,9 @@ describe("sandbox adapter execution targets", () => {
     });
 
     await waitForCondition(
-      () => combinedStream(events, "stdout") === stdoutText && combinedStream(events, "stderr") === stderrText,
+      () =>
+        combinedStream(events, "stdout") === stdoutText &&
+        combinedStream(events, "stderr") === stderrText,
       "run log tail did not stream expected stdout/stderr chunks",
     );
 
@@ -2755,12 +3361,14 @@ describe("sandbox adapter execution targets", () => {
     expect(combinedStream(events, "stderr")).toBe(stderrText);
     expect(stdoutOffsets.slice(0, 3)).toEqual([1, 5, 9]);
     expect(stderrOffsets.slice(0, 3)).toEqual([1, 5, 9]);
-    expect(runner.execute).toHaveBeenCalledWith(expect.objectContaining({
-      command: "sh",
-      cwd: "/workspace",
-      env: { TASKCORE_SANDBOX_EXEC_CHANNEL: "bridge" },
-      timeoutMs: 50,
-    }));
+    expect(runner.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "sh",
+        cwd: "/workspace",
+        env: { TASKCORE_SANDBOX_EXEC_CHANNEL: "bridge" },
+        timeoutMs: 50,
+      }),
+    );
   });
 
   it("emits only the unstreamed final suffix when the tail loop stops early", async () => {
@@ -2771,13 +3379,18 @@ describe("sandbox adapter execution targets", () => {
     const runner = {
       execute: vi.fn(async (input: { args?: string[] }) => {
         const script = input.args?.[1] ?? "";
-        const offsets = [...script.matchAll(/tail -c \+(\d+) /g)].map((match) => Number(match[1]));
+        const offsets = [...script.matchAll(/tail -c \+(\d+) /g)].map((match) =>
+          Number(match[1]),
+        );
         const stdoutStart = Math.max(0, (offsets[0] ?? 1) - 1);
         return {
           exitCode: 0,
           signal: null,
           timedOut: false,
-          stdout: encodeTailTick(finalBytes.subarray(stdoutStart, stdoutStart + 7), Buffer.alloc(0)),
+          stdout: encodeTailTick(
+            finalBytes.subarray(stdoutStart, stdoutStart + 7),
+            Buffer.alloc(0),
+          ),
           stderr: "",
           pid: null,
           startedAt: new Date().toISOString(),
@@ -2797,12 +3410,19 @@ describe("sandbox adapter execution targets", () => {
     tail.start(async (stream, chunk) => {
       events.push({ stream, chunk });
     });
-    await waitForCondition(() => combinedStream(events, "stdout").length >= 7, "run log tail did not emit prefix");
+    await waitForCondition(
+      () => combinedStream(events, "stdout").length >= 7,
+      "run log tail did not emit prefix",
+    );
     await tail.finish({ stdout: finalStdout, stderr: "" });
 
     expect(combinedStream(events, "stdout")).toBe(finalStdout);
-    expect(events.filter((event) => event.stream === "stdout").map((event) => event.chunk).join("|"))
-      .toBe("prefix |suffix\n");
+    expect(
+      events
+        .filter((event) => event.stream === "stdout")
+        .map((event) => event.chunk)
+        .join("|"),
+    ).toBe("prefix |suffix\n");
   });
 
   it("delivers the final batch and a warning when run log polling degrades", async () => {
@@ -2831,7 +3451,10 @@ describe("sandbox adapter execution targets", () => {
     tail.start(async (stream, chunk) => {
       events.push({ stream, chunk });
     });
-    await waitForCondition(() => runner.execute.mock.calls.length >= 1, "run log tail did not poll before finish");
+    await waitForCondition(
+      () => runner.execute.mock.calls.length >= 1,
+      "run log tail did not poll before finish",
+    );
     await new Promise((resolve) => setTimeout(resolve, 5));
     await tail.finish({ stdout: "final out\n", stderr: "final err\n" });
 
@@ -2842,19 +3465,29 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("exposes the Taskcore bridge to the sandbox shell surface", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-shell-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-shell-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "claude");
     await mkdir(runtimeRootDir, { recursive: true });
 
-    const requests: Array<{ method: string; url: string; auth: string | null; runId: string | null }> = [];
+    const requests: Array<{
+      method: string;
+      url: string;
+      auth: string | null;
+      runId: string | null;
+    }> = [];
     const apiServer = createServer((req, res) => {
       requests.push({
         method: req.method ?? "GET",
         url: req.url ?? "/",
         auth: req.headers.authorization ?? null,
-        runId: typeof req.headers["x-taskcore-run-id"] === "string" ? req.headers["x-taskcore-run-id"] : null,
+        runId:
+          typeof req.headers["x-taskcore-run-id"] === "string"
+            ? req.headers["x-taskcore-run-id"]
+            : null,
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
@@ -2865,12 +3498,17 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the bridge shell test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the bridge shell test API server to listen on a TCP port.",
+      );
     }
 
     const delegateRunner = createLocalSandboxRunner();
     const runner = {
-      execute: vi.fn(async (input: Parameters<typeof delegateRunner.execute>[0]) => delegateRunner.execute(input)),
+      execute: vi.fn(
+        async (input: Parameters<typeof delegateRunner.execute>[0]) =>
+          delegateRunner.execute(input),
+      ),
     };
     const target: AdapterSandboxExecutionTarget = {
       kind: "remote",
@@ -2930,8 +3568,12 @@ describe("sandbox adapter execution targets", () => {
         body: { ok: true },
         bridgeMode: "queue_v1",
       });
-      expect(`${result.stdout}\n${result.stderr}`).not.toContain("real-run-jwt");
-      expect(`${result.stdout}\n${result.stderr}`).not.toContain(bridge!.env.TASKCORE_API_KEY);
+      expect(`${result.stdout}\n${result.stderr}`).not.toContain(
+        "real-run-jwt",
+      );
+      expect(`${result.stdout}\n${result.stderr}`).not.toContain(
+        bridge!.env.TASKCORE_API_KEY,
+      );
       const runnerCommandText = JSON.stringify(
         runner.execute.mock.calls.map(([call]) => ({
           command: call.command,
@@ -2940,15 +3582,19 @@ describe("sandbox adapter execution targets", () => {
       );
       expect(runnerCommandText).not.toContain("real-run-jwt");
       expect(runnerCommandText).not.toContain(bridge!.env.TASKCORE_API_KEY);
-      const runtimeFiles = (await readRuntimeTextFiles(runtimeRootDir)).join("\n");
+      const runtimeFiles = (await readRuntimeTextFiles(runtimeRootDir)).join(
+        "\n",
+      );
       expect(runtimeFiles).not.toContain("real-run-jwt");
       expect(runtimeFiles).not.toContain(bridge!.env.TASKCORE_API_KEY);
-      expect(requests).toEqual([{
-        method: "GET",
-        url: "/api/agents/me",
-        auth: "Bearer real-run-jwt",
-        runId: "run-bridge-shell",
-      }]);
+      expect(requests).toEqual([
+        {
+          method: "GET",
+          url: "/api/agents/me",
+          auth: "Bearer real-run-jwt",
+          runId: "run-bridge-shell",
+        },
+      ]);
     } finally {
       await bridge?.stop();
       await new Promise<void>((resolve) => apiServer.close(() => resolve()));
@@ -2956,7 +3602,9 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("bounds callback bridge operations independently of the adapter run timeout", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-timeout-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-timeout-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "codex");
@@ -2964,7 +3612,10 @@ describe("sandbox adapter execution targets", () => {
 
     const delegateRunner = createLocalSandboxRunner();
     const runner = {
-      execute: vi.fn(async (input: Parameters<typeof delegateRunner.execute>[0]) => delegateRunner.execute(input)),
+      execute: vi.fn(
+        async (input: Parameters<typeof delegateRunner.execute>[0]) =>
+          delegateRunner.execute(input),
+      ),
     };
     const apiServer = createServer((req, res) => {
       res.writeHead(200, { "content-type": "application/json" });
@@ -2976,7 +3627,9 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the bridge timeout test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the bridge timeout test API server to listen on a TCP port.",
+      );
     }
 
     const target: AdapterSandboxExecutionTarget = {
@@ -3020,13 +3673,20 @@ describe("sandbox adapter execution targets", () => {
     // a retryable 502. The in-sandbox server maps the indeterminate 504 to a
     // non-retryable 409. A retryable status would repeat the mutation with a new
     // request id outside the broker deduplication set.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-limit-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-limit-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "codex");
     await mkdir(runtimeRootDir, { recursive: true });
 
-    const requests: Array<{ method: string; url: string; auth: string | null; runId: string | null }> = [];
+    const requests: Array<{
+      method: string;
+      url: string;
+      auth: string | null;
+      runId: string | null;
+    }> = [];
     // The host body sits over the size limit, so the forward read fails. The
     // limit stays above the small indeterminate marker the forward returns, so the
     // marker still reaches the server for the 504-to-409 map.
@@ -3036,7 +3696,10 @@ describe("sandbox adapter execution targets", () => {
         method: req.method ?? "GET",
         url: req.url ?? "/",
         auth: req.headers.authorization ?? null,
-        runId: typeof req.headers["x-taskcore-run-id"] === "string" ? req.headers["x-taskcore-run-id"] : null,
+        runId:
+          typeof req.headers["x-taskcore-run-id"] === "string"
+            ? req.headers["x-taskcore-run-id"]
+            : null,
       });
       res.writeHead(201, {
         "content-type": "application/json",
@@ -3050,7 +3713,9 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the bridge test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the bridge test API server to listen on a TCP port.",
+      );
     }
 
     const target: AdapterSandboxExecutionTarget = {
@@ -3074,31 +3739,39 @@ describe("sandbox adapter execution targets", () => {
       maxBodyBytes: 512,
     });
     try {
-      const response = await fetch(`${bridge!.env.TASKCORE_API_URL}/api/issues/issue-1/comments`, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
-          "content-type": "application/json",
+      const response = await fetch(
+        `${bridge!.env.TASKCORE_API_URL}/api/issues/issue-1/comments`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ body: "Status update." }),
         },
-        body: JSON.stringify({ body: "Status update." }),
-      });
+      );
 
       // The indeterminate 504 maps to a non-retryable 409, so the caller does not
       // retry the committed mutation.
       expect(response.status).toBe(409);
-      expect(response.headers.get("x-taskcore-bridge-outcome")).toBe("indeterminate");
+      expect(response.headers.get("x-taskcore-bridge-outcome")).toBe(
+        "indeterminate",
+      );
       await expect(response.json()).resolves.toEqual({
-        error: "Bridge response body exceeded the configured size limit of 512 bytes.",
+        error:
+          "Bridge response body exceeded the configured size limit of 512 bytes.",
         outcome: "indeterminate",
         retryable: false,
       });
       // The host ran the mutation exactly once. It never receives a retry.
-      expect(requests).toEqual([{
-        method: "POST",
-        url: "/api/issues/issue-1/comments",
-        auth: "Bearer real-run-jwt",
-        runId: "run-bridge-limit",
-      }]);
+      expect(requests).toEqual([
+        {
+          method: "POST",
+          url: "/api/issues/issue-1/comments",
+          auth: "Bearer real-run-jwt",
+          runId: "run-bridge-limit",
+        },
+      ]);
     } finally {
       await bridge?.stop();
       await new Promise<void>((resolve) => apiServer.close(() => resolve()));
@@ -3112,20 +3785,30 @@ describe("sandbox adapter execution targets", () => {
     // retryable 502 with no indeterminate marker, not the non-retryable 504 the
     // forward returns for a mutating method. The in-sandbox server passes the 502
     // through, so the caller can retry the safe read.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-safe-limit-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-safe-limit-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "codex");
     await mkdir(runtimeRootDir, { recursive: true });
 
-    const requests: Array<{ method: string; url: string; auth: string | null; runId: string | null }> = [];
+    const requests: Array<{
+      method: string;
+      url: string;
+      auth: string | null;
+      runId: string | null;
+    }> = [];
     const largeBody = "x".repeat(1024);
     const apiServer = createServer((req, res) => {
       requests.push({
         method: req.method ?? "GET",
         url: req.url ?? "/",
         auth: req.headers.authorization ?? null,
-        runId: typeof req.headers["x-taskcore-run-id"] === "string" ? req.headers["x-taskcore-run-id"] : null,
+        runId:
+          typeof req.headers["x-taskcore-run-id"] === "string"
+            ? req.headers["x-taskcore-run-id"]
+            : null,
       });
       res.writeHead(200, {
         "content-type": "application/json",
@@ -3139,7 +3822,9 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the bridge test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the bridge test API server to listen on a TCP port.",
+      );
     }
 
     const target: AdapterSandboxExecutionTarget = {
@@ -3163,26 +3848,32 @@ describe("sandbox adapter execution targets", () => {
       maxBodyBytes: 512,
     });
     try {
-      const response = await fetch(`${bridge!.env.TASKCORE_API_URL}/api/issues/issue-1`, {
-        method: "GET",
-        headers: {
-          authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
+      const response = await fetch(
+        `${bridge!.env.TASKCORE_API_URL}/api/issues/issue-1`,
+        {
+          method: "GET",
+          headers: {
+            authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
+          },
         },
-      });
+      );
 
       // The forward returns a retryable 502 with no indeterminate marker, so the
       // server passes it through instead of mapping it to a terminal 409.
       expect(response.status).toBe(502);
       expect(response.headers.get("x-taskcore-bridge-outcome")).toBeNull();
       await expect(response.json()).resolves.toEqual({
-        error: "Bridge response body exceeded the configured size limit of 512 bytes.",
+        error:
+          "Bridge response body exceeded the configured size limit of 512 bytes.",
       });
-      expect(requests).toEqual([{
-        method: "GET",
-        url: "/api/issues/issue-1",
-        auth: "Bearer real-run-jwt",
-        runId: "run-bridge-safe-limit",
-      }]);
+      expect(requests).toEqual([
+        {
+          method: "GET",
+          url: "/api/issues/issue-1",
+          auth: "Bearer real-run-jwt",
+          runId: "run-bridge-safe-limit",
+        },
+      ]);
     } finally {
       await bridge?.stop();
       await new Promise<void>((resolve) => apiServer.close(() => resolve()));
@@ -3195,13 +3886,19 @@ describe("sandbox adapter execution targets", () => {
     // that header, so the in-sandbox server maps the 504 to a non-retryable 409.
     // If the forward drops the header, the client sees a retryable 504 and a
     // retry repeats a mutation that already committed.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-outcome-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-outcome-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "codex");
     await mkdir(runtimeRootDir, { recursive: true });
 
-    const responseBody = JSON.stringify({ error: "Mutation outcome is indeterminate.", outcome: "indeterminate", retryable: false });
+    const responseBody = JSON.stringify({
+      error: "Mutation outcome is indeterminate.",
+      outcome: "indeterminate",
+      retryable: false,
+    });
     const apiServer = createServer((_req, res) => {
       res.writeHead(504, {
         "content-type": "application/json",
@@ -3215,7 +3912,9 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the bridge outcome test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the bridge outcome test API server to listen on a TCP port.",
+      );
     }
 
     const target: AdapterSandboxExecutionTarget = {
@@ -3238,20 +3937,25 @@ describe("sandbox adapter execution targets", () => {
       hostApiUrl: `http://127.0.0.1:${address.port}`,
     });
     try {
-      const response = await fetch(`${bridge!.env.TASKCORE_API_URL}/api/issues/issue-1/comments`, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
-          "content-type": "application/json",
+      const response = await fetch(
+        `${bridge!.env.TASKCORE_API_URL}/api/issues/issue-1/comments`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ body: "Status update." }),
         },
-        body: JSON.stringify({ body: "Status update." }),
-      });
+      );
 
       // The sandbox server maps the indeterminate 504 to a non-retryable 409.
       expect(response.status).toBe(409);
       // The outcome header and body still reach the client, so a caller that
       // reads them still sees the indeterminate result.
-      expect(response.headers.get("x-taskcore-bridge-outcome")).toBe("indeterminate");
+      expect(response.headers.get("x-taskcore-bridge-outcome")).toBe(
+        "indeterminate",
+      );
       await expect(response.json()).resolves.toEqual({
         error: "Mutation outcome is indeterminate.",
         outcome: "indeterminate",
@@ -3264,19 +3968,29 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("forwards bridge traffic to the local listen origin even when public API URLs are configured", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-local-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-local-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "claude");
     await mkdir(runtimeRootDir, { recursive: true });
 
-    const requests: Array<{ method: string; url: string; auth: string | null; runId: string | null }> = [];
+    const requests: Array<{
+      method: string;
+      url: string;
+      auth: string | null;
+      runId: string | null;
+    }> = [];
     const apiServer = createServer((req, res) => {
       requests.push({
         method: req.method ?? "GET",
         url: req.url ?? "/",
         auth: req.headers.authorization ?? null,
-        runId: typeof req.headers["x-taskcore-run-id"] === "string" ? req.headers["x-taskcore-run-id"] : null,
+        runId:
+          typeof req.headers["x-taskcore-run-id"] === "string"
+            ? req.headers["x-taskcore-run-id"]
+            : null,
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
@@ -3287,7 +4001,9 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the bridge local-origin test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the bridge local-origin test API server to listen on a TCP port.",
+      );
     }
 
     // Simulate a deployment where a public base URL is configured: server boot
@@ -3320,21 +4036,26 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge).not.toBeNull();
-      const response = await fetch(`${bridge!.env.TASKCORE_API_URL}/api/agents/me`, {
-        headers: {
-          authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
-          accept: "application/json",
+      const response = await fetch(
+        `${bridge!.env.TASKCORE_API_URL}/api/agents/me`,
+        {
+          headers: {
+            authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
+            accept: "application/json",
+          },
         },
-      });
+      );
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({ ok: true });
-      expect(requests).toEqual([{
-        method: "GET",
-        url: "/api/agents/me",
-        auth: "Bearer real-run-jwt",
-        runId: "run-bridge-local",
-      }]);
+      expect(requests).toEqual([
+        {
+          method: "GET",
+          url: "/api/agents/me",
+          auth: "Bearer real-run-jwt",
+          runId: "run-bridge-local",
+        },
+      ]);
     } finally {
       await bridge?.stop();
       await new Promise<void>((resolve) => apiServer.close(() => resolve()));
@@ -3342,7 +4063,9 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("lets an explicit hostApiUrl input override the bridge forward target", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-execution-target-bridge-override-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-execution-target-bridge-override-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "claude");
@@ -3360,7 +4083,9 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the bridge override test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the bridge override test API server to listen on a TCP port.",
+      );
     }
 
     // Neither the public URL envs nor the listen host/port should matter when
@@ -3391,12 +4116,15 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge).not.toBeNull();
-      const response = await fetch(`${bridge!.env.TASKCORE_API_URL}/api/agents/me`, {
-        headers: {
-          authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
-          accept: "application/json",
+      const response = await fetch(
+        `${bridge!.env.TASKCORE_API_URL}/api/agents/me`,
+        {
+          headers: {
+            authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
+            accept: "application/json",
+          },
         },
-      });
+      );
 
       expect(response.status).toBe(200);
       expect(requests).toEqual(["/api/agents/me"]);
@@ -3408,7 +4136,9 @@ describe("sandbox adapter execution targets", () => {
 
   // The full effective-capability snapshot with one flag set. The two strict
   // gates read `duplexCommandStream`; the other flags stay false.
-  function duplexCapabilities(duplexCommandStream: boolean): EffectiveExecutionCapabilities {
+  function duplexCapabilities(
+    duplexCommandStream: boolean,
+  ): EffectiveExecutionCapabilities {
     return {
       reusableLeases: false,
       nativeSyncIn: false,
@@ -3447,9 +4177,13 @@ describe("sandbox adapter execution targets", () => {
   // file bridge, and a fake `openDuplexChannel`. The fake parses the nonce and
   // the port out of the launch command, so the test proves the host passes both
   // only through the launch environment.
-  function makeDuplexSelectionRunner(onOpen?: (ctx: DuplexOpenContext) => void): {
+  function makeDuplexSelectionRunner(
+    onOpen?: (ctx: DuplexOpenContext) => void,
+  ): {
     runner: ReturnType<typeof createLocalSandboxRunner> & {
-      openDuplexChannel: (openInput: { command: readonly string[] }) => Promise<CommandManagedDuplexChannel>;
+      openDuplexChannel: (openInput: {
+        command: readonly string[];
+      }) => Promise<CommandManagedDuplexChannel>;
     };
     control: DuplexSelectionControl;
   } {
@@ -3469,24 +4203,32 @@ describe("sandbox adapter execution targets", () => {
       const nonce = /TASKCORE_BRIDGE_NONCE='([^']*)'/.exec(joined)?.[1] ?? "";
       const port = /TASKCORE_BRIDGE_PORT='([^']*)'/.exec(joined)?.[1] ?? "";
       let dataListener: ((chunk: Uint8Array) => void) | null = null;
-      let exitListener: ((exit: { exitCode: number | null }) => void) | null = null;
+      let exitListener: ((exit: { exitCode: number | null }) => void) | null =
+        null;
       const channel: CommandManagedDuplexChannel = {
         write(data: Uint8Array): void {
-          const decoded = decodeDuplexLine(Buffer.from(data).toString("utf8").replace(/\n$/, ""));
+          const decoded = decodeDuplexLine(
+            Buffer.from(data).toString("utf8").replace(/\n$/, ""),
+          );
           if (decoded.ok) {
             control.writtenTypes.push(decoded.frame.type);
           }
         },
         onData(listener: (chunk: Uint8Array) => void): void {
           dataListener = listener;
-          control.emitData = (chunk) => dataListener?.(new TextEncoder().encode(chunk));
+          control.emitData = (chunk) =>
+            dataListener?.(new TextEncoder().encode(chunk));
           // Drive the readiness emission on the next tick, after the gate also
           // registers its exit listener.
           setImmediate(() => {
-            const emitRaw = (text: string) => dataListener?.(new TextEncoder().encode(text));
+            const emitRaw = (text: string) =>
+              dataListener?.(new TextEncoder().encode(text));
             const emitFrame = (frame: Record<string, unknown>) =>
-              dataListener?.(new TextEncoder().encode(`${JSON.stringify(frame)}\n`));
-            const emitExit = (exit: { exitCode: number | null }) => exitListener?.(exit);
+              dataListener?.(
+                new TextEncoder().encode(`${JSON.stringify(frame)}\n`),
+              );
+            const emitExit = (exit: { exitCode: number | null }) =>
+              exitListener?.(exit);
             if (onOpen) {
               onOpen({ nonce, port, emitRaw, emitFrame, emitExit });
             } else {
@@ -3514,7 +4256,10 @@ describe("sandbox adapter execution targets", () => {
   // A test writes this literal to script a preface look-alike; it does not
   // import the production constant, so the test proves the real wire bytes
   // match, not only that the two source files agree on a name.
-  const HTTP2_TEST_CLIENT_PREFACE = Buffer.from("505249202a20485454502f322e300d0a0d0a534d0d0a0d0a", "hex");
+  const HTTP2_TEST_CLIENT_PREFACE = Buffer.from(
+    "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a",
+    "hex",
+  );
 
   interface Http2SelectionControl {
     openCount: number;
@@ -3555,12 +4300,18 @@ describe("sandbox adapter execution targets", () => {
   // isolation, exercised here through the full transport-selection path.
   function makeHttp2SelectionRunner(onOpen?: (ctx: Http2OpenContext) => void): {
     runner: ReturnType<typeof createLocalSandboxRunner> & {
-      openDuplexChannel: (openInput: { command: readonly string[] }) => Promise<CommandManagedDuplexChannel>;
+      openDuplexChannel: (openInput: {
+        command: readonly string[];
+      }) => Promise<CommandManagedDuplexChannel>;
     };
     control: Http2SelectionControl;
   } {
     const base = createLocalSandboxRunner();
-    const control: Http2SelectionControl = { openCount: 0, stopCount: 0, closeCount: 0 };
+    const control: Http2SelectionControl = {
+      openCount: 0,
+      stopCount: 0,
+      closeCount: 0,
+    };
     const openDuplexChannel = async (openInput: {
       command: readonly string[];
     }): Promise<CommandManagedDuplexChannel> => {
@@ -3568,10 +4319,12 @@ describe("sandbox adapter execution targets", () => {
       const joined = openInput.command.join(" ");
       const nonce = /TASKCORE_BRIDGE_NONCE='([^']*)'/.exec(joined)?.[1] ?? "";
       const port = /TASKCORE_BRIDGE_PORT='([^']*)'/.exec(joined)?.[1] ?? "";
-      const bridgeToken = /TASKCORE_BRIDGE_TOKEN='([^']*)'/.exec(joined)?.[1] ?? "";
+      const bridgeToken =
+        /TASKCORE_BRIDGE_TOKEN='([^']*)'/.exec(joined)?.[1] ?? "";
       const [hostSide, sandboxSide] = duplexPair();
       const dataListeners: Array<(chunk: Uint8Array) => void> = [];
-      const exitListeners: Array<(exit: { exitCode: number | null }) => void> = [];
+      const exitListeners: Array<(exit: { exitCode: number | null }) => void> =
+        [];
       hostSide.on("data", (chunk: Buffer) => {
         for (const listener of dataListeners) listener(chunk);
       });
@@ -3602,12 +4355,22 @@ describe("sandbox adapter execution targets", () => {
           nonce,
           port,
           bridgeToken,
-          emitRaw: (bytes) => sandboxSide.write(typeof bytes === "string" ? Buffer.from(bytes) : bytes),
+          emitRaw: (bytes) =>
+            sandboxSide.write(
+              typeof bytes === "string" ? Buffer.from(bytes) : bytes,
+            ),
           emitReady: (readyNonce = nonce) =>
             sandboxSide.write(
-              encodeDuplexFrame({ version: DUPLEX_FRAME_VERSION, type: "ready", nonce: readyNonce }),
+              encodeDuplexFrame({
+                version: DUPLEX_FRAME_VERSION,
+                type: "ready",
+                nonce: readyNonce,
+              }),
             ),
-          connectHttp2: () => http2.connect("http://bridge.internal", { createConnection: () => sandboxSide }),
+          connectHttp2: () =>
+            http2.connect("http://bridge.internal", {
+              createConnection: () => sandboxSide,
+            }),
           emitExit: () => sandboxSide.end(),
         };
         if (onOpen) {
@@ -3630,12 +4393,25 @@ describe("sandbox adapter execution targets", () => {
    */
   function http2TestRequest(
     session: http2.ClientHttp2Session,
-    request: { method: string; path: string; headers?: Record<string, string>; body?: Buffer },
-  ): Promise<{ status: number; headers: Record<string, string>; body: Buffer }> {
+    request: {
+      method: string;
+      path: string;
+      headers?: Record<string, string>;
+      body?: Buffer;
+    },
+  ): Promise<{
+    status: number;
+    headers: Record<string, string>;
+    body: Buffer;
+  }> {
     return new Promise((resolve, reject) => {
       const body = request.body ?? Buffer.alloc(0);
       const stream = session.request(
-        { ":method": request.method, ":path": request.path, ...request.headers },
+        {
+          ":method": request.method,
+          ":path": request.path,
+          ...request.headers,
+        },
         { endStream: body.length === 0 },
       );
       const chunks: Buffer[] = [];
@@ -3646,11 +4422,15 @@ describe("sandbox adapter execution targets", () => {
         headers = {};
         for (const [key, value] of Object.entries(h)) {
           if (key.startsWith(":") || value == null) continue;
-          headers[key] = Array.isArray(value) ? value.join(", ") : String(value);
+          headers[key] = Array.isArray(value)
+            ? value.join(", ")
+            : String(value);
         }
       });
       stream.on("data", (chunk: Buffer) => chunks.push(chunk));
-      stream.once("end", () => resolve({ status, headers, body: Buffer.concat(chunks) }));
+      stream.once("end", () =>
+        resolve({ status, headers, body: Buffer.concat(chunks) }),
+      );
       stream.once("error", (error) => reject(error));
       if (body.length > 0) stream.end(body);
       else if (!stream.writableEnded) stream.end();
@@ -3660,11 +4440,16 @@ describe("sandbox adapter execution targets", () => {
   // Fixed binary payload for an attachment-content download. Byte 0x89 opens
   // the PNG signature and is not valid UTF-8 on its own, so a round trip
   // through a text decode step would corrupt it.
-  const ATTACHMENT_DOWNLOAD_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0x00, 0x7f]);
+  const ATTACHMENT_DOWNLOAD_BYTES = Buffer.from([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0x00, 0x7f,
+  ]);
 
   // Build a minimal multipart/form-data request body with one binary file
   // part, plus the matching `content-type` header value.
-  function buildMultipartAttachmentUpload(fileBytes: Buffer): { body: Buffer; contentType: string } {
+  function buildMultipartAttachmentUpload(fileBytes: Buffer): {
+    body: Buffer;
+    contentType: string;
+  } {
     const boundary = "taskcore-test-boundary";
     const head = Buffer.from(
       `--${boundary}\r\n` +
@@ -3714,14 +4499,20 @@ describe("sandbox adapter execution targets", () => {
           method: req.method ?? "GET",
           url: req.url ?? "/",
           auth: req.headers.authorization ?? null,
-          runId: typeof req.headers["x-taskcore-run-id"] === "string" ? req.headers["x-taskcore-run-id"] : null,
+          runId:
+            typeof req.headers["x-taskcore-run-id"] === "string"
+              ? req.headers["x-taskcore-run-id"]
+              : null,
           headers,
           body: Buffer.concat(chunks),
         });
         // An attachment-content download answers with a binary body, so a
         // test can assert the bytes reach the caller unchanged. Every other
         // route keeps the fixed JSON acknowledgement.
-        if (req.method === "GET" && /^\/api\/attachments\/[^/]+\/content$/.test(req.url ?? "")) {
+        if (
+          req.method === "GET" &&
+          /^\/api\/attachments\/[^/]+\/content$/.test(req.url ?? "")
+        ) {
           res.writeHead(200, { "content-type": "application/octet-stream" });
           res.end(ATTACHMENT_DOWNLOAD_BYTES);
           return;
@@ -3736,12 +4527,15 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = server.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the recording API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the recording API server to listen on a TCP port.",
+      );
     }
     return {
       origin: `http://127.0.0.1:${address.port}`,
       requests,
-      close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+      close: () =>
+        new Promise<void>((resolve) => server.close(() => resolve())),
     };
   }
 
@@ -3749,17 +4543,20 @@ describe("sandbox adapter execution targets", () => {
     // The channel open itself fails (a provider startup fault, before any
     // READY line or preface is possible). The host must fall back to the
     // file bridge and record the typed open-failure reason, never hang.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-startup-fail-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-startup-fail-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
     const base = createLocalSandboxRunner();
     let openCount = 0;
-    const openDuplexChannel = async (): Promise<CommandManagedDuplexChannel> => {
-      openCount += 1;
-      throw new Error("provider could not start the sandbox process");
-    };
+    const openDuplexChannel =
+      async (): Promise<CommandManagedDuplexChannel> => {
+        openCount += 1;
+        throw new Error("provider could not start the sandbox process");
+      };
     const runner = { ...base, openDuplexChannel };
     const { recorder, counters } = createRecordingDuplexRecorder();
     const target: AdapterSandboxExecutionTarget = {
@@ -3786,7 +4583,9 @@ describe("sandbox adapter execution targets", () => {
       expect(bridge).not.toBeNull();
       expect(openCount).toBe(1);
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback?.dimensions.fallback_reason).toBe("channel_open_failed");
 
       // The queue fallback keeps the 415 gate for the attachment upload path:
@@ -3812,12 +4611,16 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("test_daytona_selects_http2_v1", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-select-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-select-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner, control } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -3850,13 +4653,19 @@ describe("sandbox adapter execution targets", () => {
       expect(control.openCount).toBe(1);
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
       // The host builds the origin from the port it assigned, never from a frame.
-      expect(bridge?.env.TASKCORE_API_URL).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+      expect(bridge?.env.TASKCORE_API_URL).toMatch(
+        /^http:\/\/127\.0\.0\.1:\d+$/,
+      );
       expect(bridge?.env.TASKCORE_API_KEY).not.toBe("real-run-jwt");
 
       // The sandbox gateway forwards one agent request as one real HTTP/2
       // stream, over the one session that runs directly on the sandbox
       // channel. The host serves it with the real token and the run id.
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -3881,7 +4690,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("streams run logs on the http2 path under the same gate and log line as the file path", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-runlog-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-runlog-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -3916,8 +4727,12 @@ describe("sandbox adapter execution targets", () => {
       // gate and the same log line as the file path.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
       expect(bridge?.runLogTail).toBeTruthy();
-      expect(combinedStream(logs, "stdout")).toContain("Sandbox run log streaming enabled");
-      const wrapped = bridge!.runLogTail!.create().wrapCommand("agent-cli", ["--message", "hello world"]);
+      expect(combinedStream(logs, "stdout")).toContain(
+        "Sandbox run log streaming enabled",
+      );
+      const wrapped = bridge!
+        .runLogTail!.create()
+        .wrapCommand("agent-cli", ["--message", "hello world"]);
       expect(wrapped.args.join("\n")).toContain("tee -a");
       expect(wrapped.args.join("\n")).toContain("agent-cli");
     } finally {
@@ -3927,7 +4742,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("returns no run-log tail on the http2 path when streaming is opted out", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-runlog-off-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-runlog-off-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -3963,7 +4780,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("routes http2 channel-open and fallback records to a recorder attached on the server seam", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-recorder-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-recorder-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -3999,11 +4818,14 @@ describe("sandbox adapter execution targets", () => {
       hostApiToken: "real-run-jwt",
       hostApiUrl: api.origin,
       enableSandboxDuplexBridge: true,
-      duplexObservabilityRecorder: adapterExecutionTargetDuplexObservabilityRecorder(openTarget),
+      duplexObservabilityRecorder:
+        adapterExecutionTargetDuplexObservabilityRecorder(openTarget),
     });
     try {
       expect(openBridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      const open = counters.find((record) => record.metric === DUPLEX_COUNTER_CHANNEL_OPEN_TOTAL);
+      const open = counters.find(
+        (record) => record.metric === DUPLEX_COUNTER_CHANNEL_OPEN_TOTAL,
+      );
       expect(open?.dimensions.transport).toBe("http2");
       expect(open?.dimensions.provider).toBe("daytona");
     } finally {
@@ -4031,11 +4853,14 @@ describe("sandbox adapter execution targets", () => {
       hostApiToken: "real-run-jwt",
       hostApiUrl: api.origin,
       enableSandboxDuplexBridge: false,
-      duplexObservabilityRecorder: adapterExecutionTargetDuplexObservabilityRecorder(fallbackTarget),
+      duplexObservabilityRecorder:
+        adapterExecutionTargetDuplexObservabilityRecorder(fallbackTarget),
     });
     try {
       expect(fallbackBridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((record) => record.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (record) => record.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback?.dimensions.fallback_reason).toBe("gate_off");
       expect(fallback?.dimensions.transport).toBe("file");
     } finally {
@@ -4045,58 +4870,78 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it.each([
-    { name: "the kill switch is off with the capability granted", enable: false, capability: true },
-    { name: "the capability is absent with the kill switch on", enable: true, capability: false },
-  ])("selects the file bridge when $name", async ({ enable, capability }) => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-gate-"));
-    cleanupDirs.push(rootDir);
-    const remoteCwd = path.join(rootDir, "workspace");
-    await mkdir(remoteCwd, { recursive: true });
-    const api = await startRecordingApiServer();
-    const { runner, control } = makeDuplexSelectionRunner();
-    const target: AdapterSandboxExecutionTarget = {
-      kind: "remote",
-      transport: "sandbox",
-      providerKey: "e2b",
-      remoteCwd,
-      timeoutMs: 30_000,
-      runner,
-      effectiveCapabilities: duplexCapabilities(capability),
-    };
+    {
+      name: "the kill switch is off with the capability granted",
+      enable: false,
+      capability: true,
+    },
+    {
+      name: "the capability is absent with the kill switch on",
+      enable: true,
+      capability: false,
+    },
+  ])(
+    "selects the file bridge when $name",
+    async ({ enable, capability }) => {
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-duplex-gate-"),
+      );
+      cleanupDirs.push(rootDir);
+      const remoteCwd = path.join(rootDir, "workspace");
+      await mkdir(remoteCwd, { recursive: true });
+      const api = await startRecordingApiServer();
+      const { runner, control } = makeDuplexSelectionRunner();
+      const target: AdapterSandboxExecutionTarget = {
+        kind: "remote",
+        transport: "sandbox",
+        providerKey: "e2b",
+        remoteCwd,
+        timeoutMs: 30_000,
+        runner,
+        effectiveCapabilities: duplexCapabilities(capability),
+      };
 
-    const bridge = await startAdapterExecutionTargetTaskcoreBridge({
-      runId: "run-gate",
-      target,
-      runtimeRootDir: path.join(remoteCwd, ".taskcore-runtime", "codex"),
-      adapterKey: "codex",
-      hostApiToken: "real-run-jwt",
-      hostApiUrl: api.origin,
-      enableSandboxDuplexBridge: enable,
-    });
-    try {
-      expect(bridge).not.toBeNull();
-      // Neither gate combination opened a duplex channel; the file bridge serves.
-      expect(control.openCount).toBe(0);
-      expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-    } finally {
-      await bridge?.stop();
-      await api.close();
-    }
-  }, 20000);
+      const bridge = await startAdapterExecutionTargetTaskcoreBridge({
+        runId: "run-gate",
+        target,
+        runtimeRootDir: path.join(remoteCwd, ".taskcore-runtime", "codex"),
+        adapterKey: "codex",
+        hostApiToken: "real-run-jwt",
+        hostApiUrl: api.origin,
+        enableSandboxDuplexBridge: enable,
+      });
+      try {
+        expect(bridge).not.toBeNull();
+        // Neither gate combination opened a duplex channel; the file bridge serves.
+        expect(control.openCount).toBe(0);
+        expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
+      } finally {
+        await bridge?.stop();
+        await api.close();
+      }
+    },
+    20000,
+  );
 
   it.each([
     {
       name: "a mismatched nonce",
       onOpen: (ctx: DuplexOpenContext) =>
-        ctx.emitFrame({ version: 2, type: "ready", nonce: "00000000000000000000000000000000" }),
+        ctx.emitFrame({
+          version: 2,
+          type: "ready",
+          nonce: "00000000000000000000000000000000",
+        }),
     },
     {
       name: "an incomplete READY frame",
-      onOpen: (ctx: DuplexOpenContext) => ctx.emitRaw('{"version":2,"type":"ready"}\n'),
+      onOpen: (ctx: DuplexOpenContext) =>
+        ctx.emitRaw('{"version":2,"type":"ready"}\n'),
     },
     {
       name: "protocol contamination before READY",
-      onOpen: (ctx: DuplexOpenContext) => ctx.emitFrame({ version: 2, type: "heartbeat" }),
+      onOpen: (ctx: DuplexOpenContext) =>
+        ctx.emitFrame({ version: 2, type: "heartbeat" }),
     },
     {
       name: "a gateway bind failure with no READY frame",
@@ -4106,45 +4951,53 @@ describe("sandbox adapter execution targets", () => {
       name: "a readiness timeout with no frame at all",
       onOpen: () => {},
     },
-  ])("fails closed to the file bridge on $name and leaves no live session", async ({ onOpen }) => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-fail-"));
-    cleanupDirs.push(rootDir);
-    const remoteCwd = path.join(rootDir, "workspace");
-    await mkdir(remoteCwd, { recursive: true });
-    const api = await startRecordingApiServer();
-    const { runner, control } = makeDuplexSelectionRunner(onOpen);
-    const target: AdapterSandboxExecutionTarget = {
-      kind: "remote",
-      transport: "sandbox",
-      providerKey: "e2b",
-      remoteCwd,
-      timeoutMs: 30_000,
-      runner,
-      effectiveCapabilities: duplexCapabilities(true),
-    };
+  ])(
+    "fails closed to the file bridge on $name and leaves no live session",
+    async ({ onOpen }) => {
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-duplex-fail-"),
+      );
+      cleanupDirs.push(rootDir);
+      const remoteCwd = path.join(rootDir, "workspace");
+      await mkdir(remoteCwd, { recursive: true });
+      const api = await startRecordingApiServer();
+      const { runner, control } = makeDuplexSelectionRunner(onOpen);
+      const target: AdapterSandboxExecutionTarget = {
+        kind: "remote",
+        transport: "sandbox",
+        providerKey: "e2b",
+        remoteCwd,
+        timeoutMs: 30_000,
+        runner,
+        effectiveCapabilities: duplexCapabilities(true),
+      };
 
-    const bridge = await startAdapterExecutionTargetTaskcoreBridge({
-      runId: "run-fail",
-      target,
-      runtimeRootDir: path.join(remoteCwd, ".taskcore-runtime", "codex"),
-      adapterKey: "codex",
-      hostApiToken: "real-run-jwt",
-      hostApiUrl: api.origin,
-      enableSandboxDuplexBridge: true,
-      duplexReadinessTimeoutMs: 400,
-    });
-    try {
-      expect(bridge).not.toBeNull();
-      expect(control.openCount).toBe(1);
-      // Fail closed: the file bridge serves after the bounded cleanup.
-      expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      // The bounded cleanup left no live provider session.
-      expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(1);
-    } finally {
-      await bridge?.stop();
-      await api.close();
-    }
-  }, 20000);
+      const bridge = await startAdapterExecutionTargetTaskcoreBridge({
+        runId: "run-fail",
+        target,
+        runtimeRootDir: path.join(remoteCwd, ".taskcore-runtime", "codex"),
+        adapterKey: "codex",
+        hostApiToken: "real-run-jwt",
+        hostApiUrl: api.origin,
+        enableSandboxDuplexBridge: true,
+        duplexReadinessTimeoutMs: 400,
+      });
+      try {
+        expect(bridge).not.toBeNull();
+        expect(control.openCount).toBe(1);
+        // Fail closed: the file bridge serves after the bounded cleanup.
+        expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
+        // The bounded cleanup left no live provider session.
+        expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(
+          1,
+        );
+      } finally {
+        await bridge?.stop();
+        await api.close();
+      }
+    },
+    20000,
+  );
 
   it.each([
     {
@@ -4160,7 +5013,9 @@ describe("sandbox adapter execution targets", () => {
   ])(
     "rejects a READY frame that carries $name and never sends the bridge token there",
     async ({ buildReady }) => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-addr-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-duplex-addr-"),
+      );
       cleanupDirs.push(rootDir);
       const remoteCwd = path.join(rootDir, "workspace");
       await mkdir(remoteCwd, { recursive: true });
@@ -4180,7 +5035,9 @@ describe("sandbox adapter execution targets", () => {
       });
       const attackerAddress = attacker.address();
       if (!attackerAddress || typeof attackerAddress === "string") {
-        throw new Error("Expected the attacker server to listen on a TCP port.");
+        throw new Error(
+          "Expected the attacker server to listen on a TCP port.",
+        );
       }
       const attackerPort = attackerAddress.port;
 
@@ -4213,8 +5070,12 @@ describe("sandbox adapter execution targets", () => {
         // The address-bearing READY frame failed the strict schema, so the host
         // fell closed to the file bridge and built no channel-supplied endpoint.
         expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-        expect(bridge?.env.TASKCORE_API_URL).not.toContain(String(attackerPort));
-        expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(1);
+        expect(bridge?.env.TASKCORE_API_URL).not.toContain(
+          String(attackerPort),
+        );
+        expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(
+          1,
+        );
         // Give any stray forward a moment, then assert the attacker got nothing.
         await new Promise((resolve) => setTimeout(resolve, 100));
         expect(attackerHits).toEqual([]);
@@ -4228,12 +5089,16 @@ describe("sandbox adapter execution targets", () => {
   );
 
   it("test_route_allowlist_header_cleanup_and_token_replacement_hold_on_http2", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-403-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-403-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -4261,14 +5126,21 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
 
       // An unlisted route answers 403 over the real HTTP/2 stream and never
       // reaches the host API — the route allowlist holds on the http2 path.
       const forbidden = await http2TestRequest(sessionRef.current!, {
         method: "POST",
         path: "/api/secret-admin-route",
-        headers: { authorization: `Bearer ${bridgeToken}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${bridgeToken}`,
+          "content-type": "application/json",
+        },
         body: Buffer.from(JSON.stringify({ escalate: true }), "utf8"),
       });
       expect(forbidden.status).toBe(403);
@@ -4280,7 +5152,10 @@ describe("sandbox adapter execution targets", () => {
       const allowed = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
-        headers: { authorization: `Bearer ${bridgeToken}`, "x-not-allowed": "should-be-dropped" },
+        headers: {
+          authorization: `Bearer ${bridgeToken}`,
+          "x-not-allowed": "should-be-dropped",
+        },
       });
       expect(allowed.status).toBe(200);
       expect(api.requests).toHaveLength(1);
@@ -4296,7 +5171,9 @@ describe("sandbox adapter execution targets", () => {
       // binary body reaches the host and returns unchanged in both
       // directions: no re-encoding step touches the multipart upload or the
       // binary download.
-      const uploadBytes = Buffer.from([0x00, 0x01, 0xff, 0x7f, 0x80, 0x0d, 0x0a]);
+      const uploadBytes = Buffer.from([
+        0x00, 0x01, 0xff, 0x7f, 0x80, 0x0d, 0x0a,
+      ]);
       const upload = buildMultipartAttachmentUpload(uploadBytes);
       const uploadResponse = await http2TestRequest(sessionRef.current!, {
         method: "POST",
@@ -4323,7 +5200,9 @@ describe("sandbox adapter execution targets", () => {
       });
       expect(downloadResponse.status).toBe(200);
       expect(api.requests).toHaveLength(3);
-      expect(downloadResponse.body.equals(ATTACHMENT_DOWNLOAD_BYTES)).toBe(true);
+      expect(downloadResponse.body.equals(ATTACHMENT_DOWNLOAD_BYTES)).toBe(
+        true,
+      );
     } finally {
       sessionRef.current?.close();
       await bridge?.stop();
@@ -4336,7 +5215,9 @@ describe("sandbox adapter execution targets", () => {
     // continuation byte, so this body is not valid UTF-8. The forward path
     // must carry these exact bytes on the way in, and the host's own
     // response bytes on the way out, with no re-encoding step on either leg.
-    const malformedBytes = Buffer.from([0x7b, 0x22, 0x61, 0x22, 0x3a, 0xc3, 0x28, 0x7d]);
+    const malformedBytes = Buffer.from([
+      0x7b, 0x22, 0x61, 0x22, 0x3a, 0xc3, 0x28, 0x7d,
+    ]);
     const receivedRequestBodies: Buffer[] = [];
     const echoServer = createServer((req, res) => {
       const chunks: Buffer[] = [];
@@ -4356,11 +5237,15 @@ describe("sandbox adapter execution targets", () => {
       throw new Error("Expected the echo server to listen on a TCP port.");
     }
 
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-raw-bytes-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-raw-bytes-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -4388,12 +5273,19 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
 
       const response = await http2TestRequest(sessionRef.current!, {
         method: "POST",
         path: "/api/issues/issue-1/comments",
-        headers: { authorization: `Bearer ${bridgeToken}`, "content-type": "application/octet-stream" },
+        headers: {
+          authorization: `Bearer ${bridgeToken}`,
+          "content-type": "application/octet-stream",
+        },
         body: malformedBytes,
       });
 
@@ -4412,7 +5304,9 @@ describe("sandbox adapter execution targets", () => {
   // the fixed duplex surface produces, so a test asserts the exact names,
   // dimensions, and values. An optional `failEvery` flag makes every method throw,
   // so a test proves a telemetry failure never breaks the request path.
-  function createRecordingDuplexRecorder(options: { failEvery?: boolean } = {}): {
+  function createRecordingDuplexRecorder(
+    options: { failEvery?: boolean } = {},
+  ): {
     recorder: DuplexObservabilityRecorder;
     spans: DuplexObservabilitySpanRecord[];
     counters: DuplexObservabilityCounterRecord[];
@@ -4440,10 +5334,14 @@ describe("sandbox adapter execution targets", () => {
 
   // Every dimension key a record carries must be one of the fixed keys. The set is
   // closed, so a new key never reaches a sink by accident.
-  function assertOnlyFixedDimensionKeys(dimensions: DuplexObservabilityDimensions | undefined): void {
+  function assertOnlyFixedDimensionKeys(
+    dimensions: DuplexObservabilityDimensions | undefined,
+  ): void {
     expect(dimensions).toBeDefined();
     for (const key of Object.keys(dimensions ?? {})) {
-      expect(DUPLEX_DIMENSION_KEYS).toContain(key as (typeof DUPLEX_DIMENSION_KEYS)[number]);
+      expect(DUPLEX_DIMENSION_KEYS).toContain(
+        key as (typeof DUPLEX_DIMENSION_KEYS)[number],
+      );
     }
   }
 
@@ -4461,19 +5359,24 @@ describe("sandbox adapter execution targets", () => {
   });
 
   it("records an http2 request span with latency and the fixed dimension keys", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-obs-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-obs-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
       ctx.emitReady();
       sessionRef.current = ctx.connectHttp2();
     });
-    const { recorder, spans, counters, events } = createRecordingDuplexRecorder();
+    const { recorder, spans, counters, events } =
+      createRecordingDuplexRecorder();
     const target: AdapterSandboxExecutionTarget = {
       kind: "remote",
       transport: "sandbox",
@@ -4496,7 +5399,11 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -4505,10 +5412,18 @@ describe("sandbox adapter execution targets", () => {
       expect(response.status).toBe(200);
 
       // The channel-open surface: the span, the counter, and the transport event.
-      const openSpan = spans.find((span) => span.name === DUPLEX_SPAN_CHANNEL_OPEN);
+      const openSpan = spans.find(
+        (span) => span.name === DUPLEX_SPAN_CHANNEL_OPEN,
+      );
       expect(openSpan).toBeDefined();
-      expect(openSpan?.dimensions).toMatchObject({ provider: "daytona", transport: "http2", outcome: "ok" });
-      expect(counters.some((c) => c.metric === DUPLEX_COUNTER_CHANNEL_OPEN_TOTAL)).toBe(true);
+      expect(openSpan?.dimensions).toMatchObject({
+        provider: "daytona",
+        transport: "http2",
+        outcome: "ok",
+      });
+      expect(
+        counters.some((c) => c.metric === DUPLEX_COUNTER_CHANNEL_OPEN_TOTAL),
+      ).toBe(true);
       expect(
         events.some(
           (e) =>
@@ -4519,11 +5434,17 @@ describe("sandbox adapter execution targets", () => {
       ).toBe(true);
 
       // The request span carries a numeric latency and only the fixed keys.
-      const requestSpan = spans.find((span) => span.name === DUPLEX_SPAN_REQUEST);
+      const requestSpan = spans.find(
+        (span) => span.name === DUPLEX_SPAN_REQUEST,
+      );
       expect(requestSpan).toBeDefined();
       expect(typeof requestSpan?.latencyMs).toBe("number");
       expect(requestSpan?.latencyMs).toBeGreaterThanOrEqual(0);
-      expect(requestSpan?.dimensions).toMatchObject({ provider: "daytona", transport: "http2", outcome: "ok" });
+      expect(requestSpan?.dimensions).toMatchObject({
+        provider: "daytona",
+        transport: "http2",
+        outcome: "ok",
+      });
       assertOnlyFixedDimensionKeys(requestSpan?.dimensions);
     } finally {
       sessionRef.current?.close();
@@ -4533,7 +5454,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("increments the fallback counter with an approved reason when the capability is absent", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-fb-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-fb-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -4562,7 +5485,9 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback).toBeDefined();
       const approvedReasons = [
         "gate_off",
@@ -4577,12 +5502,17 @@ describe("sandbox adapter execution targets", () => {
         "contaminated",
       ];
       expect(approvedReasons).toContain(fallback?.dimensions.fallback_reason);
-      expect(fallback?.dimensions).toMatchObject({ transport: "file", outcome: "error" });
+      expect(fallback?.dimensions).toMatchObject({
+        transport: "file",
+        outcome: "error",
+      });
       assertOnlyFixedDimensionKeys(fallback?.dimensions);
       // The transport event mirrors the fallback.
       expect(
         events.some(
-          (e) => e.name === DUPLEX_TRANSPORT_EVENT && e.dimensions.transport === "file",
+          (e) =>
+            e.name === DUPLEX_TRANSPORT_EVENT &&
+            e.dimensions.transport === "file",
         ),
       ).toBe(true);
     } finally {
@@ -4605,7 +5535,9 @@ describe("sandbox adapter execution targets", () => {
   ])(
     "names the open-failure stage $expectedReason and falls back to the file bridge on $name",
     async ({ error, expectedReason }) => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-stage-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-duplex-stage-"),
+      );
       cleanupDirs.push(rootDir);
       const remoteCwd = path.join(rootDir, "workspace");
       await mkdir(remoteCwd, { recursive: true });
@@ -4613,11 +5545,13 @@ describe("sandbox adapter execution targets", () => {
       // A runner whose duplex open rejects. The host binds the caught error and
       // names the exact open-failure stage.
       const base = createLocalSandboxRunner();
-      const openDuplexChannel = async (): Promise<CommandManagedDuplexChannel> => {
-        throw error;
-      };
+      const openDuplexChannel =
+        async (): Promise<CommandManagedDuplexChannel> => {
+          throw error;
+        };
       const runner = { ...base, openDuplexChannel };
-      const { recorder, spans, counters, events } = createRecordingDuplexRecorder();
+      const { recorder, spans, counters, events } =
+        createRecordingDuplexRecorder();
       const target: AdapterSandboxExecutionTarget = {
         kind: "remote",
         transport: "sandbox",
@@ -4643,15 +5577,21 @@ describe("sandbox adapter execution targets", () => {
         expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
         // The channel-open span and the fallback counter name the exact stage.
         const openSpan = spans.find(
-          (s) => s.name === DUPLEX_SPAN_CHANNEL_OPEN && s.dimensions.outcome === "error",
+          (s) =>
+            s.name === DUPLEX_SPAN_CHANNEL_OPEN &&
+            s.dimensions.outcome === "error",
         );
         expect(openSpan?.dimensions.fallback_reason).toBe(expectedReason);
-        const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+        const fallback = counters.find(
+          (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+        );
         expect(fallback?.dimensions.fallback_reason).toBe(expectedReason);
         assertOnlyFixedDimensionKeys(fallback?.dimensions);
         expect(
           events.some(
-            (e) => e.name === DUPLEX_TRANSPORT_EVENT && e.dimensions.transport === "file",
+            (e) =>
+              e.name === DUPLEX_TRANSPORT_EVENT &&
+              e.dimensions.transport === "file",
           ),
         ).toBe(true);
       } finally {
@@ -4663,80 +5603,110 @@ describe("sandbox adapter execution targets", () => {
   );
 
   it.each([
-    { name: "before any dispatch", dispatchFirst: false, expectedClass: "pre_dispatch" },
-    { name: "after a dispatch", dispatchFirst: true, expectedClass: "post_dispatch" },
-  ])("increments the loss counter with the loss class $name", async ({ dispatchFirst, expectedClass }) => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-loss-"));
-    cleanupDirs.push(rootDir);
-    const remoteCwd = path.join(rootDir, "workspace");
-    await mkdir(remoteCwd, { recursive: true });
-    const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
-    let bridgeToken = "";
-    let emitExit: (() => void) | null = null;
-    const { runner } = makeHttp2SelectionRunner((ctx) => {
-      bridgeToken = ctx.bridgeToken;
-      emitExit = ctx.emitExit;
-      ctx.emitReady();
-      sessionRef.current = ctx.connectHttp2();
-    });
-    const { recorder, counters } = createRecordingDuplexRecorder();
-    const target: AdapterSandboxExecutionTarget = {
-      kind: "remote",
-      transport: "sandbox",
-      providerKey: "daytona",
-      remoteCwd,
-      timeoutMs: 30_000,
-      runner,
-      effectiveCapabilities: duplexCapabilities(true),
-    };
-
-    const bridge = await startAdapterExecutionTargetTaskcoreBridge({
-      runId: "run-loss",
-      target,
-      runtimeRootDir: path.join(remoteCwd, ".taskcore-runtime", "codex"),
-      adapterKey: "codex",
-      hostApiToken: "real-run-jwt",
-      hostApiUrl: api.origin,
-      enableSandboxDuplexBridge: true,
-      duplexObservabilityRecorder: recorder,
-    });
-    try {
-      expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
-      if (dispatchFirst) {
-        const response = await http2TestRequest(sessionRef.current!, {
-          method: "GET",
-          path: "/api/agents/me",
-          headers: { authorization: `Bearer ${bridgeToken}` },
-        });
-        expect(response.status).toBe(200);
-      }
-      // The pseudo-terminal channel exits. The host records a terminal loss.
-      emitExit!();
-      await waitForCondition(
-        () => counters.some((c) => c.metric === DUPLEX_COUNTER_LOSS_TOTAL),
-        "the host to record a loss counter",
-        4000,
+    {
+      name: "before any dispatch",
+      dispatchFirst: false,
+      expectedClass: "pre_dispatch",
+    },
+    {
+      name: "after a dispatch",
+      dispatchFirst: true,
+      expectedClass: "post_dispatch",
+    },
+  ])(
+    "increments the loss counter with the loss class $name",
+    async ({ dispatchFirst, expectedClass }) => {
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-http2-loss-"),
       );
-      const loss = counters.find((c) => c.metric === DUPLEX_COUNTER_LOSS_TOTAL);
-      expect(loss?.dimensions.loss_class).toBe(expectedClass);
-      expect(loss?.dimensions).toMatchObject({ transport: "http2", outcome: "error", loss_reason: "provider_exit" });
-      assertOnlyFixedDimensionKeys(loss?.dimensions);
-    } finally {
-      sessionRef.current?.close();
-      await bridge?.stop();
-      await api.close();
-    }
-  }, 20000);
+      cleanupDirs.push(rootDir);
+      const remoteCwd = path.join(rootDir, "workspace");
+      await mkdir(remoteCwd, { recursive: true });
+      const api = await startRecordingApiServer();
+      const sessionRef: { current: http2.ClientHttp2Session | null } = {
+        current: null,
+      };
+      let bridgeToken = "";
+      let emitExit: (() => void) | null = null;
+      const { runner } = makeHttp2SelectionRunner((ctx) => {
+        bridgeToken = ctx.bridgeToken;
+        emitExit = ctx.emitExit;
+        ctx.emitReady();
+        sessionRef.current = ctx.connectHttp2();
+      });
+      const { recorder, counters } = createRecordingDuplexRecorder();
+      const target: AdapterSandboxExecutionTarget = {
+        kind: "remote",
+        transport: "sandbox",
+        providerKey: "daytona",
+        remoteCwd,
+        timeoutMs: 30_000,
+        runner,
+        effectiveCapabilities: duplexCapabilities(true),
+      };
+
+      const bridge = await startAdapterExecutionTargetTaskcoreBridge({
+        runId: "run-loss",
+        target,
+        runtimeRootDir: path.join(remoteCwd, ".taskcore-runtime", "codex"),
+        adapterKey: "codex",
+        hostApiToken: "real-run-jwt",
+        hostApiUrl: api.origin,
+        enableSandboxDuplexBridge: true,
+        duplexObservabilityRecorder: recorder,
+      });
+      try {
+        expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
+        await waitForCondition(
+          () => sessionRef.current !== null,
+          "the http2 client session to open",
+          4000,
+        );
+        if (dispatchFirst) {
+          const response = await http2TestRequest(sessionRef.current!, {
+            method: "GET",
+            path: "/api/agents/me",
+            headers: { authorization: `Bearer ${bridgeToken}` },
+          });
+          expect(response.status).toBe(200);
+        }
+        // The pseudo-terminal channel exits. The host records a terminal loss.
+        emitExit!();
+        await waitForCondition(
+          () => counters.some((c) => c.metric === DUPLEX_COUNTER_LOSS_TOTAL),
+          "the host to record a loss counter",
+          4000,
+        );
+        const loss = counters.find(
+          (c) => c.metric === DUPLEX_COUNTER_LOSS_TOTAL,
+        );
+        expect(loss?.dimensions.loss_class).toBe(expectedClass);
+        expect(loss?.dimensions).toMatchObject({
+          transport: "http2",
+          outcome: "error",
+          loss_reason: "provider_exit",
+        });
+        assertOnlyFixedDimensionKeys(loss?.dimensions);
+      } finally {
+        sessionRef.current?.close();
+        await bridge?.stop();
+        await api.close();
+      }
+    },
+    20000,
+  );
 
   it("keeps serving the request path when the telemetry recorder throws", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-guard-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-guard-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -4767,7 +5737,11 @@ describe("sandbox adapter execution targets", () => {
     try {
       // The throwing recorder never blocked the http2 selection.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -4791,7 +5765,9 @@ describe("sandbox adapter execution targets", () => {
     // error string has no code path into a sink on the http2_v1 transport, so
     // this test proves the property that does need a live run: the route,
     // the query, the body, and both tokens never ride a sink either.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-redact-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-redact-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -4801,9 +5777,16 @@ describe("sandbox adapter execution targets", () => {
     const QUERY_SENTINEL = "sentinelquery3d90";
     const BODY_SENTINEL = "sentinelbodya17c";
     const AGENT_TOKEN_SENTINEL = "sentinelagenttoke91b4";
-    const sentinels = [ROUTE_SENTINEL, QUERY_SENTINEL, BODY_SENTINEL, AGENT_TOKEN_SENTINEL];
+    const sentinels = [
+      ROUTE_SENTINEL,
+      QUERY_SENTINEL,
+      BODY_SENTINEL,
+      AGENT_TOKEN_SENTINEL,
+    ];
 
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -4812,7 +5795,8 @@ describe("sandbox adapter execution targets", () => {
     });
 
     const logLines: string[] = [];
-    const { recorder, spans, counters, events } = createRecordingDuplexRecorder();
+    const { recorder, spans, counters, events } =
+      createRecordingDuplexRecorder();
     const target: AdapterSandboxExecutionTarget = {
       kind: "remote",
       transport: "sandbox",
@@ -4825,7 +5809,9 @@ describe("sandbox adapter execution targets", () => {
 
     const previousDebug = process.env.TASKCORE_BRIDGE_DEBUG;
     process.env.TASKCORE_BRIDGE_DEBUG = "1";
-    let bridge: Awaited<ReturnType<typeof startAdapterExecutionTargetTaskcoreBridge>> = null;
+    let bridge: Awaited<
+      ReturnType<typeof startAdapterExecutionTargetTaskcoreBridge>
+    > = null;
     try {
       bridge = await startAdapterExecutionTargetTaskcoreBridge({
         runId: "run-redact",
@@ -4841,7 +5827,11 @@ describe("sandbox adapter execution targets", () => {
         },
       });
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
 
       // Dispatch one real HTTP/2 stream that carries the sentinel route,
       // query, and body. The route allowlist accepts an arbitrary issue id
@@ -4850,7 +5840,10 @@ describe("sandbox adapter execution targets", () => {
       const response = await http2TestRequest(sessionRef.current!, {
         method: "POST",
         path: `/api/issues/${ROUTE_SENTINEL}/comments?secret=${QUERY_SENTINEL}`,
-        headers: { authorization: `Bearer ${bridgeToken}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${bridgeToken}`,
+          "content-type": "application/json",
+        },
         body: Buffer.from(JSON.stringify({ body: BODY_SENTINEL }), "utf8"),
       });
       expect(response.status).toBe(200);
@@ -4881,19 +5874,24 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("maps a sentinel provider key to the constant other across every sink", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-prov-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-prov-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
       ctx.emitReady();
       sessionRef.current = ctx.connectHttp2();
     });
-    const { recorder, spans, counters, events } = createRecordingDuplexRecorder();
+    const { recorder, spans, counters, events } =
+      createRecordingDuplexRecorder();
     const PROVIDER_SENTINEL = "sentinel-plugin-provider-key-9c2a";
     const target: AdapterSandboxExecutionTarget = {
       kind: "remote",
@@ -4917,7 +5915,11 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -4951,7 +5953,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("caps the pre-READY readiness buffer and falls back with a contaminated reason", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-cap-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-cap-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -4994,7 +5998,9 @@ describe("sandbox adapter execution targets", () => {
       expect(control.openCount).toBe(1);
       // The cap drove the failure, so the file bridge serves after the bounded cleanup.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback?.dimensions.fallback_reason).toBe("contaminated");
       // The bounded cleanup left no live provider session.
       expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(1);
@@ -5005,7 +6011,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("caps the pre-READY buffer under many small newline-less chunks", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-cap-small-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-cap-small-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5017,7 +6025,8 @@ describe("sandbox adapter execution targets", () => {
     // back to the file bridge.
     const readinessBufferCapBytes = DEFAULT_MAX_DUPLEX_FRAME_BYTES + 4_096;
     const smallChunk = "x".repeat(64);
-    const chunkCount = Math.ceil(readinessBufferCapBytes / smallChunk.length) + 1;
+    const chunkCount =
+      Math.ceil(readinessBufferCapBytes / smallChunk.length) + 1;
     const { runner, control } = makeDuplexSelectionRunner((ctx) => {
       for (let i = 0; i < chunkCount; i += 1) {
         ctx.emitRaw(smallChunk);
@@ -5052,7 +6061,9 @@ describe("sandbox adapter execution targets", () => {
       expect(control.openCount).toBe(1);
       // The cap drove the failure, so the file bridge serves after the bounded cleanup.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback?.dimensions.fallback_reason).toBe("contaminated");
       expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(1);
     } finally {
@@ -5062,7 +6073,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("bounds the pre-READY newline-scan work by the bytes received", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-scan-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-scan-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5073,7 +6086,8 @@ describe("sandbox adapter execution targets", () => {
     // per-chunk full rescan makes the work quadratic.
     const readinessBufferCapBytes = DEFAULT_MAX_DUPLEX_FRAME_BYTES + 4_096;
     const smallChunk = "x".repeat(64);
-    const chunkCount = Math.ceil(readinessBufferCapBytes / smallChunk.length) + 1;
+    const chunkCount =
+      Math.ceil(readinessBufferCapBytes / smallChunk.length) + 1;
     const totalBytes = chunkCount * smallChunk.length;
     const { runner, control } = makeDuplexSelectionRunner((ctx) => {
       for (let i = 0; i < chunkCount; i += 1) {
@@ -5118,7 +6132,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("bounds the pre-READY buffer growth-copy work by the bytes received", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-growth-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-growth-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5130,7 +6146,8 @@ describe("sandbox adapter execution targets", () => {
     // the total copy work stays linear in the bytes received.
     const readinessBufferCapBytes = DEFAULT_MAX_DUPLEX_FRAME_BYTES + 4_096;
     const smallChunk = "x".repeat(64);
-    const chunkCount = Math.ceil(readinessBufferCapBytes / smallChunk.length) + 1;
+    const chunkCount =
+      Math.ceil(readinessBufferCapBytes / smallChunk.length) + 1;
     const totalBytes = chunkCount * smallChunk.length;
     const { runner, control } = makeDuplexSelectionRunner((ctx) => {
       for (let i = 0; i < chunkCount; i += 1) {
@@ -5176,7 +6193,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("bounds the pre-READY skip scan work by the bytes received", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-blank-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-blank-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5229,7 +6248,9 @@ describe("sandbox adapter execution targets", () => {
       // The gate skipped the noise and accepted the READY frame, so the http2
       // transport serves and no fallback fired.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback).toBeUndefined();
     } finally {
       await bridge?.stop();
@@ -5238,7 +6259,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("test_a_prologue_of_any_length_before_the_ready_line_is_discarded", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-noise-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-noise-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5250,7 +6273,9 @@ describe("sandbox adapter execution targets", () => {
     // in the code. The preface scan then starts only on the bytes the gate
     // retained after that accepted line.
     const { runner, control } = makeHttp2SelectionRunner((ctx) => {
-      ctx.emitRaw("sh -c exec env TASKCORE_BRIDGE_NONCE=... node gateway.mjs\n");
+      ctx.emitRaw(
+        "sh -c exec env TASKCORE_BRIDGE_NONCE=... node gateway.mjs\n",
+      );
       ctx.emitRaw('{"version":2,"type":"ready"}\n');
       ctx.emitRaw("x".repeat(50_000)); // an arbitrarily long prologue, no fixed length
       ctx.emitReady();
@@ -5285,7 +6310,9 @@ describe("sandbox adapter execution targets", () => {
       // then accepted the READY frame, so the http2 transport serves and no
       // fallback fired.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback).toBeUndefined();
     } finally {
       await bridge?.stop();
@@ -5294,7 +6321,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("settles a wrong-nonce READY frame as a nonce mismatch, even after a noise line", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-noise-nonce-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-noise-nonce-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5305,7 +6334,11 @@ describe("sandbox adapter execution targets", () => {
     // the `ready_nonce_mismatch` reason.
     const { runner, control } = makeDuplexSelectionRunner((ctx) => {
       ctx.emitRaw("a non-frame echo line\n");
-      ctx.emitFrame({ version: 2, type: "ready", nonce: "00000000000000000000000000000000" });
+      ctx.emitFrame({
+        version: 2,
+        type: "ready",
+        nonce: "00000000000000000000000000000000",
+      });
     });
     const { recorder, counters } = createRecordingDuplexRecorder();
     const target: AdapterSandboxExecutionTarget = {
@@ -5334,7 +6367,9 @@ describe("sandbox adapter execution targets", () => {
       expect(control.openCount).toBe(1);
       // The wrong nonce failed the handshake, so the file bridge serves.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback?.dimensions.fallback_reason).toBe("ready_nonce_mismatch");
       // The bounded cleanup left no live provider session.
       expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(1);
@@ -5345,7 +6380,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("enforces the buffer cap on an over-cap blank prefix before it accepts a valid READY frame", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-capbypass-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-capbypass-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5392,7 +6429,9 @@ describe("sandbox adapter execution targets", () => {
       expect(control.openCount).toBe(1);
       // The cap drove the failure before READY acceptance, so the file bridge serves.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback?.dimensions.fallback_reason).toBe("contaminated");
       // The bounded cleanup left no live provider session.
       expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(1);
@@ -5403,7 +6442,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("records the channel-open span with the fallback_reason dimension on the fallback path", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-duplex-openspan-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-duplex-openspan-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5413,7 +6454,11 @@ describe("sandbox adapter execution targets", () => {
     // carries the closed `fallback_reason` dimension, so a reader can group the
     // failed opens by reason.
     const { runner } = makeDuplexSelectionRunner((ctx) =>
-      ctx.emitFrame({ version: 2, type: "ready", nonce: "00000000000000000000000000000000" }),
+      ctx.emitFrame({
+        version: 2,
+        type: "ready",
+        nonce: "00000000000000000000000000000000",
+      }),
     );
     const { recorder, spans } = createRecordingDuplexRecorder();
     const target: AdapterSandboxExecutionTarget = {
@@ -5439,7 +6484,9 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const openSpan = spans.find((span) => span.name === DUPLEX_SPAN_CHANNEL_OPEN);
+      const openSpan = spans.find(
+        (span) => span.name === DUPLEX_SPAN_CHANNEL_OPEN,
+      );
       expect(openSpan).toBeDefined();
       expect(openSpan?.dimensions).toMatchObject({
         provider: "daytona",
@@ -5456,12 +6503,16 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("drops a header outside the allowlist on the host http2 forward path", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-hdr-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-hdr-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -5489,7 +6540,11 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -5502,7 +6557,11 @@ describe("sandbox adapter execution targets", () => {
         },
       });
       expect(response.status).toBe(200);
-      await waitForCondition(() => api.requests.length >= 1, "the host to forward the http2 request", 4000);
+      await waitForCondition(
+        () => api.requests.length >= 1,
+        "the host to forward the http2 request",
+        4000,
+      );
       const forwarded = api.requests[0];
       // The allowlisted header reaches the host.
       expect(forwarded.headers.accept).toBe("application/json");
@@ -5519,12 +6578,16 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("selects the http2 transport for a large forward budget", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-budget-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-budget-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -5557,7 +6620,11 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -5572,7 +6639,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("test_a_missing_preface_aborts_the_open_and_falls_back_to_queue_v1", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-no-preface-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-no-preface-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5615,7 +6684,9 @@ describe("sandbox adapter execution targets", () => {
       expect(control.openCount).toBe(1);
       // The missing preface aborted the open; the file bridge serves.
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback?.dimensions.fallback_reason).toBe("preface_missing");
       // The bounded cleanup left no live provider session.
       expect(control.closeCount + control.stopCount).toBeGreaterThanOrEqual(1);
@@ -5626,7 +6697,9 @@ describe("sandbox adapter execution targets", () => {
   }, 20000);
 
   it("test_disabled_flag_selects_queue_v1", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-disabled-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-disabled-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5658,7 +6731,9 @@ describe("sandbox adapter execution targets", () => {
       expect(bridge).not.toBeNull();
       expect(control.openCount).toBe(0);
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const fallback = counters.find((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallback = counters.find(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallback?.dimensions.fallback_reason).toBe("gate_off");
     } finally {
       await bridge?.stop();
@@ -5670,7 +6745,9 @@ describe("sandbox adapter execution targets", () => {
     // The open attempt runs once per run, with no retry loop: a preface
     // failure falls through to the file bridge exactly one time, and the
     // host never re-attempts http2_v1 afterward in the same run.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-one-way-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-one-way-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5708,7 +6785,9 @@ describe("sandbox adapter execution targets", () => {
       expect(control.openCount).toBe(1);
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
       // Exactly one fallback record — the transition never repeats.
-      const fallbacks = counters.filter((c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL);
+      const fallbacks = counters.filter(
+        (c) => c.metric === DUPLEX_COUNTER_FALLBACK_TOTAL,
+      );
       expect(fallbacks).toHaveLength(1);
       expect(fallbacks[0]?.dimensions.fallback_reason).toBe("preface_missing");
     } finally {
@@ -5725,7 +6804,9 @@ describe("sandbox adapter execution targets", () => {
     // READY: it holds the channel open, with no client preface arriving
     // (so the http2 server, if bound, would try to write its own SETTINGS
     // frame), and asserts zero bytes crossed the channel the whole time.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-no-early-write-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-no-early-write-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5752,7 +6833,9 @@ describe("sandbox adapter execution targets", () => {
             readySentAtMs.value = Date.now();
             readyLineSent = true;
             dataListener?.(
-              new TextEncoder().encode(`${JSON.stringify({ version: 2, type: "ready", nonce })}\n`),
+              new TextEncoder().encode(
+                `${JSON.stringify({ version: 2, type: "ready", nonce })}\n`,
+              ),
             );
             // No client preface follows: the host must still write nothing
             // while it waits out the preface bound, proving the READY-accept
@@ -5805,7 +6888,9 @@ describe("sandbox adapter execution targets", () => {
     // bytes are deliberately sentinel-marked and syntactically invalid (not
     // valid UTF-8 JSON), then a valid READY frame. No log line — on any
     // stream — may contain the sentinel bytes.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-invalid-ready-bytes-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-invalid-ready-bytes-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5815,7 +6900,13 @@ describe("sandbox adapter execution targets", () => {
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       // Invalid bytes: not valid UTF-8 (a lone continuation byte), immediately
       // followed by a sentinel and a newline — an invalid candidate line.
-      ctx.emitRaw(Buffer.concat([Buffer.from([0x80]), Buffer.from(INVALID_LINE_SENTINEL), Buffer.from("\n")]));
+      ctx.emitRaw(
+        Buffer.concat([
+          Buffer.from([0x80]),
+          Buffer.from(INVALID_LINE_SENTINEL),
+          Buffer.from("\n"),
+        ]),
+      );
       ctx.emitReady();
       ctx.connectHttp2();
     });
@@ -5856,7 +6947,9 @@ describe("sandbox adapter execution targets", () => {
     // A loss ordered after a host-observed orderly completion is a normal
     // teardown, not a failure: the run already completed. The disposition
     // latch must keep the success and emit no loss event for it.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-orderly-close-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-orderly-close-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -5891,15 +6984,25 @@ describe("sandbox adapter execution targets", () => {
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
       // The agent turn completes cleanly before the channel ends.
-      expect(bridge?.settleRunDisposition?.()).toEqual({ failed: false, lossReason: null });
+      expect(bridge?.settleRunDisposition?.()).toEqual({
+        failed: false,
+        lossReason: null,
+      });
       emitExit!();
       await new Promise((resolve) => setTimeout(resolve, 100));
       // The disposition still reports success after the teardown loss.
-      expect(bridge?.readRunDisposition?.()).toEqual({ failed: false, lossReason: null });
+      expect(bridge?.readRunDisposition?.()).toEqual({
+        failed: false,
+        lossReason: null,
+      });
       // A normal teardown after completion is not a loss: no loss event, no
       // loss counter.
-      expect(events.some((e) => e.dimensions.loss_reason !== undefined)).toBe(false);
-      expect(counters.some((c) => c.metric === DUPLEX_COUNTER_LOSS_TOTAL)).toBe(false);
+      expect(events.some((e) => e.dimensions.loss_reason !== undefined)).toBe(
+        false,
+      );
+      expect(counters.some((c) => c.metric === DUPLEX_COUNTER_LOSS_TOTAL)).toBe(
+        false,
+      );
     } finally {
       await bridge?.stop();
       await api.close();
@@ -5911,12 +7014,16 @@ describe("sandbox adapter execution targets", () => {
     // retryable: the host answers 502 with no indeterminate marker, the same
     // rule `forwardBridgeRequest` already applies on every transport. This
     // proves the http2_v1 forward handler reuses that one function unchanged.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-safe-retry-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-safe-retry-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -5947,7 +7054,11 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -5972,12 +7083,16 @@ describe("sandbox adapter execution targets", () => {
     // host and the gateway share one resolved ceiling: this request carries
     // no body, so only the mock host's own response — comfortably over one
     // byte — trips the size check this test exists to force.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-unsafe-indeterminate-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-unsafe-indeterminate-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -6006,14 +7121,23 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "POST",
         path: "/api/issues/issue-1/comments",
-        headers: { authorization: `Bearer ${bridgeToken}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${bridgeToken}`,
+          "content-type": "application/json",
+        },
       });
       expect(response.status).toBe(504);
-      expect(response.headers["x-taskcore-bridge-outcome"]).toBe("indeterminate");
+      expect(response.headers["x-taskcore-bridge-outcome"]).toBe(
+        "indeterminate",
+      );
     } finally {
       sessionRef.current?.close();
       await bridge?.stop();
@@ -6048,11 +7172,15 @@ describe("sandbox adapter execution targets", () => {
     }
     const apiOrigin = `http://127.0.0.1:${apiAddress.port}`;
 
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-abort-forward-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-abort-forward-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -6083,14 +7211,22 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const clientStream = sessionRef.current!.request({
         ":method": "GET",
         ":path": "/api/agents/me",
         authorization: `Bearer ${bridgeToken}`,
       });
       clientStream.end();
-      await waitForCondition(() => sawRequest, "the mock host to receive the forwarded request", 4000);
+      await waitForCondition(
+        () => sawRequest,
+        "the mock host to receive the forwarded request",
+        4000,
+      );
       // The sandbox side closes its stream while the host forward and its
       // response-body read are both still in flight.
       clientStream.close(http2.constants.NGHTTP2_CANCEL);
@@ -6110,7 +7246,9 @@ describe("sandbox adapter execution targets", () => {
     // outbound connection to the mock host), and retain no copy of it.
     resetBridgeBodyReservationsForTest();
     const filler = createBridgeBodyReservation();
-    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - 100)).toBe(true);
+    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - 100)).toBe(
+      true,
+    );
 
     let resolveHostConnectionClosed: (() => void) | undefined;
     const hostConnectionClosed = new Promise<void>((resolve) => {
@@ -6133,11 +7271,15 @@ describe("sandbox adapter execution targets", () => {
     }
     const apiOrigin = `http://127.0.0.1:${apiAddress.port}`;
 
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-denied-response-chunk-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-denied-response-chunk-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -6165,7 +7307,11 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       // A capacity denial reaches the client as the retryable 503 the
       // HTTP/2 bridge server's own capacity-denial path answers
       // (`forwardBridgeRequest` rethrows `BridgeProcessCapacityError` before
@@ -6205,7 +7351,11 @@ describe("sandbox adapter execution targets", () => {
     resetBridgeBodyReservationsForTest();
     const chunkBytes = 200_000;
     const filler = createBridgeBodyReservation();
-    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - Math.floor(chunkBytes * 1.5))).toBe(true);
+    expect(
+      filler.reserve(
+        HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - Math.floor(chunkBytes * 1.5),
+      ),
+    ).toBe(true);
 
     const api = createServer((_req, res) => {
       res.writeHead(200, { "content-type": "application/octet-stream" });
@@ -6221,11 +7371,15 @@ describe("sandbox adapter execution targets", () => {
     }
     const apiOrigin = `http://127.0.0.1:${apiAddress.port}`;
 
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-denied-response-concat-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-denied-response-concat-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -6252,10 +7406,17 @@ describe("sandbox adapter execution targets", () => {
       enableSandboxDuplexBridge: true,
     });
     const concatSpy = vi.spyOn(Buffer, "concat");
-    const readerCancelSpy = vi.spyOn(ReadableStreamDefaultReader.prototype, "cancel");
+    const readerCancelSpy = vi.spyOn(
+      ReadableStreamDefaultReader.prototype,
+      "cancel",
+    );
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       // A capacity denial must reach the client as the retryable 503 the
       // HTTP/2 bridge server's own capacity-denial path answers, not the
       // generic 502 the method-safety classification would otherwise apply
@@ -6264,26 +7425,29 @@ describe("sandbox adapter execution targets", () => {
       // runs). This reads the response with a plain string accumulator, not
       // `Buffer.concat`, so the spy below counts only the calls the bridge
       // code under test makes.
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const stream = sessionRef.current!.request({
-          ":method": "GET",
-          ":path": "/api/agents/me",
-          authorization: `Bearer ${bridgeToken}`,
-        });
-        let status = 0;
-        let body = "";
-        stream.setEncoding("utf8");
-        stream.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        stream.on("data", (chunk) => (body += chunk));
-        stream.once("end", () => resolve({ status, body }));
-        stream.once("error", reject);
-        stream.end();
-      });
+      const response = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const stream = sessionRef.current!.request({
+            ":method": "GET",
+            ":path": "/api/agents/me",
+            authorization: `Bearer ${bridgeToken}`,
+          });
+          let status = 0;
+          let body = "";
+          stream.setEncoding("utf8");
+          stream.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          stream.on("data", (chunk) => (body += chunk));
+          stream.once("end", () => resolve({ status, body }));
+          stream.once("error", reject);
+          stream.end();
+        },
+      );
       expect(response.status).toBe(503);
       expect(JSON.parse(response.body)).toEqual({
-        error: "The bridge host reached its reserved process body byte ceiling. Retry later.",
+        error:
+          "The bridge host reached its reserved process body byte ceiling. Retry later.",
       });
       // The GET request itself carries no body, so the host's own read of
       // that empty request body still calls `Buffer.concat` on an empty
@@ -6291,7 +7455,9 @@ describe("sandbox adapter execution targets", () => {
       // response byte, since the denied concatenated response copy must
       // never allocate.
       for (const [chunks] of concatSpy.mock.calls) {
-        expect((chunks as Buffer[]).reduce((sum, chunk) => sum + chunk.length, 0)).toBe(0);
+        expect(
+          (chunks as Buffer[]).reduce((sum, chunk) => sum + chunk.length, 0),
+        ).toBe(0);
       }
       // The denied concatenated-body reservation must cancel the upstream
       // response reader before it throws, instead of leaving it open.
@@ -6319,7 +7485,9 @@ describe("sandbox adapter execution targets", () => {
     // other response-body read fault on a mutating method gets.
     resetBridgeBodyReservationsForTest();
     const filler = createBridgeBodyReservation();
-    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - 100)).toBe(true);
+    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - 100)).toBe(
+      true,
+    );
 
     const api = createServer((_req, res) => {
       res.writeHead(200, { "content-type": "application/octet-stream" });
@@ -6336,11 +7504,15 @@ describe("sandbox adapter execution targets", () => {
     }
     const apiOrigin = `http://127.0.0.1:${apiAddress.port}`;
 
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-denied-response-mutation-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-denied-response-mutation-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -6368,14 +7540,23 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "POST",
         path: "/api/issues/issue-1/comments",
-        headers: { authorization: `Bearer ${bridgeToken}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${bridgeToken}`,
+          "content-type": "application/json",
+        },
       });
       expect(response.status).toBe(504);
-      expect(response.headers["x-taskcore-bridge-outcome"]).toBe("indeterminate");
+      expect(response.headers["x-taskcore-bridge-outcome"]).toBe(
+        "indeterminate",
+      );
       expect(JSON.parse(response.body.toString("utf8"))).toMatchObject({
         outcome: "indeterminate",
         retryable: false,
@@ -6416,11 +7597,15 @@ describe("sandbox adapter execution targets", () => {
     }
     const apiOrigin = `http://127.0.0.1:${apiAddress.port}`;
 
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-ceiling-aggregate-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-ceiling-aggregate-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -6447,14 +7632,21 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
 
       const responses = await Promise.all(
         Array.from({ length: HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS }, () =>
           http2TestRequest(sessionRef.current!, {
             method: "POST",
             path: "/api/issues/abc/comments",
-            headers: { authorization: `Bearer ${bridgeToken}`, "content-type": "application/octet-stream" },
+            headers: {
+              authorization: `Bearer ${bridgeToken}`,
+              "content-type": "application/octet-stream",
+            },
             body: requestBody,
           }),
         ),
@@ -6483,14 +7675,18 @@ describe("sandbox adapter execution targets", () => {
 
   it("test_the_host_denies_a_body_over_the_resolved_limit_not_only_the_gateway", async () => {
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
       ctx.emitReady();
       sessionRef.current = ctx.connectHttp2();
     });
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-host-body-limit-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-host-body-limit-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -6521,11 +7717,18 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "POST",
         path: "/api/issues/abc/comments",
-        headers: { authorization: `Bearer ${bridgeToken}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${bridgeToken}`,
+          "content-type": "application/json",
+        },
         body: Buffer.alloc(1_000, "a"),
       });
       // The oversized body never reaches the host API: the resolved ceiling
@@ -6549,7 +7752,9 @@ describe("sandbox adapter execution targets", () => {
     // with no `reservation` option at all. `readBridgeForwardResponseBody`
     // must behave exactly as it did before that option existed: it still
     // forwards the request and still returns the host's body.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-queue-no-reservation-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-queue-no-reservation-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     const runtimeRootDir = path.join(remoteCwd, ".taskcore-runtime", "codex");
@@ -6565,7 +7770,9 @@ describe("sandbox adapter execution targets", () => {
     });
     const address = apiServer.address();
     if (!address || typeof address === "string") {
-      throw new Error("Expected the queue-transport test API server to listen on a TCP port.");
+      throw new Error(
+        "Expected the queue-transport test API server to listen on a TCP port.",
+      );
     }
 
     const target: AdapterSandboxExecutionTarget = {
@@ -6589,14 +7796,17 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("queue_v1");
-      const response = await fetch(`${bridge!.env.TASKCORE_API_URL}/api/issues/abc/comments`, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
-          "content-type": "application/json",
+      const response = await fetch(
+        `${bridge!.env.TASKCORE_API_URL}/api/issues/abc/comments`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${bridge!.env.TASKCORE_API_KEY}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ body: "hello" }),
         },
-        body: JSON.stringify({ body: "hello" }),
-      });
+      );
       expect(response.status).toBe(201);
       expect(await response.json()).toEqual({ ok: true, echoedMethod: "POST" });
     } finally {
@@ -6616,7 +7826,9 @@ describe("sandbox adapter execution targets", () => {
   // ---------------------------------------------------------------------------
 
   async function runReadinessReplay(emit: (ctx: Http2OpenContext) => void) {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-pty-replay-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-pty-replay-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
@@ -6656,7 +7868,9 @@ describe("sandbox adapter execution targets", () => {
     const { mode } = await runReadinessReplay((ctx) => {
       ctx.emitRaw(
         "daytona@212487a7f3c9:~$ exec 2>'/tmp/taskcore-duplex-x.log'; stty raw -echo; " +
-          "exec 'bash' '-c' 'exec env TASKCORE_BRIDGE_NONCE=" + ctx.nonce + " node gateway.mjs'\r\n",
+          "exec 'bash' '-c' 'exec env TASKCORE_BRIDGE_NONCE=" +
+          ctx.nonce +
+          " node gateway.mjs'\r\n",
       );
       ctx.emitRaw('{"version":2,"type":"ready","nonce":"' + ctx.nonce + '"}\n');
       ctx.connectHttp2();
@@ -6676,7 +7890,11 @@ describe("sandbox adapter execution targets", () => {
           "stty raw -echo; exec 'bash' '-c' 'exec env node gateway.mjs'\r\n",
       );
       // No newline between the escape sequence and the frame: same line.
-      ctx.emitRaw('\x1b[?2004l\r{"version":2,"type":"ready","nonce":"' + ctx.nonce + '"}\n');
+      ctx.emitRaw(
+        '\x1b[?2004l\r{"version":2,"type":"ready","nonce":"' +
+          ctx.nonce +
+          '"}\n',
+      );
       ctx.connectHttp2();
     });
     expect(mode).toBe("http2_v1");
@@ -6686,7 +7904,8 @@ describe("sandbox adapter execution targets", () => {
   it("PTY replay: accepts READY split across chunk boundaries", async () => {
     const { mode } = await runReadinessReplay((ctx) => {
       ctx.emitRaw("prompt$ wrapper-line\r\n");
-      const frame = '{"version":2,"type":"ready","nonce":"' + ctx.nonce + '"}\n';
+      const frame =
+        '{"version":2,"type":"ready","nonce":"' + ctx.nonce + '"}\n';
       ctx.emitRaw(frame.slice(0, 12));
       ctx.emitRaw(frame.slice(12));
       ctx.connectHttp2();
@@ -6736,7 +7955,9 @@ describe("sandbox adapter execution targets", () => {
   it("PTY replay: accepts READY after a wrong-version, an extra-field, and a same-line smuggling attempt", async () => {
     const { mode } = await runReadinessReplay((ctx) => {
       ctx.emitRaw(`{"version":1,"type":"ready","nonce":"${ctx.nonce}"}\n`);
-      ctx.emitRaw(`{"version":2,"type":"ready","nonce":"${ctx.nonce}","address":"http://127.0.0.1:1"}\n`);
+      ctx.emitRaw(
+        `{"version":2,"type":"ready","nonce":"${ctx.nonce}","address":"http://127.0.0.1:1"}\n`,
+      );
       ctx.emitRaw(
         `{"version":2,"type":"ready","nonce":"${ctx.nonce}"}{"version":2,"type":"ready","nonce":"${ctx.nonce}"}\n`,
       );
@@ -6753,12 +7974,16 @@ describe("sandbox adapter execution targets", () => {
     // HTTP/2 server. A pre-preface byte would make the server report a
     // `PROTOCOL_ERROR`; this test proves the real session opens cleanly
     // instead, which only holds when the offset is exact.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-preface-offset-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-preface-offset-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
@@ -6787,7 +8012,11 @@ describe("sandbox adapter execution targets", () => {
     });
     try {
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -6808,17 +8037,27 @@ describe("sandbox adapter execution targets", () => {
     // the shell. This test embeds the exact preface bytes in the pre-READY
     // noise, then proves a session still starts only at the REAL preface
     // that follows READY.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-http2-preface-lookalike-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-http2-preface-lookalike-"),
+    );
     cleanupDirs.push(rootDir);
     const remoteCwd = path.join(rootDir, "workspace");
     await mkdir(remoteCwd, { recursive: true });
     const api = await startRecordingApiServer();
-    const sessionRef: { current: http2.ClientHttp2Session | null } = { current: null };
+    const sessionRef: { current: http2.ClientHttp2Session | null } = {
+      current: null,
+    };
     let bridgeToken = "";
     const { runner, control } = makeHttp2SelectionRunner((ctx) => {
       bridgeToken = ctx.bridgeToken;
       // A pre-READY banner that happens to carry the literal preface bytes.
-      ctx.emitRaw(Buffer.concat([Buffer.from("prompt$ "), HTTP2_TEST_CLIENT_PREFACE, Buffer.from("\r\n")]));
+      ctx.emitRaw(
+        Buffer.concat([
+          Buffer.from("prompt$ "),
+          HTTP2_TEST_CLIENT_PREFACE,
+          Buffer.from("\r\n"),
+        ]),
+      );
       ctx.emitReady();
       sessionRef.current = ctx.connectHttp2();
     });
@@ -6844,7 +8083,11 @@ describe("sandbox adapter execution targets", () => {
       expect(bridge).not.toBeNull();
       expect(control.openCount).toBe(1);
       expect(bridge?.env.TASKCORE_API_BRIDGE_MODE).toBe("http2_v1");
-      await waitForCondition(() => sessionRef.current !== null, "the http2 client session to open", 4000);
+      await waitForCondition(
+        () => sessionRef.current !== null,
+        "the http2 client session to open",
+        4000,
+      );
       const response = await http2TestRequest(sessionRef.current!, {
         method: "GET",
         path: "/api/agents/me",
@@ -6868,7 +8111,6 @@ describe("sandbox adapter execution targets", () => {
     });
     expect(mode).toBe("queue_v1");
   }, 30000);
-
 });
 
 // The names the embedded codec source declares. A test wraps the source and
@@ -6896,12 +8138,22 @@ describe("embedded sandbox gateway codec", () => {
 
     expect(codec.DUPLEX_FRAME_VERSION).toBe(DUPLEX_FRAME_VERSION);
     const nonce = "fixed-test-nonce";
-    const encoded = codec.encodeDuplexFrame({ version: codec.DUPLEX_FRAME_VERSION, type: "ready", nonce });
+    const encoded = codec.encodeDuplexFrame({
+      version: codec.DUPLEX_FRAME_VERSION,
+      type: "ready",
+      nonce,
+    });
     expect(encoded).toBe(`{"version":2,"type":"ready","nonce":"${nonce}"}\n`);
 
     // The host encode side produces the same bytes for the same frame, so the
     // two copies stay wire compatible on the one frame the gateway still sends.
-    expect(encoded).toBe(encodeDuplexFrame({ version: DUPLEX_FRAME_VERSION, type: "ready", nonce }));
+    expect(encoded).toBe(
+      encodeDuplexFrame({
+        version: DUPLEX_FRAME_VERSION,
+        type: "ready",
+        nonce,
+      }),
+    );
   });
 });
 
@@ -6912,7 +8164,9 @@ function flushMacrotasks(): Promise<void> {
 describe("sandbox target spec parse: enableSandboxDuplexBridge", () => {
   // The minimal serialized sandbox target the host stamps and the adapter parses.
   // A test overrides one field per case to prove the fail-closed parse.
-  function serializedSandboxTarget(overrides: Record<string, unknown>): Record<string, unknown> {
+  function serializedSandboxTarget(
+    overrides: Record<string, unknown>,
+  ): Record<string, unknown> {
     return {
       kind: "remote",
       transport: "sandbox",
@@ -6925,7 +8179,9 @@ describe("sandbox target spec parse: enableSandboxDuplexBridge", () => {
   }
 
   it("reads the kill switch as a grant when the stamped field is true", () => {
-    const parsed = parseAdapterExecutionTarget(serializedSandboxTarget({ enableSandboxDuplexBridge: true }));
+    const parsed = parseAdapterExecutionTarget(
+      serializedSandboxTarget({ enableSandboxDuplexBridge: true }),
+    );
     expect(parsed?.kind).toBe("remote");
     if (parsed?.kind !== "remote" || parsed.transport !== "sandbox") {
       throw new Error("expected a sandbox execution target");
@@ -6940,32 +8196,48 @@ describe("sandbox target spec parse: enableSandboxDuplexBridge", () => {
       throw new Error("expected a sandbox execution target");
     }
     expect(parsed.enableSandboxDuplexBridge).toBe(false);
-    expect(adapterExecutionTargetEnablesSandboxDuplexBridge(parsed)).toBe(false);
+    expect(adapterExecutionTargetEnablesSandboxDuplexBridge(parsed)).toBe(
+      false,
+    );
   });
 
   it("parses a false field as no grant", () => {
-    const parsed = parseAdapterExecutionTarget(serializedSandboxTarget({ enableSandboxDuplexBridge: false }));
+    const parsed = parseAdapterExecutionTarget(
+      serializedSandboxTarget({ enableSandboxDuplexBridge: false }),
+    );
     if (parsed?.kind !== "remote" || parsed.transport !== "sandbox") {
       throw new Error("expected a sandbox execution target");
     }
     expect(parsed.enableSandboxDuplexBridge).toBe(false);
-    expect(adapterExecutionTargetEnablesSandboxDuplexBridge(parsed)).toBe(false);
+    expect(adapterExecutionTargetEnablesSandboxDuplexBridge(parsed)).toBe(
+      false,
+    );
   });
 
   it("fails closed on a non-boolean field", () => {
     // A string "true" is not the literal boolean true, so the parse never reads
     // it as a grant. This keeps a malformed round-trip on the file bridge.
-    const parsed = parseAdapterExecutionTarget(serializedSandboxTarget({ enableSandboxDuplexBridge: "true" }));
+    const parsed = parseAdapterExecutionTarget(
+      serializedSandboxTarget({ enableSandboxDuplexBridge: "true" }),
+    );
     if (parsed?.kind !== "remote" || parsed.transport !== "sandbox") {
       throw new Error("expected a sandbox execution target");
     }
     expect(parsed.enableSandboxDuplexBridge).toBe(false);
-    expect(adapterExecutionTargetEnablesSandboxDuplexBridge(parsed)).toBe(false);
+    expect(adapterExecutionTargetEnablesSandboxDuplexBridge(parsed)).toBe(
+      false,
+    );
   });
 
   it("returns false from the reader for a non-sandbox target", () => {
-    const localTarget = parseAdapterExecutionTarget({ kind: "local", environmentId: "env-1", leaseId: "lease-1" });
-    expect(adapterExecutionTargetEnablesSandboxDuplexBridge(localTarget)).toBe(false);
+    const localTarget = parseAdapterExecutionTarget({
+      kind: "local",
+      environmentId: "env-1",
+      leaseId: "lease-1",
+    });
+    expect(adapterExecutionTargetEnablesSandboxDuplexBridge(localTarget)).toBe(
+      false,
+    );
     expect(adapterExecutionTargetEnablesSandboxDuplexBridge(null)).toBe(false);
   });
 });
@@ -7008,7 +8280,10 @@ describe("settleRunDisposition atomic read and mark", () => {
     const broker = createFakeBridgeTransport();
 
     // The one atomic step marks the orderly completion and reads the success.
-    expect(broker.settleRunDisposition()).toEqual({ failed: false, lossReason: null });
+    expect(broker.settleRunDisposition()).toEqual({
+      failed: false,
+      lossReason: null,
+    });
     // A later teardown loss orders after the mark, so it stays a normal teardown.
     broker.emitExit();
     await flushMacrotasks();
@@ -7023,9 +8298,15 @@ describe("settleRunDisposition atomic read and mark", () => {
     await flushMacrotasks();
     // The atomic step reads the failure and no-ops the mark, so a later
     // completion cannot clear the latch.
-    expect(broker.settleRunDisposition()).toEqual({ failed: true, lossReason: "provider_exit" });
+    expect(broker.settleRunDisposition()).toEqual({
+      failed: true,
+      lossReason: "provider_exit",
+    });
     broker.markOrderlyCompletion();
-    expect(broker.runDisposition).toEqual({ failed: true, lossReason: "provider_exit" });
+    expect(broker.runDisposition).toEqual({
+      failed: true,
+      lossReason: "provider_exit",
+    });
   });
 });
 
@@ -7062,14 +8343,20 @@ describe("CLI-lane run-disposition seam", () => {
     await flushMacrotasks();
 
     const runner = mockRunner({ ...CLEAN_RESULT });
-    const result = await runAdapterExecutionTargetProcess("run-cli-lost", sandboxTarget(runner), "agent-cli", [], {
-      cwd: "/local",
-      env: {},
-      timeoutSec: 5,
-      graceSec: 1,
-      onLog: async () => {},
-      settleRunDisposition: () => broker.settleRunDisposition(),
-    });
+    const result = await runAdapterExecutionTargetProcess(
+      "run-cli-lost",
+      sandboxTarget(runner),
+      "agent-cli",
+      [],
+      {
+        cwd: "/local",
+        env: {},
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
+        settleRunDisposition: () => broker.settleRunDisposition(),
+      },
+    );
 
     // The lost channel overrides the clean exit to a failure with the typed code.
     expect(result.exitCode).toBe(1);
@@ -7082,14 +8369,20 @@ describe("CLI-lane run-disposition seam", () => {
     const broker = createFakeBridgeTransport();
 
     const runner = mockRunner({ ...CLEAN_RESULT });
-    const result = await runAdapterExecutionTargetProcess("run-cli-ok", sandboxTarget(runner), "agent-cli", [], {
-      cwd: "/local",
-      env: {},
-      timeoutSec: 5,
-      graceSec: 1,
-      onLog: async () => {},
-      settleRunDisposition: () => broker.settleRunDisposition(),
-    });
+    const result = await runAdapterExecutionTargetProcess(
+      "run-cli-ok",
+      sandboxTarget(runner),
+      "agent-cli",
+      [],
+      {
+        cwd: "/local",
+        env: {},
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
+        settleRunDisposition: () => broker.settleRunDisposition(),
+      },
+    );
 
     expect(result.exitCode).toBe(0);
     expect(result.errorCode ?? null).toBeNull();
@@ -7122,15 +8415,21 @@ describe("CLI-lane run-disposition seam", () => {
     };
 
     const runner = mockRunner({ ...CLEAN_RESULT });
-    const result = await runAdapterExecutionTargetProcess("run-cli-race", sandboxTarget(runner), "agent-cli", [], {
-      cwd: "/local",
-      env: {},
-      timeoutSec: 5,
-      graceSec: 1,
-      onLog: async () => {},
-      runLogTail,
-      settleRunDisposition: () => broker.settleRunDisposition(),
-    });
+    const result = await runAdapterExecutionTargetProcess(
+      "run-cli-race",
+      sandboxTarget(runner),
+      "agent-cli",
+      [],
+      {
+        cwd: "/local",
+        env: {},
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
+        runLogTail,
+        settleRunDisposition: () => broker.settleRunDisposition(),
+      },
+    );
 
     // The atomic settle at the completion boundary marked the orderly
     // completion before the finish await, so the gateway exit never latches a
@@ -7149,14 +8448,20 @@ describe("CLI-lane run-disposition seam", () => {
     broker.markOrderlyCompletion();
 
     const runner = mockRunner({ ...CLEAN_RESULT });
-    const result = await runAdapterExecutionTargetProcess("run-cli-latch", sandboxTarget(runner), "agent-cli", [], {
-      cwd: "/local",
-      env: {},
-      timeoutSec: 5,
-      graceSec: 1,
-      onLog: async () => {},
-      settleRunDisposition: () => broker.settleRunDisposition(),
-    });
+    const result = await runAdapterExecutionTargetProcess(
+      "run-cli-latch",
+      sandboxTarget(runner),
+      "agent-cli",
+      [],
+      {
+        cwd: "/local",
+        env: {},
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
+        settleRunDisposition: () => broker.settleRunDisposition(),
+      },
+    );
 
     expect(result.exitCode).toBe(1);
     expect(result.errorCode).toBe(DUPLEX_CHANNEL_LOST_ERROR_CODE);
@@ -7169,18 +8474,28 @@ describe("CLI-lane run-disposition seam", () => {
     await flushMacrotasks();
 
     let settleCalls = 0;
-    const runner = mockRunner({ ...CLEAN_RESULT, exitCode: 2, stderr: "boom\n" });
-    const result = await runAdapterExecutionTargetProcess("run-cli-failed", sandboxTarget(runner), "agent-cli", [], {
-      cwd: "/local",
-      env: {},
-      timeoutSec: 5,
-      graceSec: 1,
-      onLog: async () => {},
-      settleRunDisposition: () => {
-        settleCalls += 1;
-        return broker.settleRunDisposition();
-      },
+    const runner = mockRunner({
+      ...CLEAN_RESULT,
+      exitCode: 2,
+      stderr: "boom\n",
     });
+    const result = await runAdapterExecutionTargetProcess(
+      "run-cli-failed",
+      sandboxTarget(runner),
+      "agent-cli",
+      [],
+      {
+        cwd: "/local",
+        env: {},
+        timeoutSec: 5,
+        graceSec: 1,
+        onLog: async () => {},
+        settleRunDisposition: () => {
+          settleCalls += 1;
+          return broker.settleRunDisposition();
+        },
+      },
+    );
 
     // A non-zero exit is already a failure, so the seam leaves it unchanged and
     // reports no transport-level code. This is the same success-eligibility rule
@@ -7208,13 +8523,16 @@ describe("duplex readiness gate replay-buffer reservation", () => {
     };
   } {
     let dataListener: ((chunk: Uint8Array) => void) | null = null;
-    let exitListener: ((exit: { exitCode: number | null }) => void) | null = null;
+    let exitListener: ((exit: { exitCode: number | null }) => void) | null =
+      null;
     const control = {
       stopCount: 0,
       closeCount: 0,
       written: [] as string[],
-      emitData: (chunk: string): void => dataListener?.(new TextEncoder().encode(chunk)),
-      emitExit: (exit: { exitCode: number | null }): void => exitListener?.(exit),
+      emitData: (chunk: string): void =>
+        dataListener?.(new TextEncoder().encode(chunk)),
+      emitExit: (exit: { exitCode: number | null }): void =>
+        exitListener?.(exit),
     };
     const channel: CommandManagedDuplexChannel = {
       write(data: Uint8Array): void {
@@ -7258,7 +8576,9 @@ describe("duplex readiness gate replay-buffer reservation", () => {
     expect(gate.retainedReadinessBufferLength()).toBe(0);
     // The broker binds and replays the retained suffix.
     const replayed: string[] = [];
-    gate.brokerChannel.onData((chunk) => replayed.push(Buffer.from(chunk).toString("utf8")));
+    gate.brokerChannel.onData((chunk) =>
+      replayed.push(Buffer.from(chunk).toString("utf8")),
+    );
     expect(replayed).toEqual([suffix]);
     expect(gate.retainedReadinessBufferLength()).toBe(0);
   });
@@ -7283,7 +8603,9 @@ describe("duplex readiness gate replay-buffer reservation", () => {
     expect(control.stopCount).toBe(1);
     // Binding the broker replays nothing, because the gate dropped the buffer.
     const replayed: string[] = [];
-    gate.brokerChannel.onData((chunk) => replayed.push(Buffer.from(chunk).toString("utf8")));
+    gate.brokerChannel.onData((chunk) =>
+      replayed.push(Buffer.from(chunk).toString("utf8")),
+    );
     expect(replayed).toEqual([]);
   });
 });
@@ -7293,7 +8615,10 @@ describe("http2 preface scan post-preface replay buffer", () => {
   // A test writes this literal, not the production constant, so the test
   // proves the real wire bytes match, not only that the two source files
   // agree on a name.
-  const PREFACE = Buffer.from("505249202a20485454502f322e300d0a0d0a534d0d0a0d0a", "hex");
+  const PREFACE = Buffer.from(
+    "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a",
+    "hex",
+  );
 
   // A fake duplex channel the test drives directly. `control.emitData`
   // re-enters the data listener the scan bound at construction. The fake
@@ -7374,7 +8699,9 @@ describe("http2 preface scan post-preface replay buffer", () => {
     // Binding the downstream listener replays nothing: the scan dropped the
     // buffer on the overflow.
     const replayed: string[] = [];
-    scan.scanned.onData((chunk) => replayed.push(Buffer.from(chunk).toString("utf8")));
+    scan.scanned.onData((chunk) =>
+      replayed.push(Buffer.from(chunk).toString("utf8")),
+    );
     expect(replayed).toEqual([]);
   });
 
@@ -7407,7 +8734,9 @@ describe("http2 preface scan post-preface replay buffer", () => {
     expect(await scan.settled).toBe("found");
     expect(scan.replayOverflowed()).toBe(false);
     const replayed: string[] = [];
-    scan.scanned.onData((chunk) => replayed.push(Buffer.from(chunk).toString("utf8")));
+    scan.scanned.onData((chunk) =>
+      replayed.push(Buffer.from(chunk).toString("utf8")),
+    );
     expect(replayed).toEqual([PREFACE.toString("utf8")]);
   });
 
@@ -7434,7 +8763,8 @@ describe("http2 preface scan post-preface replay buffer", () => {
     control.emitData(Buffer.from([0x2e]));
     expect(await scan.settled).toBe("missing");
     const searchUnits = __http2PrefaceScanTesting.readScanSearchUnits();
-    const growthCopyUnits = __http2PrefaceScanTesting.readScanBufferGrowthCopyUnits();
+    const growthCopyUnits =
+      __http2PrefaceScanTesting.readScanBufferGrowthCopyUnits();
     // Each one-byte fragment can re-examine at most the preface's 24 octets
     // of overlap (RFC 9113, Section 3.4), so the search work stays within a
     // small multiple of capBytes. Doubling growth copies a logarithmic
@@ -7464,7 +8794,8 @@ describe("http2 preface scan post-preface replay buffer", () => {
     for (let i = 0; i < postPrefaceBytes; i += 1) {
       control.emitData(Buffer.from([0x2e]));
     }
-    const growthCopyUnits = __http2PrefaceScanTesting.readReplayBufferGrowthCopyUnits();
+    const growthCopyUnits =
+      __http2PrefaceScanTesting.readReplayBufferGrowthCopyUnits();
     expect(growthCopyUnits).toBeLessThanOrEqual(4 * capBytes);
     // One more one-byte fragment tips the retained buffer past the cap. The
     // scan drops the buffer, stops the channel, and fails closed — the same

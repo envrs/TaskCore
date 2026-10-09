@@ -15,7 +15,10 @@ import { runChildProcess } from "./server-utils.js";
 
 const cleanup: string[] = [];
 
-async function withTmpDir<T>(tmpDir: string, run: () => Promise<T>): Promise<T> {
+async function withTmpDir<T>(
+  tmpDir: string,
+  run: () => Promise<T>,
+): Promise<T> {
   const previousTmpDir = process.env.TMPDIR;
   process.env.TMPDIR = tmpDir;
   try {
@@ -27,279 +30,420 @@ async function withTmpDir<T>(tmpDir: string, run: () => Promise<T>): Promise<T> 
 }
 
 afterEach(async () => {
-  await Promise.all(cleanup.splice(0).map((candidate) => fs.rm(candidate, { recursive: true, force: true })));
+  await Promise.all(
+    cleanup
+      .splice(0)
+      .map((candidate) => fs.rm(candidate, { recursive: true, force: true })),
+  );
 });
 
 describe("local process sandbox", () => {
-  it.runIf(process.platform !== "linux")("rejects sandbox scopes on unsupported hosts", async () => {
-    await expect(buildLocalProcessSandboxSpawnTarget({
-      executable: process.execPath, args: ["-e", "process.exit(0)"], cwd: process.cwd(),
-      options: { workspaceDir: process.cwd(), networkScope: "deny" },
-    })).rejects.toThrow("supported only on Linux");
-  });
+  it.runIf(process.platform !== "linux")(
+    "rejects sandbox scopes on unsupported hosts",
+    async () => {
+      await expect(
+        buildLocalProcessSandboxSpawnTarget({
+          executable: process.execPath,
+          args: ["-e", "process.exit(0)"],
+          cwd: process.cwd(),
+          options: { workspaceDir: process.cwd(), networkScope: "deny" },
+        }),
+      ).rejects.toThrow("supported only on Linux");
+    },
+  );
 
   it("parses read-only and writable extra paths", () => {
-    expect(parseLocalProcessSandboxExtraPaths(["/opt/cache", { path: "/var/lib/tool", access: "rw" }])).toEqual([
+    expect(
+      parseLocalProcessSandboxExtraPaths([
+        "/opt/cache",
+        { path: "/var/lib/tool", access: "rw" },
+      ]),
+    ).toEqual([
       { path: "/opt/cache", access: "ro" },
       { path: "/var/lib/tool", access: "rw" },
     ]);
-    expect(() => parseLocalProcessSandboxExtraPaths(["relative"])).toThrow("must be an absolute path");
+    expect(() => parseLocalProcessSandboxExtraPaths(["relative"])).toThrow(
+      "must be an absolute path",
+    );
   });
 
   it("parses network scopes and exact-host allowlists", () => {
     expect(parseLocalProcessFilesystemScope("workspace")).toBe("workspace");
     expect(parseLocalProcessFilesystemScope(undefined)).toBeNull();
-    expect(() => parseLocalProcessFilesystemScope("workpace")).toThrow('filesystemScope must be "workspace"');
+    expect(() => parseLocalProcessFilesystemScope("workpace")).toThrow(
+      'filesystemScope must be "workspace"',
+    );
     expect(parseLocalProcessNetworkScope("deny")).toBe("deny");
     expect(parseLocalProcessNetworkScope("allowlist")).toBe("allowlist");
     expect(parseLocalProcessNetworkScope(undefined)).toBeNull();
-    expect(parseLocalProcessNetworkAllowlist(["api.openai.com", "https://api.anthropic.com", "gateway.test:8443"]))
-      .toEqual(["api.openai.com", "api.anthropic.com", "gateway.test:8443"]);
-    expect(() => parseLocalProcessNetworkAllowlist(["*.example.com"])).toThrow("exact hostname");
-    expect(() => parseLocalProcessNetworkScope("public")).toThrow('"deny" or "allowlist"');
+    expect(
+      parseLocalProcessNetworkAllowlist([
+        "api.openai.com",
+        "https://api.anthropic.com",
+        "gateway.test:8443",
+      ]),
+    ).toEqual(["api.openai.com", "api.anthropic.com", "gateway.test:8443"]);
+    expect(() => parseLocalProcessNetworkAllowlist(["*.example.com"])).toThrow(
+      "exact hostname",
+    );
+    expect(() => parseLocalProcessNetworkScope("public")).toThrow(
+      '"deny" or "allowlist"',
+    );
   });
 
-  it.runIf(process.platform === "linux")("describes every valid allowlist input when no proxy rules remain", async () => {
-    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-network-rules-"));
-    cleanup.push(workspace);
+  it.runIf(process.platform === "linux")(
+    "describes every valid allowlist input when no proxy rules remain",
+    async () => {
+      const workspace = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-network-rules-"),
+      );
+      cleanup.push(workspace);
 
-    await expect(buildLocalProcessSandboxSpawnTarget({
-      executable: process.execPath,
-      args: ["-e", "process.exit(0)"],
-      cwd: workspace,
-      options: {
-        workspaceDir: workspace,
-        networkScope: "allowlist",
-        networkAllowlist: [],
-        networkTrustedUrls: ["file:///not-a-network-target"],
-      },
-    })).rejects.toThrow("valid networkAllowlist hostname or HTTP(S) networkTrustedUrl");
-  });
+      await expect(
+        buildLocalProcessSandboxSpawnTarget({
+          executable: process.execPath,
+          args: ["-e", "process.exit(0)"],
+          cwd: workspace,
+          options: {
+            workspaceDir: workspace,
+            networkScope: "allowlist",
+            networkAllowlist: [],
+            networkTrustedUrls: ["file:///not-a-network-target"],
+          },
+        }),
+      ).rejects.toThrow(
+        "valid networkAllowlist hostname or HTTP(S) networkTrustedUrl",
+      );
+    },
+  );
 
-  it.runIf(process.platform === "linux")("builds a fresh-root bubblewrap command with workspace access", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-fs-sandbox-"));
-    cleanup.push(root);
-    const workspace = path.join(root, "workspace");
-    const managedHome = path.join(root, "managed-home");
-    await fs.mkdir(workspace);
-    await fs.mkdir(managedHome);
+  it.runIf(process.platform === "linux")(
+    "builds a fresh-root bubblewrap command with workspace access",
+    async () => {
+      const root = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-fs-sandbox-"),
+      );
+      cleanup.push(root);
+      const workspace = path.join(root, "workspace");
+      const managedHome = path.join(root, "managed-home");
+      await fs.mkdir(workspace);
+      await fs.mkdir(managedHome);
 
-    const target = await buildLocalProcessSandboxSpawnTarget({
-      executable: process.execPath,
-      args: ["-e", "console.log('ok')"],
-      cwd: workspace,
-      options: {
-        workspaceDir: workspace,
-        filesystemScope: "workspace",
-        managedPaths: [{ path: managedHome, access: "rw" }],
-        homeDir: managedHome,
-      },
-    });
+      const target = await buildLocalProcessSandboxSpawnTarget({
+        executable: process.execPath,
+        args: ["-e", "console.log('ok')"],
+        cwd: workspace,
+        options: {
+          workspaceDir: workspace,
+          filesystemScope: "workspace",
+          managedPaths: [{ path: managedHome, access: "rw" }],
+          homeDir: managedHome,
+        },
+      });
 
-    expect(target.command).toBe("bwrap");
-    expect(target.args).toContain("--tmpfs");
-    expect(target.args).toContain(workspace);
-    expect(target.args).toContain(managedHome);
-    expect(target.args.slice(-3)).toEqual([process.execPath, "-e", "console.log('ok')"]);
-  });
+      expect(target.command).toBe("bwrap");
+      expect(target.args).toContain("--tmpfs");
+      expect(target.args).toContain(workspace);
+      expect(target.args).toContain(managedHome);
+      expect(target.args.slice(-3)).toEqual([
+        process.execPath,
+        "-e",
+        "console.log('ok')",
+      ]);
+    },
+  );
 
-  it.runIf(process.platform === "linux")("binds a confined absolute alias to the synchronized workspace", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-fs-alias-"));
-    cleanup.push(root);
-    const workspace = path.join(root, "workspace");
-    await fs.mkdir(workspace);
+  it.runIf(process.platform === "linux")(
+    "binds a confined absolute alias to the synchronized workspace",
+    async () => {
+      const root = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-fs-alias-"),
+      );
+      cleanup.push(root);
+      const workspace = path.join(root, "workspace");
+      await fs.mkdir(workspace);
 
-    const target = await buildLocalProcessSandboxSpawnTarget({
-      executable: process.execPath,
-      args: ["-e", "process.exit(0)"],
-      cwd: workspace,
-      options: {
-        workspaceDir: workspace,
-        filesystemScope: "workspace",
-        pathAliases: [{ path: "/app", target: workspace }],
-      },
-    });
-
-    expect(target.args).toEqual(expect.arrayContaining(["--bind", workspace, "/app"]));
-  });
-
-  it.runIf(process.platform === "linux")("rejects writable out-of-tree paths without an outbound restore mapping", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-fs-outbound-"));
-    cleanup.push(root);
-    const workspace = path.join(root, "workspace");
-    const outside = path.join(root, "outside");
-    await fs.mkdir(workspace);
-    await fs.mkdir(outside);
-
-    await expect(buildLocalProcessSandboxSpawnTarget({
-      executable: process.execPath,
-      args: ["-e", "process.exit(0)"],
-      cwd: workspace,
-      options: {
-        workspaceDir: workspace,
-        filesystemScope: "workspace",
-        extraPaths: [{ path: outside, access: "rw" }],
-      },
-    })).rejects.toThrow("has no outbound restore mapping");
-  });
-
-  it.runIf(process.platform === "linux")("builds a network-only namespace without changing filesystem visibility", async () => {
-    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-network-sandbox-"));
-    cleanup.push(workspace);
-    const target = await buildLocalProcessSandboxSpawnTarget({
-      executable: process.execPath,
-      args: ["-e", "console.log('ok')"],
-      cwd: workspace,
-      options: { workspaceDir: workspace, networkScope: "deny" },
-    });
-
-    expect(target.args).toContain("--unshare-net");
-    expect(target.args).toContain("--bind");
-    expect(target.args).not.toContain("--tmpfs");
-    expect(target.env?.HTTP_PROXY).toBeUndefined();
-  });
-
-  it.runIf(process.platform === "linux")("forwards allowed proxy targets with a deep TMPDIR and rejects other hosts", async () => {
-    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-network-proxy-"));
-    cleanup.push(workspace);
-    const deepTmpDir = path.join(workspace, ...Array.from({ length: 6 }, () => "deep-temporary-directory-segment"));
-    await fs.mkdir(deepTmpDir, { recursive: true });
-    const server = http.createServer((_request, response) => response.end("allowed-response"));
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-    const address = server.address();
-    if (!address || typeof address === "string") throw new Error("Expected TCP test server address.");
-    const target = await withTmpDir(deepTmpDir, () =>
-      buildLocalProcessSandboxSpawnTarget({
+      const target = await buildLocalProcessSandboxSpawnTarget({
         executable: process.execPath,
         args: ["-e", "process.exit(0)"],
         cwd: workspace,
         options: {
           workspaceDir: workspace,
           filesystemScope: "workspace",
-          networkScope: "allowlist",
-          networkAllowlist: [`127.0.0.1:${address.port}`],
+          pathAliases: [{ path: "/app", target: workspace }],
         },
-      }),
-    );
-    const delimiterIndex = target.args.indexOf("--");
-    const socketPath = target.args[delimiterIndex + 3];
-    expect(Buffer.byteLength(path.join(deepTmpDir, "taskcore-network-sandbox-XXXXXX", "proxy.sock"))).toBeGreaterThan(107);
-    expect(Buffer.byteLength(socketPath)).toBeLessThanOrEqual(107);
-    expect(socketPath).toMatch(/^\/tmp\/taskcore-network-sandbox-/);
-    expect(target.args).toContain(path.dirname(socketPath));
-    const request = (url: string) => new Promise<{ status: number; contentType: string | null; body: string }>((resolve, reject) => {
-      const outgoing = http.request({ socketPath, path: url, headers: { host: new URL(url).host } }, (response) => {
-        let body = "";
-        response.on("data", (chunk) => {
-          body += chunk;
-        });
-        response.on("end", () => resolve({
-          status: response.statusCode ?? 0,
-          contentType: typeof response.headers["content-type"] === "string" ? response.headers["content-type"] : null,
-          body,
-        }));
       });
-      outgoing.on("error", reject);
-      outgoing.end();
-    });
 
-    try {
-      await expect(request(`http://127.0.0.1:${address.port}/canary`)).resolves.toEqual({
-        status: 200,
-        contentType: null,
-        body: "allowed-response",
-      });
-      await expect(request("http://example.com/")).resolves.toEqual({
-        status: 403,
-        contentType: "application/json; charset=utf-8",
-        body: '{"error":{"code":"network_target_denied","message":"Network target denied by Taskcore sandbox policy."}}\n',
-      });
-      const connectResponse = await new Promise<string>((resolve, reject) => {
-        const socket = net.createConnection(socketPath, () => {
-          socket.end("CONNECT example.com:443 HTTP/1.1\r\nHost: example.com:443\r\n\r\n");
-        });
-        let response = "";
-        socket.setEncoding("utf8");
-        socket.on("data", (chunk) => { response += chunk; });
-        socket.on("end", () => resolve(response));
-        socket.on("error", reject);
-      });
-      expect(connectResponse).toContain("HTTP/1.1 403 Forbidden\r\n");
-      expect(connectResponse).toContain("Content-Type: application/json; charset=utf-8\r\n");
-      expect(connectResponse).toContain(
-        '{"error":{"code":"network_target_denied","message":"Network target denied by Taskcore sandbox policy."}}\n',
+      expect(target.args).toEqual(
+        expect.arrayContaining(["--bind", workspace, "/app"]),
       );
-    } finally {
-      await target.cleanup?.();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
-    }
-  });
+    },
+  );
 
-  it.runIf(process.platform === "linux")("always permits trusted Taskcore control-plane URLs", async () => {
-    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-network-trusted-"));
-    cleanup.push(workspace);
-    const server = http.createServer((_request, response) => response.end("control-plane-response"));
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-    const address = server.address();
-    if (!address || typeof address === "string") throw new Error("Expected TCP test server address.");
-    const target = await buildLocalProcessSandboxSpawnTarget({
-      executable: process.execPath,
-      args: ["-e", "process.exit(0)"],
-      cwd: workspace,
-      options: {
-        workspaceDir: workspace,
-        networkScope: "allowlist",
-        networkAllowlist: ["api.openai.com"],
-        networkTrustedUrls: [`http://127.0.0.1:${address.port}/api/issues/issue-1`],
-      },
-    });
-    const delimiterIndex = target.args.indexOf("--");
-    const socketPath = target.args[delimiterIndex + 3];
+  it.runIf(process.platform === "linux")(
+    "rejects writable out-of-tree paths without an outbound restore mapping",
+    async () => {
+      const root = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-fs-outbound-"),
+      );
+      cleanup.push(root);
+      const workspace = path.join(root, "workspace");
+      const outside = path.join(root, "outside");
+      await fs.mkdir(workspace);
+      await fs.mkdir(outside);
 
-    try {
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const outgoing = http.request({
-          socketPath,
-          path: `http://127.0.0.1:${address.port}/api/issues/issue-1`,
-          headers: { host: `127.0.0.1:${address.port}` },
-        }, (incoming) => {
-          let body = "";
-          incoming.on("data", (chunk) => { body += chunk; });
-          incoming.on("end", () => resolve({ status: incoming.statusCode ?? 0, body }));
-        });
-        outgoing.on("error", reject);
-        outgoing.end();
+      await expect(
+        buildLocalProcessSandboxSpawnTarget({
+          executable: process.execPath,
+          args: ["-e", "process.exit(0)"],
+          cwd: workspace,
+          options: {
+            workspaceDir: workspace,
+            filesystemScope: "workspace",
+            extraPaths: [{ path: outside, access: "rw" }],
+          },
+        }),
+      ).rejects.toThrow("has no outbound restore mapping");
+    },
+  );
+
+  it.runIf(process.platform === "linux")(
+    "builds a network-only namespace without changing filesystem visibility",
+    async () => {
+      const workspace = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-network-sandbox-"),
+      );
+      cleanup.push(workspace);
+      const target = await buildLocalProcessSandboxSpawnTarget({
+        executable: process.execPath,
+        args: ["-e", "console.log('ok')"],
+        cwd: workspace,
+        options: { workspaceDir: workspace, networkScope: "deny" },
       });
-      expect(response).toEqual({ status: 200, body: "control-plane-response" });
-    } finally {
-      await target.cleanup?.();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
-    }
-  });
+
+      expect(target.args).toContain("--unshare-net");
+      expect(target.args).toContain("--bind");
+      expect(target.args).not.toContain("--tmpfs");
+      expect(target.env?.HTTP_PROXY).toBeUndefined();
+    },
+  );
+
+  it.runIf(process.platform === "linux")(
+    "forwards allowed proxy targets with a deep TMPDIR and rejects other hosts",
+    async () => {
+      const workspace = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-network-proxy-"),
+      );
+      cleanup.push(workspace);
+      const deepTmpDir = path.join(
+        workspace,
+        ...Array.from({ length: 6 }, () => "deep-temporary-directory-segment"),
+      );
+      await fs.mkdir(deepTmpDir, { recursive: true });
+      const server = http.createServer((_request, response) =>
+        response.end("allowed-response"),
+      );
+      await new Promise<void>((resolve) =>
+        server.listen(0, "127.0.0.1", resolve),
+      );
+      const address = server.address();
+      if (!address || typeof address === "string")
+        throw new Error("Expected TCP test server address.");
+      const target = await withTmpDir(deepTmpDir, () =>
+        buildLocalProcessSandboxSpawnTarget({
+          executable: process.execPath,
+          args: ["-e", "process.exit(0)"],
+          cwd: workspace,
+          options: {
+            workspaceDir: workspace,
+            filesystemScope: "workspace",
+            networkScope: "allowlist",
+            networkAllowlist: [`127.0.0.1:${address.port}`],
+          },
+        }),
+      );
+      const delimiterIndex = target.args.indexOf("--");
+      const socketPath = target.args[delimiterIndex + 3];
+      expect(
+        Buffer.byteLength(
+          path.join(
+            deepTmpDir,
+            "taskcore-network-sandbox-XXXXXX",
+            "proxy.sock",
+          ),
+        ),
+      ).toBeGreaterThan(107);
+      expect(Buffer.byteLength(socketPath)).toBeLessThanOrEqual(107);
+      expect(socketPath).toMatch(/^\/tmp\/taskcore-network-sandbox-/);
+      expect(target.args).toContain(path.dirname(socketPath));
+      const request = (url: string) =>
+        new Promise<{
+          status: number;
+          contentType: string | null;
+          body: string;
+        }>((resolve, reject) => {
+          const outgoing = http.request(
+            { socketPath, path: url, headers: { host: new URL(url).host } },
+            (response) => {
+              let body = "";
+              response.on("data", (chunk) => {
+                body += chunk;
+              });
+              response.on("end", () =>
+                resolve({
+                  status: response.statusCode ?? 0,
+                  contentType:
+                    typeof response.headers["content-type"] === "string"
+                      ? response.headers["content-type"]
+                      : null,
+                  body,
+                }),
+              );
+            },
+          );
+          outgoing.on("error", reject);
+          outgoing.end();
+        });
+
+      try {
+        await expect(
+          request(`http://127.0.0.1:${address.port}/canary`),
+        ).resolves.toEqual({
+          status: 200,
+          contentType: null,
+          body: "allowed-response",
+        });
+        await expect(request("http://example.com/")).resolves.toEqual({
+          status: 403,
+          contentType: "application/json; charset=utf-8",
+          body: '{"error":{"code":"network_target_denied","message":"Network target denied by Taskcore sandbox policy."}}\n',
+        });
+        const connectResponse = await new Promise<string>((resolve, reject) => {
+          const socket = net.createConnection(socketPath, () => {
+            socket.end(
+              "CONNECT example.com:443 HTTP/1.1\r\nHost: example.com:443\r\n\r\n",
+            );
+          });
+          let response = "";
+          socket.setEncoding("utf8");
+          socket.on("data", (chunk) => {
+            response += chunk;
+          });
+          socket.on("end", () => resolve(response));
+          socket.on("error", reject);
+        });
+        expect(connectResponse).toContain("HTTP/1.1 403 Forbidden\r\n");
+        expect(connectResponse).toContain(
+          "Content-Type: application/json; charset=utf-8\r\n",
+        );
+        expect(connectResponse).toContain(
+          '{"error":{"code":"network_target_denied","message":"Network target denied by Taskcore sandbox policy."}}\n',
+        );
+      } finally {
+        await target.cleanup?.();
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    },
+  );
+
+  it.runIf(process.platform === "linux")(
+    "always permits trusted Taskcore control-plane URLs",
+    async () => {
+      const workspace = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-network-trusted-"),
+      );
+      cleanup.push(workspace);
+      const server = http.createServer((_request, response) =>
+        response.end("control-plane-response"),
+      );
+      await new Promise<void>((resolve) =>
+        server.listen(0, "127.0.0.1", resolve),
+      );
+      const address = server.address();
+      if (!address || typeof address === "string")
+        throw new Error("Expected TCP test server address.");
+      const target = await buildLocalProcessSandboxSpawnTarget({
+        executable: process.execPath,
+        args: ["-e", "process.exit(0)"],
+        cwd: workspace,
+        options: {
+          workspaceDir: workspace,
+          networkScope: "allowlist",
+          networkAllowlist: ["api.openai.com"],
+          networkTrustedUrls: [
+            `http://127.0.0.1:${address.port}/api/issues/issue-1`,
+          ],
+        },
+      });
+      const delimiterIndex = target.args.indexOf("--");
+      const socketPath = target.args[delimiterIndex + 3];
+
+      try {
+        const response = await new Promise<{ status: number; body: string }>(
+          (resolve, reject) => {
+            const outgoing = http.request(
+              {
+                socketPath,
+                path: `http://127.0.0.1:${address.port}/api/issues/issue-1`,
+                headers: { host: `127.0.0.1:${address.port}` },
+              },
+              (incoming) => {
+                let body = "";
+                incoming.on("data", (chunk) => {
+                  body += chunk;
+                });
+                incoming.on("end", () =>
+                  resolve({ status: incoming.statusCode ?? 0, body }),
+                );
+              },
+            );
+            outgoing.on("error", reject);
+            outgoing.end();
+          },
+        );
+        expect(response).toEqual({
+          status: 200,
+          body: "control-plane-response",
+        });
+      } finally {
+        await target.cleanup?.();
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    },
+  );
 
   it("fails clearly when Bubblewrap is unavailable", async () => {
-    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-fs-sandbox-missing-"));
+    const workspace = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-fs-sandbox-missing-"),
+    );
     cleanup.push(workspace);
     await expect(
-      runChildProcess("filesystem-sandbox-missing", process.execPath, ["-e", "process.exit(0)"], {
-        cwd: workspace,
-        env: {},
-        timeoutSec: 10,
-        graceSec: 1,
-        onLog: async () => {},
-        localProcessSandbox: {
-          workspaceDir: workspace,
-          filesystemScope: "workspace",
-          command: path.join(workspace, "missing-bwrap"),
+      runChildProcess(
+        "filesystem-sandbox-missing",
+        process.execPath,
+        ["-e", "process.exit(0)"],
+        {
+          cwd: workspace,
+          env: {},
+          timeoutSec: 10,
+          graceSec: 1,
+          onLog: async () => {},
+          localProcessSandbox: {
+            workspaceDir: workspace,
+            filesystemScope: "workspace",
+            command: path.join(workspace, "missing-bwrap"),
+          },
         },
-      }),
+      ),
     ).rejects.toThrow("requires Bubblewrap");
   });
 
   it.runIf(Boolean(process.env.TASKCORE_TEST_BWRAP))(
     "prevents reads outside the workspace while allowing workspace writes",
     async () => {
-      const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-fs-sandbox-integration-"));
+      const root = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-fs-sandbox-integration-"),
+      );
       cleanup.push(root);
       const workspace = path.join(root, "workspace");
       const outside = path.join(root, "canary.txt");
@@ -316,26 +460,38 @@ describe("local process sandbox", () => {
         `if (fs.readFileSync(${JSON.stringify(allowed)}, 'utf8') !== 'allowed-value') process.exit(8);`,
         "fs.writeFileSync('workspace-ok.txt', 'ok');",
       ].join("\n");
-      const result = await runChildProcess("filesystem-sandbox-test", process.execPath, ["-e", script], {
-        cwd: workspace,
-        env: {},
-        timeoutSec: 10,
-        graceSec: 1,
-        onLog: async () => {},
-        localProcessSandbox: {
-          workspaceDir: workspace,
-          filesystemScope: "workspace",
-          extraPaths: [{ path: allowed, access: "ro" }],
-          command: process.env.TASKCORE_TEST_BWRAP,
+      const result = await runChildProcess(
+        "filesystem-sandbox-test",
+        process.execPath,
+        ["-e", script],
+        {
+          cwd: workspace,
+          env: {},
+          timeoutSec: 10,
+          graceSec: 1,
+          onLog: async () => {},
+          localProcessSandbox: {
+            workspaceDir: workspace,
+            filesystemScope: "workspace",
+            extraPaths: [{ path: allowed, access: "ro" }],
+            command: process.env.TASKCORE_TEST_BWRAP,
+          },
         },
-      });
+      );
 
       expect(result.exitCode, result.stderr).toBe(0);
-      await expect(fs.readFile(path.join(workspace, "workspace-ok.txt"), "utf8")).resolves.toBe("ok");
+      await expect(
+        fs.readFile(path.join(workspace, "workspace-ok.txt"), "utf8"),
+      ).resolves.toBe("ok");
     },
   );
 
-  it.runIf(Boolean(process.env.TASKCORE_TEST_BWRAP && process.env.TASKCORE_TEST_SANDBOX_BUILD))(
+  it.runIf(
+    Boolean(
+      process.env.TASKCORE_TEST_BWRAP &&
+      process.env.TASKCORE_TEST_SANDBOX_BUILD,
+    ),
+  )(
     "runs the adapter-utils TypeScript build inside the confined workspace",
     async () => {
       const workspace = process.cwd();
@@ -364,26 +520,38 @@ describe("local process sandbox", () => {
   it.runIf(Boolean(process.env.TASKCORE_TEST_BWRAP))(
     "denies direct network egress",
     async () => {
-      const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-network-deny-"));
+      const workspace = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-network-deny-"),
+      );
       cleanup.push(workspace);
-      const server = http.createServer((_request, response) => response.end("host-network"));
-      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const server = http.createServer((_request, response) =>
+        response.end("host-network"),
+      );
+      await new Promise<void>((resolve) =>
+        server.listen(0, "127.0.0.1", resolve),
+      );
       const address = server.address();
-      if (!address || typeof address === "string") throw new Error("Expected TCP test server address.");
+      if (!address || typeof address === "string")
+        throw new Error("Expected TCP test server address.");
       const script = `require("node:http").get("http://127.0.0.1:${address.port}", () => process.exit(9)).on("error", () => process.exit(0));`;
       try {
-        const result = await runChildProcess("network-sandbox-deny-test", process.execPath, ["-e", script], {
-          cwd: workspace,
-          env: {},
-          timeoutSec: 10,
-          graceSec: 1,
-          onLog: async () => {},
-          localProcessSandbox: {
-            workspaceDir: workspace,
-            networkScope: "deny",
-            command: process.env.TASKCORE_TEST_BWRAP,
+        const result = await runChildProcess(
+          "network-sandbox-deny-test",
+          process.execPath,
+          ["-e", script],
+          {
+            cwd: workspace,
+            env: {},
+            timeoutSec: 10,
+            graceSec: 1,
+            onLog: async () => {},
+            localProcessSandbox: {
+              workspaceDir: workspace,
+              networkScope: "deny",
+              command: process.env.TASKCORE_TEST_BWRAP,
+            },
           },
-        });
+        );
         expect(result.exitCode, result.stderr).toBe(0);
       } finally {
         await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -394,12 +562,19 @@ describe("local process sandbox", () => {
   it.runIf(Boolean(process.env.TASKCORE_TEST_BWRAP))(
     "allows only configured network targets through the proxy bridge",
     async () => {
-      const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-network-allowlist-"));
+      const workspace = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-network-allowlist-"),
+      );
       cleanup.push(workspace);
-      const server = http.createServer((_request, response) => response.end("allowed-response"));
-      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const server = http.createServer((_request, response) =>
+        response.end("allowed-response"),
+      );
+      await new Promise<void>((resolve) =>
+        server.listen(0, "127.0.0.1", resolve),
+      );
       const address = server.address();
-      if (!address || typeof address === "string") throw new Error("Expected TCP test server address.");
+      if (!address || typeof address === "string")
+        throw new Error("Expected TCP test server address.");
       const targetUrl = `http://127.0.0.1:${address.port}/canary`;
       const deniedUrl = "http://example.com/";
       const script = `
@@ -421,7 +596,13 @@ function request(url) {
 })().catch((error) => { console.error(error); process.exit(7); });
 `;
       try {
-        const deepTmpDir = path.join(workspace, ...Array.from({ length: 6 }, () => "deep-temporary-directory-segment"));
+        const deepTmpDir = path.join(
+          workspace,
+          ...Array.from(
+            { length: 6 },
+            () => "deep-temporary-directory-segment",
+          ),
+        );
         await fs.mkdir(deepTmpDir, { recursive: true });
         const result = await withTmpDir(deepTmpDir, () =>
           runChildProcess(

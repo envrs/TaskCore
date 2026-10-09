@@ -64,7 +64,9 @@ export async function collectChannelState(
   runCommand: CommandRunner = defaultRunCommand,
 ): Promise<ChannelState[]> {
   const resolved = await Promise.allSettled(
-    RELEASE_CHANNELS.map((entry) => resolvePublishedVersion(entry.distTag, runCommand)),
+    RELEASE_CHANNELS.map((entry) =>
+      resolvePublishedVersion(entry.distTag, runCommand),
+    ),
   );
   return RELEASE_CHANNELS.map((entry, index) => {
     const outcome = resolved[index];
@@ -103,8 +105,12 @@ export async function channelsCommand(
   for (const entry of state) {
     const version = entry.version ?? pc.yellow("unavailable");
     console.log(`  ${pc.bold(entry.channel.padEnd(8))} ${version}`);
-    console.log(`  ${" ".repeat(8)} ${pc.dim(`${entry.cadence} — ${entry.audience}`)}`);
-    console.log(`  ${" ".repeat(8)} ${pc.dim(`npx taskcore@${entry.distTag} onboard`)}`);
+    console.log(
+      `  ${" ".repeat(8)} ${pc.dim(`${entry.cadence} — ${entry.audience}`)}`,
+    );
+    console.log(
+      `  ${" ".repeat(8)} ${pc.dim(`npx taskcore@${entry.distTag} onboard`)}`,
+    );
     console.log("");
   }
 
@@ -113,7 +119,11 @@ export async function channelsCommand(
       `This install reports version ${pc.bold(packageVersion)}, which does not map to a published channel (source checkouts report the repository placeholder).`,
     );
   } else {
-    console.log(`This install is version ${pc.bold(packageVersion)} on the ${pc.bold(currentChannel)} channel.`);
+    console.log(
+      `This install is version ${pc.bold(packageVersion)} on the ${pc.bold(currentChannel)} channel.`,
+    );
   }
-  console.log(`Docker images use the same names: ghcr.io/khulnasoft/taskcore:{latest,beta,nightly,canary}`);
+  console.log(
+    `Docker images use the same names: ghcr.io/khulnasoft/taskcore:{latest,beta,nightly,canary}`,
+  );
 }

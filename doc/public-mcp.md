@@ -237,18 +237,18 @@ OAuth credential bodies and redirect locations are redacted from HTTP logs.
 
 ## Original directory tool surface
 
-| Tool | Effect |
-| --- | --- |
-| `taskcore_connection` | Person, company, scopes, connection management link |
-| `taskcore_list_agents` | Safe agent summary and availability |
-| `taskcore_list_projects` | Safe project summary |
-| `taskcore_search_tasks` | Bounded task search with offset pagination |
-| `taskcore_read_task` | Current task plus recent comments/history |
-| `taskcore_create_task` | Assigned task, submitted to existing scheduling |
-| `taskcore_add_comment` | Human feedback; may wake or queue work |
-| `taskcore_list_deliverables` | Documents, attachments and work-product references |
-| `taskcore_read_document` | Durable document body and current revision |
-| `taskcore_pending_approvals` | Pending approvals and existing decision links |
+| Tool                         | Effect                                              |
+| ---------------------------- | --------------------------------------------------- |
+| `taskcore_connection`        | Person, company, scopes, connection management link |
+| `taskcore_list_agents`       | Safe agent summary and availability                 |
+| `taskcore_list_projects`     | Safe project summary                                |
+| `taskcore_search_tasks`      | Bounded task search with offset pagination          |
+| `taskcore_read_task`         | Current task plus recent comments/history           |
+| `taskcore_create_task`       | Assigned task, submitted to existing scheduling     |
+| `taskcore_add_comment`       | Human feedback; may wake or queue work              |
+| `taskcore_list_deliverables` | Documents, attachments and work-product references  |
+| `taskcore_read_document`     | Durable document body and current revision          |
+| `taskcore_pending_approvals` | Pending approvals and existing decision links       |
 
 Every company-scoped call requires its explicit authorized company ID. The
 server emits bounded projections without upstream credentials. Direct connections
@@ -325,11 +325,11 @@ and client-capability metadata, and `Mcp-Name` for tool calls. Existing
 initialize-based direct clients receive the same expanded tool catalog. The central
 directory broker keeps its original ten-tool connection.
 
-| Event | Required filters | Payload |
-| --- | --- | --- |
-| `taskcore.task.status_changed` | `companyId`, `taskId`; optional `statuses` | Task ID, status, company ID and task link |
-| `taskcore.task.comment_created` | `companyId`, `taskId` | Task/company IDs, comment ID and task link |
-| `taskcore.task.document_updated` | `companyId`, `taskId` | Task/company IDs, document key, revision and task link |
+| Event                            | Required filters                           | Payload                                                |
+| -------------------------------- | ------------------------------------------ | ------------------------------------------------------ |
+| `taskcore.task.status_changed`   | `companyId`, `taskId`; optional `statuses` | Task ID, status, company ID and task link              |
+| `taskcore.task.comment_created`  | `companyId`, `taskId`                      | Task/company IDs, comment ID and task link             |
+| `taskcore.task.document_updated` | `companyId`, `taskId`                      | Task/company IDs, document key, revision and task link |
 
 In an Events-capable ChatGPT Work Cloud chat or dot, ask, for example:
 “Watch this task. When it finishes, read its report and tell me the result.”

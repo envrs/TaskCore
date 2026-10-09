@@ -47,7 +47,8 @@ interface ValidatedSetup {
   defaultMaxListCostUsd: number;
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -67,7 +68,9 @@ export function validateManagedAgentSetup(
 ): ValidatedSetup {
   const anthropicApiKey = env.ANTHROPIC_API_KEY?.trim();
   if (!anthropicApiKey) {
-    throw new Error("ANTHROPIC_API_KEY is required in the CLI process environment");
+    throw new Error(
+      "ANTHROPIC_API_KEY is required in the CLI process environment",
+    );
   }
   if (!options.acknowledgeRetention) {
     throw new Error(
@@ -77,7 +80,10 @@ export function validateManagedAgentSetup(
 
   const profileKey = required(options.profileKey, "--profile-key");
   const displayName = required(options.displayName, "--display-name");
-  const apiKeySecretId = required(options.apiKeySecretId, "--api-key-secret-id");
+  const apiKeySecretId = required(
+    options.apiKeySecretId,
+    "--api-key-secret-id",
+  );
   const model = required(options.model, "--model");
   if (model !== CLAUDE_MANAGED_QUALIFIED_MODEL) {
     throw new Error(
@@ -91,12 +97,14 @@ export function validateManagedAgentSetup(
   const defaultMaxListCostUsd = Number(options.maxSessionListCostUsd);
   const cents = Math.round(defaultMaxListCostUsd * 100);
   if (
-    !Number.isFinite(defaultMaxListCostUsd)
-    || defaultMaxListCostUsd <= 0
-    || !Number.isSafeInteger(cents)
-    || cents <= 0
+    !Number.isFinite(defaultMaxListCostUsd) ||
+    defaultMaxListCostUsd <= 0 ||
+    !Number.isSafeInteger(cents) ||
+    cents <= 0
   ) {
-    throw new Error("--max-session-list-cost-usd must resolve to at least one cent");
+    throw new Error(
+      "--max-session-list-cost-usd must resolve to at least one cent",
+    );
   }
 
   return {
@@ -130,7 +138,9 @@ async function anthropicRequest(
     signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) {
-    throw new Error(`Anthropic Managed Agents request failed with HTTP ${response.status}`);
+    throw new Error(
+      `Anthropic Managed Agents request failed with HTTP ${response.status}`,
+    );
   }
   if (response.status === 204) return {};
   return record(await response.json());
@@ -140,14 +150,17 @@ async function listAll(key: string, path: string): Promise<RemoteResource[]> {
   const rows: RemoteResource[] = [];
   let page: string | null = null;
   do {
-    const suffix = page ? `${path.includes("?") ? "&" : "?"}page=${encodeURIComponent(page)}` : "";
+    const suffix = page
+      ? `${path.includes("?") ? "&" : "?"}page=${encodeURIComponent(page)}`
+      : "";
     const response = await anthropicRequest(key, "GET", `${path}${suffix}`);
     for (const value of Array.isArray(response.data) ? response.data : []) {
       rows.push(record(value) as RemoteResource);
     }
-    page = typeof response.next_page === "string" && response.next_page
-      ? response.next_page
-      : null;
+    page =
+      typeof response.next_page === "string" && response.next_page
+        ? response.next_page
+        : null;
   } while (page);
   return rows;
 }
@@ -159,8 +172,8 @@ function resourceByProfile(
 ): RemoteResource | null {
   const matches = resources.filter(
     (resource) =>
-      typeof resource.id === "string"
-      && record(resource.metadata).taskcore_profile === profileKey,
+      typeof resource.id === "string" &&
+      record(resource.metadata).taskcore_profile === profileKey,
   );
   if (matches.length > 1) {
     throw new Error(
@@ -170,7 +183,9 @@ function resourceByProfile(
   return matches[0] ?? null;
 }
 
-export function assertSafeManagedEnvironment(environment: Record<string, unknown>): void {
+export function assertSafeManagedEnvironment(
+  environment: Record<string, unknown>,
+): void {
   const config = record(environment.config);
   const networking = record(config.networking);
   const packages = record(config.packages);
@@ -179,14 +194,14 @@ export function assertSafeManagedEnvironment(environment: Record<string, unknown
     .flatMap(([, value]) => (Array.isArray(value) ? value : [value]))
     .filter((value) => value !== undefined && value !== null);
   if (
-    environment.archived_at !== null
-    || config.type !== "cloud"
-    || networking.type !== "limited"
-    || networking.allow_mcp_servers !== false
-    || networking.allow_package_managers !== false
-    || !Array.isArray(networking.allowed_hosts)
-    || networking.allowed_hosts.length > 0
-    || installed.length > 0
+    environment.archived_at !== null ||
+    config.type !== "cloud" ||
+    networking.type !== "limited" ||
+    networking.allow_mcp_servers !== false ||
+    networking.allow_package_managers !== false ||
+    !Array.isArray(networking.allowed_hosts) ||
+    networking.allowed_hosts.length > 0 ||
+    installed.length > 0
   ) {
     throw new Error(
       "Existing Anthropic Environment does not match Taskcore's no-network, no-package profile",
@@ -195,19 +210,20 @@ export function assertSafeManagedEnvironment(environment: Record<string, unknown
 }
 
 export function assertSafeManagedAgent(agent: Record<string, unknown>): void {
-  const model = typeof agent.model === "string" ? agent.model : record(agent.model).id;
+  const model =
+    typeof agent.model === "string" ? agent.model : record(agent.model).id;
   if (
-    agent.archived_at !== null
-    || agent.system !== CLAUDE_MANAGED_SYSTEM_PROMPT
-    || typeof model !== "string"
-    || !model
-    || !Array.isArray(agent.tools)
-    || agent.tools.length > 0
-    || !Array.isArray(agent.mcp_servers)
-    || agent.mcp_servers.length > 0
-    || !Array.isArray(agent.skills)
-    || agent.skills.length > 0
-    || agent.multiagent != null
+    agent.archived_at !== null ||
+    agent.system !== CLAUDE_MANAGED_SYSTEM_PROMPT ||
+    typeof model !== "string" ||
+    !model ||
+    !Array.isArray(agent.tools) ||
+    agent.tools.length > 0 ||
+    !Array.isArray(agent.mcp_servers) ||
+    agent.mcp_servers.length > 0 ||
+    !Array.isArray(agent.skills) ||
+    agent.skills.length > 0 ||
+    agent.multiagent != null
   ) {
     throw new Error(
       "Existing Anthropic Agent enables or omits the locked tools, MCP, skills, or multi-agent profile",
@@ -238,11 +254,13 @@ async function resolveEnvironment(
     assertSafeManagedEnvironment(existing);
     return existing;
   }
-  if (options.probe) throw new Error("Probe found no matching Anthropic Environment");
+  if (options.probe)
+    throw new Error("Probe found no matching Anthropic Environment");
 
   const environment = await anthropicRequest(key, "POST", "/v1/environments", {
     name: `Taskcore · ${options.displayName}`,
-    description: "Taskcore remote-agent environment: no network or added packages.",
+    description:
+      "Taskcore remote-agent environment: no network or added packages.",
     config: {
       type: "cloud",
       networking: {
@@ -295,7 +313,8 @@ async function resolveAgent(
 
   const agent = await anthropicRequest(key, "POST", "/v1/agents", {
     name: `Taskcore · ${options.displayName}`,
-    description: "Versioned Taskcore remote agent; runnerd supplies session tools.",
+    description:
+      "Versioned Taskcore remote agent; runnerd supplies session tools.",
     model: options.model,
     system: CLAUDE_MANAGED_SYSTEM_PROMPT,
     tools: [],
@@ -308,8 +327,12 @@ async function resolveAgent(
   return agent;
 }
 
-function assertManagedAgentModel(agent: Record<string, unknown>, expectedModel: string): void {
-  const model = typeof agent.model === "string" ? agent.model : record(agent.model).id;
+function assertManagedAgentModel(
+  agent: Record<string, unknown>,
+  expectedModel: string,
+): void {
+  const model =
+    typeof agent.model === "string" ? agent.model : record(agent.model).id;
   if (model !== expectedModel) {
     throw new Error(
       `Existing Anthropic Agent model does not match the requested pinned model ${expectedModel}`,
@@ -317,7 +340,9 @@ function assertManagedAgentModel(agent: Record<string, unknown>, expectedModel: 
   }
 }
 
-export async function setupManagedAgent(options: ManagedAgentSetupOptions): Promise<void> {
+export async function setupManagedAgent(
+  options: ManagedAgentSetupOptions,
+): Promise<void> {
   const validated = validateManagedAgentSetup(options);
   const normalizedOptions: ManagedAgentSetupOptions = {
     ...options,
@@ -336,15 +361,18 @@ export async function setupManagedAgent(options: ManagedAgentSetupOptions): Prom
   const agentId = String(agent.id ?? "");
   const environmentId = String(environment.id ?? "");
   if (!agentId || !environmentId) {
-    throw new Error("Anthropic did not return usable Agent and Environment identities");
+    throw new Error(
+      "Anthropic did not return usable Agent and Environment identities",
+    );
   }
 
   const versions = await listAll(
     validated.anthropicApiKey,
     `/v1/agents/${encodeURIComponent(agentId)}/versions`,
   );
-  const version = normalizedOptions.agentVersion
-    ?? String(agent.version ?? versions.at(-1)?.version ?? "");
+  const version =
+    normalizedOptions.agentVersion ??
+    String(agent.version ?? versions.at(-1)?.version ?? "");
   const pinnedAgent = version
     ? versions.find((entry) => String(entry.version) === version)
     : undefined;
@@ -352,7 +380,9 @@ export async function setupManagedAgent(options: ManagedAgentSetupOptions): Prom
     throw new Error("Anthropic did not return a usable pinned Agent version");
   }
   if (String(pinnedAgent.id ?? "") !== agentId) {
-    throw new Error("Anthropic pinned Agent version identity does not match the selected Agent");
+    throw new Error(
+      "Anthropic pinned Agent version identity does not match the selected Agent",
+    );
   }
   assertSafeManagedAgent(pinnedAgent);
   assertManagedAgentModel(pinnedAgent, normalizedOptions.model);
@@ -378,7 +408,10 @@ export async function setupManagedAgent(options: ManagedAgentSetupOptions): Prom
   };
 
   if (options.probe) {
-    printOutput({ mode: "probe", qualified: true, profile }, { json: options.json });
+    printOutput(
+      { mode: "probe", qualified: true, profile },
+      { json: options.json },
+    );
     return;
   }
 
@@ -406,7 +439,11 @@ export function registerManagedAgentCommands(program: Command): void {
         "--api-key-secret-id <id>",
         "Existing company secret containing ANTHROPIC_API_KEY",
       )
-      .option("--model <id>", "Pinned Claude model", CLAUDE_MANAGED_QUALIFIED_MODEL)
+      .option(
+        "--model <id>",
+        "Pinned Claude model",
+        CLAUDE_MANAGED_QUALIFIED_MODEL,
+      )
       .option(
         "--max-session-list-cost-usd <usd>",
         "Default hard session ceiling",
@@ -414,8 +451,15 @@ export function registerManagedAgentCommands(program: Command): void {
       )
       .option("--agent-id <id>", "Adopt an existing Anthropic Agent")
       .option("--agent-version <version>", "Pin an existing Agent version")
-      .option("--environment-id <id>", "Adopt an existing Anthropic Environment")
-      .option("--probe", "Read-only qualification; create or persist nothing", false)
+      .option(
+        "--environment-id <id>",
+        "Adopt an existing Anthropic Environment",
+      )
+      .option(
+        "--probe",
+        "Read-only qualification; create or persist nothing",
+        false,
+      )
       .option(
         "--acknowledge-retention",
         "Acknowledge beta retention and non-ZDR/non-HIPAA status",

@@ -31,14 +31,14 @@ change. They are not a migration plan for existing adapters.
 
 The server resolves and persists the runtime once, before provider launch.
 
-| Persisted runtime | Adapter | Flag | Result |
-| --- | --- | --- | --- |
-| none | Any direct adapter | off or on | Use the existing direct path. |
-| none | `taskcore_runner` with any qualified provider | off | Reject the fresh start with a stable rollout-disabled error. |
-| none | `taskcore_runner` with a qualified provider | on | Use PRP v1 and the provider's persisted runnerd backend. |
-| none | `taskcore_runner` with an incomplete or unqualified profile | on | Reject the profile before runnerd starts. |
-| direct | Any | changed later | Keep the persisted direct path. |
-| native | Any | changed later | Keep the persisted native path for read, cancel, recovery, and finalization. |
+| Persisted runtime | Adapter                                                     | Flag          | Result                                                                       |
+| ----------------- | ----------------------------------------------------------- | ------------- | ---------------------------------------------------------------------------- |
+| none              | Any direct adapter                                          | off or on     | Use the existing direct path.                                                |
+| none              | `taskcore_runner` with any qualified provider               | off           | Reject the fresh start with a stable rollout-disabled error.                 |
+| none              | `taskcore_runner` with a qualified provider                 | on            | Use PRP v1 and the provider's persisted runnerd backend.                     |
+| none              | `taskcore_runner` with an incomplete or unqualified profile | on            | Reject the profile before runnerd starts.                                    |
+| direct            | Any                                                         | changed later | Keep the persisted direct path.                                              |
+| native            | Any                                                         | changed later | Keep the persisted native path for read, cancel, recovery, and finalization. |
 
 The server must not fall back from a selected `taskcore_runner` start to
 `codex_local`. A configuration or rollout error must be visible. Silent fallback
@@ -227,16 +227,16 @@ Catalog generation and production authorization are separate steps.
 Each runner-related pull request updates only rows that it can execute. The
 complete first-wave matrix must cover:
 
-| Area | Required cases |
-| --- | --- |
-| Runtime selection | Every built-in direct adapter, explicit runner selection, unsupported provider, flag on, and flag off. |
-| Direct regression | Flag-off `codex_local` invocation count, byte-stable result/finalization, and zero native rows. |
-| Configuration | Enabled and disabled create, import, edit, read, export, and adapter switch. |
-| Recovery | Persisted native run after flag disable, reconnect, duplicate event, duplicate command, cancellation, and server restart. |
-| Protocol security | Cross-company binding, ticket replay, ticket expiry, malformed frame, unsupported version, and revoked lease. |
-| Semantic actions | Discovery denial, unbound action, duplicate call, conflicting retry, redaction, and governed action. |
-| Task page | Active, settled, empty transcript, interaction, and classic direct-adapter states. |
-| Structured input | Valid response, malformed response, stale response, duplicate response, provider loss, and cancellation. |
+| Area              | Required cases                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Runtime selection | Every built-in direct adapter, explicit runner selection, unsupported provider, flag on, and flag off.                    |
+| Direct regression | Flag-off `codex_local` invocation count, byte-stable result/finalization, and zero native rows.                           |
+| Configuration     | Enabled and disabled create, import, edit, read, export, and adapter switch.                                              |
+| Recovery          | Persisted native run after flag disable, reconnect, duplicate event, duplicate command, cancellation, and server restart. |
+| Protocol security | Cross-company binding, ticket replay, ticket expiry, malformed frame, unsupported version, and revoked lease.             |
+| Semantic actions  | Discovery denial, unbound action, duplicate call, conflicting retry, redaction, and governed action.                      |
+| Task page         | Active, settled, empty transcript, interaction, and classic direct-adapter states.                                        |
+| Structured input  | Valid response, malformed response, stale response, duplicate response, provider loss, and cancellation.                  |
 
 ## Pull request acceptance
 

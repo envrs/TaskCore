@@ -10,7 +10,11 @@ import {
   withInstallStoreLock,
 } from "../install-store.js";
 import { resolveTaskcoreInstanceId } from "../config/home.js";
-import { detectServiceManager, launchdServiceName, systemdServiceName } from "../services/service-manager.js";
+import {
+  detectServiceManager,
+  launchdServiceName,
+  systemdServiceName,
+} from "../services/service-manager.js";
 
 type UninstallDependencies = {
   detectServiceManager: typeof detectServiceManager;
@@ -18,20 +22,28 @@ type UninstallDependencies = {
   userHomeDir: string;
 };
 
-function otherServiceDefinitions(platform: NodeJS.Platform, userHomeDir: string, instanceId: string): string[] {
-  const directory = platform === "linux"
-    ? path.join(userHomeDir, ".config", "systemd", "user")
-    : platform === "darwin"
-      ? path.join(userHomeDir, "Library", "LaunchAgents")
-      : null;
+function otherServiceDefinitions(
+  platform: NodeJS.Platform,
+  userHomeDir: string,
+  instanceId: string,
+): string[] {
+  const directory =
+    platform === "linux"
+      ? path.join(userHomeDir, ".config", "systemd", "user")
+      : platform === "darwin"
+        ? path.join(userHomeDir, "Library", "LaunchAgents")
+        : null;
   if (!directory || !fs.existsSync(directory)) return [];
-  const currentName = platform === "linux"
-    ? systemdServiceName(instanceId)
-    : `${launchdServiceName(instanceId)}.plist`;
-  const pattern = platform === "linux"
-    ? /^taskcore(?:-.+)?\.service$/
-    : /^ing\.taskcore\.taskcore(?:\..+)?\.plist$/;
-  return fs.readdirSync(directory)
+  const currentName =
+    platform === "linux"
+      ? systemdServiceName(instanceId)
+      : `${launchdServiceName(instanceId)}.plist`;
+  const pattern =
+    platform === "linux"
+      ? /^taskcore(?:-.+)?\.service$/
+      : /^ing\.taskcore\.taskcore(?:\..+)?\.plist$/;
+  return fs
+    .readdirSync(directory)
     .filter((name) => name !== currentName && pattern.test(name))
     .map((name) => path.join(directory, name));
 }
@@ -44,9 +56,15 @@ export async function uninstallCommand(
   const platform = dependencies.platform ?? process.platform;
   const userHomeDir = dependencies.userHomeDir ?? os.homedir();
   const detection = await detect({ instanceId, platform });
-  const otherDefinitions = otherServiceDefinitions(platform, userHomeDir, instanceId);
+  const otherDefinitions = otherServiceDefinitions(
+    platform,
+    userHomeDir,
+    instanceId,
+  );
   if (otherDefinitions.length > 0) {
-    throw new Error(`Cannot remove the shared managed CLI while other instance services are installed: ${otherDefinitions.join(", ")}. Uninstall those services first.`);
+    throw new Error(
+      `Cannot remove the shared managed CLI while other instance services are installed: ${otherDefinitions.join(", ")}. Uninstall those services first.`,
+    );
   }
   if (!detection.supported && platform === "linux") {
     const definitionPath = path.join(
@@ -70,21 +88,33 @@ export async function uninstallCommand(
   const paths = resolveInstallStorePaths();
   const hadStore = fs.existsSync(paths.cliRoot);
   if (hadStore) assertManagedInstallStore(paths);
-  const shimRemoved = await withInstallStoreLock(async () => {
-    if (hadStore) assertManagedInstallStore(paths);
-    const removed = removeManagedShim(paths);
+  const shimRemoved = await withInstallStoreLock(
+    async () => {
+      if (hadStore) assertManagedInstallStore(paths);
+      const removed = removeManagedShim(paths);
 
-    const home = process.env.HOME;
-    for (const rcFile of home ? [path.join(home, ".bashrc"), path.join(home, ".zshrc")] : []) {
-      removeManagedPathBlock(rcFile);
-    }
-    fs.rmSync(paths.cliRoot, { recursive: true, force: true });
-    return removed;
-  }, paths, { initialize: !hadStore });
+      const home = process.env.HOME;
+      for (const rcFile of home
+        ? [path.join(home, ".bashrc"), path.join(home, ".zshrc")]
+        : []) {
+        removeManagedPathBlock(rcFile);
+      }
+      fs.rmSync(paths.cliRoot, { recursive: true, force: true });
+      return removed;
+    },
+    paths,
+    { initialize: !hadStore },
+  );
 
   if (!shimRemoved) {
-    console.log(pc.yellow(`Left ${paths.shimPath} unchanged because it is not a Taskcore-managed shim.`));
+    console.log(
+      pc.yellow(
+        `Left ${paths.shimPath} unchanged because it is not a Taskcore-managed shim.`,
+      ),
+    );
   }
   console.log(pc.green("Removed the managed Taskcore CLI install."));
-  console.log(pc.dim(`User data was left untouched under ${paths.taskcoreHome}.`));
+  console.log(
+    pc.dim(`User data was left untouched under ${paths.taskcoreHome}.`),
+  );
 }

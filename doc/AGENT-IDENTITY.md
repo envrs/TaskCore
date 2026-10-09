@@ -62,7 +62,11 @@ An agent can sign using an ordinary cryptographic library, for example Node.js:
 
 ```js
 import { sign } from "node:crypto";
-const signature = sign(null, challengeBytes, process.env.TASKCORE_AGENT_PRIVATE_KEY);
+const signature = sign(
+  null,
+  challengeBytes,
+  process.env.TASKCORE_AGENT_PRIVATE_KEY,
+);
 ```
 
 This identity does not change Taskcore bearer-token authentication. There is no

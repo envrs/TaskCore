@@ -36,11 +36,21 @@ const COMMAND_JWT_RE =
 /** Recognize encoded JSON headers, without treating dotted identifiers as tokens. */
 export function looksLikeCredentialJwt(value: string): boolean {
   const segments = value.split(".");
-  if (![3, 5].includes(segments.length) || segments.some((part) => !/^[A-Za-z0-9_-]{8,}$/.test(part))) return false;
+  if (
+    ![3, 5].includes(segments.length) ||
+    segments.some((part) => !/^[A-Za-z0-9_-]{8,}$/.test(part))
+  )
+    return false;
   if (segments[0].startsWith("eyJ")) return true;
   try {
-    const header = JSON.parse(atob(segments[0].replace(/-/g, "+").replace(/_/g, "/")));
-    return typeof header === "object" && header !== null && typeof header.alg === "string";
+    const header = JSON.parse(
+      atob(segments[0].replace(/-/g, "+").replace(/_/g, "/")),
+    );
+    return (
+      typeof header === "object" &&
+      header !== null &&
+      typeof header.alg === "string"
+    );
   } catch {
     return false;
   }
@@ -100,7 +110,9 @@ export function redactCommandText(
     )
     .replace(COMMAND_OPENAI_KEY_RE, redactedValue)
     .replace(COMMAND_GITHUB_TOKEN_RE, redactedValue)
-    .replace(COMMAND_JWT_RE, (match) => looksLikeCredentialJwt(match) ? redactedValue : match);
+    .replace(COMMAND_JWT_RE, (match) =>
+      looksLikeCredentialJwt(match) ? redactedValue : match,
+    );
 }
 
 // A JSON secret field is a key/value pair such as `"token":"opaque-value"`. The

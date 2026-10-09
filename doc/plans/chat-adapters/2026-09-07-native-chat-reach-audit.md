@@ -21,12 +21,12 @@ the provider's existing test conversation through the signed-in in-app browser,
 and inspected Taskcore Activity and the provider. Returning to Settings proved
 the disabled state persisted; the original setting was then restored.
 
-| Provider | Disabled setting                         | Send time (UTC) | Observed result                                                                                                                           |
-| -------- | ---------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Slack    | `#pc-chat-live-0905b`                    | 17:56:10.018    | Activity: filtered, “Destination is not enabled in Taskcore”; no reaction/reply                                                          |
+| Provider | Disabled setting                        | Send time (UTC) | Observed result                                                                                                                           |
+| -------- | --------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Slack    | `#pc-chat-live-0905b`                   | 17:56:10.018    | Activity: filtered, “Destination is not enabled in Taskcore”; no reaction/reply                                                           |
 | GitHub   | `cryppadotta/taskcore-chat-e2e-enabled` | 18:01:08.615    | Saved comment persisted after reload; signed webhook acknowledged at 18:01:10; content rejected before durable ingress; no reaction/reply |
-| Discord  | Clawd `#general`                         | 18:02:53.827    | Activity: filtered, same destination explanation; no reaction/reply                                                                       |
-| Telegram | Allow direct messages                    | 18:03:55.816    | Activity: filtered, same destination explanation; no reply                                                                                |
+| Discord  | Clawd `#general`                        | 18:02:53.827    | Activity: filtered, same destination explanation; no reaction/reply                                                                       |
+| Telegram | Allow direct messages                   | 18:03:55.816    | Activity: filtered, same destination explanation; no reply                                                                                |
 
 Provider markers were `SLACK-REACH-DISABLED-0907-1256`,
 `GITHUB-REACH-DISABLED-0907-1301`, `DISCORD-REACH-DISABLED-0907-1304`, and

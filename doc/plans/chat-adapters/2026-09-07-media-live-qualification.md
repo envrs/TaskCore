@@ -26,13 +26,13 @@ through Taskcore's Board attachment API and explicitly sent to each existing QA
 conversation. This isolates native transport from agent-generation/handoff logic;
 it does **not** prove the agent handoff fix.
 
-| Provider | Observed outcome |
-| --- | --- |
-| Discord | Cat rendered in the native media viewer; text file rendered with its exact contents. Image message `1546531868575535114`; file message `1546531871523995698`, in thread `1546513811672932372`. |
-| Slack | Bot image loaded at 1024×1024 and text file preview contained the exact fixture contents in the existing CHA-6 thread. |
-| Telegram | Bot image loaded at 800×800; document message `417200359:11` downloaded through the actual UI. The downloaded 128-byte file matched the source SHA-256 exactly. |
-| GitHub | App comment transport is link-only for attachments; direct upload is not qualified. Live Board file send published a caption and one explicit private-task notice per selected file, starting with comment `5572594232`. No file bytes or loopback URLs were exposed. The misleading generic `Shared filename` preface was replaced and the final live retake verified the neutral wording below. |
-| Teams | No live media claim: Microsoft 365 tenant/admin setup remains unavailable. |
+| Provider | Observed outcome                                                                                                                                                                                                                                                                                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discord  | Cat rendered in the native media viewer; text file rendered with its exact contents. Image message `1546531868575535114`; file message `1546531871523995698`, in thread `1546513811672932372`.                                                                                                                                                                                                    |
+| Slack    | Bot image loaded at 1024×1024 and text file preview contained the exact fixture contents in the existing CHA-6 thread.                                                                                                                                                                                                                                                                            |
+| Telegram | Bot image loaded at 800×800; document message `417200359:11` downloaded through the actual UI. The downloaded 128-byte file matched the source SHA-256 exactly.                                                                                                                                                                                                                                   |
+| GitHub   | App comment transport is link-only for attachments; direct upload is not qualified. Live Board file send published a caption and one explicit private-task notice per selected file, starting with comment `5572594232`. No file bytes or loopback URLs were exposed. The misleading generic `Shared filename` preface was replaced and the final live retake verified the neutral wording below. |
+| Teams    | No live media claim: Microsoft 365 tenant/admin setup remains unavailable.                                                                                                                                                                                                                                                                                                                        |
 
 Text fixture SHA-256:
 `fd40030afb62b83181a2a46dde8220e8defecfa0b4328e380c30b1899ccdce24`.
@@ -75,10 +75,10 @@ and create a text file with a provider-specific exact marker. The requests did
 not tell Maya which tool or helper command to use. All three stayed on their
 existing task, succeeded, and published both selected attachments.
 
-| Provider | Run and real-provider proof |
-| --- | --- |
-| Discord | Run `448779d2-73a3-4f39-9f75-0c9fdac528d0`, 14:57:10–15:02:43 UTC. Native image message `1546536207448547401` loaded; native file `1546536210195808318` previewed exactly `DISCORD-FILE-HANDOFF-0907-OK`. |
-| Slack | Run `d4b00e25-a2b6-49bd-9442-384419c88776`, 14:57:17–15:02:00 UTC. Both native files appeared in CHA-6's original thread; the image loaded at 1024×1024 and the file preview showed `SLACK-FILE-HANDOFF-0907-OK`. |
+| Provider | Run and real-provider proof                                                                                                                                                                                                                                      |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discord  | Run `448779d2-73a3-4f39-9f75-0c9fdac528d0`, 14:57:10–15:02:43 UTC. Native image message `1546536207448547401` loaded; native file `1546536210195808318` previewed exactly `DISCORD-FILE-HANDOFF-0907-OK`.                                                        |
+| Slack    | Run `d4b00e25-a2b6-49bd-9442-384419c88776`, 14:57:17–15:02:00 UTC. Both native files appeared in CHA-6's original thread; the image loaded at 1024×1024 and the file preview showed `SLACK-FILE-HANDOFF-0907-OK`.                                                |
 | Telegram | Run `949a2b1a-5f6c-4680-971c-cceb244be8a5`, 14:57:23–15:02:24 UTC. Image `417200359:14` loaded at 800×800. Document `417200359:15` downloaded through Telegram's real UI; its 29 bytes were exactly `TELEGRAM-FILE-HANDOFF-0907-OK`, without a trailing newline. |
 
 The Telegram download SHA-256 was
@@ -142,12 +142,12 @@ the connection wizard's tool-method selector after reconciliation. Restarted the
 live server with migration 0249 applied. Three ordinary requests were sent from
 the signed-in provider composers at 15:30:25–27 UTC, without helper instructions.
 
-| Provider | Observed result on the final media implementation |
-| --- | --- |
-| Discord | Run `15f7af18-d052-44d3-9698-127433b9e941` succeeded in 163 seconds. Native image `1546543862883946597` visibly rendered the cat; file `1546543864142102529` previewed `DISCORD-MEDIA-FINAL-0907-OK`. |
-| Slack | Run `d5e7b996-1fc0-41e4-92fd-c5522fd23fbb` succeeded in 183 seconds. Native file message `1788795212.198169` previewed `SLACK-MEDIA-FINAL-0907-OK`; image message `1788795215.443269` visibly rendered the cat in the same thread. |
-| Telegram | Run `783a9af6-eefd-4d24-a39b-ce8eac97bdcf` succeeded in 151 seconds. Photo `417200359:18` loaded at 800 pixels wide; document `417200359:19` downloaded through the real UI. |
-| GitHub | Fresh Board file send `4a82fa40-5fc0-42f7-99ac-ddc97c5b2ff8` produced comment `5572840135`: the file is saved on the private Taskcore task and this GitHub App connection cannot upload file bytes into comments. No misleading “Shared” preface or public file URL. |
+| Provider | Observed result on the final media implementation                                                                                                                                                                                                                    |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discord  | Run `15f7af18-d052-44d3-9698-127433b9e941` succeeded in 163 seconds. Native image `1546543862883946597` visibly rendered the cat; file `1546543864142102529` previewed `DISCORD-MEDIA-FINAL-0907-OK`.                                                                |
+| Slack    | Run `d5e7b996-1fc0-41e4-92fd-c5522fd23fbb` succeeded in 183 seconds. Native file message `1788795212.198169` previewed `SLACK-MEDIA-FINAL-0907-OK`; image message `1788795215.443269` visibly rendered the cat in the same thread.                                   |
+| Telegram | Run `783a9af6-eefd-4d24-a39b-ce8eac97bdcf` succeeded in 151 seconds. Photo `417200359:18` loaded at 800 pixels wide; document `417200359:19` downloaded through the real UI.                                                                                         |
+| GitHub   | Fresh Board file send `4a82fa40-5fc0-42f7-99ac-ddc97c5b2ff8` produced comment `5572840135`: the file is saved on the private Taskcore task and this GitHub App connection cannot upload file bytes into comments. No misleading “Shared” preface or public file URL. |
 
 All six native attachment publications were `published` with one attempt each;
 each upload carried the correct immutable originating run. The refreshed

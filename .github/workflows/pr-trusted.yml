@@ -670,7 +670,16 @@ jobs:
     # Preserve the legacy required-check name while the underlying work runs in parallel.
     name: verify
     if: ${{ always() }}
-    needs: [gate, policy, typecheck_release_registry, general_tests, verify_taskcore_runner, build, docker_context_integrity]
+    needs:
+      [
+        gate,
+        policy,
+        typecheck_release_registry,
+        general_tests,
+        verify_taskcore_runner,
+        build,
+        docker_context_integrity,
+      ]
     runs-on: ${{ needs.gate.outputs.runner }}
     timeout-minutes: 5
 
@@ -1249,7 +1258,6 @@ jobs:
       - name: Verify built-in Grok from a clean public npm install
         if: ${{ hashFiles('scripts/verify-grok-npm-install.mjs') != '' }}
         run: node scripts/verify-grok-npm-install.mjs
-
 
   e2e_shards:
     name: e2e shard (${{ matrix.shard_label }})

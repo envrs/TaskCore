@@ -1,5 +1,13 @@
 import { execFile, spawn } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -36,7 +44,9 @@ async function getAvailablePort(): Promise<number> {
 }
 
 const embeddedPostgresSupport = await getEmbeddedPostgresTestSupport();
-const describeEmbeddedPostgres = embeddedPostgresSupport.supported ? describe : describe.skip;
+const describeEmbeddedPostgres = embeddedPostgresSupport.supported
+  ? describe
+  : describe.skip;
 
 if (!embeddedPostgresSupport.supported) {
   console.warn(
@@ -44,7 +54,12 @@ if (!embeddedPostgresSupport.supported) {
   );
 }
 
-function writeTestConfig(configPath: string, tempRoot: string, port: number, connectionString: string) {
+function writeTestConfig(
+  configPath: string,
+  tempRoot: string,
+  port: number,
+  connectionString: string,
+) {
   const config = {
     $meta: {
       version: 1,
@@ -153,7 +168,8 @@ function createServerEnv(
   env.PORT = String(port);
   env.SERVE_UI = "false";
   env.TASKCORE_DB_BACKUP_ENABLED = "false";
-  env.TASKCORE_DECISION_SIGNING_SECRET = "company-import-export-decision-signing-secret";
+  env.TASKCORE_DECISION_SIGNING_SECRET =
+    "company-import-export-decision-signing-secret";
   env.HEARTBEAT_SCHEDULER_ENABLED = "false";
   env.TASKCORE_MIGRATION_AUTO_APPLY = "true";
   env.TASKCORE_UI_DEV_MIDDLEWARE = "false";
@@ -174,7 +190,11 @@ function createCliEnv(options: TestTaskcoreEnv) {
   return env;
 }
 
-function collectTextFiles(root: string, current: string, files: Record<string, string>) {
+function collectTextFiles(
+  root: string,
+  current: string,
+  files: Record<string, string>,
+) {
   for (const entry of readdirSync(current, { withFileTypes: true })) {
     const absolutePath = path.join(current, entry.name);
     if (entry.isDirectory()) {
@@ -200,13 +220,17 @@ async function stopServerProcess(child: ServerProcess | null) {
   });
 }
 
-async function api<T>(baseUrl: string, pathname: string, init?: RequestInit): Promise<T> {
+async function api<T>(
+  baseUrl: string,
+  pathname: string,
+  init?: RequestInit,
+): Promise<T> {
   const res = await fetch(`${baseUrl}${pathname}`, init);
   const text = await res.text();
   if (!res.ok) {
     throw new Error(`Request failed ${res.status} ${pathname}: ${text}`);
   }
-  return text ? JSON.parse(text) as T : (null as T);
+  return text ? (JSON.parse(text) as T) : (null as T);
 }
 
 function isPortableAgent(agent: { metadata?: Record<string, unknown> | null }) {
@@ -218,7 +242,10 @@ async function runCliJson<T>(
   args: string[],
   opts: TestTaskcoreEnv & { apiBase?: string; includeConfigArg?: boolean },
 ) {
-  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+  const repoRoot = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../..",
+  );
   const cliArgs = ["--silent", "taskcore", ...args];
   if (opts.apiBase) {
     cliArgs.push("--api-base", opts.apiBase);
@@ -227,19 +254,17 @@ async function runCliJson<T>(
     cliArgs.push("--config", opts.configPath);
   }
   cliArgs.push("--json");
-  const result = await execFileAsync(
-    "pnpm",
-    cliArgs,
-    {
-      cwd: repoRoot,
-      env: createCliEnv(opts),
-      maxBuffer: 10 * 1024 * 1024,
-    },
-  );
+  const result = await execFileAsync("pnpm", cliArgs, {
+    cwd: repoRoot,
+    env: createCliEnv(opts),
+    maxBuffer: 10 * 1024 * 1024,
+  });
   const stdout = result.stdout.trim();
   const jsonStart = stdout.search(/[\[{]/);
   if (jsonStart === -1) {
-    throw new Error(`CLI did not emit JSON.\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+    throw new Error(
+      `CLI did not emit JSON.\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
+    );
   }
   return JSON.parse(stdout.slice(jsonStart)) as T;
 }
@@ -281,7 +306,9 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
   let cliShellHome = "";
   let taskcoreInstanceId = "";
   let serverProcess: ServerProcess | null = null;
-  let tempDb: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | null = null;
+  let tempDb: Awaited<
+    ReturnType<typeof startEmbeddedPostgresTestDatabase>
+  > | null = null;
 
   beforeAll(async () => {
     tempRoot = mkdtempSync(path.join(os.tmpdir(), "taskcore-company-cli-e2e-"));
@@ -293,27 +320,28 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
     mkdirSync(taskcoreHome, { recursive: true });
     mkdirSync(cliShellHome, { recursive: true });
 
-    tempDb = await startEmbeddedPostgresTestDatabase("taskcore-company-cli-db-");
+    tempDb = await startEmbeddedPostgresTestDatabase(
+      "taskcore-company-cli-db-",
+    );
 
     const port = await getAvailablePort();
     writeTestConfig(configPath, tempRoot, port, tempDb.connectionString);
     apiBase = `http://127.0.0.1:${port}`;
 
-    const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-    const output = { stdout: [] as string[], stderr: [] as string[] };
-    const child = spawn(
-      "pnpm",
-      ["taskcore", "run", "--config", configPath],
-      {
-        cwd: repoRoot,
-        env: createServerEnv(configPath, port, tempDb.connectionString, {
-          taskcoreHome,
-          instanceId: taskcoreInstanceId,
-          shellHome: cliShellHome,
-        }),
-        stdio: ["ignore", "pipe", "pipe"],
-      },
+    const repoRoot = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../../..",
     );
+    const output = { stdout: [] as string[], stderr: [] as string[] };
+    const child = spawn("pnpm", ["taskcore", "run", "--config", configPath], {
+      cwd: repoRoot,
+      env: createServerEnv(configPath, port, tempDb.connectionString, {
+        taskcoreHome,
+        instanceId: taskcoreInstanceId,
+        shellHome: cliShellHome,
+      }),
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     serverProcess = child;
     child.stdout?.on("data", (chunk) => {
       output.stdout.push(String(chunk));
@@ -341,7 +369,14 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
       profileName: string;
       profile: { apiBase?: string };
     }>(
-      ["context", "set", "--profile", "isolation-check", "--api-base", "https://example.test"],
+      [
+        "context",
+        "set",
+        "--profile",
+        "isolation-check",
+        "--api-base",
+        "https://example.test",
+      ],
       {
         configPath,
         taskcoreHome,
@@ -352,7 +387,11 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
     );
 
     const expectedContextPath = path.join(taskcoreHome, "context.json");
-    const leakedContextPath = path.join(cliShellHome, ".taskcore", "context.json");
+    const leakedContextPath = path.join(
+      cliShellHome,
+      ".taskcore",
+      "context.json",
+    );
     expect(cliContext.contextPath).toBe(expectedContextPath);
     expect(cliContext.profileName).toBe("isolation-check");
     expect(cliContext.profile.apiBase).toBe("https://example.test");
@@ -361,7 +400,11 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
     rmSync(expectedContextPath, { force: true });
     expect(existsSync(expectedContextPath)).toBe(false);
 
-    const sourceCompany = await api<{ id: string; name: string; issuePrefix: string }>(apiBase, "/api/companies", {
+    const sourceCompany = await api<{
+      id: string;
+      name: string;
+      issuePrefix: string;
+    }>(apiBase, "/api/companies", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: `CLI Export Source ${Date.now()}` }),
@@ -407,21 +450,21 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
 
     const largeIssueDescription = `Round-trip the company package through the CLI.\n\n${"portable-data ".repeat(12_000)}`;
 
-    const sourceIssue = await api<{ id: string; title: string; identifier: string }>(
-      apiBase,
-      `/api/companies/${sourceCompany.id}/issues`,
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          title: "Validate company import/export",
-          description: largeIssueDescription,
-          status: "todo",
-          projectId: sourceProject.id,
-          assigneeAgentId: sourceAgent.id,
-        }),
-      },
-    );
+    const sourceIssue = await api<{
+      id: string;
+      title: string;
+      identifier: string;
+    }>(apiBase, `/api/companies/${sourceCompany.id}/issues`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "Validate company import/export",
+        description: largeIssueDescription,
+        status: "todo",
+        projectId: sourceProject.id,
+        assigneeAgentId: sourceAgent.id,
+      }),
+    });
 
     const exportResult = await runCliJson<{
       ok: boolean;
@@ -448,8 +491,12 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
 
     expect(exportResult.ok).toBe(true);
     expect(exportResult.filesWritten).toBeGreaterThan(0);
-    expect(readFileSync(path.join(exportDir, "COMPANY.md"), "utf8")).toContain(sourceCompany.name);
-    expect(readFileSync(path.join(exportDir, ".taskcore.yaml"), "utf8")).toContain('schema: "taskcore/v1"');
+    expect(readFileSync(path.join(exportDir, "COMPANY.md"), "utf8")).toContain(
+      sourceCompany.name,
+    );
+    expect(
+      readFileSync(path.join(exportDir, ".taskcore.yaml"), "utf8"),
+    ).toContain('schema: "taskcore/v1"');
 
     const importedNew = await runCliJson<{
       company: { id: string; name: string; action: string };
@@ -488,14 +535,19 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
       apiBase,
       `/api/companies/${importedNew.company.id}/projects`,
     );
-    const importedIssues = await api<Array<{ id: string; title: string; identifier: string }>>(
-      apiBase,
-      `/api/companies/${importedNew.company.id}/issues`,
+    const importedIssues = await api<
+      Array<{ id: string; title: string; identifier: string }>
+    >(apiBase, `/api/companies/${importedNew.company.id}/issues`);
+    const importedMatchingIssues = importedIssues.filter(
+      (issue) => issue.title === sourceIssue.title,
     );
-    const importedMatchingIssues = importedIssues.filter((issue) => issue.title === sourceIssue.title);
 
-    expect(importedAgents.map((agent) => agent.name)).toContain(sourceAgent.name);
-    expect(importedProjects.map((project) => project.name)).toContain(sourceProject.name);
+    expect(importedAgents.map((agent) => agent.name)).toContain(
+      sourceAgent.name,
+    );
+    expect(importedProjects.map((project) => project.name)).toContain(
+      sourceProject.name,
+    );
     expect(importedMatchingIssues).toHaveLength(1);
 
     const previewExisting = await runCliJson<{
@@ -532,9 +584,17 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
 
     expect(previewExisting.errors).toEqual([]);
     expect(previewExisting.plan.companyAction).toBe("none");
-    expect(previewExisting.plan.agentPlans.some((plan) => plan.action === "create")).toBe(true);
-    expect(previewExisting.plan.projectPlans.some((plan) => plan.action === "create")).toBe(true);
-    expect(previewExisting.plan.issuePlans.some((plan) => plan.action === "create")).toBe(true);
+    expect(
+      previewExisting.plan.agentPlans.some((plan) => plan.action === "create"),
+    ).toBe(true);
+    expect(
+      previewExisting.plan.projectPlans.some(
+        (plan) => plan.action === "create",
+      ),
+    ).toBe(true);
+    expect(
+      previewExisting.plan.issuePlans.some((plan) => plan.action === "create"),
+    ).toBe(true);
 
     const importedExisting = await runCliJson<{
       company: { id: string; action: string };
@@ -564,33 +624,47 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
     );
 
     expect(importedExisting.company.action).toBe("unchanged");
-    expect(importedExisting.agents.some((agent) => agent.action === "created")).toBe(true);
+    expect(
+      importedExisting.agents.some((agent) => agent.action === "created"),
+    ).toBe(true);
 
-    const twiceImportedAgents = await api<Array<{ id: string; name: string; metadata?: Record<string, unknown> | null }>>(
-      apiBase,
-      `/api/companies/${importedNew.company.id}/agents`,
+    const twiceImportedAgents = await api<
+      Array<{
+        id: string;
+        name: string;
+        metadata?: Record<string, unknown> | null;
+      }>
+    >(apiBase, `/api/companies/${importedNew.company.id}/agents`);
+    const twiceImportedProjects = await api<
+      Array<{ id: string; name: string }>
+    >(apiBase, `/api/companies/${importedNew.company.id}/projects`);
+    const twiceImportedIssues = await api<
+      Array<{ id: string; title: string; identifier: string }>
+    >(apiBase, `/api/companies/${importedNew.company.id}/issues`);
+    const twiceImportedMatchingIssues = twiceImportedIssues.filter(
+      (issue) => issue.title === sourceIssue.title,
     );
-    const twiceImportedProjects = await api<Array<{ id: string; name: string }>>(
-      apiBase,
-      `/api/companies/${importedNew.company.id}/projects`,
-    );
-    const twiceImportedIssues = await api<Array<{ id: string; title: string; identifier: string }>>(
-      apiBase,
-      `/api/companies/${importedNew.company.id}/issues`,
-    );
-    const twiceImportedMatchingIssues = twiceImportedIssues.filter((issue) => issue.title === sourceIssue.title);
-    const twiceImportedPortableAgents = twiceImportedAgents.filter(isPortableAgent);
+    const twiceImportedPortableAgents =
+      twiceImportedAgents.filter(isPortableAgent);
 
     expect(twiceImportedPortableAgents).toHaveLength(2);
-    expect(new Set(twiceImportedPortableAgents.map((agent) => agent.name)).size).toBe(2);
+    expect(
+      new Set(twiceImportedPortableAgents.map((agent) => agent.name)).size,
+    ).toBe(2);
     expect(twiceImportedProjects).toHaveLength(2);
     expect(twiceImportedMatchingIssues).toHaveLength(2);
-    expect(new Set(twiceImportedMatchingIssues.map((issue) => issue.identifier)).size).toBe(2);
+    expect(
+      new Set(twiceImportedMatchingIssues.map((issue) => issue.identifier))
+        .size,
+    ).toBe(2);
 
     const zipPath = path.join(tempRoot, "exported-company.zip");
     const portableFiles: Record<string, string> = {};
     collectTextFiles(exportDir, exportDir, portableFiles);
-    writeFileSync(zipPath, createStoredZipArchive(portableFiles, "taskcore-demo"));
+    writeFileSync(
+      zipPath,
+      createStoredZipArchive(portableFiles, "taskcore-demo"),
+    );
 
     const importedFromZip = await runCliJson<{
       company: { id: string; name: string; action: string };
@@ -618,6 +692,8 @@ describeEmbeddedPostgres("taskcore company import/export e2e", () => {
     );
 
     expect(importedFromZip.company.action).toBe("created");
-    expect(importedFromZip.agents.some((agent) => agent.action === "created")).toBe(true);
+    expect(
+      importedFromZip.agents.some((agent) => agent.action === "created"),
+    ).toBe(true);
   }, 90_000);
 });

@@ -17,10 +17,7 @@
     "longDescription": "Use your Taskcore team as yourself. Review tasks, delegate work to agents, add feedback and retrieve documents. Delegation can start autonomous work using your team's configured execution capacity and budget.",
     "developerName": "Taskcore",
     "category": "Productivity",
-    "capabilities": [
-      "Read",
-      "Write"
-    ],
+    "capabilities": ["Read", "Write"],
     "defaultPrompt": "Review my Taskcore team and show what needs my attention."
   }
 }

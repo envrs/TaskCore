@@ -72,7 +72,10 @@ export interface SessionReuseStoreConfig<T> {
    * Write (or clear with `undefined`) an entry's per-entry idle timer. The host
    * lane supplies this; the sandbox lane omits it.
    */
-  readonly setTimer?: (entry: T, timer: ReturnType<typeof setTimeout> | undefined) => void;
+  readonly setTimer?: (
+    entry: T,
+    timer: ReturnType<typeof setTimeout> | undefined,
+  ) => void;
   /**
    * Arm a per-entry idle timer on `save`. The host lane sets it true. The
    * sandbox lane leaves it false and relies on the run-start sweep only.
@@ -84,7 +87,10 @@ export interface SessionReuseStoreConfig<T> {
    * the lease. The host lane omits it and the sweep runs the critical section
    * directly.
    */
-  readonly withEvictLease?: (key: string, critical: () => Promise<void>) => Promise<void>;
+  readonly withEvictLease?: (
+    key: string,
+    critical: () => Promise<void>,
+  ) => Promise<void>;
 }
 
 /**
@@ -119,7 +125,10 @@ export function createSessionReuseStore<T>(
   function armTimer(key: string, entry: T): void {
     if (!config.perEntryTimer || config.idleMs <= 0) return;
     clearEntryTimer(entry);
-    const delayMs = Math.max(1, config.lastUsedAt(entry) + config.idleMs - config.now());
+    const delayMs = Math.max(
+      1,
+      config.lastUsedAt(entry) + config.idleMs - config.now(),
+    );
     const timer = setTimeout(() => {
       void (async () => {
         if (entries.get(key) !== entry) return;
@@ -166,14 +175,18 @@ export function createSessionReuseStore<T>(
       if (config.idleMs <= 0) return;
       const stale: Array<[string, T]> = [];
       for (const [key, entry] of entries.entries()) {
-        if (now - config.lastUsedAt(entry) >= config.idleMs) stale.push([key, entry]);
+        if (now - config.lastUsedAt(entry) >= config.idleMs)
+          stale.push([key, entry]);
       }
       for (const [key, entry] of stale) {
         const critical = async (): Promise<void> => {
           if (entries.get(key) !== entry) return;
           // Under a lease the sweep re-checks the idle window, so a run that
           // re-saved the key while the lease was held keeps its entry.
-          if (config.withEvictLease && config.now() - config.lastUsedAt(entry) < config.idleMs) {
+          if (
+            config.withEvictLease &&
+            config.now() - config.lastUsedAt(entry) < config.idleMs
+          ) {
             return;
           }
           await releaseEntry(key, entry);

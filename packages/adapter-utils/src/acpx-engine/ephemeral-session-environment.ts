@@ -23,7 +23,8 @@ export function createEphemeralSessionEnvironmentStore(
     save(record) {
       const persisted = { ...record };
       if (record.acpx?.session_options !== undefined) {
-        const { env: _environment, ...sessionOptions } = record.acpx.session_options;
+        const { env: _environment, ...sessionOptions } =
+          record.acpx.session_options;
         persisted.acpx = { ...record.acpx, session_options: sessionOptions };
       }
       return persistedStore.save(persisted);

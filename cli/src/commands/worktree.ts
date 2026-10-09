@@ -67,7 +67,14 @@ import {
   prepareEmbeddedPostgresNativeRuntime,
 } from "@taskcore/db";
 import type { Command } from "commander";
-import { ensureAgentJwtSecret, ensureToolActionSigningSecret, loadTaskcoreEnvFile, mergeTaskcoreEnvEntries, readTaskcoreEnvEntries, resolveTaskcoreEnvFile } from "../config/env.js";
+import {
+  ensureAgentJwtSecret,
+  ensureToolActionSigningSecret,
+  loadTaskcoreEnvFile,
+  mergeTaskcoreEnvEntries,
+  readTaskcoreEnvEntries,
+  resolveTaskcoreEnvFile,
+} from "../config/env.js";
 import { expandHomePrefix } from "../config/home.js";
 import type { TaskcoreConfig } from "../config/schema.js";
 import { readConfig, resolveConfigPath, writeConfig } from "../config/store.js";
@@ -268,7 +275,9 @@ export type SeededWorktreeExecutionQuarantineSummary = {
 };
 
 function nonEmpty(value: string | null | undefined): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 function isCurrentSourceConfigPath(sourceConfigPath: string): boolean {
@@ -306,23 +315,37 @@ function resolveWorktreeMakeName(name: string): string {
       "Worktree name must contain only letters, numbers, dots, underscores, or dashes.",
     );
   }
-  return value.startsWith(WORKTREE_NAME_PREFIX) ? value : `${WORKTREE_NAME_PREFIX}${value}`;
+  return value.startsWith(WORKTREE_NAME_PREFIX)
+    ? value
+    : `${WORKTREE_NAME_PREFIX}${value}`;
 }
 
 function resolveWorktreeHome(explicit?: string): string {
-  return explicit ?? process.env.TASKCORE_WORKTREES_DIR ?? DEFAULT_WORKTREE_HOME;
+  return (
+    explicit ?? process.env.TASKCORE_WORKTREES_DIR ?? DEFAULT_WORKTREE_HOME
+  );
 }
 
 function resolveWorktreeStartPoint(explicit?: string): string | undefined {
-  return explicit ?? nonEmpty(process.env.TASKCORE_WORKTREE_START_POINT) ?? undefined;
+  return (
+    explicit ?? nonEmpty(process.env.TASKCORE_WORKTREE_START_POINT) ?? undefined
+  );
 }
 
 type ConfiguredStorage = {
   getObject(companyId: string, objectKey: string): Promise<Buffer>;
-  putObject(companyId: string, objectKey: string, body: Buffer, contentType: string): Promise<void>;
+  putObject(
+    companyId: string,
+    objectKey: string,
+    body: Buffer,
+    contentType: string,
+  ): Promise<void>;
 };
 
-function assertStorageCompanyPrefix(companyId: string, objectKey: string): void {
+function assertStorageCompanyPrefix(
+  companyId: string,
+  objectKey: string,
+): void {
   if (!objectKey.startsWith(`${companyId}/`) || objectKey.includes("..")) {
     throw new Error(`Invalid object key for company ${companyId}.`);
   }
@@ -334,7 +357,10 @@ function normalizeStorageObjectKey(objectKey: string): string {
     throw new Error("Invalid object key.");
   }
   const parts = normalized.split("/").filter((part) => part.length > 0);
-  if (parts.length === 0 || parts.some((part) => part === "." || part === "..")) {
+  if (
+    parts.length === 0 ||
+    parts.some((part) => part === "." || part === "..")
+  ) {
     throw new Error("Invalid object key.");
   }
   return parts.join("/");
@@ -391,15 +417,22 @@ function buildS3ObjectKey(prefix: string, objectKey: string): string {
   return prefix ? `${prefix}/${objectKey}` : objectKey;
 }
 
-const dynamicImport = new Function("specifier", "return import(specifier);") as (specifier: string) => Promise<any>;
+const dynamicImport = new Function(
+  "specifier",
+  "return import(specifier);",
+) as (specifier: string) => Promise<any>;
 
-function createConfiguredStorageFromTaskcoreConfig(config: TaskcoreConfig): ConfiguredStorage {
+function createConfiguredStorageFromTaskcoreConfig(
+  config: TaskcoreConfig,
+): ConfiguredStorage {
   if (config.storage.provider === "local_disk") {
     const baseDir = expandHomePrefix(config.storage.localDisk.baseDir);
     return {
       async getObject(companyId: string, objectKey: string) {
         assertStorageCompanyPrefix(companyId, objectKey);
-        return await fsPromises.readFile(resolveLocalStoragePath(baseDir, objectKey));
+        return await fsPromises.readFile(
+          resolveLocalStoragePath(baseDir, objectKey),
+        );
       },
       async putObject(companyId: string, objectKey: string, body: Buffer) {
         assertStorageCompanyPrefix(companyId, objectKey);
@@ -441,7 +474,12 @@ function createConfiguredStorageFromTaskcoreConfig(config: TaskcoreConfig): Conf
       );
       return await s3BodyToBuffer(response.Body);
     },
-    async putObject(companyId: string, objectKey: string, body: Buffer, contentType: string) {
+    async putObject(
+      companyId: string,
+      objectKey: string,
+      body: Buffer,
+      contentType: string,
+    ) {
       assertStorageCompanyPrefix(companyId, objectKey);
       const { sdk, client } = await getS3Client();
       await client.send(
@@ -475,12 +513,19 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 
 export function isMissingStorageObjectError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
-  const candidate = error as { code?: unknown; status?: unknown; name?: unknown; message?: unknown };
-  return candidate.code === "ENOENT"
-    || candidate.status === 404
-    || candidate.name === "NoSuchKey"
-    || candidate.name === "NotFound"
-    || candidate.message === "Object not found.";
+  const candidate = error as {
+    code?: unknown;
+    status?: unknown;
+    name?: unknown;
+    message?: unknown;
+  };
+  return (
+    candidate.code === "ENOENT" ||
+    candidate.status === 404 ||
+    candidate.name === "NoSuchKey" ||
+    candidate.name === "NotFound" ||
+    candidate.message === "Object not found."
+  );
 }
 
 export async function readSourceAttachmentBody(
@@ -523,10 +568,14 @@ function extractExecSyncErrorMessage(error: unknown): string | null {
 
 function localBranchExists(cwd: string, branchName: string): boolean {
   try {
-    execFileSync("git", ["show-ref", "--verify", "--quiet", `refs/heads/${branchName}`], {
-      cwd,
-      stdio: "ignore",
-    });
+    execFileSync(
+      "git",
+      ["show-ref", "--verify", "--quiet", `refs/heads/${branchName}`],
+      {
+        cwd,
+        stdio: "ignore",
+      },
+    );
     return true;
   } catch {
     return false;
@@ -543,7 +592,14 @@ export function resolveGitWorktreeAddArgs(input: {
     return ["worktree", "add", input.targetPath, input.branchName];
   }
   const commitish = input.startPoint ?? "HEAD";
-  return ["worktree", "add", "-b", input.branchName, input.targetPath, commitish];
+  return [
+    "worktree",
+    "add",
+    "-b",
+    input.branchName,
+    input.targetPath,
+    commitish,
+  ];
 }
 
 function readPidFilePort(postmasterPidFile: string): number | null {
@@ -560,7 +616,9 @@ function readPidFilePort(postmasterPidFile: string): number | null {
 function readRunningPostmasterPid(postmasterPidFile: string): number | null {
   if (!existsSync(postmasterPidFile)) return null;
   try {
-    const pid = Number(readFileSync(postmasterPidFile, "utf8").split("\n")[0]?.trim());
+    const pid = Number(
+      readFileSync(postmasterPidFile, "utf8").split("\n")[0]?.trim(),
+    );
     if (!Number.isInteger(pid) || pid <= 0) return null;
     process.kill(pid, 0);
     return pid;
@@ -580,7 +638,10 @@ async function isPortAvailable(port: number): Promise<boolean> {
   });
 }
 
-async function findAvailablePort(preferredPort: number, reserved = new Set<number>()): Promise<number> {
+async function findAvailablePort(
+  preferredPort: number,
+  reserved = new Set<number>(),
+): Promise<number> {
   let port = Math.max(1, Math.trunc(preferredPort));
   while (reserved.has(port) || !(await isPortAvailable(port))) {
     port += 1;
@@ -611,7 +672,10 @@ function collectClaimedWorktreePorts(
   const configPaths = new Set<string>();
   for (const configPath of registeredConfigPaths) {
     const resolvedConfigPath = path.resolve(configPath);
-    if (resolvedConfigPath !== path.resolve(cwd, ".taskcore", "config.json") && existsSync(resolvedConfigPath)) {
+    if (
+      resolvedConfigPath !== path.resolve(cwd, ".taskcore", "config.json") &&
+      existsSync(resolvedConfigPath)
+    ) {
       configPaths.add(resolvedConfigPath);
     }
   }
@@ -629,9 +693,16 @@ function collectClaimedWorktreePorts(
 
   const repoManagedWorktreesRoot = resolveRepoManagedWorktreesRoot(cwd);
   if (repoManagedWorktreesRoot && existsSync(repoManagedWorktreesRoot)) {
-    for (const entry of readdirSync(repoManagedWorktreesRoot, { withFileTypes: true })) {
+    for (const entry of readdirSync(repoManagedWorktreesRoot, {
+      withFileTypes: true,
+    })) {
       if (!entry.isDirectory()) continue;
-      const configPath = path.resolve(repoManagedWorktreesRoot, entry.name, ".taskcore", "config.json");
+      const configPath = path.resolve(
+        repoManagedWorktreesRoot,
+        entry.name,
+        ".taskcore",
+        "config.json",
+      );
       if (existsSync(configPath)) {
         configPaths.add(configPath);
       }
@@ -684,7 +755,9 @@ function validateGitBranchName(cwd: string, branchName: string): string {
       stdio: ["ignore", "pipe", "pipe"],
     });
   } catch (error) {
-    throw new Error(`Invalid branch name "${branchName}": ${extractExecSyncErrorMessage(error) ?? String(error)}`);
+    throw new Error(
+      `Invalid branch name "${branchName}": ${extractExecSyncErrorMessage(error) ?? String(error)}`,
+    );
   }
   return value;
 }
@@ -706,7 +779,8 @@ function resolvePrimaryGitRepoRoot(cwd: string): string {
 }
 
 function resolveRepairWorktreeDirName(branchName: string): string {
-  const normalized = branchName.trim()
+  const normalized = branchName
+    .trim()
     .replace(/[^A-Za-z0-9._-]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^[-._]+|[-._]+$/g, "");
@@ -752,7 +826,9 @@ function copyDirectoryContents(sourceDir: string, targetDir: string): boolean {
   return copied;
 }
 
-export function copyGitHooksToWorktreeGitDir(cwd: string): CopiedGitHooksResult | null {
+export function copyGitHooksToWorktreeGitDir(
+  cwd: string,
+): CopiedGitHooksResult | null {
   const workspace = detectGitWorkspaceInfo(cwd);
   if (!workspace) return null;
 
@@ -855,22 +931,31 @@ async function rebindSeededProjectWorkspaces(input: {
 }
 
 export function resolveSourceConfigPath(opts: WorktreeInitOptions): string {
-  if (opts.sourceConfigPathOverride) return path.resolve(opts.sourceConfigPathOverride);
+  if (opts.sourceConfigPathOverride)
+    return path.resolve(opts.sourceConfigPathOverride);
   if (opts.fromConfig) return path.resolve(opts.fromConfig);
   if (!opts.fromDataDir && !opts.fromInstance) {
     return resolveConfigPath();
   }
-  const sourceHome = path.resolve(expandHomePrefix(opts.fromDataDir ?? "~/.taskcore"));
-  const sourceInstanceId = sanitizeWorktreeInstanceId(opts.fromInstance ?? "default");
+  const sourceHome = path.resolve(
+    expandHomePrefix(opts.fromDataDir ?? "~/.taskcore"),
+  );
+  const sourceInstanceId = sanitizeWorktreeInstanceId(
+    opts.fromInstance ?? "default",
+  );
   return path.resolve(sourceHome, "instances", sourceInstanceId, "config.json");
 }
 
-export function resolveWorktreeReseedSource(input: WorktreeReseedOptions): ResolvedWorktreeReseedSource {
+export function resolveWorktreeReseedSource(
+  input: WorktreeReseedOptions,
+): ResolvedWorktreeReseedSource {
   const fromSelector = nonEmpty(input.from);
   const fromConfig = nonEmpty(input.fromConfig);
   const fromDataDir = nonEmpty(input.fromDataDir);
   const fromInstance = nonEmpty(input.fromInstance);
-  const hasExplicitConfigSource = Boolean(fromConfig || fromDataDir || fromInstance);
+  const hasExplicitConfigSource = Boolean(
+    fromConfig || fromDataDir || fromInstance,
+  );
 
   if (fromSelector && hasExplicitConfigSource) {
     throw new Error(
@@ -879,7 +964,9 @@ export function resolveWorktreeReseedSource(input: WorktreeReseedOptions): Resol
   }
 
   if (fromSelector) {
-    const endpoint = resolveWorktreeEndpointFromSelector(fromSelector, { allowCurrent: true });
+    const endpoint = resolveWorktreeEndpointFromSelector(fromSelector, {
+      allowCurrent: true,
+    });
     return {
       configPath: endpoint.configPath,
       label: endpoint.label,
@@ -903,7 +990,9 @@ export function resolveWorktreeReseedSource(input: WorktreeReseedOptions): Resol
   );
 }
 
-function resolveWorktreeRepairSource(input: WorktreeRepairOptions): ResolvedWorktreeReseedSource {
+function resolveWorktreeRepairSource(
+  input: WorktreeRepairOptions,
+): ResolvedWorktreeReseedSource {
   const fromConfig = nonEmpty(input.fromConfig);
   const fromDataDir = nonEmpty(input.fromDataDir);
   const fromInstance = nonEmpty(input.fromInstance) ?? "default";
@@ -922,7 +1011,9 @@ export function resolveWorktreeReseedTargetPaths(input: {
   configPath: string;
   rootPath: string;
 }): WorktreeLocalPaths {
-  const envEntries = readTaskcoreEnvEntries(resolveTaskcoreEnvFile(input.configPath));
+  const envEntries = readTaskcoreEnvEntries(
+    resolveTaskcoreEnvFile(input.configPath),
+  );
   const homeDir = nonEmpty(envEntries.TASKCORE_HOME);
   const instanceId = nonEmpty(envEntries.TASKCORE_INSTANCE_ID);
 
@@ -939,7 +1030,10 @@ export function resolveWorktreeReseedTargetPaths(input: {
   });
 }
 
-function resolveExistingGitWorktree(selector: string, cwd: string): MergeSourceChoice | null {
+function resolveExistingGitWorktree(
+  selector: string,
+  cwd: string,
+): MergeSourceChoice | null {
   const trimmed = selector.trim();
   if (trimmed.length === 0) return null;
 
@@ -949,17 +1043,22 @@ function resolveExistingGitWorktree(selector: string, cwd: string): MergeSourceC
       worktree: directPath,
       branch: null,
       branchLabel: path.basename(directPath),
-      hasTaskcoreConfig: existsSync(path.resolve(directPath, ".taskcore", "config.json")),
+      hasTaskcoreConfig: existsSync(
+        path.resolve(directPath, ".taskcore", "config.json"),
+      ),
       isCurrent: directPath === path.resolve(cwd),
     };
   }
 
-  return toMergeSourceChoices(cwd).find((choice) =>
-    choice.worktree === directPath
-    || path.basename(choice.worktree) === trimmed
-    || choice.branchLabel === trimmed
-    || choice.branch === trimmed,
-  ) ?? null;
+  return (
+    toMergeSourceChoices(cwd).find(
+      (choice) =>
+        choice.worktree === directPath ||
+        path.basename(choice.worktree) === trimmed ||
+        choice.branchLabel === trimmed ||
+        choice.branch === trimmed,
+    ) ?? null
+  );
 }
 
 async function ensureRepairTargetWorktree(input: {
@@ -969,7 +1068,11 @@ async function ensureRepairTargetWorktree(input: {
 }): Promise<ResolvedWorktreeRepairTarget | null> {
   const cwd = process.cwd();
   const currentRoot = path.resolve(cwd);
-  const currentConfigPath = path.resolve(currentRoot, ".taskcore", "config.json");
+  const currentConfigPath = path.resolve(
+    currentRoot,
+    ".taskcore",
+    "config.json",
+  );
 
   if (!input.selector) {
     if (isPrimaryGitWorktree(cwd)) {
@@ -990,7 +1093,8 @@ async function ensureRepairTargetWorktree(input: {
       rootPath: existing.worktree,
       configPath: path.resolve(existing.worktree, ".taskcore", "config.json"),
       label: existing.branchLabel,
-      branchName: existing.branchLabel === "(detached)" ? null : existing.branchLabel,
+      branchName:
+        existing.branchLabel === "(detached)" ? null : existing.branchLabel,
       created: false,
     };
   }
@@ -1005,7 +1109,9 @@ async function ensureRepairTargetWorktree(input: {
   );
 
   if (existsSync(targetPath)) {
-    throw new Error(`Target path already exists but is not a registered git worktree: ${targetPath}`);
+    throw new Error(
+      `Target path already exists but is not a registered git worktree: ${targetPath}`,
+    );
   }
 
   mkdirSync(path.dirname(targetPath), { recursive: true });
@@ -1013,14 +1119,18 @@ async function ensureRepairTargetWorktree(input: {
   const spinner = p.spinner();
   spinner.start(`Creating git worktree for ${branchName}...`);
   try {
-    execFileSync("git", resolveGitWorktreeAddArgs({
-      branchName,
-      targetPath,
-      branchExists: localBranchExists(repoRoot, branchName),
-    }), {
-      cwd: repoRoot,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    execFileSync(
+      "git",
+      resolveGitWorktreeAddArgs({
+        branchName,
+        targetPath,
+        branchExists: localBranchExists(repoRoot, branchName),
+      }),
+      {
+        cwd: repoRoot,
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
     spinner.stop(`Created git worktree at ${targetPath}.`);
   } catch (error) {
     spinner.stop(pc.red("Failed to create git worktree."));
@@ -1038,9 +1148,15 @@ async function ensureRepairTargetWorktree(input: {
   };
 }
 
-function resolveSourceConnectionString(config: TaskcoreConfig, envEntries: Record<string, string>, portOverride?: number): string {
+function resolveSourceConnectionString(
+  config: TaskcoreConfig,
+  envEntries: Record<string, string>,
+  portOverride?: number,
+): string {
   if (config.database.mode === "postgres") {
-    const connectionString = nonEmpty(envEntries.DATABASE_URL) ?? nonEmpty(config.database.connectionString);
+    const connectionString =
+      nonEmpty(envEntries.DATABASE_URL) ??
+      nonEmpty(config.database.connectionString);
     if (!connectionString) {
       throw new Error(
         "Source instance uses postgres mode but has no connection string in config or adjacent .env.",
@@ -1065,10 +1181,14 @@ export function copySeededSecretsKey(input: {
 
   mkdirSync(path.dirname(input.targetKeyFilePath), { recursive: true });
 
-  const allowProcessEnvFallback = isCurrentSourceConfigPath(input.sourceConfigPath);
+  const allowProcessEnvFallback = isCurrentSourceConfigPath(
+    input.sourceConfigPath,
+  );
   const sourceInlineMasterKey =
     nonEmpty(input.sourceEnvEntries.TASKCORE_SECRETS_MASTER_KEY) ??
-    (allowProcessEnvFallback ? nonEmpty(process.env.TASKCORE_SECRETS_MASTER_KEY) : null);
+    (allowProcessEnvFallback
+      ? nonEmpty(process.env.TASKCORE_SECRETS_MASTER_KEY)
+      : null);
   if (sourceInlineMasterKey) {
     writeFileSync(input.targetKeyFilePath, sourceInlineMasterKey, {
       encoding: "utf8",
@@ -1084,9 +1204,16 @@ export function copySeededSecretsKey(input: {
 
   const sourceKeyFileOverride =
     nonEmpty(input.sourceEnvEntries.TASKCORE_SECRETS_MASTER_KEY_FILE) ??
-    (allowProcessEnvFallback ? nonEmpty(process.env.TASKCORE_SECRETS_MASTER_KEY_FILE) : null);
-  const sourceConfiguredKeyPath = sourceKeyFileOverride ?? input.sourceConfig.secrets.localEncrypted.keyFilePath;
-  const sourceKeyFilePath = resolveRuntimeLikePath(sourceConfiguredKeyPath, input.sourceConfigPath);
+    (allowProcessEnvFallback
+      ? nonEmpty(process.env.TASKCORE_SECRETS_MASTER_KEY_FILE)
+      : null);
+  const sourceConfiguredKeyPath =
+    sourceKeyFileOverride ??
+    input.sourceConfig.secrets.localEncrypted.keyFilePath;
+  const sourceKeyFilePath = resolveRuntimeLikePath(
+    sourceConfiguredKeyPath,
+    input.sourceConfigPath,
+  );
 
   if (!existsSync(sourceKeyFilePath)) {
     throw new Error(
@@ -1110,7 +1237,9 @@ export async function ensureEmbeddedPostgres(
   const moduleName = "embedded-postgres";
   let EmbeddedPostgres: EmbeddedPostgresCtor;
   try {
-    const mod = await loadWithoutEmbeddedPostgresExitHooks(() => import(moduleName));
+    const mod = await loadWithoutEmbeddedPostgresExitHooks(
+      () => import(moduleName),
+    );
     EmbeddedPostgres = mod.default as EmbeddedPostgresCtor;
   } catch {
     throw new Error(
@@ -1124,8 +1253,8 @@ export async function ensureEmbeddedPostgres(
   if (runningPid) {
     if (options.allowExisting === false) {
       throw new Error(
-        `Cannot seed target embedded PostgreSQL at ${dataDir} while it is already running (pid=${runningPid}). `
-        + "Stop the worktree service that owns this database, then retry the seed.",
+        `Cannot seed target embedded PostgreSQL at ${dataDir} while it is already running (pid=${runningPid}). ` +
+          "Stop the worktree service that owns this database, then retry the seed.",
       );
     }
     return {
@@ -1179,13 +1308,20 @@ export async function ensureEmbeddedPostgres(
   };
 }
 
-export async function pauseSeededScheduledRoutines(connectionString: string): Promise<number> {
+export async function pauseSeededScheduledRoutines(
+  connectionString: string,
+): Promise<number> {
   const db = createDb(connectionString);
   try {
     const scheduledRoutineIds = await db
       .selectDistinct({ routineId: routineTriggers.routineId })
       .from(routineTriggers)
-      .where(and(eq(routineTriggers.kind, "schedule"), eq(routineTriggers.enabled, true)));
+      .where(
+        and(
+          eq(routineTriggers.kind, "schedule"),
+          eq(routineTriggers.enabled, true),
+        ),
+      );
     const idsToPause = scheduledRoutineIds
       .map((row) => row.routineId)
       .filter((value): value is string => Boolean(value));
@@ -1200,7 +1336,13 @@ export async function pauseSeededScheduledRoutines(connectionString: string): Pr
         status: "paused",
         updatedAt: new Date(),
       })
-      .where(and(inArray(routines.id, idsToPause), sql`${routines.status} <> 'paused'`, sql`${routines.status} <> 'archived'`))
+      .where(
+        and(
+          inArray(routines.id, idsToPause),
+          sql`${routines.status} <> 'paused'`,
+          sql`${routines.status} <> 'archived'`,
+        ),
+      )
       .returning({ id: routines.id });
 
     return paused.length;
@@ -1209,16 +1351,17 @@ export async function pauseSeededScheduledRoutines(connectionString: string): Pr
   }
 }
 
-const EMPTY_SEEDED_WORKTREE_EXECUTION_QUARANTINE_SUMMARY: SeededWorktreeExecutionQuarantineSummary = {
-  disabledTimerHeartbeats: 0,
-  resetRunningAgents: 0,
-  quarantinedInProgressIssues: 0,
-  unassignedTodoIssues: 0,
-  unassignedReviewIssues: 0,
-  stoppedProjectWorkspaceRuntimes: 0,
-  stoppedExecutionWorkspaceRuntimes: 0,
-  stoppedRuntimeServices: 0,
-};
+const EMPTY_SEEDED_WORKTREE_EXECUTION_QUARANTINE_SUMMARY: SeededWorktreeExecutionQuarantineSummary =
+  {
+    disabledTimerHeartbeats: 0,
+    resetRunningAgents: 0,
+    quarantinedInProgressIssues: 0,
+    unassignedTodoIssues: 0,
+    unassignedReviewIssues: 0,
+    stoppedProjectWorkspaceRuntimes: 0,
+    stoppedExecutionWorkspaceRuntimes: 0,
+    stoppedRuntimeServices: 0,
+  };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -1234,19 +1377,33 @@ function normalizeWorktreeRuntimeConfig(runtimeConfig: unknown): {
   changed: boolean;
 } {
   const nextRuntimeConfig = isRecord(runtimeConfig) ? { ...runtimeConfig } : {};
-  const heartbeat = isRecord(nextRuntimeConfig.heartbeat) ? { ...nextRuntimeConfig.heartbeat } : null;
+  const heartbeat = isRecord(nextRuntimeConfig.heartbeat)
+    ? { ...nextRuntimeConfig.heartbeat }
+    : null;
   if (!heartbeat) {
-    return { runtimeConfig: nextRuntimeConfig, disabledTimerHeartbeat: false, changed: false };
+    return {
+      runtimeConfig: nextRuntimeConfig,
+      disabledTimerHeartbeat: false,
+      changed: false,
+    };
   }
 
   const disabledTimerHeartbeat = isEnabledValue(heartbeat.enabled);
   if (heartbeat.enabled !== false) {
     heartbeat.enabled = false;
     nextRuntimeConfig.heartbeat = heartbeat;
-    return { runtimeConfig: nextRuntimeConfig, disabledTimerHeartbeat, changed: true };
+    return {
+      runtimeConfig: nextRuntimeConfig,
+      disabledTimerHeartbeat,
+      changed: true,
+    };
   }
 
-  return { runtimeConfig: nextRuntimeConfig, disabledTimerHeartbeat: false, changed: false };
+  return {
+    runtimeConfig: nextRuntimeConfig,
+    disabledTimerHeartbeat: false,
+    changed: false,
+  };
 }
 
 function stopSeededWorkspaceRuntime(
@@ -1331,7 +1488,8 @@ export async function quarantineSeededWorktreeExecutionState(
         );
 
       for (const issue of affectedIssues) {
-        const nextStatus = issue.status === "in_progress" ? "blocked" : issue.status;
+        const nextStatus =
+          issue.status === "in_progress" ? "blocked" : issue.status;
         await tx
           .update(issues)
           .set({
@@ -1363,10 +1521,16 @@ export async function quarantineSeededWorktreeExecutionState(
       }
 
       const seededProjectWorkspaces = await tx
-        .select({ id: projectWorkspaces.id, metadata: projectWorkspaces.metadata })
+        .select({
+          id: projectWorkspaces.id,
+          metadata: projectWorkspaces.metadata,
+        })
         .from(projectWorkspaces);
       for (const workspace of seededProjectWorkspaces) {
-        const stopped = stopSeededWorkspaceRuntime(workspace.metadata, "runtimeConfig");
+        const stopped = stopSeededWorkspaceRuntime(
+          workspace.metadata,
+          "runtimeConfig",
+        );
         if (!stopped.changed) continue;
         await tx
           .update(projectWorkspaces)
@@ -1376,10 +1540,16 @@ export async function quarantineSeededWorktreeExecutionState(
       }
 
       const seededExecutionWorkspaces = await tx
-        .select({ id: executionWorkspaces.id, metadata: executionWorkspaces.metadata })
+        .select({
+          id: executionWorkspaces.id,
+          metadata: executionWorkspaces.metadata,
+        })
         .from(executionWorkspaces);
       for (const workspace of seededExecutionWorkspaces) {
-        const stopped = stopSeededWorkspaceRuntime(workspace.metadata, "config");
+        const stopped = stopSeededWorkspaceRuntime(
+          workspace.metadata,
+          "config",
+        );
         if (!stopped.changed) continue;
         await tx
           .update(executionWorkspaces)
@@ -1436,9 +1606,13 @@ export function resolveWorktreeSeedMigrationRevision(
   const appliedMigrationNames = new Set(migrationState.appliedMigrations);
   if (
     appliedMigrationNames.size !== expectedAppliedPrefix.length ||
-    expectedAppliedPrefix.some((migration) => !appliedMigrationNames.has(migration))
+    expectedAppliedPrefix.some(
+      (migration) => !appliedMigrationNames.has(migration),
+    )
   ) {
-    throw new Error("Migration journal is not a prefix of this Taskcore checkout's migration journal.");
+    throw new Error(
+      "Migration journal is not a prefix of this Taskcore checkout's migration journal.",
+    );
   }
 
   if (requirement === "upToDate" && migrationState.status !== "upToDate") {
@@ -1472,12 +1646,22 @@ export async function inspectLegacyWorktreeDatabase(
   let db: ReturnType<typeof createDb> | null = null;
   try {
     if (config.database.mode === "embedded-postgres") {
-      const dataDir = resolveRuntimeLikePath(config.database.embeddedPostgresDataDir, configPath);
+      const dataDir = resolveRuntimeLikePath(
+        config.database.embeddedPostgresDataDir,
+        configPath,
+      );
       if (!existsSync(path.join(dataDir, "PG_VERSION"))) return null;
-      embeddedHandle = await ensureEmbeddedPostgres(dataDir, config.database.embeddedPostgresPort);
+      embeddedHandle = await ensureEmbeddedPostgres(
+        dataDir,
+        config.database.embeddedPostgresPort,
+      );
     }
 
-    const connectionString = resolveSourceConnectionString(config, envEntries, embeddedHandle?.port);
+    const connectionString = resolveSourceConnectionString(
+      config,
+      envEntries,
+      embeddedHandle?.port,
+    );
     const migrationRevision = resolveWorktreeSeedMigrationRevision(
       await inspectMigrations(connectionString),
       "sourcePrefix",
@@ -1507,14 +1691,18 @@ async function inspectVerifiedSeedDatabase(
     migrationRequirement?: "sourcePrefix" | "upToDate";
     requiredCompanyId?: string;
   },
-): Promise<{ summary: WorktreeSeedValidationSummary; expectation: WorktreeSeedValidationExpectation }> {
+): Promise<{
+  summary: WorktreeSeedValidationSummary;
+  expectation: WorktreeSeedValidationExpectation;
+}> {
   const {
     deploymentMode,
     expected,
     migrationRequirement = "upToDate",
     requiredCompanyId,
   } = options;
-  const requiresCredentialAccount = requiresWorktreeSeedCredentialAccount(deploymentMode);
+  const requiresCredentialAccount =
+    requiresWorktreeSeedCredentialAccount(deploymentMode);
   const migrationState = await inspectMigrations(connectionString);
   const migrationRevision = resolveWorktreeSeedMigrationRevision(
     migrationState,
@@ -1536,7 +1724,10 @@ async function inspectVerifiedSeedDatabase(
       .leftJoin(authAccounts, eq(authAccounts.userId, authUsers.id))
       .leftJoin(
         instanceUserRoles,
-        and(eq(instanceUserRoles.userId, authUsers.id), eq(instanceUserRoles.role, "instance_admin")),
+        and(
+          eq(instanceUserRoles.userId, authUsers.id),
+          eq(instanceUserRoles.role, "instance_admin"),
+        ),
       )
       .leftJoin(
         companyMemberships,
@@ -1554,12 +1745,12 @@ async function inspectVerifiedSeedDatabase(
       .from(authUsers)
       .innerJoin(
         instanceUserRoles,
-        and(eq(instanceUserRoles.userId, authUsers.id), eq(instanceUserRoles.role, "instance_admin")),
+        and(
+          eq(instanceUserRoles.userId, authUsers.id),
+          eq(instanceUserRoles.role, "instance_admin"),
+        ),
       )
-      .leftJoin(
-        authAccounts,
-        eq(authAccounts.userId, authUsers.id),
-      )
+      .leftJoin(authAccounts, eq(authAccounts.userId, authUsers.id))
       .innerJoin(
         companyMemberships,
         and(
@@ -1568,16 +1759,20 @@ async function inspectVerifiedSeedDatabase(
           eq(companyMemberships.status, "active"),
         ),
       )
-      .where(and(
-        expected ? eq(authUsers.id, expected.adminUserId) : undefined,
-        requiredCompanyId ? eq(companyMemberships.companyId, requiredCompanyId) : undefined,
-        requiresCredentialAccount
-          ? and(
-              sql`length(trim(${authAccounts.providerId})) > 0`,
-              sql`length(trim(${authAccounts.accountId})) > 0`,
-            )
-          : undefined,
-      ))
+      .where(
+        and(
+          expected ? eq(authUsers.id, expected.adminUserId) : undefined,
+          requiredCompanyId
+            ? eq(companyMemberships.companyId, requiredCompanyId)
+            : undefined,
+          requiresCredentialAccount
+            ? and(
+                sql`length(trim(${authAccounts.providerId})) > 0`,
+                sql`length(trim(${authAccounts.accountId})) > 0`,
+              )
+            : undefined,
+        ),
+      )
       .limit(1)
       .then((rows) => rows[0] ?? null);
     if (!admin) {
@@ -1594,7 +1789,9 @@ async function inspectVerifiedSeedDatabase(
       .innerJoin(issues, eq(issues.companyId, companies.id))
       .where(
         and(
-          expected ? eq(companies.id, expected.representativeCompanyId) : undefined,
+          expected
+            ? eq(companies.id, expected.representativeCompanyId)
+            : undefined,
           expected ? eq(issues.id, expected.representativeIssueId) : undefined,
           requiredCompanyId ? eq(companies.id, requiredCompanyId) : undefined,
         ),
@@ -1602,7 +1799,9 @@ async function inspectVerifiedSeedDatabase(
       .limit(1)
       .then((rows) => rows[0] ?? null);
     if (!representative) {
-      throw new Error("No representative cloned company and issue pair is readable.");
+      throw new Error(
+        "No representative cloned company and issue pair is readable.",
+      );
     }
 
     const summary: WorktreeSeedValidationSummary = {
@@ -1617,14 +1816,16 @@ async function inspectVerifiedSeedDatabase(
       migrationRevision,
     };
     if (
-      summary.authUserCount < 1
-      || (requiresCredentialAccount && summary.credentialAccountCount < 1)
-      || summary.instanceAdminCount < 1
-      || summary.activeMembershipCount < 1
-      || summary.companyCount < 1
-      || summary.issueCount < 1
+      summary.authUserCount < 1 ||
+      (requiresCredentialAccount && summary.credentialAccountCount < 1) ||
+      summary.instanceAdminCount < 1 ||
+      summary.activeMembershipCount < 1 ||
+      summary.companyCount < 1 ||
+      summary.issueCount < 1
     ) {
-      throw new Error("Seed validation found an incomplete auth, membership, company, or issue shape.");
+      throw new Error(
+        "Seed validation found an incomplete auth, membership, company, or issue shape.",
+      );
     }
 
     return {
@@ -1649,7 +1850,11 @@ async function seedWorktreeDatabase(input: {
   seedMode: WorktreeSeedMode;
   preserveLiveWork?: boolean;
   expectedCompanyId?: string;
-  onPhase?: (phase: WorktreeSeedPhase, status: "started" | "succeeded", message?: string) => void;
+  onPhase?: (
+    phase: WorktreeSeedPhase,
+    status: "started" | "succeeded",
+    message?: string,
+  ) => void;
 }): Promise<SeedWorktreeDatabaseResult> {
   const seedPlan = resolveWorktreeSeedPlan(input.seedMode);
   const sourceEnvFile = resolveTaskcoreEnvFile(input.sourceConfigPath);
@@ -1704,7 +1909,11 @@ async function seedWorktreeDatabase(input: {
       excludeTables: seedPlan.excludedTables,
       nullifyColumns: seedPlan.nullifyColumns,
     });
-    input.onPhase?.("snapshot", "succeeded", `Created ${path.basename(backup.backupFile)}.`);
+    input.onPhase?.(
+      "snapshot",
+      "succeeded",
+      `Created ${path.basename(backup.backupFile)}.`,
+    );
 
     input.onPhase?.("restore", "started");
     targetHandle = await ensureEmbeddedPostgres(
@@ -1736,14 +1945,24 @@ async function seedWorktreeDatabase(input: {
         : formatSeededWorktreeExecutionQuarantineSummary(executionQuarantine),
     );
     input.onPhase?.("routine_pause", "started");
-    const pausedScheduledRoutines = await pauseSeededScheduledRoutines(targetConnectionString);
-    input.onPhase?.("routine_pause", "succeeded", `Paused ${pausedScheduledRoutines} scheduled routine(s).`);
+    const pausedScheduledRoutines = await pauseSeededScheduledRoutines(
+      targetConnectionString,
+    );
+    input.onPhase?.(
+      "routine_pause",
+      "succeeded",
+      `Paused ${pausedScheduledRoutines} scheduled routine(s).`,
+    );
     input.onPhase?.("workspace_rebind", "started");
     const reboundWorkspaces = await rebindSeededProjectWorkspaces({
       targetConnectionString,
       currentCwd: input.targetPaths.cwd,
     });
-    input.onPhase?.("workspace_rebind", "succeeded", `Rebound ${reboundWorkspaces.length} workspace path(s).`);
+    input.onPhase?.(
+      "workspace_rebind",
+      "succeeded",
+      `Rebound ${reboundWorkspaces.length} workspace path(s).`,
+    );
     input.onPhase?.("post_restore_validation", "started");
     const targetValidation = await inspectVerifiedSeedDatabase(
       targetConnectionString,
@@ -1779,7 +1998,10 @@ async function seedWorktreeDatabase(input: {
 
 const WORKTREE_SEED_DIAGNOSTIC_LIMIT = 32;
 const WORKTREE_SEED_DIAGNOSTIC_MESSAGE_LIMIT = 512;
-const activeSeedInterruptHandlers = new Map<string, (signal: NodeJS.Signals) => void>();
+const activeSeedInterruptHandlers = new Map<
+  string,
+  (signal: NodeJS.Signals) => void
+>();
 
 export function formatWorktreeSeedFailureDiagnostic(
   phase: WorktreeSeedPhase,
@@ -1787,12 +2009,17 @@ export function formatWorktreeSeedFailureDiagnostic(
 ): string {
   const message = error instanceof Error ? error.message : String(error ?? "");
   if (
-    phase === "restore"
-    && /database system is shutting down|terminating connection due to administrator command/i.test(message)
+    phase === "restore" &&
+    /database system is shutting down|terminating connection due to administrator command/i.test(
+      message,
+    )
   ) {
     return "Target embedded PostgreSQL shut down during restore. Stop any competing worktree service and retry the seed.";
   }
-  if (phase === "restore" && /Cannot seed target embedded PostgreSQL.+already running/i.test(message)) {
+  if (
+    phase === "restore" &&
+    /Cannot seed target embedded PostgreSQL.+already running/i.test(message)
+  ) {
     return "Target embedded PostgreSQL is owned by a running worktree service. Stop that service and retry the seed.";
   }
   if (
@@ -1819,7 +2046,9 @@ function dispatchSeedInterruption(signal: NodeJS.Signals): void {
 const dispatchSeedSigint = () => dispatchSeedInterruption("SIGINT");
 const dispatchSeedSigterm = () => dispatchSeedInterruption("SIGTERM");
 
-function registerSeedInterruptHandler(handler: (signal: NodeJS.Signals) => void): () => void {
+function registerSeedInterruptHandler(
+  handler: (signal: NodeJS.Signals) => void,
+): () => void {
   const id = randomUUID();
   if (activeSeedInterruptHandlers.size === 0) {
     process.once("SIGINT", dispatchSeedSigint);
@@ -1843,18 +2072,29 @@ type LegacyWorktreeSeedPendingMarker = {
 
 function resolveSeedInstanceId(configPath: string): string {
   const envEntries = readTaskcoreEnvEntries(resolveTaskcoreEnvFile(configPath));
-  return nonEmpty(envEntries.TASKCORE_INSTANCE_ID)
-    ?? sanitizeWorktreeInstanceId(path.basename(path.dirname(path.resolve(configPath))));
+  return (
+    nonEmpty(envEntries.TASKCORE_INSTANCE_ID) ??
+    sanitizeWorktreeInstanceId(
+      path.basename(path.dirname(path.resolve(configPath))),
+    )
+  );
 }
 
-function writeWorktreeSeedManifest(filePath: string, manifest: WorktreeSeedManifest): void {
+function writeWorktreeSeedManifest(
+  filePath: string,
+  manifest: WorktreeSeedManifest,
+): void {
   mkdirSync(path.dirname(filePath), { recursive: true });
   const temporaryPath = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
-  writeFileSync(temporaryPath, `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o600 });
+  writeFileSync(temporaryPath, `${JSON.stringify(manifest, null, 2)}\n`, {
+    mode: 0o600,
+  });
   renameSync(temporaryPath, filePath);
 }
 
-export function readWorktreeSeedManifest(configPath: string): WorktreeSeedManifest | null {
+export function readWorktreeSeedManifest(
+  configPath: string,
+): WorktreeSeedManifest | null {
   const manifestPath = resolveWorktreeSeedMarkerPaths(configPath).manifest;
   if (!existsSync(manifestPath)) return null;
   let parsed: unknown;
@@ -1866,42 +2106,49 @@ export function readWorktreeSeedManifest(configPath: string): WorktreeSeedManife
     );
   }
   const value = parsed as Partial<WorktreeSeedManifest>;
-  const diagnosticsValid = Array.isArray(value.diagnostics) && value.diagnostics.every((diagnostic) => (
-    diagnostic
-    && typeof diagnostic === "object"
-    && WORKTREE_SEED_PHASES.includes(diagnostic.phase)
-    && ["started", "succeeded", "failed"].includes(diagnostic.status)
-    && typeof diagnostic.at === "string"
-    && (diagnostic.message === undefined || typeof diagnostic.message === "string")
-  ));
-  const verifiedTerminalValid = value.state !== "verified" || (
-    value.phase === "complete"
-    && typeof value.snapshotAt === "string"
-    && value.snapshotAt.length > 0
-    && typeof value.migrationRevision === "string"
-    && value.migrationRevision.length > 0
-    && typeof value.startedAt === "string"
-    && typeof value.finishedAt === "string"
-    && value.diagnostics?.some((diagnostic) => (
-      diagnostic.phase === "complete" && diagnostic.status === "succeeded"
-    )) === true
-  );
+  const diagnosticsValid =
+    Array.isArray(value.diagnostics) &&
+    value.diagnostics.every(
+      (diagnostic) =>
+        diagnostic &&
+        typeof diagnostic === "object" &&
+        WORKTREE_SEED_PHASES.includes(diagnostic.phase) &&
+        ["started", "succeeded", "failed"].includes(diagnostic.status) &&
+        typeof diagnostic.at === "string" &&
+        (diagnostic.message === undefined ||
+          typeof diagnostic.message === "string"),
+    );
+  const verifiedTerminalValid =
+    value.state !== "verified" ||
+    (value.phase === "complete" &&
+      typeof value.snapshotAt === "string" &&
+      value.snapshotAt.length > 0 &&
+      typeof value.migrationRevision === "string" &&
+      value.migrationRevision.length > 0 &&
+      typeof value.startedAt === "string" &&
+      typeof value.finishedAt === "string" &&
+      value.diagnostics?.some(
+        (diagnostic) =>
+          diagnostic.phase === "complete" && diagnostic.status === "succeeded",
+      ) === true);
   if (
-    !value
-    || typeof value !== "object"
-    || value.version !== 2
-    || !value.source
-    || typeof value.source.instanceId !== "string"
-    || typeof value.source.configPath !== "string"
-    || typeof value.targetInstanceId !== "string"
-    || value.targetInstanceId.length === 0
-    || !isWorktreeSeedMode(String(value.seedMode ?? ""))
-    || !WORKTREE_SEED_PHASES.includes(value.phase as WorktreeSeedPhase)
-    || !["pending", "running", "verified", "failed"].includes(String(value.state ?? ""))
-    || typeof value.attemptId !== "string"
-    || value.attemptId.length === 0
-    || !diagnosticsValid
-    || !verifiedTerminalValid
+    !value ||
+    typeof value !== "object" ||
+    value.version !== 2 ||
+    !value.source ||
+    typeof value.source.instanceId !== "string" ||
+    typeof value.source.configPath !== "string" ||
+    typeof value.targetInstanceId !== "string" ||
+    value.targetInstanceId.length === 0 ||
+    !isWorktreeSeedMode(String(value.seedMode ?? "")) ||
+    !WORKTREE_SEED_PHASES.includes(value.phase as WorktreeSeedPhase) ||
+    !["pending", "running", "verified", "failed"].includes(
+      String(value.state ?? ""),
+    ) ||
+    typeof value.attemptId !== "string" ||
+    value.attemptId.length === 0 ||
+    !diagnosticsValid ||
+    !verifiedTerminalValid
   ) {
     throw new Error(`Invalid worktree seed manifest at ${manifestPath}.`);
   }
@@ -1927,20 +2174,28 @@ export function markWorktreeSeedPending(input: {
     snapshotAt: null,
     seedMode: input.seedMode ?? "minimal",
     migrationRevision: null,
-    targetInstanceId: input.targetInstanceId ?? resolveSeedInstanceId(input.configPath),
+    targetInstanceId:
+      input.targetInstanceId ?? resolveSeedInstanceId(input.configPath),
     phase: "pending",
     state: "pending",
     attemptId: randomUUID(),
     startedAt: null,
     finishedAt: null,
-    diagnostics: [{
-      phase: "pending",
-      status: "succeeded",
-      at,
-      ...(input.diagnosticMessage
-        ? { message: input.diagnosticMessage.slice(0, WORKTREE_SEED_DIAGNOSTIC_MESSAGE_LIMIT) }
-        : {}),
-    }],
+    diagnostics: [
+      {
+        phase: "pending",
+        status: "succeeded",
+        at,
+        ...(input.diagnosticMessage
+          ? {
+              message: input.diagnosticMessage.slice(
+                0,
+                WORKTREE_SEED_DIAGNOSTIC_MESSAGE_LIMIT,
+              ),
+            }
+          : {}),
+      },
+    ],
   });
   // New manifests are authoritative. Legacy files are removed so no caller can
   // mistake a stale binary marker for current verified seed state.
@@ -1960,7 +2215,10 @@ function updateWorktreeSeedManifest(input: {
 }): WorktreeSeedManifest {
   const markers = resolveWorktreeSeedMarkerPaths(input.configPath);
   const current = readWorktreeSeedManifest(input.configPath);
-  if (!current) throw new Error(`Worktree seed manifest does not exist at ${markers.manifest}.`);
+  if (!current)
+    throw new Error(
+      `Worktree seed manifest does not exist at ${markers.manifest}.`,
+    );
   const at = (input.now ?? new Date()).toISOString();
   const nextState = input.state ?? current.state;
   const diagnostic = {
@@ -1968,25 +2226,37 @@ function updateWorktreeSeedManifest(input: {
     status: input.status,
     at,
     ...(input.message
-      ? { message: input.message.slice(0, WORKTREE_SEED_DIAGNOSTIC_MESSAGE_LIMIT) }
+      ? {
+          message: input.message.slice(
+            0,
+            WORKTREE_SEED_DIAGNOSTIC_MESSAGE_LIMIT,
+          ),
+        }
       : {}),
   };
   const next: WorktreeSeedManifest = {
     ...current,
     phase: input.phase,
     state: nextState,
-    snapshotAt: input.snapshotAt === undefined ? current.snapshotAt : input.snapshotAt,
+    snapshotAt:
+      input.snapshotAt === undefined ? current.snapshotAt : input.snapshotAt,
     migrationRevision:
-      input.migrationRevision === undefined ? current.migrationRevision : input.migrationRevision,
+      input.migrationRevision === undefined
+        ? current.migrationRevision
+        : input.migrationRevision,
     startedAt: current.startedAt ?? (input.status === "started" ? at : null),
     finishedAt: nextState === "verified" || nextState === "failed" ? at : null,
-    diagnostics: [...current.diagnostics, diagnostic].slice(-WORKTREE_SEED_DIAGNOSTIC_LIMIT),
+    diagnostics: [...current.diagnostics, diagnostic].slice(
+      -WORKTREE_SEED_DIAGNOSTIC_LIMIT,
+    ),
   };
   writeWorktreeSeedManifest(markers.manifest, next);
   return next;
 }
 
-function readLegacyWorktreeSeedPendingMarker(filePath: string): LegacyWorktreeSeedPendingMarker {
+function readLegacyWorktreeSeedPendingMarker(
+  filePath: string,
+): LegacyWorktreeSeedPendingMarker {
   let parsed: unknown;
   try {
     parsed = JSON.parse(readFileSync(filePath, "utf8"));
@@ -1997,12 +2267,13 @@ function readLegacyWorktreeSeedPendingMarker(filePath: string): LegacyWorktreeSe
   }
 
   if (
-    !parsed
-    || typeof parsed !== "object"
-    || (parsed as { version?: unknown }).version !== 1
-    || (parsed as { state?: unknown }).state !== "pending"
-    || typeof (parsed as { sourceConfigPath?: unknown }).sourceConfigPath !== "string"
-    || !(parsed as { sourceConfigPath: string }).sourceConfigPath.trim()
+    !parsed ||
+    typeof parsed !== "object" ||
+    (parsed as { version?: unknown }).version !== 1 ||
+    (parsed as { state?: unknown }).state !== "pending" ||
+    typeof (parsed as { sourceConfigPath?: unknown }).sourceConfigPath !==
+      "string" ||
+    !(parsed as { sourceConfigPath: string }).sourceConfigPath.trim()
   ) {
     throw new Error(`Invalid worktree seed-pending marker at ${filePath}.`);
   }
@@ -2033,13 +2304,13 @@ function parseWorktreeSeedLockOwner(raw: string): WorktreeSeedLockOwner | null {
   try {
     const value = JSON.parse(raw) as Partial<WorktreeSeedLockOwner>;
     if (
-      value.version !== 1
-      || !Number.isInteger(value.pid)
-      || (value.pid ?? 0) <= 0
-      || typeof value.token !== "string"
-      || !value.token
-      || typeof value.createdAt !== "string"
-      || !value.createdAt
+      value.version !== 1 ||
+      !Number.isInteger(value.pid) ||
+      (value.pid ?? 0) <= 0 ||
+      typeof value.token !== "string" ||
+      !value.token ||
+      typeof value.createdAt !== "string" ||
+      !value.createdAt
     ) {
       return null;
     }
@@ -2049,7 +2320,9 @@ function parseWorktreeSeedLockOwner(raw: string): WorktreeSeedLockOwner | null {
   }
 }
 
-async function acquireWorktreeSeedLock(lockPath: string): Promise<() => Promise<void>> {
+async function acquireWorktreeSeedLock(
+  lockPath: string,
+): Promise<() => Promise<void>> {
   while (true) {
     const owner: WorktreeSeedLockOwner = {
       version: 1,
@@ -2068,8 +2341,13 @@ async function acquireWorktreeSeedLock(lockPath: string): Promise<() => Promise<
       }
       await handle.close();
       return async () => {
-        const current = await fsPromises.readFile(lockPath, "utf8").catch(() => null);
-        if (current && parseWorktreeSeedLockOwner(current)?.token === owner.token) {
+        const current = await fsPromises
+          .readFile(lockPath, "utf8")
+          .catch(() => null);
+        if (
+          current &&
+          parseWorktreeSeedLockOwner(current)?.token === owner.token
+        ) {
           await fsPromises.rm(lockPath, { force: true });
         }
       };
@@ -2083,28 +2361,37 @@ async function acquireWorktreeSeedLock(lockPath: string): Promise<() => Promise<
     ]);
     const currentOwner = rawOwner ? parseWorktreeSeedLockOwner(rawOwner) : null;
     const malformedLockIsStale = Boolean(
-      lockStat && Date.now() - lockStat.mtimeMs >= WORKTREE_SEED_LOCK_MALFORMED_STALE_MS,
+      lockStat &&
+      Date.now() - lockStat.mtimeMs >= WORKTREE_SEED_LOCK_MALFORMED_STALE_MS,
     );
     if (currentOwner && !processIsAlive(currentOwner.pid)) {
       throw new Error(
-        `Worktree seed lock ${lockPath} belongs to exited process ${currentOwner.pid}. `
-        + "Verify that no seed is running, then remove the stale lock and retry.",
+        `Worktree seed lock ${lockPath} belongs to exited process ${currentOwner.pid}. ` +
+          "Verify that no seed is running, then remove the stale lock and retry.",
       );
     }
     if (!currentOwner && malformedLockIsStale) {
       throw new Error(
-        `Worktree seed lock ${lockPath} is stale or malformed. `
-        + "Verify that no seed is running, then remove the stale lock and retry.",
+        `Worktree seed lock ${lockPath} is stale or malformed. ` +
+          "Verify that no seed is running, then remove the stale lock and retry.",
       );
     }
-    await new Promise((resolve) => setTimeout(resolve, WORKTREE_SEED_LOCK_POLL_MS));
+    await new Promise((resolve) =>
+      setTimeout(resolve, WORKTREE_SEED_LOCK_POLL_MS),
+    );
   }
 }
 
-function startWorktreeSeedAttempt(configPath: string, now = new Date()): WorktreeSeedManifest {
+function startWorktreeSeedAttempt(
+  configPath: string,
+  now = new Date(),
+): WorktreeSeedManifest {
   const markers = resolveWorktreeSeedMarkerPaths(configPath);
   const current = readWorktreeSeedManifest(configPath);
-  if (!current) throw new Error(`Worktree seed manifest does not exist at ${markers.manifest}.`);
+  if (!current)
+    throw new Error(
+      `Worktree seed manifest does not exist at ${markers.manifest}.`,
+    );
   const at = now.toISOString();
   const next: WorktreeSeedManifest = {
     ...current,
@@ -2183,8 +2470,14 @@ async function runVerifiedWorktreeSeed(input: {
         });
       },
     });
-    if (!details.snapshotAt || !details.migrationRevision || !details.validation) {
-      throw new Error("Seed implementation returned without required validation evidence.");
+    if (
+      !details.snapshotAt ||
+      !details.migrationRevision ||
+      !details.validation
+    ) {
+      throw new Error(
+        "Seed implementation returned without required validation evidence.",
+      );
     }
     updateWorktreeSeedManifest({
       configPath: input.configPath,
@@ -2194,8 +2487,8 @@ async function runVerifiedWorktreeSeed(input: {
       snapshotAt: details.snapshotAt,
       migrationRevision: details.migrationRevision,
       message:
-        `Verified ${details.validation.companyCount} company record(s), `
-        + `${details.validation.issueCount} issue record(s), auth, admin, membership, and migration state.`,
+        `Verified ${details.validation.companyCount} company record(s), ` +
+        `${details.validation.issueCount} issue record(s), auth, admin, membership, and migration state.`,
     });
     return details;
   } catch (error) {
@@ -2233,10 +2526,13 @@ export async function ensureWorktreeSeeded(
   if (!initialManifest && existsSync(markers.complete)) {
     return { seeded: false, reason: "complete_marker" };
   }
-  const legacyPending = !initialManifest && existsSync(markers.pending)
-    ? readLegacyWorktreeSeedPendingMarker(markers.pending)
-    : null;
-  const hasExplicitSource = Boolean(opts.fromConfig || opts.fromDataDir || opts.fromInstance);
+  const legacyPending =
+    !initialManifest && existsSync(markers.pending)
+      ? readLegacyWorktreeSeedPendingMarker(markers.pending)
+      : null;
+  const hasExplicitSource = Boolean(
+    opts.fromConfig || opts.fromDataDir || opts.fromInstance,
+  );
   const explicitSourceConfigPath = hasExplicitSource
     ? resolveSourceConfigPath({
         fromConfig: opts.fromConfig,
@@ -2244,31 +2540,46 @@ export async function ensureWorktreeSeeded(
         fromInstance: opts.fromInstance,
       })
     : null;
-  const registeredBaseWorkspaceCwd = opts.registeredBaseWorkspaceCwd
-    ?? nonEmpty(process.env.TASKCORE_WORKSPACE_BASE_CWD)
-    ?? null;
-  if (!initialManifest && !legacyPending && !hasExplicitSource && !registeredBaseWorkspaceCwd) {
+  const registeredBaseWorkspaceCwd =
+    opts.registeredBaseWorkspaceCwd ??
+    nonEmpty(process.env.TASKCORE_WORKSPACE_BASE_CWD) ??
+    null;
+  if (
+    !initialManifest &&
+    !legacyPending &&
+    !hasExplicitSource &&
+    !registeredBaseWorkspaceCwd
+  ) {
     if (existsSync(markers.lock)) {
       const releaseExistingLock = await acquireWorktreeSeedLock(markers.lock);
       await releaseExistingLock();
     }
     return { seeded: false, reason: "legacy_unmarked" };
   }
-  const registeredProjectWorkspaceId = opts.registeredProjectWorkspaceId
-    ?? nonEmpty(process.env.TASKCORE_PROJECT_WORKSPACE_ID)
-    ?? null;
-  const expectedCompanyId = opts.expectedCompanyId
-    ?? nonEmpty(process.env.TASKCORE_SEED_EXPECTED_COMPANY_ID)
-    ?? nonEmpty(process.env.TASKCORE_COMPANY_ID)
-    ?? undefined;
-  if (!explicitSourceConfigPath && registeredBaseWorkspaceCwd && (!registeredProjectWorkspaceId || !expectedCompanyId)) {
+  const registeredProjectWorkspaceId =
+    opts.registeredProjectWorkspaceId ??
+    nonEmpty(process.env.TASKCORE_PROJECT_WORKSPACE_ID) ??
+    null;
+  const expectedCompanyId =
+    opts.expectedCompanyId ??
+    nonEmpty(process.env.TASKCORE_SEED_EXPECTED_COMPANY_ID) ??
+    nonEmpty(process.env.TASKCORE_COMPANY_ID) ??
+    undefined;
+  if (
+    !explicitSourceConfigPath &&
+    registeredBaseWorkspaceCwd &&
+    (!registeredProjectWorkspaceId || !expectedCompanyId)
+  ) {
     throw new Error(
       "Managed worktree seed registration is incomplete; project workspace and company bindings are required.",
     );
   }
 
   const targetRoot = path.dirname(path.dirname(configPath));
-  const targetPaths = resolveWorktreeReseedTargetPaths({ configPath, rootPath: targetRoot });
+  const targetPaths = resolveWorktreeReseedTargetPaths({
+    configPath,
+    rootPath: targetRoot,
+  });
   const registeredSeedSource = resolveRegisteredWorktreeSeedSource({
     registeredBaseWorkspaceCwd,
     explicitSourceConfigPath,
@@ -2276,8 +2587,13 @@ export async function ensureWorktreeSeeded(
     expectedTargetInstanceId: targetPaths.instanceId,
   });
 
-  if (initialManifest && initialManifest.targetInstanceId !== registeredSeedSource.targetInstanceId) {
-    throw new Error("Worktree seed manifest target instance does not match the registered target instance.");
+  if (
+    initialManifest &&
+    initialManifest.targetInstanceId !== registeredSeedSource.targetInstanceId
+  ) {
+    throw new Error(
+      "Worktree seed manifest target instance does not match the registered target instance.",
+    );
   }
 
   // Resolve all authority-bearing paths before creating the lock. The manifest is
@@ -2298,16 +2614,24 @@ export async function ensureWorktreeSeeded(
       return { seeded: false, reason: "verified_manifest" };
     }
     if (!manifest && existsSync(markers.pending)) {
-      const currentLegacyPending = readLegacyWorktreeSeedPendingMarker(markers.pending);
-      if (currentLegacyPending.sourceConfigPath !== legacyPending?.sourceConfigPath) {
-        throw new Error("Worktree seed source diagnostics changed while waiting for the seed lock.");
+      const currentLegacyPending = readLegacyWorktreeSeedPendingMarker(
+        markers.pending,
+      );
+      if (
+        currentLegacyPending.sourceConfigPath !==
+        legacyPending?.sourceConfigPath
+      ) {
+        throw new Error(
+          "Worktree seed source diagnostics changed while waiting for the seed lock.",
+        );
       }
       markWorktreeSeedPending({
         configPath,
         sourceConfigPath: registeredSeedSource.configPath,
         targetInstanceId: targetPaths.instanceId,
         seedMode: "minimal",
-        diagnosticMessage: "Re-derived seed source diagnostics from the registered canonical source.",
+        diagnosticMessage:
+          "Re-derived seed source diagnostics from the registered canonical source.",
       });
       manifest = readWorktreeSeedManifest(configPath);
     }
@@ -2321,7 +2645,8 @@ export async function ensureWorktreeSeeded(
           sourceConfigPath: registeredSeedSource.configPath,
           targetInstanceId: targetPaths.instanceId,
           seedMode: "minimal",
-          diagnosticMessage: "Validated existing legacy worktree database schema before adoption.",
+          diagnosticMessage:
+            "Validated existing legacy worktree database schema before adoption.",
         });
         startWorktreeSeedAttempt(configPath);
         updateWorktreeSeedManifest({
@@ -2331,7 +2656,8 @@ export async function ensureWorktreeSeeded(
           state: "verified",
           snapshotAt: new Date().toISOString(),
           migrationRevision: legacyEvidence.migrationRevision,
-          message: "Adopted an existing legacy worktree database after validating its migration journal and core schema.",
+          message:
+            "Adopted an existing legacy worktree database after validating its migration journal and core schema.",
         });
         return { seeded: false, reason: "legacy_database" };
       }
@@ -2341,7 +2667,8 @@ export async function ensureWorktreeSeeded(
         sourceConfigPath: registeredSeedSource.configPath,
         targetInstanceId: targetPaths.instanceId,
         seedMode: "minimal",
-        diagnosticMessage: "No verified seed or compatible legacy database was found; provisioning is required.",
+        diagnosticMessage:
+          "No verified seed or compatible legacy database was found; provisioning is required.",
       });
       manifest = readWorktreeSeedManifest(configPath);
       if (!manifest) {
@@ -2349,15 +2676,16 @@ export async function ensureWorktreeSeeded(
       }
     }
     if (
-      manifest.source.configPath !== registeredSeedSource.configPath
-      || manifest.source.instanceId !== registeredSeedSource.instanceId
+      manifest.source.configPath !== registeredSeedSource.configPath ||
+      manifest.source.instanceId !== registeredSeedSource.instanceId
     ) {
       markWorktreeSeedPending({
         configPath,
         sourceConfigPath: registeredSeedSource.configPath,
         targetInstanceId: manifest.targetInstanceId,
         seedMode: manifest.seedMode,
-        diagnosticMessage: "Re-derived seed source diagnostics from the registered canonical source.",
+        diagnosticMessage:
+          "Re-derived seed source diagnostics from the registered canonical source.",
       });
       manifest = readWorktreeSeedManifest(configPath)!;
     }
@@ -2399,8 +2727,11 @@ export async function ensureWorktreeSeeded(
   }
 }
 
-export function resolveWorktreeSeedBackupEngine(seedPlan: WorktreeSeedPlan): "auto" | "javascript" {
-  return seedPlan.excludedTables.length === 0 && Object.keys(seedPlan.nullifyColumns).length === 0
+export function resolveWorktreeSeedBackupEngine(
+  seedPlan: WorktreeSeedPlan,
+): "auto" | "javascript" {
+  return seedPlan.excludedTables.length === 0 &&
+    Object.keys(seedPlan.nullifyColumns).length === 0
     ? "auto"
     : "javascript";
 }
@@ -2413,7 +2744,9 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
   );
   const seedMode = opts.seedMode ?? "minimal";
   if (!isWorktreeSeedMode(seedMode)) {
-    throw new Error(`Unsupported seed mode "${seedMode}". Expected one of: minimal, full.`);
+    throw new Error(
+      `Unsupported seed mode "${seedMode}". Expected one of: minimal, full.`,
+    );
   }
   const instanceId = sanitizeWorktreeInstanceId(opts.instance ?? worktreeName);
   const paths = resolveWorktreeLocalPaths({
@@ -2426,9 +2759,14 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
     color: opts.color ?? generateWorktreeColor(),
   };
   const sourceConfigPath = resolveSourceConfigPath(opts);
-  const sourceConfig = existsSync(sourceConfigPath) ? readConfig(sourceConfigPath) : null;
+  const sourceConfig = existsSync(sourceConfigPath)
+    ? readConfig(sourceConfigPath)
+    : null;
 
-  if ((existsSync(paths.configPath) || existsSync(paths.instanceRoot)) && !opts.force) {
+  if (
+    (existsSync(paths.configPath) || existsSync(paths.instanceRoot)) &&
+    !opts.force
+  ) {
     throw new Error(
       `Worktree config already exists at ${paths.configPath} or instance data exists at ${paths.instanceRoot}. Re-run with --force to replace it.`,
     );
@@ -2449,9 +2787,8 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
     rmSync(paths.instanceRoot, { recursive: true, force: true });
   }
 
-  const { serverPort, databasePort, targetConfig } = await withWorktreePortRegistryLock(
-    paths.homeDir,
-    async () => {
+  const { serverPort, databasePort, targetConfig } =
+    await withWorktreePortRegistryLock(paths.homeDir, async () => {
       const registeredConfigPaths = readWorktreePortRegistry(paths.homeDir);
       const claimedPorts = collectClaimedWorktreePorts(
         paths.homeDir,
@@ -2459,9 +2796,15 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
         paths.cwd,
         registeredConfigPaths,
       );
-      const preferredServerPort = opts.serverPort ?? ((sourceConfig?.server.port ?? 3100) + 1);
-      const selectedServerPort = await findAvailablePort(preferredServerPort, claimedPorts.serverPorts);
-      const preferredDbPort = opts.dbPort ?? ((sourceConfig?.database.embeddedPostgresPort ?? 54329) + 1);
+      const preferredServerPort =
+        opts.serverPort ?? (sourceConfig?.server.port ?? 3100) + 1;
+      const selectedServerPort = await findAvailablePort(
+        preferredServerPort,
+        claimedPorts.serverPorts,
+      );
+      const preferredDbPort =
+        opts.dbPort ??
+        (sourceConfig?.database.embeddedPostgresPort ?? 54329) + 1;
       const selectedDatabasePort = await findAvailablePort(
         preferredDbPort,
         new Set([...claimedPorts.databasePorts, selectedServerPort]),
@@ -2477,7 +2820,11 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
         // Persist the no-copy choice before the config becomes visible to managed startup.
         if (opts.empty) {
           mkdirSync(paths.repoConfigDir, { recursive: true });
-          writeFileSync(resolveWorktreeSeedMarkerPaths(paths.configPath).empty, "Explicitly empty instance; automatic database copying is disabled.\n", { mode: 0o600 });
+          writeFileSync(
+            resolveWorktreeSeedMarkerPaths(paths.configPath).empty,
+            "Explicitly empty instance; automatic database copying is disabled.\n",
+            { mode: 0o600 },
+          );
         }
         writeConfig(selectedConfig, paths.configPath);
         writeWorktreePortRegistry(paths.homeDir, [
@@ -2486,7 +2833,10 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
         ]);
       } catch (error) {
         rmSync(paths.configPath, { force: true });
-        if (opts.empty) rmSync(resolveWorktreeSeedMarkerPaths(paths.configPath).empty, { force: true });
+        if (opts.empty)
+          rmSync(resolveWorktreeSeedMarkerPaths(paths.configPath).empty, {
+            force: true,
+          });
         throw error;
       }
 
@@ -2495,8 +2845,7 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
         databasePort: selectedDatabasePort,
         targetConfig: selectedConfig,
       };
-    },
-  );
+    });
   if (!opts.empty) {
     markWorktreeSeedPending({
       configPath: paths.configPath,
@@ -2505,18 +2854,29 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
       seedMode,
     });
   }
-  const sourceEnvEntries = readTaskcoreEnvEntries(resolveTaskcoreEnvFile(sourceConfigPath));
-  const existingAgentJwtSecret =
-    opts.empty ? randomBytes(32).toString("base64url") : nonEmpty(sourceEnvEntries.TASKCORE_AGENT_JWT_SECRET) ??
-    nonEmpty(process.env.TASKCORE_AGENT_JWT_SECRET);
-  const existingToolActionSigningSecret =
-    opts.empty ? randomBytes(32).toString("base64url") : nonEmpty(sourceEnvEntries.TASKCORE_TOOL_ACTION_SIGNING_SECRET) ??
-    nonEmpty(process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET);
+  const sourceEnvEntries = readTaskcoreEnvEntries(
+    resolveTaskcoreEnvFile(sourceConfigPath),
+  );
+  const existingAgentJwtSecret = opts.empty
+    ? randomBytes(32).toString("base64url")
+    : (nonEmpty(sourceEnvEntries.TASKCORE_AGENT_JWT_SECRET) ??
+      nonEmpty(process.env.TASKCORE_AGENT_JWT_SECRET));
+  const existingToolActionSigningSecret = opts.empty
+    ? randomBytes(32).toString("base64url")
+    : (nonEmpty(sourceEnvEntries.TASKCORE_TOOL_ACTION_SIGNING_SECRET) ??
+      nonEmpty(process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET));
   mergeTaskcoreEnvEntries(
     {
       ...buildWorktreeEnvEntries(paths, branding),
-      ...(existingAgentJwtSecret ? { TASKCORE_AGENT_JWT_SECRET: existingAgentJwtSecret } : {}),
-      ...(existingToolActionSigningSecret ? { TASKCORE_TOOL_ACTION_SIGNING_SECRET: existingToolActionSigningSecret } : {}),
+      ...(existingAgentJwtSecret
+        ? { TASKCORE_AGENT_JWT_SECRET: existingAgentJwtSecret }
+        : {}),
+      ...(existingToolActionSigningSecret
+        ? {
+            TASKCORE_TOOL_ACTION_SIGNING_SECRET:
+              existingToolActionSigningSecret,
+          }
+        : {}),
     },
     paths.envPath,
   );
@@ -2526,9 +2886,11 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
   const copiedGitHooks = copyGitHooksToWorktreeGitDir(cwd);
 
   let seedSummary: string | null = null;
-  let seedExecutionQuarantineSummary: SeededWorktreeExecutionQuarantineSummary | null = null;
+  let seedExecutionQuarantineSummary: SeededWorktreeExecutionQuarantineSummary | null =
+    null;
   let pausedScheduledRoutineCount: number | null = null;
-  let reboundWorkspaceSummary: SeedWorktreeDatabaseResult["reboundWorkspaces"] = [];
+  let reboundWorkspaceSummary: SeedWorktreeDatabaseResult["reboundWorkspaces"] =
+    [];
   if (!opts.empty && opts.seed !== false) {
     if (!sourceConfig) {
       throw new Error(
@@ -2536,7 +2898,9 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
       );
     }
     const spinner = p.spinner();
-    spinner.start(`Seeding isolated worktree database from source instance (${seedMode})...`);
+    spinner.start(
+      `Seeding isolated worktree database from source instance (${seedMode})...`,
+    );
     const markers = resolveWorktreeSeedMarkerPaths(paths.configPath);
     const releaseSeedLock = await acquireWorktreeSeedLock(markers.lock);
     try {
@@ -2569,28 +2933,40 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
   p.log.message(pc.dim(`Isolated home: ${paths.homeDir}`));
   p.log.message(pc.dim(`Instance: ${paths.instanceId}`));
   p.log.message(pc.dim(`Worktree badge: ${branding.name} (${branding.color})`));
-  p.log.message(pc.dim(`Server port: ${serverPort} | DB port: ${databasePort}`));
+  p.log.message(
+    pc.dim(`Server port: ${serverPort} | DB port: ${databasePort}`),
+  );
   if (copiedGitHooks?.copied) {
     p.log.message(
-      pc.dim(`Mirrored git hooks: ${copiedGitHooks.sourceHooksPath} -> ${copiedGitHooks.targetHooksPath}`),
+      pc.dim(
+        `Mirrored git hooks: ${copiedGitHooks.sourceHooksPath} -> ${copiedGitHooks.targetHooksPath}`,
+      ),
     );
   }
   if (seedSummary) {
     p.log.message(pc.dim(`Seed mode: ${seedMode}`));
     p.log.message(pc.dim(`Seed snapshot: ${seedSummary}`));
     if (opts.preserveLiveWork) {
-      p.log.warning("Preserved copied live work; this worktree instance may auto-run source-instance assignments.");
+      p.log.warning(
+        "Preserved copied live work; this worktree instance may auto-run source-instance assignments.",
+      );
     } else if (seedExecutionQuarantineSummary) {
       p.log.message(
-        pc.dim(`Seed execution quarantine: ${formatSeededWorktreeExecutionQuarantineSummary(seedExecutionQuarantineSummary)}`),
+        pc.dim(
+          `Seed execution quarantine: ${formatSeededWorktreeExecutionQuarantineSummary(seedExecutionQuarantineSummary)}`,
+        ),
       );
     }
     if (pausedScheduledRoutineCount != null) {
-      p.log.message(pc.dim(`Paused scheduled routines: ${pausedScheduledRoutineCount}`));
+      p.log.message(
+        pc.dim(`Paused scheduled routines: ${pausedScheduledRoutineCount}`),
+      );
     }
     for (const rebound of reboundWorkspaceSummary) {
       p.log.message(
-        pc.dim(`Rebound workspace ${rebound.name}: ${rebound.fromCwd} -> ${rebound.toCwd}`),
+        pc.dim(
+          `Rebound workspace ${rebound.name}: ${rebound.fromCwd} -> ${rebound.toCwd}`,
+        ),
       );
     }
   }
@@ -2601,13 +2977,17 @@ async function runWorktreeInit(opts: WorktreeInitOptions): Promise<void> {
   );
 }
 
-export async function worktreeInitCommand(opts: WorktreeInitOptions): Promise<void> {
+export async function worktreeInitCommand(
+  opts: WorktreeInitOptions,
+): Promise<void> {
   printTaskcoreCliBanner();
   p.intro(pc.bgCyan(pc.black(" taskcore worktree init ")));
   await runWorktreeInit(opts);
 }
 
-export async function worktreeEnsureSeededCommand(opts: WorktreeEnsureSeededOptions): Promise<void> {
+export async function worktreeEnsureSeededCommand(
+  opts: WorktreeEnsureSeededOptions,
+): Promise<void> {
   printTaskcoreCliBanner();
   p.intro(pc.bgCyan(pc.black(" taskcore worktree ensure-seeded ")));
 
@@ -2618,9 +2998,13 @@ export async function worktreeEnsureSeededCommand(opts: WorktreeEnsureSeededOpti
     if (result.seeded) {
       spinner.stop("Seeded isolated worktree database (minimal).");
     } else if (result.reason === "legacy_database") {
-      spinner.stop("Validated and adopted an existing legacy worktree database.");
+      spinner.stop(
+        "Validated and adopted an existing legacy worktree database.",
+      );
     } else if (result.reason === "explicitly_empty") {
-      spinner.stop("Explicitly empty instance; automatic database copying is disabled.");
+      spinner.stop(
+        "Explicitly empty instance; automatic database copying is disabled.",
+      );
     } else {
       spinner.stop("Worktree database already has a verified seed manifest.");
     }
@@ -2631,21 +3015,36 @@ export async function worktreeEnsureSeededCommand(opts: WorktreeEnsureSeededOpti
           `Seed execution quarantine: ${formatSeededWorktreeExecutionQuarantineSummary(result.details.executionQuarantine)}`,
         ),
       );
-      p.log.message(pc.dim(`Paused scheduled routines: ${result.details.pausedScheduledRoutines}`));
+      p.log.message(
+        pc.dim(
+          `Paused scheduled routines: ${result.details.pausedScheduledRoutines}`,
+        ),
+      );
       for (const rebound of result.details.reboundWorkspaces) {
         p.log.message(
-          pc.dim(`Rebound workspace ${rebound.name}: ${rebound.fromCwd} -> ${rebound.toCwd}`),
+          pc.dim(
+            `Rebound workspace ${rebound.name}: ${rebound.fromCwd} -> ${rebound.toCwd}`,
+          ),
         );
       }
     }
-    p.outro(pc.green(result.reason === "explicitly_empty" ? "Empty worktree ready." : "Worktree database seed complete."));
+    p.outro(
+      pc.green(
+        result.reason === "explicitly_empty"
+          ? "Empty worktree ready."
+          : "Worktree database seed complete.",
+      ),
+    );
   } catch (error) {
     spinner.stop(pc.red("Failed to seed worktree database."));
     throw error;
   }
 }
 
-export async function worktreeMakeCommand(nameArg: string, opts: WorktreeMakeOptions): Promise<void> {
+export async function worktreeMakeCommand(
+  nameArg: string,
+  opts: WorktreeMakeOptions,
+): Promise<void> {
   printTaskcoreCliBanner();
   p.intro(pc.bgCyan(pc.black(" taskcore worktree:make ")));
 
@@ -2740,7 +3139,9 @@ function installDependenciesBestEffort(targetPath: string): void {
     });
     installSpinner.stop("Installed dependencies.");
   } catch (error) {
-    installSpinner.stop(pc.yellow("Failed to install dependencies (continuing anyway)."));
+    installSpinner.stop(
+      pc.yellow("Failed to install dependencies (continuing anyway)."),
+    );
     p.log.warning(extractExecSyncErrorMessage(error) ?? String(error));
   }
 }
@@ -2827,13 +3228,16 @@ function parseGitWorktreeList(cwd: string): GitWorktreeListEntry[] {
 function toMergeSourceChoices(cwd: string): MergeSourceChoice[] {
   const currentCwd = path.resolve(cwd);
   return parseGitWorktreeList(cwd).map((entry) => {
-    const branchLabel = entry.branch?.replace(/^refs\/heads\//, "") ?? "(detached)";
+    const branchLabel =
+      entry.branch?.replace(/^refs\/heads\//, "") ?? "(detached)";
     const worktreePath = path.resolve(entry.worktree);
     return {
       worktree: worktreePath,
       branch: entry.branch,
       branchLabel,
-      hasTaskcoreConfig: existsSync(path.resolve(worktreePath, ".taskcore", "config.json")),
+      hasTaskcoreConfig: existsSync(
+        path.resolve(worktreePath, ".taskcore", "config.json"),
+      ),
       isCurrent: worktreePath === currentCwd,
     };
   });
@@ -2843,7 +3247,16 @@ function branchHasUniqueCommits(cwd: string, branchName: string): boolean {
   try {
     const output = execFileSync(
       "git",
-      ["log", "--oneline", branchName, "--not", "--remotes", "--exclude", `refs/heads/${branchName}`, "--branches"],
+      [
+        "log",
+        "--oneline",
+        branchName,
+        "--not",
+        "--remotes",
+        "--exclude",
+        `refs/heads/${branchName}`,
+        "--branches",
+      ],
       { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
     ).trim();
     return output.length > 0;
@@ -2867,18 +3280,21 @@ function branchExistsOnAnyRemote(cwd: string, branchName: string): boolean {
 
 function worktreePathHasUncommittedChanges(worktreePath: string): boolean {
   try {
-    const output = execFileSync(
-      "git",
-      ["status", "--porcelain"],
-      { cwd: worktreePath, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-    ).trim();
+    const output = execFileSync("git", ["status", "--porcelain"], {
+      cwd: worktreePath,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
     return output.length > 0;
   } catch {
     return false;
   }
 }
 
-export async function worktreeCleanupCommand(nameArg: string, opts: WorktreeCleanupOptions): Promise<void> {
+export async function worktreeCleanupCommand(
+  nameArg: string,
+  opts: WorktreeCleanupOptions,
+): Promise<void> {
   printTaskcoreCliBanner();
   p.intro(pc.bgCyan(pc.black(" taskcore worktree:cleanup ")));
 
@@ -2886,7 +3302,9 @@ export async function worktreeCleanupCommand(nameArg: string, opts: WorktreeClea
   const sourceCwd = process.cwd();
   const targetPath = resolveWorktreeMakeTargetPath(name);
   const instanceId = sanitizeWorktreeInstanceId(opts.instance ?? name);
-  const homeDir = path.resolve(expandHomePrefix(resolveWorktreeHome(opts.home)));
+  const homeDir = path.resolve(
+    expandHomePrefix(resolveWorktreeHome(opts.home)),
+  );
   const instanceRoot = path.resolve(homeDir, "instances", instanceId);
 
   // ── 1. Assess current state ──────────────────────────────────────────
@@ -2897,11 +3315,15 @@ export async function worktreeCleanupCommand(nameArg: string, opts: WorktreeClea
 
   const worktrees = parseGitWorktreeList(sourceCwd);
   const linkedWorktree = worktrees.find(
-    (wt) => wt.branch === `refs/heads/${name}` || path.resolve(wt.worktree) === path.resolve(targetPath),
+    (wt) =>
+      wt.branch === `refs/heads/${name}` ||
+      path.resolve(wt.worktree) === path.resolve(targetPath),
   );
 
   if (!hasBranch && !hasTargetDir && !hasInstanceData && !linkedWorktree) {
-    p.log.info("Nothing to clean up — no branch, worktree directory, or instance data found.");
+    p.log.info(
+      "Nothing to clean up — no branch, worktree directory, or instance data found.",
+    );
     p.outro(pc.green("Already clean."));
     return;
   }
@@ -2934,7 +3356,9 @@ export async function worktreeCleanupCommand(nameArg: string, opts: WorktreeClea
     for (const problem of problems) {
       p.log.error(problem);
     }
-    throw new Error("Safety checks failed. Resolve the issues above or re-run with --force.");
+    throw new Error(
+      "Safety checks failed. Resolve the issues above or re-run with --force.",
+    );
   }
   if (problems.length > 0 && opts.force) {
     for (const problem of problems) {
@@ -2959,7 +3383,9 @@ export async function worktreeCleanupCommand(nameArg: string, opts: WorktreeClea
         });
         spinner.stop(`Removed git worktree at ${linkedWorktree.worktree}.`);
       } catch (error) {
-        spinner.stop(pc.yellow(`Could not remove worktree cleanly, will prune instead.`));
+        spinner.stop(
+          pc.yellow(`Could not remove worktree cleanly, will prune instead.`),
+        );
         p.log.warning(extractExecSyncErrorMessage(error) ?? String(error));
       }
     } else {
@@ -3014,15 +3440,23 @@ export async function worktreeCleanupCommand(nameArg: string, opts: WorktreeClea
   p.outro(pc.green("Cleanup complete."));
 }
 
-export async function worktreeEnvCommand(opts: WorktreeEnvOptions): Promise<void> {
+export async function worktreeEnvCommand(
+  opts: WorktreeEnvOptions,
+): Promise<void> {
   const configPath = resolveConfigPath(opts.config);
   const envPath = resolveTaskcoreEnvFile(configPath);
   const envEntries = readTaskcoreEnvEntries(envPath);
   const out = {
     TASKCORE_CONFIG: configPath,
-    ...(envEntries.TASKCORE_HOME ? { TASKCORE_HOME: envEntries.TASKCORE_HOME } : {}),
-    ...(envEntries.TASKCORE_INSTANCE_ID ? { TASKCORE_INSTANCE_ID: envEntries.TASKCORE_INSTANCE_ID } : {}),
-    ...(envEntries.TASKCORE_CONTEXT ? { TASKCORE_CONTEXT: envEntries.TASKCORE_CONTEXT } : {}),
+    ...(envEntries.TASKCORE_HOME
+      ? { TASKCORE_HOME: envEntries.TASKCORE_HOME }
+      : {}),
+    ...(envEntries.TASKCORE_INSTANCE_ID
+      ? { TASKCORE_INSTANCE_ID: envEntries.TASKCORE_INSTANCE_ID }
+      : {}),
+    ...(envEntries.TASKCORE_CONTEXT
+      ? { TASKCORE_CONTEXT: envEntries.TASKCORE_CONTEXT }
+      : {}),
     ...envEntries,
   };
 
@@ -3059,7 +3493,9 @@ export function resolveCurrentWorktreeEndpoint(): ResolvedWorktreeEndpoint {
   const localConfigPath = path.join(rootPath, ".taskcore", "config.json");
   return {
     rootPath,
-    configPath: existsSync(localConfigPath) ? localConfigPath : resolveConfigPath(),
+    configPath: existsSync(localConfigPath)
+      ? localConfigPath
+      : resolveConfigPath(),
     label: "current",
     isCurrent: true,
   };
@@ -3075,7 +3511,9 @@ function resolveAttachmentLookupStorages(input: {
     input.targetEndpoint.configPath,
     ...toMergeSourceChoices(process.cwd())
       .filter((choice) => choice.hasTaskcoreConfig)
-      .map((choice) => path.resolve(choice.worktree, ".taskcore", "config.json")),
+      .map((choice) =>
+        path.resolve(choice.worktree, ".taskcore", "config.json"),
+      ),
   ];
   const seen = new Set<string>();
   const storages: ConfiguredStorage[] = [];
@@ -3103,7 +3541,11 @@ async function openConfiguredDb(configPath: string): Promise<OpenDbHandle> {
         config.database.embeddedPostgresPort,
       );
     }
-    const connectionString = resolveSourceConnectionString(config, envEntries, embeddedHandle?.port);
+    const connectionString = resolveSourceConnectionString(
+      config,
+      envEntries,
+      embeddedHandle?.port,
+    );
     const migrationState = await inspectMigrations(connectionString);
     if (migrationState.status !== "upToDate") {
       const pending =
@@ -3154,15 +3596,23 @@ async function resolveMergeCompany(input: {
       .from(companies),
   ]);
 
-  const targetById = new Map(targetCompanies.map((company) => [company.id, company]));
-  const shared = sourceCompanies.filter((company) => targetById.has(company.id));
+  const targetById = new Map(
+    targetCompanies.map((company) => [company.id, company]),
+  );
+  const shared = sourceCompanies.filter((company) =>
+    targetById.has(company.id),
+  );
   const selector = nonEmpty(input.selector);
   if (selector) {
     const matched = shared.find(
-      (company) => company.id === selector || company.issuePrefix.toLowerCase() === selector.toLowerCase(),
+      (company) =>
+        company.id === selector ||
+        company.issuePrefix.toLowerCase() === selector.toLowerCase(),
     );
     if (!matched) {
-      throw new Error(`Could not resolve company "${selector}" in both source and target databases.`);
+      throw new Error(
+        `Could not resolve company "${selector}" in both source and target databases.`,
+      );
     }
     return matched;
   }
@@ -3172,20 +3622,27 @@ async function resolveMergeCompany(input: {
   }
 
   if (shared.length === 0) {
-    throw new Error("Source and target databases do not share a company id. Pass --company explicitly once both sides match.");
+    throw new Error(
+      "Source and target databases do not share a company id. Pass --company explicitly once both sides match.",
+    );
   }
 
   const options = shared
     .map((company) => `${company.issuePrefix} (${company.name})`)
     .join(", ");
-  throw new Error(`Multiple shared companies found. Re-run with --company <id-or-prefix>. Options: ${options}`);
+  throw new Error(
+    `Multiple shared companies found. Re-run with --company <id-or-prefix>. Options: ${options}`,
+  );
 }
 
-function renderMergePlan(plan: Awaited<ReturnType<typeof collectMergePlan>>["plan"], extras: {
-  sourcePath: string;
-  targetPath: string;
-  unsupportedRunCount: number;
-}): string {
+function renderMergePlan(
+  plan: Awaited<ReturnType<typeof collectMergePlan>>["plan"],
+  extras: {
+    sourcePath: string;
+    targetPath: string;
+    unsupportedRunCount: number;
+  },
+): string {
   const terminalWidth = Math.max(60, process.stdout.columns ?? 100);
   const oneLine = (value: string) => value.replace(/\s+/g, " ").trim();
   const truncateToWidth = (value: string, maxWidth: number) => {
@@ -3218,17 +3675,23 @@ function renderMergePlan(plan: Awaited<ReturnType<typeof collectMergePlan>>["pla
     }
   }
 
-  const issueInserts = plan.issuePlans.filter((item): item is PlannedIssueInsert => item.action === "insert");
+  const issueInserts = plan.issuePlans.filter(
+    (item): item is PlannedIssueInsert => item.action === "insert",
+  );
   if (issueInserts.length > 0) {
     lines.push("");
     lines.push("Planned issue imports");
     for (const issue of issueInserts) {
       const projectNote =
-        (issue.projectResolution === "mapped" || issue.projectResolution === "imported")
-        && issue.mappedProjectName
+        (issue.projectResolution === "mapped" ||
+          issue.projectResolution === "imported") &&
+        issue.mappedProjectName
           ? ` project->${issue.projectResolution === "imported" ? "import:" : ""}${issue.mappedProjectName}`
           : "";
-      const adjustments = issue.adjustments.length > 0 ? ` [${issue.adjustments.join(", ")}]` : "";
+      const adjustments =
+        issue.adjustments.length > 0
+          ? ` [${issue.adjustments.join(", ")}]`
+          : "";
       const prefix = `- ${issue.source.identifier ?? issue.source.id} -> ${issue.previewIdentifier} (${issue.targetStatus}${projectNote})`;
       const title = oneLine(issue.source.title);
       const suffix = `${adjustments}${title ? ` ${title}` : ""}`;
@@ -3243,7 +3706,9 @@ function renderMergePlan(plan: Awaited<ReturnType<typeof collectMergePlan>>["pla
     lines.push("Comments");
     lines.push(`- insert: ${plan.counts.commentsToInsert}`);
     lines.push(`- already present: ${plan.counts.commentsExisting}`);
-    lines.push(`- skipped (missing parent): ${plan.counts.commentsMissingParent}`);
+    lines.push(
+      `- skipped (missing parent): ${plan.counts.commentsMissingParent}`,
+    );
   }
 
   lines.push("");
@@ -3251,42 +3716,68 @@ function renderMergePlan(plan: Awaited<ReturnType<typeof collectMergePlan>>["pla
   lines.push(`- insert: ${plan.counts.documentsToInsert}`);
   lines.push(`- merge existing: ${plan.counts.documentsToMerge}`);
   lines.push(`- already present: ${plan.counts.documentsExisting}`);
-  lines.push(`- skipped (conflicting key): ${plan.counts.documentsConflictingKey}`);
-  lines.push(`- skipped (missing parent): ${plan.counts.documentsMissingParent}`);
+  lines.push(
+    `- skipped (conflicting key): ${plan.counts.documentsConflictingKey}`,
+  );
+  lines.push(
+    `- skipped (missing parent): ${plan.counts.documentsMissingParent}`,
+  );
   lines.push(`- revisions insert: ${plan.counts.documentRevisionsToInsert}`);
 
   lines.push("");
   lines.push("Attachments");
   lines.push(`- insert: ${plan.counts.attachmentsToInsert}`);
   lines.push(`- already present: ${plan.counts.attachmentsExisting}`);
-  lines.push(`- skipped (missing parent): ${plan.counts.attachmentsMissingParent}`);
+  lines.push(
+    `- skipped (missing parent): ${plan.counts.attachmentsMissingParent}`,
+  );
 
   lines.push("");
   lines.push("Adjustments");
-  lines.push(`- cleared assignee agents: ${plan.adjustments.clear_assignee_agent}`);
+  lines.push(
+    `- cleared assignee agents: ${plan.adjustments.clear_assignee_agent}`,
+  );
   lines.push(`- cleared projects: ${plan.adjustments.clear_project}`);
-  lines.push(`- cleared project workspaces: ${plan.adjustments.clear_project_workspace}`);
+  lines.push(
+    `- cleared project workspaces: ${plan.adjustments.clear_project_workspace}`,
+  );
   lines.push(`- cleared goals: ${plan.adjustments.clear_goal}`);
-  lines.push(`- cleared comment author agents: ${plan.adjustments.clear_author_agent}`);
-  lines.push(`- cleared document agents: ${plan.adjustments.clear_document_agent}`);
-  lines.push(`- cleared document revision agents: ${plan.adjustments.clear_document_revision_agent}`);
-  lines.push(`- cleared attachment author agents: ${plan.adjustments.clear_attachment_agent}`);
-  lines.push(`- coerced in_progress to todo: ${plan.adjustments.coerce_in_progress_to_todo}`);
+  lines.push(
+    `- cleared comment author agents: ${plan.adjustments.clear_author_agent}`,
+  );
+  lines.push(
+    `- cleared document agents: ${plan.adjustments.clear_document_agent}`,
+  );
+  lines.push(
+    `- cleared document revision agents: ${plan.adjustments.clear_document_revision_agent}`,
+  );
+  lines.push(
+    `- cleared attachment author agents: ${plan.adjustments.clear_attachment_agent}`,
+  );
+  lines.push(
+    `- coerced in_progress to todo: ${plan.adjustments.coerce_in_progress_to_todo}`,
+  );
 
   lines.push("");
   lines.push("Not imported in this phase");
   lines.push(`- heartbeat runs: ${extras.unsupportedRunCount}`);
   lines.push("");
-  lines.push("Identifiers shown above are provisional preview values. `--apply` reserves fresh issue numbers at write time.");
+  lines.push(
+    "Identifiers shown above are provisional preview values. `--apply` reserves fresh issue numbers at write time.",
+  );
 
   return lines.join("\n");
 }
 
-function resolveRunningEmbeddedPostgresPid(config: TaskcoreConfig): number | null {
+function resolveRunningEmbeddedPostgresPid(
+  config: TaskcoreConfig,
+): number | null {
   if (config.database.mode !== "embedded-postgres") {
     return null;
   }
-  return readRunningPostmasterPid(path.resolve(config.database.embeddedPostgresDataDir, "postmaster.pid"));
+  return readRunningPostmasterPid(
+    path.resolve(config.database.embeddedPostgresDataDir, "postmaster.pid"),
+  );
 }
 
 async function collectMergePlan(input: {
@@ -3325,19 +3816,13 @@ async function collectMergePlan(input: {
       .from(companies)
       .where(eq(companies.id, companyId))
       .then((rows) => rows[0] ?? null),
-    input.sourceDb
-      .select()
-      .from(issues)
-      .where(eq(issues.companyId, companyId)),
-    input.targetDb
-      .select()
-      .from(issues)
-      .where(eq(issues.companyId, companyId)),
+    input.sourceDb.select().from(issues).where(eq(issues.companyId, companyId)),
+    input.targetDb.select().from(issues).where(eq(issues.companyId, companyId)),
     input.scopes.includes("comments")
       ? input.sourceDb
-        .select()
-        .from(issueComments)
-        .where(eq(issueComments.companyId, companyId))
+          .select()
+          .from(issueComments)
+          .where(eq(issueComments.companyId, companyId))
       : Promise.resolve([]),
     input.targetDb
       .select()
@@ -3406,7 +3891,10 @@ async function collectMergePlan(input: {
         createdAt: documentRevisions.createdAt,
       })
       .from(documentRevisions)
-      .innerJoin(issueDocuments, eq(documentRevisions.documentId, issueDocuments.documentId))
+      .innerJoin(
+        issueDocuments,
+        eq(documentRevisions.documentId, issueDocuments.documentId),
+      )
       .innerJoin(issues, eq(issueDocuments.issueId, issues.id))
       .where(eq(issues.companyId, companyId)),
     input.targetDb
@@ -3422,7 +3910,10 @@ async function collectMergePlan(input: {
         createdAt: documentRevisions.createdAt,
       })
       .from(documentRevisions)
-      .innerJoin(issueDocuments, eq(documentRevisions.documentId, issueDocuments.documentId))
+      .innerJoin(
+        issueDocuments,
+        eq(documentRevisions.documentId, issueDocuments.documentId),
+      )
       .innerJoin(issues, eq(issueDocuments.issueId, issues.id))
       .where(eq(issues.companyId, companyId)),
     input.sourceDb
@@ -3485,18 +3976,12 @@ async function collectMergePlan(input: {
       .select()
       .from(projects)
       .where(eq(projects.companyId, companyId)),
-    input.targetDb
-      .select()
-      .from(agents)
-      .where(eq(agents.companyId, companyId)),
+    input.targetDb.select().from(agents).where(eq(agents.companyId, companyId)),
     input.targetDb
       .select()
       .from(projectWorkspaces)
       .where(eq(projectWorkspaces.companyId, companyId)),
-    input.targetDb
-      .select()
-      .from(goals)
-      .where(eq(goals.companyId, companyId)),
+    input.targetDb.select().from(goals).where(eq(goals.companyId, companyId)),
     input.sourceDb
       .select({ count: sql<number>`count(*)::int` })
       .from(heartbeatRuns)
@@ -3521,8 +4006,10 @@ async function collectMergePlan(input: {
     sourceProjectWorkspaces: sourceProjectWorkspaceRows,
     sourceDocuments: sourceIssueDocumentsRows as IssueDocumentRow[],
     targetDocuments: targetIssueDocumentsRows as IssueDocumentRow[],
-    sourceDocumentRevisions: sourceDocumentRevisionRows as DocumentRevisionRow[],
-    targetDocumentRevisions: targetDocumentRevisionRows as DocumentRevisionRow[],
+    sourceDocumentRevisions:
+      sourceDocumentRevisionRows as DocumentRevisionRow[],
+    targetDocumentRevisions:
+      targetDocumentRevisionRows as DocumentRevisionRow[],
     sourceAttachments: sourceAttachmentRows as IssueAttachmentRow[],
     targetAttachments: targetAttachmentRows as IssueAttachmentRow[],
     targetAgents: targetAgentsRows,
@@ -3548,14 +4035,21 @@ type ProjectMappingSelections = {
 
 async function promptForProjectMappings(input: {
   plan: Awaited<ReturnType<typeof collectMergePlan>>["plan"];
-  sourceProjects: Awaited<ReturnType<typeof collectMergePlan>>["sourceProjects"];
-  targetProjects: Awaited<ReturnType<typeof collectMergePlan>>["targetProjects"];
+  sourceProjects: Awaited<
+    ReturnType<typeof collectMergePlan>
+  >["sourceProjects"];
+  targetProjects: Awaited<
+    ReturnType<typeof collectMergePlan>
+  >["targetProjects"];
 }): Promise<ProjectMappingSelections> {
   const missingProjectIds = [
     ...new Set(
       input.plan.issuePlans
         .filter((plan): plan is PlannedIssueInsert => plan.action === "insert")
-        .filter((plan) => !!plan.source.projectId && plan.projectResolution === "cleared")
+        .filter(
+          (plan) =>
+            !!plan.source.projectId && plan.projectResolution === "cleared",
+        )
         .map((plan) => plan.source.projectId as string),
     ),
   ];
@@ -3566,7 +4060,9 @@ async function promptForProjectMappings(input: {
     };
   }
 
-  const sourceProjectsById = new Map(input.sourceProjects.map((project) => [project.id, project]));
+  const sourceProjectsById = new Map(
+    input.sourceProjects.map((project) => [project.id, project]),
+  );
   const targetChoices = [...input.targetProjects]
     .sort((left, right) => left.name.localeCompare(right.name))
     .map((project) => ({
@@ -3581,7 +4077,9 @@ async function promptForProjectMappings(input: {
     const sourceProject = sourceProjectsById.get(sourceProjectId);
     if (!sourceProject) continue;
     const nameMatch = input.targetProjects.find(
-      (project) => project.name.trim().toLowerCase() === sourceProject.name.trim().toLowerCase(),
+      (project) =>
+        project.name.trim().toLowerCase() ===
+        sourceProject.name.trim().toLowerCase(),
     );
     const importSelectionValue = `__import__:${sourceProjectId}`;
     const selection = await p.select<string | null>({
@@ -3593,11 +4091,13 @@ async function promptForProjectMappings(input: {
           hint: "Create the project and copy its workspace settings",
         },
         ...(nameMatch
-          ? [{
-              value: nameMatch.id,
-              label: `Map to ${nameMatch.name}`,
-              hint: "Recommended: exact name match",
-            }]
+          ? [
+              {
+                value: nameMatch.id,
+                label: `Map to ${nameMatch.name}`,
+                hint: "Recommended: exact name match",
+              },
+            ]
           : []),
         {
           value: null,
@@ -3624,7 +4124,9 @@ async function promptForProjectMappings(input: {
   };
 }
 
-export async function worktreeListCommand(opts: WorktreeListOptions): Promise<void> {
+export async function worktreeListCommand(
+  opts: WorktreeListOptions,
+): Promise<void> {
   const choices = toMergeSourceChoices(process.cwd());
   if (opts.json) {
     console.log(JSON.stringify(choices, null, 2));
@@ -3636,11 +4138,15 @@ export async function worktreeListCommand(opts: WorktreeListOptions): Promise<vo
       choice.isCurrent ? "current" : null,
       choice.hasTaskcoreConfig ? "taskcore" : "no-taskcore-config",
     ].filter((value): value is string => value !== null);
-    p.log.message(`${choice.branchLabel}  ${choice.worktree}  [${flags.join(", ")}]`);
+    p.log.message(
+      `${choice.branchLabel}  ${choice.worktree}  [${flags.join(", ")}]`,
+    );
   }
 }
 
-function resolveEndpointFromChoice(choice: MergeSourceChoice): ResolvedWorktreeEndpoint {
+function resolveEndpointFromChoice(
+  choice: MergeSourceChoice,
+): ResolvedWorktreeEndpoint {
   if (choice.isCurrent) {
     return resolveCurrentWorktreeEndpoint();
   }
@@ -3675,7 +4181,9 @@ function resolveWorktreeEndpointFromSelector(
     }
     const configPath = path.resolve(directPath, ".taskcore", "config.json");
     if (!existsSync(configPath)) {
-      throw new Error(`Resolved worktree path ${directPath} does not contain .taskcore/config.json.`);
+      throw new Error(
+        `Resolved worktree path ${directPath} does not contain .taskcore/config.json.`,
+      );
     }
     return {
       rootPath: directPath,
@@ -3685,11 +4193,12 @@ function resolveWorktreeEndpointFromSelector(
     };
   }
 
-  const matched = choices.find((choice) =>
-    (allowCurrent || !choice.isCurrent)
-    && (choice.worktree === directPath
-      || path.basename(choice.worktree) === trimmed
-      || choice.branchLabel === trimmed),
+  const matched = choices.find(
+    (choice) =>
+      (allowCurrent || !choice.isCurrent) &&
+      (choice.worktree === directPath ||
+        path.basename(choice.worktree) === trimmed ||
+        choice.branchLabel === trimmed),
   );
   if (!matched) {
     throw new Error(
@@ -3697,13 +4206,19 @@ function resolveWorktreeEndpointFromSelector(
     );
   }
   if (!matched.hasTaskcoreConfig && !matched.isCurrent) {
-    throw new Error(`Resolved worktree "${selector}" does not look like a Taskcore worktree.`);
+    throw new Error(
+      `Resolved worktree "${selector}" does not look like a Taskcore worktree.`,
+    );
   }
   return resolveEndpointFromChoice(matched);
 }
 
-async function promptForSourceEndpoint(excludeWorktreePath?: string): Promise<ResolvedWorktreeEndpoint> {
-  const excluded = excludeWorktreePath ? path.resolve(excludeWorktreePath) : null;
+async function promptForSourceEndpoint(
+  excludeWorktreePath?: string,
+): Promise<ResolvedWorktreeEndpoint> {
+  const excluded = excludeWorktreePath
+    ? path.resolve(excludeWorktreePath)
+    : null;
   const currentEndpoint = resolveCurrentWorktreeEndpoint();
   const choices = toMergeSourceChoices(process.cwd())
     .filter((choice) => choice.hasTaskcoreConfig || choice.isCurrent)
@@ -3714,7 +4229,9 @@ async function promptForSourceEndpoint(excludeWorktreePath?: string): Promise<Re
       hint: `${choice.worktree}${choice.isCurrent ? " (current)" : ""}`,
     }));
   if (choices.length === 0) {
-    throw new Error("No Taskcore worktrees were found. Run `taskcore worktree:list` to inspect the repo worktrees.");
+    throw new Error(
+      "No Taskcore worktrees were found. Run `taskcore worktree:list` to inspect the repo worktrees.",
+    );
   }
   const selection = await p.select<string>({
     message: "Choose the source worktree to import from",
@@ -3739,27 +4256,37 @@ async function applyMergePlan(input: {
   const companyId = input.company.id;
 
   return await input.targetDb.transaction(async (tx) => {
-    const importedProjectIds = input.plan.projectImports.map((project) => project.source.id);
-    const existingImportedProjectIds = importedProjectIds.length > 0
-      ? new Set(
-        (await tx
-          .select({ id: projects.id })
-          .from(projects)
-          .where(inArray(projects.id, importedProjectIds)))
-          .map((row) => row.id),
-      )
-      : new Set<string>();
-    const projectImports = input.plan.projectImports.filter((project) => !existingImportedProjectIds.has(project.source.id));
-    const importedWorkspaceIds = projectImports.flatMap((project) => project.workspaces.map((workspace) => workspace.id));
-    const existingImportedWorkspaceIds = importedWorkspaceIds.length > 0
-      ? new Set(
-        (await tx
-          .select({ id: projectWorkspaces.id })
-          .from(projectWorkspaces)
-          .where(inArray(projectWorkspaces.id, importedWorkspaceIds)))
-          .map((row) => row.id),
-      )
-      : new Set<string>();
+    const importedProjectIds = input.plan.projectImports.map(
+      (project) => project.source.id,
+    );
+    const existingImportedProjectIds =
+      importedProjectIds.length > 0
+        ? new Set(
+            (
+              await tx
+                .select({ id: projects.id })
+                .from(projects)
+                .where(inArray(projects.id, importedProjectIds))
+            ).map((row) => row.id),
+          )
+        : new Set<string>();
+    const projectImports = input.plan.projectImports.filter(
+      (project) => !existingImportedProjectIds.has(project.source.id),
+    );
+    const importedWorkspaceIds = projectImports.flatMap((project) =>
+      project.workspaces.map((workspace) => workspace.id),
+    );
+    const existingImportedWorkspaceIds =
+      importedWorkspaceIds.length > 0
+        ? new Set(
+            (
+              await tx
+                .select({ id: projectWorkspaces.id })
+                .from(projectWorkspaces)
+                .where(inArray(projectWorkspaces.id, importedWorkspaceIds))
+            ).map((row) => row.id),
+          )
+        : new Set<string>();
 
     let insertedProjects = 0;
     let insertedProjectWorkspaces = 0;
@@ -3814,22 +4341,28 @@ async function applyMergePlan(input: {
       (plan): plan is PlannedIssueInsert => plan.action === "insert",
     );
     const issueCandidateIds = issueCandidates.map((issue) => issue.source.id);
-    const existingIssueIds = issueCandidateIds.length > 0
-      ? new Set(
-        (await tx
-          .select({ id: issues.id })
-          .from(issues)
-          .where(inArray(issues.id, issueCandidateIds)))
-          .map((row) => row.id),
-      )
-      : new Set<string>();
-    const issueInserts = issueCandidates.filter((issue) => !existingIssueIds.has(issue.source.id));
+    const existingIssueIds =
+      issueCandidateIds.length > 0
+        ? new Set(
+            (
+              await tx
+                .select({ id: issues.id })
+                .from(issues)
+                .where(inArray(issues.id, issueCandidateIds))
+            ).map((row) => row.id),
+          )
+        : new Set<string>();
+    const issueInserts = issueCandidates.filter(
+      (issue) => !existingIssueIds.has(issue.source.id),
+    );
 
     let nextIssueNumber = 0;
     if (issueInserts.length > 0) {
       const [companyRow] = await tx
         .update(companies)
-        .set({ issueCounter: sql`${companies.issueCounter} + ${issueInserts.length}` })
+        .set({
+          issueCounter: sql`${companies.issueCounter} + ${issueInserts.length}`,
+        })
         .where(eq(companies.id, companyId))
         .returning({ issueCounter: companies.issueCounter });
       nextIssueNumber = companyRow.issueCounter - issueInserts.length + 1;
@@ -3865,7 +4398,9 @@ async function applyMergePlan(input: {
         identifier,
         requestDepth: issue.source.requestDepth,
         billingCode: issue.source.billingCode,
-        assigneeAdapterOverrides: issue.targetAssigneeAgentId ? issue.source.assigneeAdapterOverrides : null,
+        assigneeAdapterOverrides: issue.targetAssigneeAgentId
+          ? issue.source.assigneeAdapterOverrides
+          : null,
         executionWorkspaceId: null,
         executionWorkspacePreference: null,
         executionWorkspaceSettings: null,
@@ -3882,16 +4417,20 @@ async function applyMergePlan(input: {
     const commentCandidates = input.plan.commentPlans.filter(
       (plan): plan is PlannedCommentInsert => plan.action === "insert",
     );
-    const commentCandidateIds = commentCandidates.map((comment) => comment.source.id);
-    const existingCommentIds = commentCandidateIds.length > 0
-      ? new Set(
-        (await tx
-          .select({ id: issueComments.id })
-          .from(issueComments)
-          .where(inArray(issueComments.id, commentCandidateIds)))
-          .map((row) => row.id),
-      )
-      : new Set<string>();
+    const commentCandidateIds = commentCandidates.map(
+      (comment) => comment.source.id,
+    );
+    const existingCommentIds =
+      commentCandidateIds.length > 0
+        ? new Set(
+            (
+              await tx
+                .select({ id: issueComments.id })
+                .from(issueComments)
+                .where(inArray(issueComments.id, commentCandidateIds))
+            ).map((row) => row.id),
+          )
+        : new Set<string>();
 
     let insertedComments = 0;
     for (const comment of commentCandidates) {
@@ -3899,7 +4438,12 @@ async function applyMergePlan(input: {
       const parentExists = await tx
         .select({ id: issues.id })
         .from(issues)
-        .where(and(eq(issues.id, comment.source.issueId), eq(issues.companyId, companyId)))
+        .where(
+          and(
+            eq(issues.id, comment.source.issueId),
+            eq(issues.companyId, companyId),
+          ),
+        )
         .then((rows) => rows[0] ?? null);
       if (!parentExists) continue;
       await tx.insert(issueComments).values({
@@ -3926,18 +4470,28 @@ async function applyMergePlan(input: {
       const parentExists = await tx
         .select({ id: issues.id })
         .from(issues)
-        .where(and(eq(issues.id, documentPlan.source.issueId), eq(issues.companyId, companyId)))
+        .where(
+          and(
+            eq(issues.id, documentPlan.source.issueId),
+            eq(issues.companyId, companyId),
+          ),
+        )
         .then((rows) => rows[0] ?? null);
       if (!parentExists) continue;
 
       const conflictingKeyDocument = await tx
         .select({ documentId: issueDocuments.documentId })
         .from(issueDocuments)
-        .where(and(eq(issueDocuments.issueId, documentPlan.source.issueId), eq(issueDocuments.key, documentPlan.source.key)))
+        .where(
+          and(
+            eq(issueDocuments.issueId, documentPlan.source.issueId),
+            eq(issueDocuments.key, documentPlan.source.key),
+          ),
+        )
         .then((rows) => rows[0] ?? null);
       if (
-        conflictingKeyDocument
-        && conflictingKeyDocument.documentId !== documentPlan.source.documentId
+        conflictingKeyDocument &&
+        conflictingKeyDocument.documentId !== documentPlan.source.documentId
       ) {
         continue;
       }
@@ -3998,7 +4552,9 @@ async function applyMergePlan(input: {
               key: documentPlan.source.key,
               updatedAt: documentPlan.source.linkUpdatedAt,
             })
-            .where(eq(issueDocuments.documentId, documentPlan.source.documentId));
+            .where(
+              eq(issueDocuments.documentId, documentPlan.source.documentId),
+            );
         }
 
         await tx
@@ -4022,7 +4578,9 @@ async function applyMergePlan(input: {
           await tx
             .select({ id: documentRevisions.id })
             .from(documentRevisions)
-            .where(eq(documentRevisions.documentId, documentPlan.source.documentId))
+            .where(
+              eq(documentRevisions.documentId, documentPlan.source.documentId),
+            )
         ).map((row) => row.id),
       );
       for (const revisionPlan of documentPlan.revisionsToInsert) {
@@ -4060,7 +4618,12 @@ async function applyMergePlan(input: {
       const parentExists = await tx
         .select({ id: issues.id })
         .from(issues)
-        .where(and(eq(issues.id, attachment.source.issueId), eq(issues.companyId, companyId)))
+        .where(
+          and(
+            eq(issues.id, attachment.source.issueId),
+            eq(issues.companyId, companyId),
+          ),
+        )
         .then((rows) => rows[0] ?? null);
       if (!parentExists) continue;
 
@@ -4122,13 +4685,18 @@ async function applyMergePlan(input: {
   });
 }
 
-export async function worktreeMergeHistoryCommand(sourceArg: string | undefined, opts: WorktreeMergeHistoryOptions): Promise<void> {
+export async function worktreeMergeHistoryCommand(
+  sourceArg: string | undefined,
+  opts: WorktreeMergeHistoryOptions,
+): Promise<void> {
   if (opts.apply && opts.dry) {
     throw new Error("Use either --apply or --dry, not both.");
   }
 
   if (sourceArg && opts.from) {
-    throw new Error("Use either the positional source argument or --from, not both.");
+    throw new Error(
+      "Use either the positional source argument or --from, not both.",
+    );
   }
 
   const targetEndpoint = opts.to
@@ -4140,8 +4708,13 @@ export async function worktreeMergeHistoryCommand(sourceArg: string | undefined,
       ? resolveWorktreeEndpointFromSelector(sourceArg, { allowCurrent: true })
       : await promptForSourceEndpoint(targetEndpoint.rootPath);
 
-  if (path.resolve(sourceEndpoint.configPath) === path.resolve(targetEndpoint.configPath)) {
-    throw new Error("Source and target Taskcore configs are the same. Choose different --from/--to worktrees.");
+  if (
+    path.resolve(sourceEndpoint.configPath) ===
+    path.resolve(targetEndpoint.configPath)
+  ) {
+    throw new Error(
+      "Source and target Taskcore configs are the same. Choose different --from/--to worktrees.",
+    );
   }
 
   const scopes = parseWorktreeMergeScopes(opts.scope);
@@ -4172,8 +4745,8 @@ export async function worktreeMergeHistoryCommand(sourceArg: string | undefined,
         targetProjects: collected.targetProjects,
       });
       if (
-        projectSelections.importProjectIds.length > 0
-        || Object.keys(projectSelections.projectIdOverrides).length > 0
+        projectSelections.importProjectIds.length > 0 ||
+        Object.keys(projectSelections.projectIdOverrides).length > 0
       ) {
         collected = await collectMergePlan({
           sourceDb: sourceHandle.db,
@@ -4186,11 +4759,13 @@ export async function worktreeMergeHistoryCommand(sourceArg: string | undefined,
       }
     }
 
-    console.log(renderMergePlan(collected.plan, {
-      sourcePath: `${sourceEndpoint.label} (${sourceEndpoint.rootPath})`,
-      targetPath: `${targetEndpoint.label} (${targetEndpoint.rootPath})`,
-      unsupportedRunCount: collected.unsupportedRunCount,
-    }));
+    console.log(
+      renderMergePlan(collected.plan, {
+        sourcePath: `${sourceEndpoint.label} (${sourceEndpoint.rootPath})`,
+        targetPath: `${targetEndpoint.label} (${targetEndpoint.rootPath})`,
+        unsupportedRunCount: collected.unsupportedRunCount,
+      }),
+    );
 
     if (!opts.apply) {
       return;
@@ -4199,9 +4774,9 @@ export async function worktreeMergeHistoryCommand(sourceArg: string | undefined,
     const confirmed = opts.yes
       ? true
       : await p.confirm({
-        message: `Import ${collected.plan.counts.issuesToInsert} issues and ${collected.plan.counts.commentsToInsert} comments from ${sourceEndpoint.label} into ${targetEndpoint.label}?`,
-        initialValue: false,
-      });
+          message: `Import ${collected.plan.counts.issuesToInsert} issues and ${collected.plan.counts.commentsToInsert} comments from ${sourceEndpoint.label} into ${targetEndpoint.label}?`,
+          initialValue: false,
+        });
     if (p.isCancel(confirmed) || !confirmed) {
       p.log.warn("Import cancelled.");
       return;
@@ -4235,7 +4810,9 @@ async function backupWorktreeReseedTarget(input: {
   targetPaths: WorktreeLocalPaths;
 }): Promise<string> {
   if (input.targetConfig.database.mode !== "embedded-postgres") {
-    throw new Error("Managed worktree repair requires an embedded PostgreSQL target.");
+    throw new Error(
+      "Managed worktree repair requires an embedded PostgreSQL target.",
+    );
   }
   const targetHandle = await ensureEmbeddedPostgres(
     input.targetConfig.database.embeddedPostgresDataDir,
@@ -4261,7 +4838,9 @@ async function backupWorktreeReseedTarget(input: {
 async function runWorktreeReseed(opts: WorktreeReseedOptions): Promise<void> {
   const seedMode = opts.seedMode ?? "full";
   if (!isWorktreeSeedMode(seedMode)) {
-    throw new Error(`Unsupported seed mode "${seedMode}". Expected one of: minimal, full.`);
+    throw new Error(
+      `Unsupported seed mode "${seedMode}". Expected one of: minimal, full.`,
+    );
   }
 
   const targetEndpoint = opts.to
@@ -4269,8 +4848,12 @@ async function runWorktreeReseed(opts: WorktreeReseedOptions): Promise<void> {
     : resolveCurrentWorktreeEndpoint();
   const source = resolveWorktreeReseedSource(opts);
 
-  if (path.resolve(source.configPath) === path.resolve(targetEndpoint.configPath)) {
-    throw new Error("Source and target Taskcore configs are the same. Choose different --from/--to values.");
+  if (
+    path.resolve(source.configPath) === path.resolve(targetEndpoint.configPath)
+  ) {
+    throw new Error(
+      "Source and target Taskcore configs are the same. Choose different --from/--to values.",
+    );
   }
   if (!existsSync(source.configPath)) {
     throw new Error(`Source config not found at ${source.configPath}.`);
@@ -4299,28 +4882,37 @@ async function runWorktreeReseed(opts: WorktreeReseedOptions): Promise<void> {
   const confirmed = opts.yes
     ? true
     : await p.confirm({
-      message: `Overwrite the isolated Taskcore DB for ${targetEndpoint.label} from ${source.label} using ${seedMode} seed mode?`,
-      initialValue: false,
-    });
+        message: `Overwrite the isolated Taskcore DB for ${targetEndpoint.label} from ${source.label} using ${seedMode} seed mode?`,
+        initialValue: false,
+      });
   if (p.isCancel(confirmed) || !confirmed) {
     p.log.warn("Reseed cancelled.");
     return;
   }
 
   if (runningTargetPid && opts.allowLiveTarget) {
-    p.log.warning(`Proceeding even though the target embedded PostgreSQL appears to be running (pid ${runningTargetPid}).`);
+    p.log.warning(
+      `Proceeding even though the target embedded PostgreSQL appears to be running (pid ${runningTargetPid}).`,
+    );
   }
 
   const spinner = p.spinner();
-  spinner.start(`Reseeding ${targetEndpoint.label} from ${source.label} (${seedMode})...`);
+  spinner.start(
+    `Reseeding ${targetEndpoint.label} from ${source.label} (${seedMode})...`,
+  );
   const markers = resolveWorktreeSeedMarkerPaths(targetEndpoint.configPath);
   mkdirSync(path.dirname(markers.lock), { recursive: true });
   const releaseSeedLock = await acquireWorktreeSeedLock(markers.lock);
   try {
     let targetBackupSummary: string | null = null;
     if (opts.backupTarget) {
-      targetBackupSummary = await backupWorktreeReseedTarget({ targetConfig, targetPaths });
-      p.log.message(pc.dim(`Recoverable pre-repair backup: ${targetBackupSummary}`));
+      targetBackupSummary = await backupWorktreeReseedTarget({
+        targetConfig,
+        targetPaths,
+      });
+      p.log.message(
+        pc.dim(`Recoverable pre-repair backup: ${targetBackupSummary}`),
+      );
     }
     markWorktreeSeedPending({
       configPath: targetEndpoint.configPath,
@@ -4337,7 +4929,8 @@ async function runWorktreeReseed(opts: WorktreeReseedOptions): Promise<void> {
       instanceId: targetPaths.instanceId,
       seedMode,
       preserveLiveWork: opts.preserveLiveWork,
-      expectedCompanyId: nonEmpty(process.env.TASKCORE_SEED_EXPECTED_COMPANY_ID) ?? undefined,
+      expectedCompanyId:
+        nonEmpty(process.env.TASKCORE_SEED_EXPECTED_COMPANY_ID) ?? undefined,
       seedDatabase: seedWorktreeDatabase,
     });
     // An operator-confirmed successful reseed replaces the earlier empty-instance choice.
@@ -4347,16 +4940,24 @@ async function runWorktreeReseed(opts: WorktreeReseedOptions): Promise<void> {
     p.log.message(pc.dim(`Target: ${targetEndpoint.configPath}`));
     p.log.message(pc.dim(`Seed snapshot: ${seeded.backupSummary}`));
     if (opts.preserveLiveWork) {
-      p.log.warning("Preserved copied live work; this worktree instance may auto-run source-instance assignments.");
+      p.log.warning(
+        "Preserved copied live work; this worktree instance may auto-run source-instance assignments.",
+      );
     } else {
       p.log.message(
-        pc.dim(`Seed execution quarantine: ${formatSeededWorktreeExecutionQuarantineSummary(seeded.executionQuarantine)}`),
+        pc.dim(
+          `Seed execution quarantine: ${formatSeededWorktreeExecutionQuarantineSummary(seeded.executionQuarantine)}`,
+        ),
       );
     }
-    p.log.message(pc.dim(`Paused scheduled routines: ${seeded.pausedScheduledRoutines}`));
+    p.log.message(
+      pc.dim(`Paused scheduled routines: ${seeded.pausedScheduledRoutines}`),
+    );
     for (const rebound of seeded.reboundWorkspaces) {
       p.log.message(
-        pc.dim(`Rebound workspace ${rebound.name}: ${rebound.fromCwd} -> ${rebound.toCwd}`),
+        pc.dim(
+          `Rebound workspace ${rebound.name}: ${rebound.fromCwd} -> ${rebound.toCwd}`,
+        ),
       );
     }
     p.outro(pc.green(`Reseed complete for ${targetEndpoint.label}.`));
@@ -4368,19 +4969,25 @@ async function runWorktreeReseed(opts: WorktreeReseedOptions): Promise<void> {
   }
 }
 
-export async function worktreeReseedCommand(opts: WorktreeReseedOptions): Promise<void> {
+export async function worktreeReseedCommand(
+  opts: WorktreeReseedOptions,
+): Promise<void> {
   printTaskcoreCliBanner();
   p.intro(pc.bgCyan(pc.black(" taskcore worktree reseed ")));
   await runWorktreeReseed(opts);
 }
 
-export async function worktreeRepairCommand(opts: WorktreeRepairOptions): Promise<void> {
+export async function worktreeRepairCommand(
+  opts: WorktreeRepairOptions,
+): Promise<void> {
   printTaskcoreCliBanner();
   p.intro(pc.bgCyan(pc.black(" taskcore worktree repair ")));
 
   const seedMode = opts.seedMode ?? "minimal";
   if (!isWorktreeSeedMode(seedMode)) {
-    throw new Error(`Unsupported seed mode "${seedMode}". Expected one of: minimal, full.`);
+    throw new Error(
+      `Unsupported seed mode "${seedMode}". Expected one of: minimal, full.`,
+    );
   }
 
   const target = await ensureRepairTargetWorktree({
@@ -4389,7 +4996,9 @@ export async function worktreeRepairCommand(opts: WorktreeRepairOptions): Promis
     opts,
   });
   if (!target) {
-    p.log.warn("Current checkout is the primary repo worktree. Pass --branch to create or repair a linked worktree.");
+    p.log.warn(
+      "Current checkout is the primary repo worktree. Pass --branch to create or repair a linked worktree.",
+    );
     p.outro(pc.yellow("No worktree repaired."));
     return;
   }
@@ -4399,18 +5008,31 @@ export async function worktreeRepairCommand(opts: WorktreeRepairOptions): Promis
     throw new Error(`Source config not found at ${source.configPath}.`);
   }
   if (path.resolve(source.configPath) === path.resolve(target.configPath)) {
-    throw new Error("Source and target Taskcore configs are the same. Use --from-config/--from-instance to point repair at a different source.");
+    throw new Error(
+      "Source and target Taskcore configs are the same. Use --from-config/--from-instance to point repair at a different source.",
+    );
   }
 
-  const targetConfig = existsSync(target.configPath) ? readConfig(target.configPath) : null;
-  const targetEnvEntries = readTaskcoreEnvEntries(resolveTaskcoreEnvFile(target.configPath));
+  const targetConfig = existsSync(target.configPath)
+    ? readConfig(target.configPath)
+    : null;
+  const targetEnvEntries = readTaskcoreEnvEntries(
+    resolveTaskcoreEnvFile(target.configPath),
+  );
   const targetHasWorktreeEnv = Boolean(
-    nonEmpty(targetEnvEntries.TASKCORE_HOME) && nonEmpty(targetEnvEntries.TASKCORE_INSTANCE_ID),
+    nonEmpty(targetEnvEntries.TASKCORE_HOME) &&
+    nonEmpty(targetEnvEntries.TASKCORE_INSTANCE_ID),
   );
 
   if (targetConfig && targetHasWorktreeEnv && opts.noSeed) {
-    p.log.message(pc.dim(`Target ${target.label} already has worktree-local config/env. Skipping reseed because --no-seed was passed.`));
-    p.outro(pc.green(`Worktree metadata already looks healthy for ${target.label}.`));
+    p.log.message(
+      pc.dim(
+        `Target ${target.label} already has worktree-local config/env. Skipping reseed because --no-seed was passed.`,
+      ),
+    );
+    p.outro(
+      pc.green(`Worktree metadata already looks healthy for ${target.label}.`),
+    );
     return;
   }
 
@@ -4426,20 +5048,26 @@ export async function worktreeRepairCommand(opts: WorktreeRepairOptions): Promis
     return;
   }
 
-  const repairInstanceId = sanitizeWorktreeInstanceId(path.basename(target.rootPath));
+  const repairInstanceId = sanitizeWorktreeInstanceId(
+    path.basename(target.rootPath),
+  );
   const repairPaths = resolveWorktreeLocalPaths({
     cwd: target.rootPath,
     homeDir: resolveWorktreeHome(opts.home),
     instanceId: repairInstanceId,
   });
-  const runningTargetPid = readRunningPostmasterPid(path.resolve(repairPaths.embeddedPostgresDataDir, "postmaster.pid"));
+  const runningTargetPid = readRunningPostmasterPid(
+    path.resolve(repairPaths.embeddedPostgresDataDir, "postmaster.pid"),
+  );
   if (runningTargetPid && !opts.allowLiveTarget) {
     throw new Error(
       `Target worktree database appears to be running (pid ${runningTargetPid}). Stop Taskcore in ${target.rootPath} before repairing, or re-run with --allow-live-target if you want to override this guard.`,
     );
   }
   if (runningTargetPid && opts.allowLiveTarget) {
-    p.log.warning(`Proceeding even though the target embedded PostgreSQL appears to be running (pid ${runningTargetPid}).`);
+    p.log.warning(
+      `Proceeding even though the target embedded PostgreSQL appears to be running (pid ${runningTargetPid}).`,
+    );
   }
 
   const originalCwd = process.cwd();
@@ -4461,116 +5089,304 @@ export async function worktreeRepairCommand(opts: WorktreeRepairOptions): Promis
 }
 
 export function registerWorktreeCommands(program: Command): void {
-  const worktree = program.command("worktree").description("Worktree-local Taskcore instance helpers");
+  const worktree = program
+    .command("worktree")
+    .description("Worktree-local Taskcore instance helpers");
 
   program
     .command("worktree:make")
-    .description("Create ~/NAME as a git worktree, then initialize an isolated Taskcore instance inside it")
-    .argument("<name>", "Worktree name — auto-prefixed with taskcore- if needed (created at ~/taskcore-NAME)")
-    .option("--start-point <ref>", "Remote ref to base the new branch on (env: TASKCORE_WORKTREE_START_POINT)")
+    .description(
+      "Create ~/NAME as a git worktree, then initialize an isolated Taskcore instance inside it",
+    )
+    .argument(
+      "<name>",
+      "Worktree name — auto-prefixed with taskcore- if needed (created at ~/taskcore-NAME)",
+    )
+    .option(
+      "--start-point <ref>",
+      "Remote ref to base the new branch on (env: TASKCORE_WORKTREE_START_POINT)",
+    )
     .option("--instance <id>", "Explicit isolated instance id")
-    .option("--home <path>", `Home root for worktree instances (env: TASKCORE_WORKTREES_DIR, default: ${DEFAULT_WORKTREE_HOME})`)
+    .option(
+      "--home <path>",
+      `Home root for worktree instances (env: TASKCORE_WORKTREES_DIR, default: ${DEFAULT_WORKTREE_HOME})`,
+    )
     .option("--from-config <path>", "Source config.json to seed from")
-    .option("--from-data-dir <path>", "Source TASKCORE_HOME used when deriving the source config")
-    .option("--from-instance <id>", "Source instance id when deriving the source config", "default")
-    .option("--server-port <port>", "Preferred server port", (value) => Number(value))
-    .option("--db-port <port>", "Preferred embedded Postgres port", (value) => Number(value))
-    .option("--seed-mode <mode>", "Seed profile: minimal or full (default: minimal)", "minimal")
-    .option("--preserve-live-work", "Do not quarantine copied agent work or workspace runtime services in the seeded worktree", false)
+    .option(
+      "--from-data-dir <path>",
+      "Source TASKCORE_HOME used when deriving the source config",
+    )
+    .option(
+      "--from-instance <id>",
+      "Source instance id when deriving the source config",
+      "default",
+    )
+    .option("--server-port <port>", "Preferred server port", (value) =>
+      Number(value),
+    )
+    .option("--db-port <port>", "Preferred embedded Postgres port", (value) =>
+      Number(value),
+    )
+    .option(
+      "--seed-mode <mode>",
+      "Seed profile: minimal or full (default: minimal)",
+      "minimal",
+    )
+    .option(
+      "--preserve-live-work",
+      "Do not quarantine copied agent work or workspace runtime services in the seeded worktree",
+      false,
+    )
     .option("--no-seed", "Skip database seeding from the source instance")
-    .option("--empty", "Create an empty instance without immediate or deferred database copying", false)
-    .option("--force", "Replace existing repo-local config and isolated instance data", false)
+    .option(
+      "--empty",
+      "Create an empty instance without immediate or deferred database copying",
+      false,
+    )
+    .option(
+      "--force",
+      "Replace existing repo-local config and isolated instance data",
+      false,
+    )
     .action(worktreeMakeCommand);
 
   worktree
     .command("init")
-    .description("Create repo-local config/env and an isolated instance for this worktree")
+    .description(
+      "Create repo-local config/env and an isolated instance for this worktree",
+    )
     .option("--name <name>", "Display name used to derive the instance id")
     .option("--instance <id>", "Explicit isolated instance id")
-    .option("--home <path>", `Home root for worktree instances (env: TASKCORE_WORKTREES_DIR, default: ${DEFAULT_WORKTREE_HOME})`)
+    .option(
+      "--home <path>",
+      `Home root for worktree instances (env: TASKCORE_WORKTREES_DIR, default: ${DEFAULT_WORKTREE_HOME})`,
+    )
     .option("--from-config <path>", "Source config.json to seed from")
-    .option("--from-data-dir <path>", "Source TASKCORE_HOME used when deriving the source config")
-    .option("--from-instance <id>", "Source instance id when deriving the source config", "default")
-    .option("--server-port <port>", "Preferred server port", (value) => Number(value))
-    .option("--db-port <port>", "Preferred embedded Postgres port", (value) => Number(value))
-    .option("--seed-mode <mode>", "Seed profile: minimal or full (default: minimal)", "minimal")
-    .option("--preserve-live-work", "Do not quarantine copied agent work or workspace runtime services in the seeded worktree", false)
+    .option(
+      "--from-data-dir <path>",
+      "Source TASKCORE_HOME used when deriving the source config",
+    )
+    .option(
+      "--from-instance <id>",
+      "Source instance id when deriving the source config",
+      "default",
+    )
+    .option("--server-port <port>", "Preferred server port", (value) =>
+      Number(value),
+    )
+    .option("--db-port <port>", "Preferred embedded Postgres port", (value) =>
+      Number(value),
+    )
+    .option(
+      "--seed-mode <mode>",
+      "Seed profile: minimal or full (default: minimal)",
+      "minimal",
+    )
+    .option(
+      "--preserve-live-work",
+      "Do not quarantine copied agent work or workspace runtime services in the seeded worktree",
+      false,
+    )
     .option("--no-seed", "Skip database seeding from the source instance")
-    .option("--empty", "Create an empty instance without immediate or deferred database copying", false)
-    .option("--force", "Replace existing repo-local config and isolated instance data", false)
+    .option(
+      "--empty",
+      "Create an empty instance without immediate or deferred database copying",
+      false,
+    )
+    .option(
+      "--force",
+      "Replace existing repo-local config and isolated instance data",
+      false,
+    )
     .action(worktreeInitCommand);
 
   worktree
     .command("env")
-    .description("Print shell exports for the current worktree-local Taskcore instance")
+    .description(
+      "Print shell exports for the current worktree-local Taskcore instance",
+    )
     .option("-c, --config <path>", "Path to config file")
     .option("--json", "Print JSON instead of shell exports")
     .action(worktreeEnvCommand);
 
   worktree
     .command("ensure-seeded")
-    .description("Seed a seed-pending worktree database exactly once from its source instance")
+    .description(
+      "Seed a seed-pending worktree database exactly once from its source instance",
+    )
     .option("-c, --config <path>", "Path to the target worktree config file")
-    .option("--from-config <path>", "Source config.json to seed from (defaults to the seed-pending marker)")
-    .option("--from-data-dir <path>", "Source TASKCORE_HOME used when deriving the source config")
-    .option("--from-instance <id>", "Source instance id when deriving the source config")
-    .option("--preserve-live-work", "Do not quarantine copied agent work or workspace runtime services", false)
+    .option(
+      "--from-config <path>",
+      "Source config.json to seed from (defaults to the seed-pending marker)",
+    )
+    .option(
+      "--from-data-dir <path>",
+      "Source TASKCORE_HOME used when deriving the source config",
+    )
+    .option(
+      "--from-instance <id>",
+      "Source instance id when deriving the source config",
+    )
+    .option(
+      "--preserve-live-work",
+      "Do not quarantine copied agent work or workspace runtime services",
+      false,
+    )
     .action(worktreeEnsureSeededCommand);
 
   program
     .command("worktree:list")
-    .description("List git worktrees visible from this repo and whether they look like Taskcore worktrees")
+    .description(
+      "List git worktrees visible from this repo and whether they look like Taskcore worktrees",
+    )
     .option("--json", "Print JSON instead of text output")
     .action(worktreeListCommand);
 
   program
     .command("worktree:merge-history")
-    .description("Preview or import issue/comment history from another worktree into the current instance")
-    .argument("[source]", "Optional source worktree path, directory name, or branch name (back-compat alias for --from)")
-    .option("--from <worktree>", "Source worktree path, directory name, branch name, or current")
-    .option("--to <worktree>", "Target worktree path, directory name, branch name, or current (defaults to current)")
-    .option("--company <id-or-prefix>", "Shared company id or issue prefix inside the chosen source/target instances")
-    .option("--scope <items>", "Comma-separated scopes to import (issues, comments)", "issues,comments")
+    .description(
+      "Preview or import issue/comment history from another worktree into the current instance",
+    )
+    .argument(
+      "[source]",
+      "Optional source worktree path, directory name, or branch name (back-compat alias for --from)",
+    )
+    .option(
+      "--from <worktree>",
+      "Source worktree path, directory name, branch name, or current",
+    )
+    .option(
+      "--to <worktree>",
+      "Target worktree path, directory name, branch name, or current (defaults to current)",
+    )
+    .option(
+      "--company <id-or-prefix>",
+      "Shared company id or issue prefix inside the chosen source/target instances",
+    )
+    .option(
+      "--scope <items>",
+      "Comma-separated scopes to import (issues, comments)",
+      "issues,comments",
+    )
     .option("--apply", "Apply the import after previewing the plan", false)
     .option("--dry", "Preview only and do not import anything", false)
-    .option("--yes", "Skip the interactive confirmation prompt when applying", false)
+    .option(
+      "--yes",
+      "Skip the interactive confirmation prompt when applying",
+      false,
+    )
     .action(worktreeMergeHistoryCommand);
 
   worktree
     .command("reseed")
-    .description("Re-seed an existing worktree-local instance from another Taskcore instance or worktree")
-    .option("--from <worktree>", "Source worktree path, directory name, branch name, or current")
-    .option("--to <worktree>", "Target worktree path, directory name, branch name, or current (defaults to current)")
+    .description(
+      "Re-seed an existing worktree-local instance from another Taskcore instance or worktree",
+    )
+    .option(
+      "--from <worktree>",
+      "Source worktree path, directory name, branch name, or current",
+    )
+    .option(
+      "--to <worktree>",
+      "Target worktree path, directory name, branch name, or current (defaults to current)",
+    )
     .option("--from-config <path>", "Source config.json to seed from")
-    .option("--from-data-dir <path>", "Source TASKCORE_HOME used when deriving the source config")
-    .option("--from-instance <id>", "Source instance id when deriving the source config")
-    .option("--seed-mode <mode>", "Seed profile: minimal or full (default: full)", "full")
-    .option("--preserve-live-work", "Do not quarantine copied agent work or workspace runtime services in the seeded worktree", false)
+    .option(
+      "--from-data-dir <path>",
+      "Source TASKCORE_HOME used when deriving the source config",
+    )
+    .option(
+      "--from-instance <id>",
+      "Source instance id when deriving the source config",
+    )
+    .option(
+      "--seed-mode <mode>",
+      "Seed profile: minimal or full (default: full)",
+      "full",
+    )
+    .option(
+      "--preserve-live-work",
+      "Do not quarantine copied agent work or workspace runtime services in the seeded worktree",
+      false,
+    )
     .option("--yes", "Skip the destructive confirmation prompt", false)
-    .option("--allow-live-target", "Override the guard that requires the target worktree DB to be stopped first", false)
-    .option("--backup-target", "Retain a recoverable full backup of the isolated target DB before reseeding", false)
+    .option(
+      "--allow-live-target",
+      "Override the guard that requires the target worktree DB to be stopped first",
+      false,
+    )
+    .option(
+      "--backup-target",
+      "Retain a recoverable full backup of the isolated target DB before reseeding",
+      false,
+    )
     .action(worktreeReseedCommand);
 
   worktree
     .command("repair")
-    .description("Create or repair a linked worktree-local Taskcore instance without touching the primary checkout")
-    .option("--branch <name>", "Existing branch/worktree selector to repair, or a branch name to create under .taskcore/worktrees")
-    .option("--home <path>", `Home root for worktree instances (env: TASKCORE_WORKTREES_DIR, default: ${DEFAULT_WORKTREE_HOME})`)
+    .description(
+      "Create or repair a linked worktree-local Taskcore instance without touching the primary checkout",
+    )
+    .option(
+      "--branch <name>",
+      "Existing branch/worktree selector to repair, or a branch name to create under .taskcore/worktrees",
+    )
+    .option(
+      "--home <path>",
+      `Home root for worktree instances (env: TASKCORE_WORKTREES_DIR, default: ${DEFAULT_WORKTREE_HOME})`,
+    )
     .option("--from-config <path>", "Source config.json to seed from")
-    .option("--from-data-dir <path>", "Source TASKCORE_HOME used when deriving the source config")
-    .option("--from-instance <id>", "Source instance id when deriving the source config (default: default)")
-    .option("--seed-mode <mode>", "Seed profile: minimal or full (default: minimal)", "minimal")
-    .option("--preserve-live-work", "Do not quarantine copied agent work or workspace runtime services in the seeded worktree", false)
-    .option("--no-seed", "Repair metadata only and skip reseeding when bootstrapping a missing worktree config", false)
-    .option("--allow-live-target", "Override the guard that requires the target worktree DB to be stopped first", false)
+    .option(
+      "--from-data-dir <path>",
+      "Source TASKCORE_HOME used when deriving the source config",
+    )
+    .option(
+      "--from-instance <id>",
+      "Source instance id when deriving the source config (default: default)",
+    )
+    .option(
+      "--seed-mode <mode>",
+      "Seed profile: minimal or full (default: minimal)",
+      "minimal",
+    )
+    .option(
+      "--preserve-live-work",
+      "Do not quarantine copied agent work or workspace runtime services in the seeded worktree",
+      false,
+    )
+    .option(
+      "--no-seed",
+      "Repair metadata only and skip reseeding when bootstrapping a missing worktree config",
+      false,
+    )
+    .option(
+      "--allow-live-target",
+      "Override the guard that requires the target worktree DB to be stopped first",
+      false,
+    )
     .action(worktreeRepairCommand);
 
   program
     .command("worktree:cleanup")
-    .description("Safely remove a worktree, its branch, and its isolated instance data")
-    .argument("<name>", "Worktree name — auto-prefixed with taskcore- if needed")
-    .option("--instance <id>", "Explicit instance id (if different from the worktree name)")
-    .option("--home <path>", `Home root for worktree instances (env: TASKCORE_WORKTREES_DIR, default: ${DEFAULT_WORKTREE_HOME})`)
-    .option("--force", "Bypass safety checks (uncommitted changes, unique commits)", false)
+    .description(
+      "Safely remove a worktree, its branch, and its isolated instance data",
+    )
+    .argument(
+      "<name>",
+      "Worktree name — auto-prefixed with taskcore- if needed",
+    )
+    .option(
+      "--instance <id>",
+      "Explicit instance id (if different from the worktree name)",
+    )
+    .option(
+      "--home <path>",
+      `Home root for worktree instances (env: TASKCORE_WORKTREES_DIR, default: ${DEFAULT_WORKTREE_HOME})`,
+    )
+    .option(
+      "--force",
+      "Bypass safety checks (uncommitted changes, unique commits)",
+      false,
+    )
     .action(worktreeCleanupCommand);
 }

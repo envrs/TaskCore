@@ -23,24 +23,29 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
   if (!trimmed) return null;
   try {
     const parsed = JSON.parse(trimmed);
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+      return null;
     return parsed as Record<string, unknown>;
   } catch {
     return null;
   }
 }
 
-export function buildCodexLocalConfig(v: CreateConfigValues): Record<string, unknown> {
+export function buildCodexLocalConfig(
+  v: CreateConfigValues,
+): Record<string, unknown> {
   const ac: Record<string, unknown> = {};
   if (v.cwd) ac.cwd = v.cwd;
   if (v.instructionsFilePath) ac.instructionsFilePath = v.instructionsFilePath;
   if (v.model) ac.model = v.model;
   if (v.thinkingEffort) ac.modelReasoningEffort = v.thinkingEffort;
-  if (v.codexEngine === "cli" || v.codexEngine === "acp") ac.engine = v.codexEngine;
+  if (v.codexEngine === "cli" || v.codexEngine === "acp")
+    ac.engine = v.codexEngine;
   if (v.codexEngine === "acp") {
     if (v.codexAcpAgentCommand) ac.agentCommand = v.codexAcpAgentCommand;
     ac.mode = v.codexAcpMode ?? "persistent";
-    ac.nonInteractivePermissions = v.codexAcpNonInteractivePermissions ?? "deny";
+    ac.nonInteractivePermissions =
+      v.codexAcpNonInteractivePermissions ?? "deny";
     if (v.codexAcpStateDir) ac.stateDir = v.codexAcpStateDir;
     ac.warmHandleIdleMs = v.codexAcpWarmHandleIdleMs ?? 0;
   }
@@ -58,8 +63,12 @@ export function buildCodexLocalConfig(v: CreateConfigValues): Record<string, unk
     ac.workspaceStrategy = {
       type: "git_worktree",
       ...(v.workspaceBaseRef ? { baseRef: v.workspaceBaseRef } : {}),
-      ...(v.workspaceBranchTemplate ? { branchTemplate: v.workspaceBranchTemplate } : {}),
-      ...(v.worktreeParentDir ? { worktreeParentDir: v.worktreeParentDir } : {}),
+      ...(v.workspaceBranchTemplate
+        ? { branchTemplate: v.workspaceBranchTemplate }
+        : {}),
+      ...(v.worktreeParentDir
+        ? { worktreeParentDir: v.worktreeParentDir }
+        : {}),
     };
   }
   const runtimeServices = parseJsonObject(v.runtimeServicesJson ?? "");
@@ -72,9 +81,13 @@ export function buildCodexLocalConfig(v: CreateConfigValues): Record<string, unk
 }
 
 /** Build a provider profile accepted by the experimental Rust runner. */
-export function buildTaskcoreRunnerConfig(v: CreateConfigValues): Record<string, unknown> {
+export function buildTaskcoreRunnerConfig(
+  v: CreateConfigValues,
+): Record<string, unknown> {
   const config = buildCodexLocalConfig(v);
-  const schemaValues = normalizeLegacyRunnerProvider({ ...(v.adapterSchemaValues ?? {}) });
+  const schemaValues = normalizeLegacyRunnerProvider({
+    ...(v.adapterSchemaValues ?? {}),
+  });
   for (const unsupportedKey of [
     "engine",
     "agentCommand",
@@ -98,31 +111,56 @@ export function buildTaskcoreRunnerConfig(v: CreateConfigValues): Record<string,
     ? providerCandidate
     : "codex";
   if (provider === "openai_dot") {
-    return { provider, lifecycleMode: "per_turn", allowUnmeteredProvider: schemaValues.allowUnmeteredProvider === true, dotWorkspaceAccess: schemaValues.dotWorkspaceAccess === true, dotAttachmentAccess: schemaValues.dotAttachmentAccess === true,
-      ...(typeof schemaValues.dotBindingId === "string" ? { dotBindingId: schemaValues.dotBindingId } : {}) };
+    return {
+      provider,
+      lifecycleMode: "per_turn",
+      allowUnmeteredProvider: schemaValues.allowUnmeteredProvider === true,
+      dotWorkspaceAccess: schemaValues.dotWorkspaceAccess === true,
+      dotAttachmentAccess: schemaValues.dotAttachmentAccess === true,
+      ...(typeof schemaValues.dotBindingId === "string"
+        ? { dotBindingId: schemaValues.dotBindingId }
+        : {}),
+    };
   }
-  const selectedAcpxProfile = TASKCORE_RUNNER_ACPX_PROFILES.find(profile => profile.value === schemaValues.acpxAgent);
-  if (provider === "acpx" && selectedAcpxProfile && !selectedAcpxProfile.qualified) {
-    throw new Error(`${selectedAcpxProfile.label} is not enabled for production`);
+  const selectedAcpxProfile = TASKCORE_RUNNER_ACPX_PROFILES.find(
+    (profile) => profile.value === schemaValues.acpxAgent,
+  );
+  if (
+    provider === "acpx" &&
+    selectedAcpxProfile &&
+    !selectedAcpxProfile.qualified
+  ) {
+    throw new Error(
+      `${selectedAcpxProfile.label} is not enabled for production`,
+    );
   }
   const acpxAgent = selectedAcpxProfile?.value ?? "claude";
-  const cursorMode = resolveTaskcoreRunnerCursorMode(provider, acpxAgent, schemaValues.acpxSessionMode);
+  const cursorMode = resolveTaskcoreRunnerCursorMode(
+    provider,
+    acpxAgent,
+    schemaValues.acpxSessionMode,
+  );
 
-  const schemaModel = typeof schemaValues.model === "string"
-    ? schemaValues.model.trim()
-    : "";
-  const configuredModel = typeof config.model === "string"
-    ? config.model.trim()
-    : "";
-  if (provider === "acpx" && acpxAgent === "cursor" && !configuredModel && !schemaModel) {
+  const schemaModel =
+    typeof schemaValues.model === "string" ? schemaValues.model.trim() : "";
+  const configuredModel =
+    typeof config.model === "string" ? config.model.trim() : "";
+  if (
+    provider === "acpx" &&
+    acpxAgent === "cursor" &&
+    !configuredModel &&
+    !schemaModel
+  ) {
     throw new Error(`${acpxAgent} requires an explicit provider model`);
   }
-  const managedProfileId = typeof schemaValues.managedProfileId === "string"
-    ? schemaValues.managedProfileId.trim()
-    : "";
-  const agentCoreProfileId = typeof schemaValues.agentCoreProfileId === "string"
-    ? schemaValues.agentCoreProfileId.trim()
-    : "";
+  const managedProfileId =
+    typeof schemaValues.managedProfileId === "string"
+      ? schemaValues.managedProfileId.trim()
+      : "";
+  const agentCoreProfileId =
+    typeof schemaValues.agentCoreProfileId === "string"
+      ? schemaValues.agentCoreProfileId.trim()
+      : "";
   const maxSessionListCostUsd = Number(schemaValues.maxSessionListCostUsd ?? 1);
   const maxEstimatedSessionCostUsd = Number(
     schemaValues.maxEstimatedSessionCostUsd ?? 1,
@@ -139,10 +177,10 @@ export function buildTaskcoreRunnerConfig(v: CreateConfigValues): Record<string,
   ) => {
     if (value === undefined || value === null || value === "") return fallback;
     if (
-      typeof value !== "number"
-      || !Number.isSafeInteger(value)
-      || value <= 0
-      || value > maximum
+      typeof value !== "number" ||
+      !Number.isSafeInteger(value) ||
+      value <= 0 ||
+      value > maximum
     ) {
       throw new Error(`${label} must be an integer between 1 and ${maximum}.`);
     }
@@ -166,7 +204,8 @@ export function buildTaskcoreRunnerConfig(v: CreateConfigValues): Record<string,
     300,
     "AWS AgentCore timeoutSeconds",
   );
-  const lifecycleCandidate = v.taskcoreRunnerLifecycleMode ?? schemaValues.lifecycleMode;
+  const lifecycleCandidate =
+    v.taskcoreRunnerLifecycleMode ?? schemaValues.lifecycleMode;
   const lifecycleMode = lifecycleCandidate === "warm" ? "warm" : "per_turn";
   const configuredIdleTimeoutMs =
     v.taskcoreRunnerIdleTimeoutMs ?? schemaValues.idleTimeoutMs;
@@ -176,9 +215,9 @@ export function buildTaskcoreRunnerConfig(v: CreateConfigValues): Record<string,
   const configuredCodexPermissionMode =
     v.adapterSchemaValues?.codexPermissionMode ?? v.codexPermissionMode;
   if (
-    provider === "codex"
-    && configuredCodexPermissionMode !== undefined
-    && configuredCodexPermissionMode !== "never"
+    provider === "codex" &&
+    configuredCodexPermissionMode !== undefined &&
+    configuredCodexPermissionMode !== "never"
   ) {
     throw new Error(
       "Taskcore Runner currently supports Codex only with codexPermissionMode set to never. Select Full auto (never ask) before saving.",
@@ -242,16 +281,22 @@ export function buildTaskcoreRunnerConfig(v: CreateConfigValues): Record<string,
     ),
     ...(provider === "opencode"
       ? {
-          model: schemaModel
-            || configuredModel
-            || "openrouter/deepseek/deepseek-v4-flash-0731",
+          model:
+            schemaModel ||
+            configuredModel ||
+            "openrouter/deepseek/deepseek-v4-flash-0731",
         }
       : {}),
     ...(provider === "acpx"
       ? {
           acpxAgent,
           ...(cursorMode === undefined ? {} : { acpxSessionMode: cursorMode }),
-          model: configuredModel || schemaModel || (acpxAgent === "grok" ? "grok-4.7" : resolveTaskcoreRunnerModel("acpx", undefined)),
+          model:
+            configuredModel ||
+            schemaModel ||
+            (acpxAgent === "grok"
+              ? "grok-4.7"
+              : resolveTaskcoreRunnerModel("acpx", undefined)),
         }
       : {}),
     ...(provider === "claude_managed"
@@ -271,12 +316,11 @@ export function buildTaskcoreRunnerConfig(v: CreateConfigValues): Record<string,
           ...(agentCoreProfileId ? { agentCoreProfileId } : {}),
           model: configuredModel || "global.anthropic.claude-sonnet-4-6",
           maxEstimatedSessionCostUsd:
-            Number.isFinite(maxEstimatedSessionCostUsd)
-              && maxEstimatedSessionCostUsd > 0
+            Number.isFinite(maxEstimatedSessionCostUsd) &&
+            maxEstimatedSessionCostUsd > 0
               ? maxEstimatedSessionCostUsd
               : 1,
-          agentCoreRetentionAcknowledged:
-            agentCoreRetentionAcknowledged,
+          agentCoreRetentionAcknowledged: agentCoreRetentionAcknowledged,
           maxIterations,
           maxOutputTokens,
           timeoutSeconds,

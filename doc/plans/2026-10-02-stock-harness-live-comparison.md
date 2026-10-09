@@ -18,32 +18,32 @@ The reductions and evaluation setup are in draft [PR #14948](https://github.com/
 
 These are recorded overall qualifications, including security and receipt failures. A credential-guard failure does not imply every behavioral matcher failed.
 
-| Profile | Model | Journey | Historical | Reduced |
-| --- | --- | --- | --- | --- |
-| `legacy-codex` | `gpt-5.6-sol` | `assigned-skill-explicit-invocation` | Pass | Pass |
-| `legacy-codex` | `gpt-5.6-sol` | `ordered-comment-continuation` | Pass | Pass |
-| `legacy-codex` | `gpt-5.6-sol` | `continuity-restart` | Pass | Pass |
-| `legacy-claude` | `claude-sonnet-4-6` | `assigned-skill-explicit-invocation` | Pass | Fail: no Taskcore document |
-| `legacy-claude` | `claude-sonnet-4-6` | `ordered-comment-continuation` | Pass | Pass |
-| `legacy-claude` | `claude-sonnet-4-6` | `continuity-restart` | Fail: chat memory | Fail: chat memory |
-| `legacy-opencode` | `openrouter/deepseek/deepseek-v4-flash-0731` | `assigned-skill-explicit-invocation` | Pass | Fail: no Taskcore document |
-| `legacy-opencode` | `openrouter/deepseek/deepseek-v4-flash-0731` | `ordered-comment-continuation` | Fail: deadline/run-start timeout | Pass |
-| `legacy-opencode` | `openrouter/deepseek/deepseek-v4-flash-0731` | `continuity-restart` | Pass | Pass |
-| `legacy-acp-codex` | `gpt-5.6-sol` | `assigned-skill-explicit-invocation` | Fail: credential guard | Fail: credential guard |
-| `legacy-acp-codex` | `gpt-5.6-sol` | `ordered-comment-continuation` | Fail: credential guard, receipt incomplete | Fail: credential guard |
-| `legacy-acp-codex` | `gpt-5.6-sol` | `continuity-restart` | Fail: credential guard, receipt incomplete | Fail: credential guard, receipt incomplete |
-| `legacy-acp-claude` | `claude-sonnet-4-6` | `assigned-skill-explicit-invocation` | Fail: credential guard | Fail: credential guard, no Taskcore document |
-| `legacy-acp-claude` | `claude-sonnet-4-6` | `ordered-comment-continuation` | Fail: credential guard, receipt incomplete | Fail: credential guard |
-| `legacy-acp-claude` | `claude-sonnet-4-6` | `continuity-restart` | Fail: credential guard, receipt incomplete | Fail: credential guard |
-| `runner-codex` | `gpt-5.6-sol` | `assigned-skill-explicit-invocation` | Pass | Pass |
-| `runner-codex` | `gpt-5.6-sol` | `ordered-comment-continuation` | Pass | Pass |
-| `runner-codex` | `gpt-5.6-sol` | `continuity-restart` | Pass | Pass |
-| `runner-acpx-claude` | `claude-sonnet-5` | `assigned-skill-explicit-invocation` | Pass | Pass |
-| `runner-acpx-claude` | `claude-sonnet-5` | `ordered-comment-continuation` | Pass | Pass |
-| `runner-acpx-claude` | `claude-sonnet-5` | `continuity-restart` | Pass | Pass |
-| `runner-opencode` | `openrouter/deepseek/deepseek-v4-flash-0731` | `assigned-skill-explicit-invocation` | Pass | Pass |
-| `runner-opencode` | `openrouter/deepseek/deepseek-v4-flash-0731` | `ordered-comment-continuation` | Fail: deadline/run-start timeout | Pass |
-| `runner-opencode` | `openrouter/deepseek/deepseek-v4-flash-0731` | `continuity-restart` | Pass | Pass |
+| Profile              | Model                                        | Journey                              | Historical                                 | Reduced                                      |
+| -------------------- | -------------------------------------------- | ------------------------------------ | ------------------------------------------ | -------------------------------------------- |
+| `legacy-codex`       | `gpt-5.6-sol`                                | `assigned-skill-explicit-invocation` | Pass                                       | Pass                                         |
+| `legacy-codex`       | `gpt-5.6-sol`                                | `ordered-comment-continuation`       | Pass                                       | Pass                                         |
+| `legacy-codex`       | `gpt-5.6-sol`                                | `continuity-restart`                 | Pass                                       | Pass                                         |
+| `legacy-claude`      | `claude-sonnet-4-6`                          | `assigned-skill-explicit-invocation` | Pass                                       | Fail: no Taskcore document                   |
+| `legacy-claude`      | `claude-sonnet-4-6`                          | `ordered-comment-continuation`       | Pass                                       | Pass                                         |
+| `legacy-claude`      | `claude-sonnet-4-6`                          | `continuity-restart`                 | Fail: chat memory                          | Fail: chat memory                            |
+| `legacy-opencode`    | `openrouter/deepseek/deepseek-v4-flash-0731` | `assigned-skill-explicit-invocation` | Pass                                       | Fail: no Taskcore document                   |
+| `legacy-opencode`    | `openrouter/deepseek/deepseek-v4-flash-0731` | `ordered-comment-continuation`       | Fail: deadline/run-start timeout           | Pass                                         |
+| `legacy-opencode`    | `openrouter/deepseek/deepseek-v4-flash-0731` | `continuity-restart`                 | Pass                                       | Pass                                         |
+| `legacy-acp-codex`   | `gpt-5.6-sol`                                | `assigned-skill-explicit-invocation` | Fail: credential guard                     | Fail: credential guard                       |
+| `legacy-acp-codex`   | `gpt-5.6-sol`                                | `ordered-comment-continuation`       | Fail: credential guard, receipt incomplete | Fail: credential guard                       |
+| `legacy-acp-codex`   | `gpt-5.6-sol`                                | `continuity-restart`                 | Fail: credential guard, receipt incomplete | Fail: credential guard, receipt incomplete   |
+| `legacy-acp-claude`  | `claude-sonnet-4-6`                          | `assigned-skill-explicit-invocation` | Fail: credential guard                     | Fail: credential guard, no Taskcore document |
+| `legacy-acp-claude`  | `claude-sonnet-4-6`                          | `ordered-comment-continuation`       | Fail: credential guard, receipt incomplete | Fail: credential guard                       |
+| `legacy-acp-claude`  | `claude-sonnet-4-6`                          | `continuity-restart`                 | Fail: credential guard, receipt incomplete | Fail: credential guard                       |
+| `runner-codex`       | `gpt-5.6-sol`                                | `assigned-skill-explicit-invocation` | Pass                                       | Pass                                         |
+| `runner-codex`       | `gpt-5.6-sol`                                | `ordered-comment-continuation`       | Pass                                       | Pass                                         |
+| `runner-codex`       | `gpt-5.6-sol`                                | `continuity-restart`                 | Pass                                       | Pass                                         |
+| `runner-acpx-claude` | `claude-sonnet-5`                            | `assigned-skill-explicit-invocation` | Pass                                       | Pass                                         |
+| `runner-acpx-claude` | `claude-sonnet-5`                            | `ordered-comment-continuation`       | Pass                                       | Pass                                         |
+| `runner-acpx-claude` | `claude-sonnet-5`                            | `continuity-restart`                 | Pass                                       | Pass                                         |
+| `runner-opencode`    | `openrouter/deepseek/deepseek-v4-flash-0731` | `assigned-skill-explicit-invocation` | Pass                                       | Pass                                         |
+| `runner-opencode`    | `openrouter/deepseek/deepseek-v4-flash-0731` | `ordered-comment-continuation`       | Fail: deadline/run-start timeout           | Pass                                         |
+| `runner-opencode`    | `openrouter/deepseek/deepseek-v4-flash-0731` | `continuity-restart`                 | Pass                                       | Pass                                         |
 
 ## Findings and next step
 
@@ -59,10 +59,10 @@ Historical public prompt retrieval is clipped in three legacy ACP cells (four in
 
 ## Timing, usage and cost
 
-| Variant | Retained cells | Pass / fail / missing | Cell duration sum | Provider duration sum | Recorded runs with tokens / with reported cost / total | Reported LLM subtotal |
-| --- | ---: | --- | ---: | ---: | --- | ---: |
-| baseline | 24 | 15 / 9 / 0 | 3250.195s | 2108.034s | 52 / 43 / 58 | $1.749425 |
-| candidate | 24 | 15 / 9 / 0 | 2804.913s | 1540.860s | 45 / 36 / 47 | $1.743151 |
+| Variant   | Retained cells | Pass / fail / missing | Cell duration sum | Provider duration sum | Recorded runs with tokens / with reported cost / total | Reported LLM subtotal |
+| --------- | -------------: | --------------------- | ----------------: | --------------------: | ------------------------------------------------------ | --------------------: |
+| baseline  |             24 | 15 / 9 / 0            |         3250.195s |             2108.034s | 52 / 43 / 58                                           |             $1.749425 |
+| candidate |             24 | 15 / 9 / 0            |         2804.913s |             1540.860s | 45 / 36 / 47                                           |             $1.743151 |
 
 For the 13 cells that pass both variants, median cell time is 85.550s historical versus 69.761s reduced; median provider time is 57.150s versus 43.862s. This excludes failures and is descriptive, not a reliable speedup estimate.
 
@@ -70,18 +70,18 @@ Provider billing is incomplete. Legacy Codex/ACP usage is unpriced in several ru
 
 ## Campaign and evidence history
 
-| Campaign | Source | Outcome / evidence |
-| --- | --- | --- |
-| [Initial diagnostic Codex](https://github.com/khulnasoft/taskcore/actions/runs/37034213743) | `a63437069` | Skill passes; predates mandatory admission. |
-| [Cold full attempt](https://github.com/khulnasoft/taskcore/actions/runs/37037105491) | `36e987246` | Missing SDK build; cancelled before provider admission. |
-| [SDK pilot](https://github.com/khulnasoft/taskcore/actions/runs/37039240025) | `4163dbfd0` | Missing daemon; stops before providers. |
-| [Daemon pilot](https://github.com/khulnasoft/taskcore/actions/runs/37040493183) | `ac6ddefb5` | Missing fake Codex fixture; stops before providers. |
-| [Complete-build Claude pilot](https://github.com/khulnasoft/taskcore/actions/runs/37041741124) | `f02d8d0df` | 537 prerequisites pass; skill document oracle fails; reported $0.175308. |
-| [Initial candidate matrix](https://github.com/khulnasoft/taskcore/actions/runs/37042856368) | `f02d8d0df` | 4 pass, 7 fail, 13 cancelled when a same-target-branch pilot superseded it. Original attempts retained. |
-| [Candidate cancelled-cell recovery](https://github.com/khulnasoft/taskcore/actions/runs/37045368302) | `f02d8d0df` | Only the 13 cancelled cells: 11 pass, 2 fail. Combined candidate has 24 results, 15 pass / 9 fail. |
-| [Historical matrix](https://github.com/khulnasoft/taskcore/actions/runs/37042864888) | `12c5433c6` | 15 pass, 8 recorded failures, one AWS-runner shutdown without result upload. |
+| Campaign                                                                                                | Source      | Outcome / evidence                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Initial diagnostic Codex](https://github.com/khulnasoft/taskcore/actions/runs/37034213743)             | `a63437069` | Skill passes; predates mandatory admission.                                                                                                           |
+| [Cold full attempt](https://github.com/khulnasoft/taskcore/actions/runs/37037105491)                    | `36e987246` | Missing SDK build; cancelled before provider admission.                                                                                               |
+| [SDK pilot](https://github.com/khulnasoft/taskcore/actions/runs/37039240025)                            | `4163dbfd0` | Missing daemon; stops before providers.                                                                                                               |
+| [Daemon pilot](https://github.com/khulnasoft/taskcore/actions/runs/37040493183)                         | `ac6ddefb5` | Missing fake Codex fixture; stops before providers.                                                                                                   |
+| [Complete-build Claude pilot](https://github.com/khulnasoft/taskcore/actions/runs/37041741124)          | `f02d8d0df` | 537 prerequisites pass; skill document oracle fails; reported $0.175308.                                                                              |
+| [Initial candidate matrix](https://github.com/khulnasoft/taskcore/actions/runs/37042856368)             | `f02d8d0df` | 4 pass, 7 fail, 13 cancelled when a same-target-branch pilot superseded it. Original attempts retained.                                               |
+| [Candidate cancelled-cell recovery](https://github.com/khulnasoft/taskcore/actions/runs/37045368302)    | `f02d8d0df` | Only the 13 cancelled cells: 11 pass, 2 fail. Combined candidate has 24 results, 15 pass / 9 fail.                                                    |
+| [Historical matrix](https://github.com/khulnasoft/taskcore/actions/runs/37042864888)                    | `12c5433c6` | 15 pass, 8 recorded failures, one AWS-runner shutdown without result upload.                                                                          |
 | [Historical interrupted-cell recovery](https://github.com/khulnasoft/taskcore/actions/runs/37048838402) | `12c5433c6` | Only legacy OpenCode ordered comments: 720.616s deadline failure; evidence and cleanup valid. Historical cohort now has 24 results, 15 pass / 9 fail. |
-| [Current packaging pilot](https://github.com/khulnasoft/taskcore/actions/runs/37044967981) | `1eb5ba420` | Attempt 1 stopped before cell/provider execution; attempt 2 passes, evidence valid and cleanup pass. |
+| [Current packaging pilot](https://github.com/khulnasoft/taskcore/actions/runs/37044967981)              | `1eb5ba420` | Attempt 1 stopped before cell/provider execution; attempt 2 passes, evidence valid and cleanup pass.                                                  |
 
 The same-target-branch workflow concurrency rule caused the candidate interruption; that orchestration mistake was acknowledged and corrected with a separate unchanged-source recovery branch. No completed model failure was retried. The historical missing cell is recovered once for a runner shutdown. Partial/failed attempts remain part of the history and unknown-spend accounting.
 

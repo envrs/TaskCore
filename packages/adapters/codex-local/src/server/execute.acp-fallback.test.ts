@@ -11,11 +11,18 @@ const {
   tempCodexHome,
 } = vi.hoisted(() => ({
   ensureAdapterExecutionTargetCommandResolvable: vi.fn(async () => undefined),
-  ensureAdapterExecutionTargetRuntimeCommandInstalled: vi.fn(async () => undefined),
+  ensureAdapterExecutionTargetRuntimeCommandInstalled: vi.fn(
+    async () => undefined,
+  ),
   executeCodexAcp: vi.fn(async () => {
-    throw new Error('Transform failed with 1 error: execute.ts:818:0: ERROR: Unexpected "<<"');
+    throw new Error(
+      'Transform failed with 1 error: execute.ts:818:0: ERROR: Unexpected "<<"',
+    );
   }),
-  prepareCodexRuntimeConfig: vi.fn(async () => ({ cleanup: vi.fn(async () => undefined), notes: [] })),
+  prepareCodexRuntimeConfig: vi.fn(async () => ({
+    cleanup: vi.fn(async () => undefined),
+    notes: [],
+  })),
   readTaskcoreRuntimeSkillEntries: vi.fn(async () => []),
   resolveAdapterExecutionTargetCommandForLogs: vi.fn(async () => "codex"),
   runAdapterExecutionTargetProcess: vi.fn(async () => ({
@@ -42,18 +49,20 @@ const {
 
 vi.mock("./acp.js", () => ({
   createCodexAcpExecutor: () => executeCodexAcp,
-  resolveCodexExecutionEngineForRun: async (ctx: { config: Record<string, unknown> }) =>
+  resolveCodexExecutionEngineForRun: async (ctx: {
+    config: Record<string, unknown>;
+  }) =>
     ctx.config.engine === "cli"
       ? { engine: "cli", explicit: true }
       : ctx.config.engine === "acp"
-      ? { engine: "acp", explicit: true }
-      : { engine: "acp", explicit: false },
+        ? { engine: "acp", explicit: true }
+        : { engine: "acp", explicit: false },
 }));
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     ensureAdapterExecutionTargetCommandResolvable,
@@ -64,9 +73,9 @@ vi.mock("@taskcore/adapter-utils/execution-target", async () => {
 });
 
 vi.mock("@taskcore/adapter-utils/server-utils", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/server-utils")>(
-    "@taskcore/adapter-utils/server-utils",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/server-utils")
+  >("@taskcore/adapter-utils/server-utils");
   return {
     ...actual,
     readTaskcoreRuntimeSkillEntries,
@@ -74,7 +83,8 @@ vi.mock("@taskcore/adapter-utils/server-utils", async () => {
 });
 
 vi.mock("./codex-home.js", async () => {
-  const actual = await vi.importActual<typeof import("./codex-home.js")>("./codex-home.js");
+  const actual =
+    await vi.importActual<typeof import("./codex-home.js")>("./codex-home.js");
   return {
     ...actual,
     evaluateCodexCredentialReadiness: vi.fn(async () => ({
@@ -85,14 +95,22 @@ vi.mock("./codex-home.js", async () => {
       sharedSourceHome: tempCodexHome,
     })),
     isManagedCodexHomePath: vi.fn(() => true),
-    prepareManagedCodexHome: vi.fn(async () => ({ status: "seeded", home: tempCodexHome })),
+    prepareManagedCodexHome: vi.fn(async () => ({
+      status: "seeded",
+      home: tempCodexHome,
+    })),
     resolveManagedCodexHomeDir: vi.fn(() => tempCodexHome),
-    seedManagedCodexHome: vi.fn(async () => ({ status: "seeded", home: tempCodexHome })),
+    seedManagedCodexHome: vi.fn(async () => ({
+      status: "seeded",
+      home: tempCodexHome,
+    })),
   };
 });
 
 vi.mock("./runtime-config.js", async () => {
-  const actual = await vi.importActual<typeof import("./runtime-config.js")>("./runtime-config.js");
+  const actual = await vi.importActual<typeof import("./runtime-config.js")>(
+    "./runtime-config.js",
+  );
   return {
     ...actual,
     prepareCodexRuntimeConfig,

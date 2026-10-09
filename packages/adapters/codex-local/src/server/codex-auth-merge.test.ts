@@ -1,5 +1,12 @@
 import { execFile as execFileCallback } from "node:child_process";
-import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,15 +38,19 @@ describe("codex home auth merge on sandbox asset extract", () => {
     lastRefresh?: string;
     marker: string;
   }): string {
-    return JSON.stringify({
-      tokens: {
-        id_token: `id-token-${input.marker}`,
-        access_token: `access-token-${input.marker}`,
-        refresh_token: `refresh-token-${input.marker}`,
-        account_id: input.accountId,
+    return JSON.stringify(
+      {
+        tokens: {
+          id_token: `id-token-${input.marker}`,
+          access_token: `access-token-${input.marker}`,
+          refresh_token: `refresh-token-${input.marker}`,
+          account_id: input.accountId,
+        },
+        ...(input.lastRefresh ? { last_refresh: input.lastRefresh } : {}),
       },
-      ...(input.lastRefresh ? { last_refresh: input.lastRefresh } : {}),
-    }, null, 2);
+      null,
+      2,
+    );
   }
 
   function apiKeyAuth(marker: string): string {
@@ -57,29 +68,54 @@ describe("codex home auth merge on sandbox asset extract", () => {
     finalMode: number;
     combinedOutput: string;
   }> {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-auth-merge-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-auth-merge-"),
+    );
     cleanupDirs.push(rootDir);
 
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     const localHomeDir = path.join(rootDir, "local-codex-home");
-    const remoteHomeDir = path.join(remoteWorkspaceDir, ".taskcore-runtime", "codex", "home");
+    const remoteHomeDir = path.join(
+      remoteWorkspaceDir,
+      ".taskcore-runtime",
+      "codex",
+      "home",
+    );
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(localHomeDir, { recursive: true });
     await mkdir(remoteHomeDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace\n",
+      "utf8",
+    );
     if (input.hostAuth !== undefined) {
-      await writeFile(path.join(localHomeDir, "auth.json"), input.hostAuth, { mode: 0o600 });
+      await writeFile(path.join(localHomeDir, "auth.json"), input.hostAuth, {
+        mode: 0o600,
+      });
     }
-    await writeFile(path.join(localHomeDir, "config.toml"), "model = \"gpt\"\n", "utf8");
+    await writeFile(
+      path.join(localHomeDir, "config.toml"),
+      'model = "gpt"\n',
+      "utf8",
+    );
     if (input.sandboxAuth !== undefined) {
-      await writeFile(path.join(remoteHomeDir, "auth.json"), input.sandboxAuth, { mode: 0o600 });
+      await writeFile(
+        path.join(remoteHomeDir, "auth.json"),
+        input.sandboxAuth,
+        { mode: 0o600 },
+      );
     }
     // A fake in-sandbox $HOME whose ~/.codex may carry the image's own login.
     const imageHomeDir = path.join(rootDir, "image-home");
     await mkdir(path.join(imageHomeDir, ".codex"), { recursive: true });
     if (input.imageAuth !== undefined) {
-      await writeFile(path.join(imageHomeDir, ".codex", "auth.json"), input.imageAuth, { mode: 0o600 });
+      await writeFile(
+        path.join(imageHomeDir, ".codex", "auth.json"),
+        input.imageAuth,
+        { mode: 0o600 },
+      );
     }
 
     const commands: string[] = [];
@@ -118,10 +154,13 @@ describe("codex home auth merge on sandbox asset extract", () => {
         for (const mapping of operation.files) {
           const bytes = await readFile(mapping.sourcePath);
           await mkdir(path.dirname(mapping.targetPath), { recursive: true });
-          await client.writeFile(mapping.targetPath, bytes.buffer.slice(
-            bytes.byteOffset,
-            bytes.byteOffset + bytes.byteLength,
-          ) as ArrayBuffer);
+          await client.writeFile(
+            mapping.targetPath,
+            bytes.buffer.slice(
+              bytes.byteOffset,
+              bytes.byteOffset + bytes.byteLength,
+            ) as ArrayBuffer,
+          );
         }
         for (const command of operation.postUploadCommands ?? []) {
           await client.run(command.command, { timeoutMs: 30_000 });
@@ -142,19 +181,24 @@ describe("codex home auth merge on sandbox asset extract", () => {
       adapterKey: "codex",
       client,
       workspaceLocalDir: localWorkspaceDir,
-      assets: [{
-        key: "home",
-        localDir: localHomeDir,
-        followSymlinks: true,
-        // The Codex inbound auth-merge rides the generic per-asset `provision`
-        // seam. This matrix drives the sandbox core directly, supplying the same
-        // contribution the codex adapter (`execute.ts`) attaches in production —
-        // proving the seam reproduces inbound behavior.
-        provision: buildCodexAuthInboundProvision(),
-      }],
+      assets: [
+        {
+          key: "home",
+          localDir: localHomeDir,
+          followSymlinks: true,
+          // The Codex inbound auth-merge rides the generic per-asset `provision`
+          // seam. This matrix drives the sandbox core directly, supplying the same
+          // contribution the codex adapter (`execute.ts`) attaches in production —
+          // proving the seam reproduces inbound behavior.
+          provision: buildCodexAuthInboundProvision(),
+        },
+      ],
     });
 
-    const commandText = commands.find((command) => command.includes("codex-auth-merge-extract.sh")) ?? "";
+    const commandText =
+      commands.find((command) =>
+        command.includes("codex-auth-merge-extract.sh"),
+      ) ?? "";
     const finalAuthPath = path.join(remoteHomeDir, "auth.json");
     return {
       commandText,
@@ -188,8 +232,16 @@ describe("codex home auth merge on sandbox asset extract", () => {
     expect(result.commandText).not.toContain("node -");
     expect(result.commandText).not.toContain("target_tmp=");
     expect(result.commandText).not.toContain("mv -f");
-    expect(result.writtenPaths.some((entry) => entry.endsWith("codex-auth-merge-extract.sh"))).toBe(true);
-    expect(result.writtenPaths.some((entry) => entry.endsWith("codex-auth-merge-decision.cjs"))).toBe(true);
+    expect(
+      result.writtenPaths.some((entry) =>
+        entry.endsWith("codex-auth-merge-extract.sh"),
+      ),
+    ).toBe(true);
+    expect(
+      result.writtenPaths.some((entry) =>
+        entry.endsWith("codex-auth-merge-decision.cjs"),
+      ),
+    ).toBe(true);
   });
 
   it("installs same-account host auth when host last_refresh is strictly newer", async () => {
@@ -448,16 +500,27 @@ describe("codex home auth merge on sandbox asset extract", () => {
   });
 
   it("routes the Codex home asset through a single native syncIn operation whose post-command is the auth-merge (#4, C5/C6)", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-native-route-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-native-route-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     const localHomeDir = path.join(rootDir, "local-codex-home");
-    const remoteHomeDir = path.join(remoteWorkspaceDir, ".taskcore-runtime", "codex", "home");
+    const remoteHomeDir = path.join(
+      remoteWorkspaceDir,
+      ".taskcore-runtime",
+      "codex",
+      "home",
+    );
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(localHomeDir, { recursive: true });
     await mkdir(remoteHomeDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace\n",
+      "utf8",
+    );
     // Host credential is strictly newer → wins the merge (same identity).
     const hostAuth = subscriptionAuth({
       accountId: "acct-native",
@@ -469,9 +532,17 @@ describe("codex home auth merge on sandbox asset extract", () => {
       lastRefresh: "2026-07-10T01:00:00Z",
       marker: "sandbox-older-SENTINEL",
     });
-    await writeFile(path.join(localHomeDir, "auth.json"), hostAuth, { mode: 0o600 });
-    await writeFile(path.join(localHomeDir, "config.toml"), "model = \"gpt\"\n", "utf8");
-    await writeFile(path.join(remoteHomeDir, "auth.json"), sandboxAuth, { mode: 0o600 });
+    await writeFile(path.join(localHomeDir, "auth.json"), hostAuth, {
+      mode: 0o600,
+    });
+    await writeFile(
+      path.join(localHomeDir, "config.toml"),
+      'model = "gpt"\n',
+      "utf8",
+    );
+    await writeFile(path.join(remoteHomeDir, "auth.json"), sandboxAuth, {
+      mode: 0o600,
+    });
 
     // A native runner: the orchestrator must make NO direct writeFile/run — every
     // byte (incl. auth.json) rides `syncIn` (native uploadFiles), and the merge
@@ -508,7 +579,9 @@ describe("codex home auth merge on sandbox asset extract", () => {
           if (mapping.mode != null) await lstat(mapping.targetPath);
         }
         for (const command of operation.postUploadCommands ?? []) {
-          await execFile("sh", ["-c", command.command], { maxBuffer: 32 * 1024 * 1024 });
+          await execFile("sh", ["-c", command.command], {
+            maxBuffer: 32 * 1024 * 1024,
+          });
         }
       }
       return { operations: [] };
@@ -526,12 +599,14 @@ describe("codex home auth merge on sandbox asset extract", () => {
       adapterKey: "codex",
       client,
       workspaceLocalDir: localWorkspaceDir,
-      assets: [{
-        key: "home",
-        localDir: localHomeDir,
-        followSymlinks: true,
-        provision: buildCodexAuthInboundProvision(),
-      }],
+      assets: [
+        {
+          key: "home",
+          localDir: localHomeDir,
+          followSymlinks: true,
+          provision: buildCodexAuthInboundProvision(),
+        },
+      ],
     });
 
     // 0 direct exec/writeFile — pure native delegation.
@@ -541,16 +616,22 @@ describe("codex home auth merge on sandbox asset extract", () => {
     // One operation carries the home asset: the home tar + the two merge scripts
     // as `files` mappings, and the auth-merge as the ordered post-upload command.
     const homeOp = captured.find((op) =>
-      op.files.some((mapping) => mapping.targetPath.endsWith("home-upload.tar")),
+      op.files.some((mapping) =>
+        mapping.targetPath.endsWith("home-upload.tar"),
+      ),
     );
     expect(homeOp).toBeDefined();
-    const targets = homeOp!.files.map((mapping) => path.posix.basename(mapping.targetPath)).sort();
+    const targets = homeOp!.files
+      .map((mapping) => path.posix.basename(mapping.targetPath))
+      .sort();
     expect(targets).toEqual([
       "codex-auth-merge-decision.cjs",
       "codex-auth-merge-extract.sh",
       "home-upload.tar",
     ]);
-    expect(homeOp!.files.every((mapping) => mapping.kind === "file")).toBe(true);
+    expect(homeOp!.files.every((mapping) => mapping.kind === "file")).toBe(
+      true,
+    );
     expect(homeOp!.postUploadCommands).toHaveLength(1);
     // The post-command is the auth-merge script, NOT a plain `tar -xf` (C6).
     const mergeCommand = homeOp!.postUploadCommands![0].command;
@@ -623,7 +704,9 @@ describe("codex-auth-merge-decision predicate (source/destination)", () => {
     sourceAuth: string;
     destinationAuth: string;
   }): Promise<{ code: number; output: string }> {
-    const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-auth-decision-"));
+    const dir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-auth-decision-"),
+    );
     cleanupDirs.push(dir);
     const sourcePath = path.join(dir, "source-auth.json");
     const destinationPath = path.join(dir, "destination-auth.json");
@@ -637,9 +720,14 @@ describe("codex-auth-merge-decision predicate (source/destination)", () => {
       const result = await execFile("node", args);
       return { code: 0, output: `${result.stdout}\n${result.stderr}` };
     } catch (error) {
-      const failure = error as { code?: unknown; stdout?: string; stderr?: string };
+      const failure = error as {
+        code?: unknown;
+        stdout?: string;
+        stderr?: string;
+      };
       const output = `${failure.stdout ?? ""}\n${failure.stderr ?? ""}`;
-      if (typeof failure.code === "number") return { code: failure.code, output };
+      if (typeof failure.code === "number")
+        return { code: failure.code, output };
       throw error;
     }
   }
@@ -647,35 +735,63 @@ describe("codex-auth-merge-decision predicate (source/destination)", () => {
   const NEWER = "2026-07-09T02:00:00Z";
   const OLDER = "2026-07-09T01:00:00Z";
 
-  const cases: { name: string; sourceAuth: string; destinationAuth: string; expected: number }[] = [
+  const cases: {
+    name: string;
+    sourceAuth: string;
+    destinationAuth: string;
+    expected: number;
+  }[] = [
     {
       name: "source strictly newer, same identity → use source",
       sourceAuth: subscriptionAuth({ accountId: "acct", lastRefresh: NEWER }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+      }),
       expected: USE_SOURCE,
     },
     {
       name: "equal last_refresh (tie) → keep destination",
-      sourceAuth: subscriptionAuth({ accountId: "acct", lastRefresh: NEWER, marker: "src" }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: NEWER, marker: "dst" }),
+      sourceAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: NEWER,
+        marker: "src",
+      }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: NEWER,
+        marker: "dst",
+      }),
       expected: KEEP_DESTINATION,
     },
     {
       name: "source older → keep destination",
       sourceAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: NEWER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: NEWER,
+      }),
       expected: KEEP_DESTINATION,
     },
     {
       name: "identity mismatch even when source newer → keep destination",
-      sourceAuth: subscriptionAuth({ accountId: "acct-source", lastRefresh: NEWER }),
-      destinationAuth: subscriptionAuth({ accountId: "acct-destination", lastRefresh: OLDER }),
+      sourceAuth: subscriptionAuth({
+        accountId: "acct-source",
+        lastRefresh: NEWER,
+      }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct-destination",
+        lastRefresh: OLDER,
+      }),
       expected: KEEP_DESTINATION,
     },
     {
       name: "source last_refresh missing → keep destination",
       sourceAuth: subscriptionAuth({ accountId: "acct" }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+      }),
       expected: KEEP_DESTINATION,
     },
     {
@@ -692,20 +808,32 @@ describe("codex-auth-merge-decision predicate (source/destination)", () => {
     },
     {
       name: "source last_refresh unparseable → keep destination",
-      sourceAuth: subscriptionAuth({ accountId: "acct", lastRefresh: "not-a-date" }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
+      sourceAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: "not-a-date",
+      }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+      }),
       expected: KEEP_DESTINATION,
     },
     {
       name: "destination last_refresh unparseable → keep destination",
       sourceAuth: subscriptionAuth({ accountId: "acct", lastRefresh: NEWER }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: "not-a-date" }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: "not-a-date",
+      }),
       expected: KEEP_DESTINATION,
     },
     {
       name: "source apikey → keep destination",
       sourceAuth: apiKeyAuth("source"),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+      }),
       expected: KEEP_DESTINATION,
     },
     {
@@ -729,7 +857,10 @@ describe("codex-auth-merge-decision predicate (source/destination)", () => {
     {
       name: "source unusable JSON → keep destination",
       sourceAuth: "{not valid json",
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+      }),
       expected: KEEP_DESTINATION,
     },
     {
@@ -745,9 +876,14 @@ describe("codex-auth-merge-decision predicate (source/destination)", () => {
       name: "source last_refresh implausibly far in the future → keep destination",
       sourceAuth: subscriptionAuth({
         accountId: "acct",
-        lastRefresh: new Date(Date.now() + 400 * 24 * 60 * 60 * 1000).toISOString(),
+        lastRefresh: new Date(
+          Date.now() + 400 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
       }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+      }),
       expected: IMPLAUSIBLE_LAST_REFRESH,
     },
   ];
@@ -769,7 +905,10 @@ describe("codex-auth-merge-decision predicate (source/destination)", () => {
         lastRefresh: NEWER,
         marker: "SECRET-SENTINEL",
       }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+      }),
     });
     expect(result.code).toBe(USE_SOURCE);
     expect(result.output).not.toContain("SENTINEL");
@@ -779,10 +918,15 @@ describe("codex-auth-merge-decision predicate (source/destination)", () => {
     const result = await runDecision({
       sourceAuth: subscriptionAuth({
         accountId: "acct",
-        lastRefresh: new Date(Date.now() + 400 * 24 * 60 * 60 * 1000).toISOString(),
+        lastRefresh: new Date(
+          Date.now() + 400 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
         marker: "SECRET-SENTINEL",
       }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+      }),
     });
     expect(result.code).toBe(IMPLAUSIBLE_LAST_REFRESH);
     expect(result.output).not.toContain("SENTINEL");

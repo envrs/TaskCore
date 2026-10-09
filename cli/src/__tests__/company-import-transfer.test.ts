@@ -22,7 +22,9 @@ const ORIGINAL_ENV = { ...process.env };
 const tempDirs: string[] = [];
 
 async function makeTempDir(): Promise<string> {
-  const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-company-import-transfer-"));
+  const dir = await mkdtemp(
+    path.join(os.tmpdir(), "taskcore-company-import-transfer-"),
+  );
   tempDirs.push(dir);
   return dir;
 }
@@ -56,7 +58,9 @@ describe("buildImportTransferManifest", () => {
       {
         index: 0,
         byteSize: IMPORT_TRANSFER_PART_SIZE_BYTES,
-        sha256: sha256Hex(zipBytes.subarray(0, IMPORT_TRANSFER_PART_SIZE_BYTES)),
+        sha256: sha256Hex(
+          zipBytes.subarray(0, IMPORT_TRANSFER_PART_SIZE_BYTES),
+        ),
       },
       {
         index: 1,
@@ -76,7 +80,8 @@ function buildDeflateZip(entryPath: string, text: string): Uint8Array {
   let crc = 0xffffffff;
   for (const byte of raw) {
     crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) crc = (crc & 1) === 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
+    for (let bit = 0; bit < 8; bit += 1)
+      crc = (crc & 1) === 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
   }
   crc = (crc ^ 0xffffffff) >>> 0;
   const local = Buffer.alloc(30 + name.length);
@@ -111,7 +116,6 @@ function buildDeflateZip(entryPath: string, text: string): Uint8Array {
 }
 
 describe("resolveChunkedImportZip", () => {
-
   it("returns null for a zip at or under the threshold", async () => {
     const dir = await makeTempDir();
     const zipPath = path.join(dir, "small.zip");
@@ -126,7 +130,10 @@ describe("resolveChunkedImportZip", () => {
     // ~64 MB of repetitive text DEFLATEs to a tiny file: far under the raw
     // 48 MB threshold, but the inline body would carry the inflated entries,
     // so the estimated request size sends the zip down the chunked path.
-    const zipBytes = buildDeflateZip("dense-package/NOTES.md", "taskcore agent docs\n".repeat(3_200_000));
+    const zipBytes = buildDeflateZip(
+      "dense-package/NOTES.md",
+      "taskcore agent docs\n".repeat(3_200_000),
+    );
     await writeFile(zipPath, zipBytes);
 
     const resolved = await resolveChunkedImportZip(zipPath);
@@ -143,7 +150,10 @@ describe("resolveChunkedImportZip", () => {
     // ~9 MB of blob bytes: estimated inline ~12 MB — fine for the generic
     // import path (64 MB parser) but over the existing-company path's
     // default 10 MB parser, so only the existing-target threshold chunks it.
-    await writeFile(path.join(packageDir, "blobs", "1a2b3c4d"), Buffer.alloc(9 * 1024 * 1024, 5));
+    await writeFile(
+      path.join(packageDir, "blobs", "1a2b3c4d"),
+      Buffer.alloc(9 * 1024 * 1024, 5),
+    );
 
     expect(await resolveChunkedImportZip(packageDir)).toBeNull();
     const chunked = await resolveChunkedImportZip(
@@ -157,7 +167,10 @@ describe("resolveChunkedImportZip", () => {
   it("keeps a small zip inline when its entries stay under the estimated threshold", async () => {
     const dir = await makeTempDir();
     const zipPath = path.join(dir, "modest-package.zip");
-    await writeFile(zipPath, buildDeflateZip("modest-package/COMPANY.md", "# Company\n"));
+    await writeFile(
+      zipPath,
+      buildDeflateZip("modest-package/COMPANY.md", "# Company\n"),
+    );
 
     expect(await resolveChunkedImportZip(zipPath)).toBeNull();
   });
@@ -201,7 +214,10 @@ describe("resolveChunkedImportZip", () => {
     expect(resolved).not.toBeNull();
     expect(resolved!.rootPath).toBe("binary-package");
     const archive = await readZipArchive(resolved!.zipBytes);
-    expect(Object.keys(archive.files).sort()).toEqual(["COMPANY.md", "blobs/9a1b2c3d"]);
+    expect(Object.keys(archive.files).sort()).toEqual([
+      "COMPANY.md",
+      "blobs/9a1b2c3d",
+    ]);
   });
 
   it("keeps a text folder under both the raw and estimated measures inline", async () => {
@@ -212,7 +228,10 @@ describe("resolveChunkedImportZip", () => {
     // Sizable but nowhere near the threshold on either measure: text entries
     // travel JSON-escaped, close to their raw size, so no base64 inflation
     // pushes this folder onto the chunked path.
-    await writeFile(path.join(packageDir, "NOTES.md"), "agent docs line\n".repeat(200_000));
+    await writeFile(
+      path.join(packageDir, "NOTES.md"),
+      "agent docs line\n".repeat(200_000),
+    );
 
     expect(await resolveChunkedImportZip(packageDir)).toBeNull();
   });
@@ -224,7 +243,10 @@ describe("resolveChunkedImportZip", () => {
     await mkdir(path.join(packageDir, ".git"), { recursive: true });
     await writeFile(path.join(packageDir, "COMPANY.md"), "# Company\n");
     await writeFile(path.join(packageDir, "notes.txt"), "not portable\n");
-    await writeFile(path.join(packageDir, ".git", "HEAD"), "ref: refs/heads/main\n");
+    await writeFile(
+      path.join(packageDir, ".git", "HEAD"),
+      "ref: refs/heads/main\n",
+    );
     await writeFile(
       path.join(packageDir, "blobs", "4f2d1c9a"),
       Buffer.alloc(CHUNKED_IMPORT_THRESHOLD_BYTES + 1024, 9),
@@ -237,7 +259,10 @@ describe("resolveChunkedImportZip", () => {
     // The archive unzips back into the same bundle the inline source carries.
     const archive = await readZipArchive(resolved!.zipBytes);
     expect(archive.rootPath).toBe("big-package");
-    expect(Object.keys(archive.files).sort()).toEqual(["COMPANY.md", "blobs/4f2d1c9a"]);
+    expect(Object.keys(archive.files).sort()).toEqual([
+      "COMPANY.md",
+      "blobs/4f2d1c9a",
+    ]);
     expect(archive.files["COMPANY.md"]).toBe("# Company\n");
   });
 });
@@ -246,9 +271,15 @@ describe("uploadCompanyImportTransfer", () => {
   const zipBytes = buildTwoPartZipBytes();
   type TransferApi = Parameters<typeof uploadCompanyImportTransfer>[0];
 
-  function fakeApi(overrides: { post?: ReturnType<typeof vi.fn>; putRaw?: ReturnType<typeof vi.fn> } = {}) {
-    const post = overrides.post
-      ?? vi.fn().mockResolvedValue({
+  function fakeApi(
+    overrides: {
+      post?: ReturnType<typeof vi.fn>;
+      putRaw?: ReturnType<typeof vi.fn>;
+    } = {},
+  ) {
+    const post =
+      overrides.post ??
+      vi.fn().mockResolvedValue({
         transferId: "transfer-1",
         status: "running",
         alreadyCompleted: false,
@@ -281,19 +312,24 @@ describe("uploadCompanyImportTransfer", () => {
       expect.objectContaining({ totalBytes: zipBytes.length }),
     );
     expect(putRaw).toHaveBeenCalledTimes(1);
-    expect(putRaw.mock.calls[0]![0]).toBe("/api/companies/import/transfers/transfer-1/parts/1");
+    expect(putRaw.mock.calls[0]![0]).toBe(
+      "/api/companies/import/transfers/transfer-1/parts/1",
+    );
     expect(putRaw.mock.calls[0]![1]).toHaveLength(3);
     expect(progress).toEqual([2]);
   });
 
   it("retries a failed part before succeeding", async () => {
-    const putRaw = vi.fn()
+    const putRaw = vi
+      .fn()
       .mockRejectedValueOnce(new Error("socket hang up"))
       .mockRejectedValueOnce(new Error("socket hang up"))
       .mockResolvedValue({ ok: true });
     const { api } = fakeApi({ putRaw });
 
-    await expect(uploadCompanyImportTransfer(api, zipBytes)).resolves.toBe("transfer-1");
+    await expect(uploadCompanyImportTransfer(api, zipBytes)).resolves.toBe(
+      "transfer-1",
+    );
     // Part 0 took three attempts; part 1 succeeded first try.
     expect(putRaw).toHaveBeenCalledTimes(4);
   });
@@ -302,7 +338,9 @@ describe("uploadCompanyImportTransfer", () => {
     const putRaw = vi.fn().mockRejectedValue(new Error("socket hang up"));
     const { api } = fakeApi({ putRaw });
 
-    await expect(uploadCompanyImportTransfer(api, zipBytes)).rejects.toThrow("socket hang up");
+    await expect(uploadCompanyImportTransfer(api, zipBytes)).rejects.toThrow(
+      "socket hang up",
+    );
     expect(putRaw).toHaveBeenCalledTimes(3);
   });
 
@@ -317,7 +355,9 @@ describe("uploadCompanyImportTransfer", () => {
       }),
     });
 
-    await expect(uploadCompanyImportTransfer(api, zipBytes)).rejects.toThrow(/already imported/);
+    await expect(uploadCompanyImportTransfer(api, zipBytes)).rejects.toThrow(
+      /already imported/,
+    );
     expect(putRaw).not.toHaveBeenCalled();
   });
 
@@ -386,8 +426,19 @@ describe("company import command over the chunked transfer path", () => {
       targetCompanyName: null,
       collisionStrategy: "rename",
       selectedAgentSlugs: [],
-      plan: { companyAction: "create", agentPlans: [], projectPlans: [], issuePlans: [] },
-      manifest: { agents: [], projects: [], issues: [], skills: [], company: null },
+      plan: {
+        companyAction: "create",
+        agentPlans: [],
+        projectPlans: [],
+        issuePlans: [],
+      },
+      manifest: {
+        agents: [],
+        projects: [],
+        issues: [],
+        skills: [],
+        company: null,
+      },
       files: {},
       envInputs: [],
       warnings: [],
@@ -398,28 +449,39 @@ describe("company import command over the chunked transfer path", () => {
   it("slices an oversized local zip into a transfer and applies it against the spool", async () => {
     const dir = await makeTempDir();
     const zipPath = path.join(dir, "big-package.zip");
-    await writeFile(zipPath, Buffer.alloc(CHUNKED_IMPORT_THRESHOLD_BYTES + 1024, 5));
+    await writeFile(
+      zipPath,
+      Buffer.alloc(CHUNKED_IMPORT_THRESHOLD_BYTES + 1024, 5),
+    );
 
     fetchMock
-      .mockResolvedValueOnce(jsonResponse({
-        transferId: "transfer-1",
-        status: "running",
-        alreadyCompleted: false,
-        totalParts: 2,
-        missingParts: [0, 1],
-      }))
-      .mockResolvedValueOnce(jsonResponse({ ok: true, index: 0, alreadyCompleted: false }))
-      .mockResolvedValueOnce(jsonResponse({ ok: true, index: 1, alreadyCompleted: false }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          transferId: "transfer-1",
+          status: "running",
+          alreadyCompleted: false,
+          totalParts: 2,
+          missingParts: [0, 1],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, index: 0, alreadyCompleted: false }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, index: 1, alreadyCompleted: false }),
+      )
       .mockResolvedValueOnce(jsonResponse(minimalPreview()))
-      .mockResolvedValueOnce(jsonResponse({
-        company: { id: "company-9", name: "Imported", action: "created" },
-        agents: [],
-        skills: [],
-        projects: [],
-        routines: [],
-        envInputs: [],
-        warnings: [],
-      }));
+      .mockResolvedValueOnce(
+        jsonResponse({
+          company: { id: "company-9", name: "Imported", action: "created" },
+          agents: [],
+          skills: [],
+          projects: [],
+          routines: [],
+          envInputs: [],
+          warnings: [],
+        }),
+      );
 
     await runCommand([
       "company",
@@ -449,7 +511,9 @@ describe("company import command over the chunked transfer path", () => {
       "http://taskcore.test/api/companies/import/transfers/transfer-1/parts/0",
       expect.objectContaining({
         method: "PUT",
-        headers: expect.objectContaining({ "content-type": "application/octet-stream" }),
+        headers: expect.objectContaining({
+          "content-type": "application/octet-stream",
+        }),
       }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -464,7 +528,10 @@ describe("company import command over the chunked transfer path", () => {
     );
     // Preview and apply carry the meta fields, never an inline source.
     const previewBody = JSON.parse(String(fetchMock.mock.calls[3]![1].body));
-    expect(previewBody.target).toEqual({ mode: "new_company", newCompanyName: null });
+    expect(previewBody.target).toEqual({
+      mode: "new_company",
+      newCompanyName: null,
+    });
     expect(previewBody).not.toHaveProperty("source");
     expect(fetchMock).toHaveBeenNthCalledWith(
       5,
@@ -482,7 +549,10 @@ describe("company import command over the chunked transfer path", () => {
   it("keeps small local zips on the inline single-shot path", async () => {
     const dir = await makeTempDir();
     const zipPath = path.join(dir, "small-package.zip");
-    await writeFile(zipPath, createStoredZipArchive({ "COMPANY.md": "# Company\n" }, "small-package"));
+    await writeFile(
+      zipPath,
+      createStoredZipArchive({ "COMPANY.md": "# Company\n" }, "small-package"),
+    );
 
     fetchMock.mockResolvedValueOnce(jsonResponse(minimalPreview()));
 

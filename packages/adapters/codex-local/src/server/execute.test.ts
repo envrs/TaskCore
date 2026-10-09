@@ -1,4 +1,11 @@
-import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -35,9 +42,9 @@ const {
 }));
 
 vi.mock("@taskcore/adapter-utils/server-utils", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/server-utils")>(
-    "@taskcore/adapter-utils/server-utils",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/server-utils")
+  >("@taskcore/adapter-utils/server-utils");
   return {
     ...actual,
     ensureCommandResolvable,
@@ -47,9 +54,9 @@ vi.mock("@taskcore/adapter-utils/server-utils", async () => {
 });
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     prepareAdapterExecutionTargetRuntime,
@@ -64,24 +71,26 @@ import { execute } from "./execute.js";
 // `readFile` (returns the sandbox fixture) and the remote asset dir. This drives
 // the exact `restore` contribution the Codex adapter wires in production without
 // needing a live sandbox.
-prepareAdapterExecutionTargetRuntime.mockImplementation(async (input: { assets?: SandboxManagedRuntimeAsset[] }) => {
-  captured.assets = input.assets ?? [];
-  return {
-    target: { kind: "remote", transport: "ssh" },
-    workspaceRemoteDir: "/remote/workspace",
-    runtimeRootDir: REMOTE_RUNTIME_ROOT,
-    assetDirs: { home: `${REMOTE_RUNTIME_ROOT}/home` },
-    restoreWorkspace: async () => {
-      for (const asset of captured.assets) {
-        if (!asset.restore) continue;
-        await asset.restore({
-          assetDir: `${REMOTE_RUNTIME_ROOT}/home`,
-          readFile: async () => sandboxAuthFixture.bytes,
-        });
-      }
-    },
-  };
-});
+prepareAdapterExecutionTargetRuntime.mockImplementation(
+  async (input: { assets?: SandboxManagedRuntimeAsset[] }) => {
+    captured.assets = input.assets ?? [];
+    return {
+      target: { kind: "remote", transport: "ssh" },
+      workspaceRemoteDir: "/remote/workspace",
+      runtimeRootDir: REMOTE_RUNTIME_ROOT,
+      assetDirs: { home: `${REMOTE_RUNTIME_ROOT}/home` },
+      restoreWorkspace: async () => {
+        for (const asset of captured.assets) {
+          if (!asset.restore) continue;
+          await asset.restore({
+            assetDir: `${REMOTE_RUNTIME_ROOT}/home`,
+            readFile: async () => sandboxAuthFixture.bytes,
+          });
+        }
+      },
+    };
+  },
+);
 
 describe("codex execute — outbound auth copy-back restore contribution", () => {
   const cleanupDirs: string[] = [];
@@ -102,7 +111,11 @@ describe("codex execute — outbound auth copy-back restore contribution", () =>
     }
   });
 
-  function subscriptionAuth(input: { accountId: string; lastRefresh?: string; marker: string }): string {
+  function subscriptionAuth(input: {
+    accountId: string;
+    lastRefresh?: string;
+    marker: string;
+  }): string {
     return JSON.stringify(
       {
         tokens: {
@@ -118,7 +131,12 @@ describe("codex execute — outbound auth copy-back restore contribution", () =>
     );
   }
 
-  async function runTeardown(input: { sandboxAuth: string; hostAuth: string; onProviderStopped?: () => Promise<void>; withIdentity?: boolean }) {
+  async function runTeardown(input: {
+    sandboxAuth: string;
+    hostAuth: string;
+    onProviderStopped?: () => Promise<void>;
+    withIdentity?: boolean;
+  }) {
     const rootDir = await mkdtemp(
       path.join(os.tmpdir(), "taskcore-codex-copyback-e2e-"),
     );
@@ -140,11 +158,19 @@ describe("codex execute — outbound auth copy-back restore contribution", () =>
     const commandArgs: string[] = [];
     const executionResult = await execute({
       runId: "run-copyback-e2e",
-      ...(input.withIdentity ? {
-        authToken: "assigned-run-token",
-        agentIdentity: { keyId: "sha256:test", publicKeyPem: "public", privateKeyPem: "private" },
-      } : {}),
-      onMeta: async meta => { commandArgs.push(...(meta.commandArgs ?? [])); },
+      ...(input.withIdentity
+        ? {
+            authToken: "assigned-run-token",
+            agentIdentity: {
+              keyId: "sha256:test",
+              publicKeyPem: "public",
+              privateKeyPem: "private",
+            },
+          }
+        : {}),
+      onMeta: async (meta) => {
+        commandArgs.push(...(meta.commandArgs ?? []));
+      },
       onProviderStopped: input.onProviderStopped,
       agent: {
         id: "agent-1",
@@ -153,13 +179,23 @@ describe("codex execute — outbound auth copy-back restore contribution", () =>
         adapterType: "codex_local",
         adapterConfig: {},
       },
-      runtime: { sessionId: null, sessionParams: null, sessionDisplayId: null, taskKey: null },
+      runtime: {
+        sessionId: null,
+        sessionParams: null,
+        sessionDisplayId: null,
+        taskKey: null,
+      },
       config: {
         command: "codex",
         engine: "cli",
         // External CODEX_HOME (outside the managed company tree) so no managed
         // seeding rewrites auth.json before teardown; equals the shared host home.
-        env: { CODEX_HOME: sharedHostHome, ...(input.withIdentity ? { MY_SERVICE_TOKEN: "assigned-tool-token" } : {}) },
+        env: {
+          CODEX_HOME: sharedHostHome,
+          ...(input.withIdentity
+            ? { MY_SERVICE_TOKEN: "assigned-tool-token" }
+            : {}),
+        },
       },
       context: {
         taskcoreWorkspace: {
@@ -191,14 +227,26 @@ describe("codex execute — outbound auth copy-back restore contribution", () =>
   }
 
   it("keeps identity and scoped API access without exposing configured service tokens to CLI shells", async () => {
-    vi.stubEnv("DATABASE_URL", "postgres://operator:host-password@host/private");
+    vi.stubEnv(
+      "DATABASE_URL",
+      "postgres://operator:host-password@host/private",
+    );
     vi.stubEnv("HOST_DATABASE_PASSWORD", "host-password");
-    const { commandArgs } = await runTeardown({ sandboxAuth: "{}", hostAuth: "{}", withIdentity: true });
-    const policy = commandArgs.find(arg => arg.startsWith("shell_environment_policy.include_only="));
+    const { commandArgs } = await runTeardown({
+      sandboxAuth: "{}",
+      hostAuth: "{}",
+      withIdentity: true,
+    });
+    const policy = commandArgs.find((arg) =>
+      arg.startsWith("shell_environment_policy.include_only="),
+    );
     const keys = JSON.parse(policy!.slice(policy!.indexOf("=") + 1));
-    expect(keys).toEqual(expect.arrayContaining([
-      "TASKCORE_API_KEY", "TASKCORE_AGENT_PRIVATE_KEY",
-    ]));
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "TASKCORE_API_KEY",
+        "TASKCORE_AGENT_PRIVATE_KEY",
+      ]),
+    );
     expect(keys).not.toContain("MY_SERVICE_TOKEN");
     expect(keys).not.toContain("DATABASE_URL");
     expect(keys).not.toContain("HOST_DATABASE_PASSWORD");
@@ -209,42 +257,88 @@ describe("codex execute — outbound auth copy-back restore contribution", () =>
   it("collects stopped-provider instruction edits before a throwing remote restore", async () => {
     const order: string[] = [];
     prepareAdapterExecutionTargetRuntime.mockImplementationOnce(async () => ({
-      target: { kind: "remote", transport: "ssh" }, workspaceRemoteDir: "/remote/workspace",
-      runtimeRootDir: REMOTE_RUNTIME_ROOT, assetDirs: { home: `${REMOTE_RUNTIME_ROOT}/home` },
-      restoreWorkspace: async () => { order.push("restore"); throw new Error("restore failed"); },
+      target: { kind: "remote", transport: "ssh" },
+      workspaceRemoteDir: "/remote/workspace",
+      runtimeRootDir: REMOTE_RUNTIME_ROOT,
+      assetDirs: { home: `${REMOTE_RUNTIME_ROOT}/home` },
+      restoreWorkspace: async () => {
+        order.push("restore");
+        throw new Error("restore failed");
+      },
     }));
-    await expect(runTeardown({ sandboxAuth: "{}", hostAuth: "{}", onProviderStopped: async () => { order.push("collect"); } })).rejects.toThrow("restore failed");
+    await expect(
+      runTeardown({
+        sandboxAuth: "{}",
+        hostAuth: "{}",
+        onProviderStopped: async () => {
+          order.push("collect");
+        },
+      }),
+    ).rejects.toThrow("restore failed");
     expect(order).toEqual(["collect", "restore"]);
   });
 
   it("collects after a failed provider exit before restoring its workspace", async () => {
-    runChildProcess.mockResolvedValueOnce({ exitCode: 1, signal: null, timedOut: false, stdout: "", stderr: "provider failed", pid: 321, startedAt: new Date().toISOString() });
+    runChildProcess.mockResolvedValueOnce({
+      exitCode: 1,
+      signal: null,
+      timedOut: false,
+      stdout: "",
+      stderr: "provider failed",
+      pid: 321,
+      startedAt: new Date().toISOString(),
+    });
     const collected = vi.fn(async () => {});
-    await runTeardown({ sandboxAuth: "{}", hostAuth: "{}", onProviderStopped: collected });
+    await runTeardown({
+      sandboxAuth: "{}",
+      hostAuth: "{}",
+      onProviderStopped: collected,
+    });
     expect(collected).toHaveBeenCalledOnce();
   });
 
   it("stops the bridge and restores the workspace when instruction collection rejects", async () => {
     const order: string[] = [];
     startAdapterExecutionTargetTaskcoreBridge.mockResolvedValueOnce({
-      env: {}, stop: async () => { order.push("bridge-stop"); },
+      env: {},
+      stop: async () => {
+        order.push("bridge-stop");
+      },
     } as never);
     prepareAdapterExecutionTargetRuntime.mockImplementationOnce(async () => ({
-      target: { kind: "remote", transport: "ssh" }, workspaceRemoteDir: "/remote/workspace",
-      runtimeRootDir: REMOTE_RUNTIME_ROOT, assetDirs: { home: `${REMOTE_RUNTIME_ROOT}/home` },
-      restoreWorkspace: async () => { order.push("restore"); },
+      target: { kind: "remote", transport: "ssh" },
+      workspaceRemoteDir: "/remote/workspace",
+      runtimeRootDir: REMOTE_RUNTIME_ROOT,
+      assetDirs: { home: `${REMOTE_RUNTIME_ROOT}/home` },
+      restoreWorkspace: async () => {
+        order.push("restore");
+      },
     }));
-    await expect(runTeardown({ sandboxAuth: "{}", hostAuth: "{}", onProviderStopped: async () => {
-      order.push("collect");
-      throw new Error("instruction collection failed");
-    } })).rejects.toThrow("instruction collection failed");
+    await expect(
+      runTeardown({
+        sandboxAuth: "{}",
+        hostAuth: "{}",
+        onProviderStopped: async () => {
+          order.push("collect");
+          throw new Error("instruction collection failed");
+        },
+      }),
+    ).rejects.toThrow("instruction collection failed");
     expect(order).toEqual(["collect", "bridge-stop", "restore"]);
   });
 
   it("declares a Codex `home` asset carrying both inbound provision and outbound restore contributions", async () => {
     await runTeardown({
-      sandboxAuth: subscriptionAuth({ accountId: "acct", lastRefresh: "2026-07-09T01:00:00Z", marker: "s" }),
-      hostAuth: subscriptionAuth({ accountId: "acct", lastRefresh: "2026-07-09T02:00:00Z", marker: "h" }),
+      sandboxAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: "2026-07-09T01:00:00Z",
+        marker: "s",
+      }),
+      hostAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: "2026-07-09T02:00:00Z",
+        marker: "h",
+      }),
     });
 
     const homeAsset = captured.assets.find((asset) => asset.key === "home");
@@ -275,18 +369,37 @@ describe("codex execute — outbound auth copy-back restore contribution", () =>
     const cases = [
       {
         name: "tie",
-        sandboxAuth: subscriptionAuth({ accountId: "acct-same", lastRefresh: "2026-07-09T02:00:00Z", marker: "s-tie" }),
-        hostAuth: subscriptionAuth({ accountId: "acct-same", lastRefresh: "2026-07-09T02:00:00Z", marker: "h-tie" }),
+        sandboxAuth: subscriptionAuth({
+          accountId: "acct-same",
+          lastRefresh: "2026-07-09T02:00:00Z",
+          marker: "s-tie",
+        }),
+        hostAuth: subscriptionAuth({
+          accountId: "acct-same",
+          lastRefresh: "2026-07-09T02:00:00Z",
+          marker: "h-tie",
+        }),
       },
       {
         name: "older",
-        sandboxAuth: subscriptionAuth({ accountId: "acct-same", lastRefresh: "2026-07-09T01:00:00Z", marker: "s-old" }),
-        hostAuth: subscriptionAuth({ accountId: "acct-same", lastRefresh: "2026-07-09T02:00:00Z", marker: "h-new" }),
+        sandboxAuth: subscriptionAuth({
+          accountId: "acct-same",
+          lastRefresh: "2026-07-09T01:00:00Z",
+          marker: "s-old",
+        }),
+        hostAuth: subscriptionAuth({
+          accountId: "acct-same",
+          lastRefresh: "2026-07-09T02:00:00Z",
+          marker: "h-new",
+        }),
       },
     ];
 
     for (const entry of cases) {
-      const result = await runTeardown({ sandboxAuth: entry.sandboxAuth, hostAuth: entry.hostAuth });
+      const result = await runTeardown({
+        sandboxAuth: entry.sandboxAuth,
+        hostAuth: entry.hostAuth,
+      });
       expect(result.finalHostAuth, entry.name).toBe(entry.hostAuth);
       expect(result.finalHostMode, entry.name).toBe(0o600);
     }

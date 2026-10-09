@@ -44,7 +44,11 @@ describe("scheduleSyncOperations", () => {
   });
 
   it("keeps at most `bound` tasks active in concurrent mode", async () => {
-    const deferreds = [makeDeferred<number>(), makeDeferred<number>(), makeDeferred<number>()];
+    const deferreds = [
+      makeDeferred<number>(),
+      makeDeferred<number>(),
+      makeDeferred<number>(),
+    ];
     const tasks = deferreds.map((deferred) => deferred.task);
 
     const scheduled = scheduleSyncOperations(tasks, true, 2);
@@ -71,7 +75,11 @@ describe("scheduleSyncOperations", () => {
   });
 
   it("runs one task at a time in input order in serial mode", async () => {
-    const deferreds = [makeDeferred<number>(), makeDeferred<number>(), makeDeferred<number>()];
+    const deferreds = [
+      makeDeferred<number>(),
+      makeDeferred<number>(),
+      makeDeferred<number>(),
+    ];
     const tasks = deferreds.map((deferred) => deferred.task);
 
     const scheduled = scheduleSyncOperations(tasks, false);
@@ -127,14 +135,21 @@ describe("scheduleSyncOperations", () => {
     const results = await scheduled;
     expect(settled).toBe(true);
     // The results keep input order, and the rejection carries its reason.
-    expect(results[0]).toEqual({ status: "rejected", reason: new Error("first failed") });
+    expect(results[0]).toEqual({
+      status: "rejected",
+      reason: new Error("first failed"),
+    });
     expect(results[1]).toEqual({ status: "fulfilled", value: 2 });
   });
 
   // One table proves settle-all and input-order for both call modes. Both future
   // call sites share these proven cases.
   const MODE_TABLE = [
-    { name: "serial mode", concurrent: false, bound: SYNC_OPERATION_CONCURRENCY_LIMIT },
+    {
+      name: "serial mode",
+      concurrent: false,
+      bound: SYNC_OPERATION_CONCURRENCY_LIMIT,
+    },
     { name: "concurrent mode", concurrent: true, bound: 2 },
   ];
 
@@ -149,7 +164,11 @@ describe("scheduleSyncOperations", () => {
         () => Promise.resolve("two"),
       ];
 
-      const results = await scheduleSyncOperations(tasks, mode.concurrent, mode.bound);
+      const results = await scheduleSyncOperations(
+        tasks,
+        mode.concurrent,
+        mode.bound,
+      );
 
       expect(results).toEqual([
         { status: "fulfilled", value: "zero" },

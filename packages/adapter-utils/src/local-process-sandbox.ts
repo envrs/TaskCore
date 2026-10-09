@@ -66,7 +66,14 @@ const SYSTEM_READ_PATHS = [
   "/etc/gitconfig",
 ] as const;
 
-const PROXY_ENV_KEYS = ["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"] as const;
+const PROXY_ENV_KEYS = [
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "ALL_PROXY",
+  "http_proxy",
+  "https_proxy",
+  "all_proxy",
+] as const;
 const SANDBOX_PROXY_PORT = 31_337;
 const UNIX_SOCKET_PATH_MAX_BYTES = 107;
 const NETWORK_PROXY_TEMP_PREFIX = "taskcore-network-sandbox-";
@@ -80,7 +87,10 @@ function normalizeAbsolutePath(candidate: string, label: string): string {
 }
 
 async function pathExists(candidate: string): Promise<boolean> {
-  return fs.lstat(candidate).then(() => true).catch(() => false);
+  return fs
+    .lstat(candidate)
+    .then(() => true)
+    .catch(() => false);
 }
 
 function parentDirectories(candidate: string): string[] {
@@ -93,7 +103,11 @@ function parentDirectories(candidate: string): string[] {
   return directories.reverse();
 }
 
-function addParentDirectories(args: string[], created: Set<string>, candidate: string): void {
+function addParentDirectories(
+  args: string[],
+  created: Set<string>,
+  candidate: string,
+): void {
   for (const directory of parentDirectories(candidate)) {
     if (created.has(directory)) continue;
     args.push("--dir", directory);
@@ -118,23 +132,39 @@ async function executableReadPaths(command: string): Promise<string[]> {
   return Array.from(paths);
 }
 
-function parseNetworkAllowlistEntry(entry: string, index: number): NetworkAllowlistRule {
+function parseNetworkAllowlistEntry(
+  entry: string,
+  index: number,
+): NetworkAllowlistRule {
   const trimmed = entry.trim();
-  if (!trimmed) throw new Error(`networkAllowlist[${index}] must not be empty.`);
+  if (!trimmed)
+    throw new Error(`networkAllowlist[${index}] must not be empty.`);
   let hostname: string;
   let port: string | null;
   try {
-    const parsed = new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`);
-    if (parsed.username || parsed.password || parsed.pathname !== "/" || parsed.search || parsed.hash) {
+    const parsed = new URL(
+      trimmed.includes("://") ? trimmed : `https://${trimmed}`,
+    );
+    if (
+      parsed.username ||
+      parsed.password ||
+      parsed.pathname !== "/" ||
+      parsed.search ||
+      parsed.hash
+    ) {
       throw new Error("path");
     }
     hostname = parsed.hostname.toLowerCase();
     port = parsed.port || null;
   } catch {
-    throw new Error(`networkAllowlist[${index}] must be a hostname, hostname:port, or origin URL.`);
+    throw new Error(
+      `networkAllowlist[${index}] must be a hostname, hostname:port, or origin URL.`,
+    );
   }
   if (!hostname || hostname === "*" || hostname.startsWith("*.")) {
-    throw new Error(`networkAllowlist[${index}] must use an exact hostname; wildcards are not supported.`);
+    throw new Error(
+      `networkAllowlist[${index}] must use an exact hostname; wildcards are not supported.`,
+    );
   }
   return { hostname, port };
 }
@@ -142,27 +172,40 @@ function parseNetworkAllowlistEntry(entry: string, index: number): NetworkAllowl
 export function parseLocalProcessNetworkAllowlist(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.map((entry, index) => {
-    if (typeof entry !== "string") throw new Error(`networkAllowlist[${index}] must be a string.`);
+    if (typeof entry !== "string")
+      throw new Error(`networkAllowlist[${index}] must be a string.`);
     const rule = parseNetworkAllowlistEntry(entry, index);
     return rule.port ? `${rule.hostname}:${rule.port}` : rule.hostname;
   });
 }
 
-export function parseLocalProcessNetworkScope(value: unknown): LocalProcessNetworkScope | null {
+export function parseLocalProcessNetworkScope(
+  value: unknown,
+): LocalProcessNetworkScope | null {
   if (value == null || value === "") return null;
   if (value === "deny" || value === "allowlist") return value;
   throw new Error('networkScope must be "deny" or "allowlist".');
 }
 
-export function parseLocalProcessFilesystemScope(value: unknown): "workspace" | null {
+export function parseLocalProcessFilesystemScope(
+  value: unknown,
+): "workspace" | null {
   if (value == null || value === "") return null;
   if (value === "workspace") return value;
   throw new Error('filesystemScope must be "workspace".');
 }
 
-function isNetworkTargetAllowed(hostname: string, port: string, rules: NetworkAllowlistRule[]): boolean {
+function isNetworkTargetAllowed(
+  hostname: string,
+  port: string,
+  rules: NetworkAllowlistRule[],
+): boolean {
   const normalizedHostname = hostname.toLowerCase().replace(/^\[|\]$/g, "");
-  return rules.some((rule) => rule.hostname === normalizedHostname && (rule.port === null || rule.port === port));
+  return rules.some(
+    (rule) =>
+      rule.hostname === normalizedHostname &&
+      (rule.port === null || rule.port === port),
+  );
 }
 
 function assertUnixSocketPathLength(socketPath: string): void {
@@ -179,7 +222,9 @@ async function createNetworkProxyTempDir(): Promise<string> {
   let lastError: unknown;
   for (const baseDir of candidates) {
     try {
-      const tempDir = await fs.mkdtemp(path.join(baseDir, NETWORK_PROXY_TEMP_PREFIX));
+      const tempDir = await fs.mkdtemp(
+        path.join(baseDir, NETWORK_PROXY_TEMP_PREFIX),
+      );
       try {
         assertUnixSocketPathLength(path.join(tempDir, "proxy.sock"));
         return tempDir;
@@ -191,13 +236,17 @@ async function createNetworkProxyTempDir(): Promise<string> {
       lastError = error;
     }
   }
-  throw new Error("Unable to create a Linux-safe Taskcore sandbox proxy socket directory.", { cause: lastError });
+  throw new Error(
+    "Unable to create a Linux-safe Taskcore sandbox proxy socket directory.",
+    { cause: lastError },
+  );
 }
 
 function parseTrustedNetworkUrl(value: string): NetworkAllowlistRule | null {
   try {
     const parsed = new URL(value);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:")
+      return null;
     return {
       hostname: parsed.hostname.toLowerCase(),
       port: parsed.port || (parsed.protocol === "https:" ? "443" : "80"),
@@ -207,12 +256,19 @@ function parseTrustedNetworkUrl(value: string): NetworkAllowlistRule | null {
   }
 }
 
-function writeProxyError(response: http.ServerResponse, status: number, code: string, message: string): void {
+function writeProxyError(
+  response: http.ServerResponse,
+  status: number,
+  code: string,
+  message: string,
+): void {
   const body = `${JSON.stringify({ error: { code, message } })}\n`;
-  response.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Content-Length": Buffer.byteLength(body),
-  }).end(body);
+  response
+    .writeHead(status, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Length": Buffer.byteLength(body),
+    })
+    .end(body);
 }
 
 function connectProxyError(code: string, message: string): string {
@@ -235,7 +291,9 @@ async function startNetworkAllowlistProxy(
   assertUnixSocketPathLength(socketPath);
   const rules = [
     ...allowlist.map(parseNetworkAllowlistEntry),
-    ...trustedUrls.map(parseTrustedNetworkUrl).filter((rule): rule is NetworkAllowlistRule => rule !== null),
+    ...trustedUrls
+      .map(parseTrustedNetworkUrl)
+      .filter((rule): rule is NetworkAllowlistRule => rule !== null),
   ];
   if (rules.length === 0) {
     throw new Error(
@@ -247,37 +305,68 @@ async function startNetworkAllowlistProxy(
     try {
       target = new URL(request.url ?? "");
     } catch {
-      writeProxyError(response, 400, "invalid_request_url", "Taskcore sandbox proxy requires an absolute request URL.");
+      writeProxyError(
+        response,
+        400,
+        "invalid_request_url",
+        "Taskcore sandbox proxy requires an absolute request URL.",
+      );
       return;
     }
     const port = target.port || (target.protocol === "https:" ? "443" : "80");
     if (target.protocol !== "http:") {
-      writeProxyError(response, 400, "https_requires_connect", "HTTPS targets must use CONNECT through the Taskcore sandbox proxy.");
+      writeProxyError(
+        response,
+        400,
+        "https_requires_connect",
+        "HTTPS targets must use CONNECT through the Taskcore sandbox proxy.",
+      );
       return;
     }
     if (!isNetworkTargetAllowed(target.hostname, port, rules)) {
-      writeProxyError(response, 403, "network_target_denied", "Network target denied by Taskcore sandbox policy.");
+      writeProxyError(
+        response,
+        403,
+        "network_target_denied",
+        "Network target denied by Taskcore sandbox policy.",
+      );
       return;
     }
-    const upstream = http.request(target, {
-      method: request.method,
-      headers: { ...request.headers, host: target.host },
-    }, (upstreamResponse) => {
-      response.writeHead(upstreamResponse.statusCode ?? 502, upstreamResponse.headers);
-      upstreamResponse.pipe(response);
-    });
+    const upstream = http.request(
+      target,
+      {
+        method: request.method,
+        headers: { ...request.headers, host: target.host },
+      },
+      (upstreamResponse) => {
+        response.writeHead(
+          upstreamResponse.statusCode ?? 502,
+          upstreamResponse.headers,
+        );
+        upstreamResponse.pipe(response);
+      },
+    );
     upstream.on("error", (error) => response.destroy(error));
     request.pipe(upstream);
   });
   server.on("connect", (request, clientSocket, head) => {
     const separator = request.url?.lastIndexOf(":") ?? -1;
-    const hostname = separator > 0 ? request.url!.slice(0, separator).replace(/^\[|\]$/g, "") : "";
+    const hostname =
+      separator > 0
+        ? request.url!.slice(0, separator).replace(/^\[|\]$/g, "")
+        : "";
     const port = separator > 0 ? request.url!.slice(separator + 1) : "443";
-    if (!hostname || !/^\d+$/.test(port) || !isNetworkTargetAllowed(hostname, port, rules)) {
-      clientSocket.end(connectProxyError(
-        "network_target_denied",
-        "Network target denied by Taskcore sandbox policy.",
-      ));
+    if (
+      !hostname ||
+      !/^\d+$/.test(port) ||
+      !isNetworkTargetAllowed(hostname, port, rules)
+    ) {
+      clientSocket.end(
+        connectProxyError(
+          "network_target_denied",
+          "Network target denied by Taskcore sandbox policy.",
+        ),
+      );
       return;
     }
     const upstream = net.connect(Number(port), hostname, () => {
@@ -345,26 +434,51 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
   options: LocalProcessSandboxOptions;
 }): Promise<LocalProcessSandboxSpawnTarget> {
   if (process.platform !== "linux") {
-    throw new Error("Local process filesystem and network scopes are currently supported only on Linux.");
+    throw new Error(
+      "Local process filesystem and network scopes are currently supported only on Linux.",
+    );
   }
   const filesystemScope = input.options.filesystemScope ?? null;
   const networkScope = input.options.networkScope ?? null;
-  if (!filesystemScope && !networkScope) throw new Error("Local process sandbox requires a filesystem or network scope.");
+  if (!filesystemScope && !networkScope)
+    throw new Error(
+      "Local process sandbox requires a filesystem or network scope.",
+    );
 
-  const workspaceDir = normalizeAbsolutePath(input.options.workspaceDir, "Sandbox workspaceDir");
+  const workspaceDir = normalizeAbsolutePath(
+    input.options.workspaceDir,
+    "Sandbox workspaceDir",
+  );
   const cwd = normalizeAbsolutePath(input.cwd, "Sandbox cwd");
   if (filesystemScope === "workspace") {
     const relativeCwd = path.relative(workspaceDir, cwd);
     if (relativeCwd.startsWith("..") || path.isAbsolute(relativeCwd)) {
-      throw new Error(`Sandbox cwd "${cwd}" must be inside workspaceDir "${workspaceDir}".`);
+      throw new Error(
+        `Sandbox cwd "${cwd}" must be inside workspaceDir "${workspaceDir}".`,
+      );
     }
-    const outboundRestorePaths = (input.options.outboundRestorePaths ?? []).map((candidate, index) =>
-      normalizeAbsolutePath(candidate, `Sandbox outboundRestorePaths[${index}]`));
-    for (const [index, extraPath] of (input.options.extraPaths ?? []).entries()) {
+    const outboundRestorePaths = (input.options.outboundRestorePaths ?? []).map(
+      (candidate, index) =>
+        normalizeAbsolutePath(
+          candidate,
+          `Sandbox outboundRestorePaths[${index}]`,
+        ),
+    );
+    for (const [index, extraPath] of (
+      input.options.extraPaths ?? []
+    ).entries()) {
       if (extraPath.access !== "rw") continue;
-      const normalizedExtraPath = normalizeAbsolutePath(extraPath.path, `Sandbox extraPaths[${index}].path`);
-      const relativeToWorkspace = path.relative(workspaceDir, normalizedExtraPath);
-      const synchronized = !relativeToWorkspace.startsWith("..") && !path.isAbsolute(relativeToWorkspace);
+      const normalizedExtraPath = normalizeAbsolutePath(
+        extraPath.path,
+        `Sandbox extraPaths[${index}].path`,
+      );
+      const relativeToWorkspace = path.relative(
+        workspaceDir,
+        normalizedExtraPath,
+      );
+      const synchronized =
+        !relativeToWorkspace.startsWith("..") &&
+        !path.isAbsolute(relativeToWorkspace);
       const restored = outboundRestorePaths.some((restorePath) => {
         const relative = path.relative(restorePath, normalizedExtraPath);
         return !relative.startsWith("..") && !path.isAbsolute(relative);
@@ -378,19 +492,42 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
   }
 
   const bwrapCommand = input.options.command?.trim() || "bwrap";
-  const args = ["--die-with-parent", "--new-session", "--unshare-pid", "--unshare-ipc", "--unshare-uts"];
+  const args = [
+    "--die-with-parent",
+    "--new-session",
+    "--unshare-pid",
+    "--unshare-ipc",
+    "--unshare-uts",
+  ];
   const env: Record<string, string | undefined> = {};
   let cleanup: (() => Promise<void>) | undefined;
   let executable = input.executable;
   let executableArgs = input.args;
 
   if (filesystemScope === "workspace") {
-    args.push("--tmpfs", "/", "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp");
     args.push(
-      "--symlink", "usr/bin", "/bin",
-      "--symlink", "usr/sbin", "/sbin",
-      "--symlink", "usr/lib", "/lib",
-      "--symlink", "usr/lib64", "/lib64",
+      "--tmpfs",
+      "/",
+      "--proc",
+      "/proc",
+      "--dev",
+      "/dev",
+      "--tmpfs",
+      "/tmp",
+    );
+    args.push(
+      "--symlink",
+      "usr/bin",
+      "/bin",
+      "--symlink",
+      "usr/sbin",
+      "/sbin",
+      "--symlink",
+      "usr/lib",
+      "/lib",
+      "--symlink",
+      "usr/lib64",
+      "/lib64",
     );
     const created = new Set<string>(["/", "/proc", "/dev", "/tmp"]);
     const mounted = new Set<string>();
@@ -398,21 +535,35 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
       const normalized = normalizeAbsolutePath(source, "Sandbox path");
       if (mounted.has(normalized) || !(await pathExists(normalized))) return;
       addParentDirectories(args, created, normalized);
-      args.push(access === "rw" ? "--bind" : "--ro-bind", normalized, normalized);
+      args.push(
+        access === "rw" ? "--bind" : "--ro-bind",
+        normalized,
+        normalized,
+      );
       mounted.add(normalized);
       created.add(normalized);
     };
     for (const systemPath of SYSTEM_READ_PATHS) await mount(systemPath, "ro");
-    for (const executablePath of await executableReadPaths(input.executable)) await mount(executablePath, "ro");
+    for (const executablePath of await executableReadPaths(input.executable))
+      await mount(executablePath, "ro");
     if (networkScope === "allowlist") {
-      for (const nodePath of await executableReadPaths(process.execPath)) await mount(nodePath, "ro");
+      for (const nodePath of await executableReadPaths(process.execPath))
+        await mount(nodePath, "ro");
     }
-    for (const managedPath of input.options.managedPaths ?? []) await mount(managedPath.path, managedPath.access);
-    for (const extraPath of input.options.extraPaths ?? []) await mount(extraPath.path, extraPath.access);
+    for (const managedPath of input.options.managedPaths ?? [])
+      await mount(managedPath.path, managedPath.access);
+    for (const extraPath of input.options.extraPaths ?? [])
+      await mount(extraPath.path, extraPath.access);
     await mount(workspaceDir, "rw");
     for (const [index, alias] of (input.options.pathAliases ?? []).entries()) {
-      const aliasPath = normalizeAbsolutePath(alias.path, `Sandbox pathAliases[${index}].path`);
-      const aliasTarget = normalizeAbsolutePath(alias.target, `Sandbox pathAliases[${index}].target`);
+      const aliasPath = normalizeAbsolutePath(
+        alias.path,
+        `Sandbox pathAliases[${index}].path`,
+      );
+      const aliasTarget = normalizeAbsolutePath(
+        alias.target,
+        `Sandbox pathAliases[${index}].target`,
+      );
       const relativeTarget = path.relative(workspaceDir, aliasTarget);
       if (relativeTarget.startsWith("..") || path.isAbsolute(relativeTarget)) {
         throw new Error(
@@ -420,7 +571,9 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
         );
       }
       if (!(await pathExists(aliasTarget))) {
-        throw new Error(`Sandbox path alias target "${aliasTarget}" does not exist.`);
+        throw new Error(
+          `Sandbox path alias target "${aliasTarget}" does not exist.`,
+        );
       }
       addParentDirectories(args, created, aliasPath);
       args.push("--bind", aliasTarget, aliasPath);
@@ -431,7 +584,9 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
       const tempDir = await createNetworkProxyTempDir();
       const socketPath = path.join(tempDir, "proxy.sock");
       const bridgePath = path.join(tempDir, "bridge.cjs");
-      await fs.writeFile(bridgePath, await createNetworkProxyBridge(), { mode: 0o500 });
+      await fs.writeFile(bridgePath, await createNetworkProxyBridge(), {
+        mode: 0o500,
+      });
       const proxy = await startNetworkAllowlistProxy(
         input.options.networkAllowlist ?? [],
         input.options.networkTrustedUrls ?? [],
@@ -442,7 +597,12 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
       });
       await mount(tempDir, "rw");
       executable = process.execPath;
-      executableArgs = [bridgePath, socketPath, input.executable, ...input.args];
+      executableArgs = [
+        bridgePath,
+        socketPath,
+        input.executable,
+        ...input.args,
+      ];
       cleanup = async () => {
         await proxy.close();
         await fs.rm(tempDir, { recursive: true, force: true });
@@ -454,7 +614,9 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
       const tempDir = await createNetworkProxyTempDir();
       const socketPath = path.join(tempDir, "proxy.sock");
       const bridgePath = path.join(tempDir, "bridge.cjs");
-      await fs.writeFile(bridgePath, await createNetworkProxyBridge(), { mode: 0o500 });
+      await fs.writeFile(bridgePath, await createNetworkProxyBridge(), {
+        mode: 0o500,
+      });
       const proxy = await startNetworkAllowlistProxy(
         input.options.networkAllowlist ?? [],
         input.options.networkTrustedUrls ?? [],
@@ -464,7 +626,12 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
         throw error;
       });
       executable = process.execPath;
-      executableArgs = [bridgePath, socketPath, input.executable, ...input.args];
+      executableArgs = [
+        bridgePath,
+        socketPath,
+        input.executable,
+        ...input.args,
+      ];
       cleanup = async () => {
         await proxy.close();
         await fs.rm(tempDir, { recursive: true, force: true });
@@ -490,20 +657,40 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
   return { command: bwrapCommand, args, cwd: "/", env, cleanup };
 }
 
-export function parseLocalProcessSandboxExtraPaths(value: unknown): LocalProcessSandboxPath[] {
+export function parseLocalProcessSandboxExtraPaths(
+  value: unknown,
+): LocalProcessSandboxPath[] {
   if (!Array.isArray(value)) return [];
   return value.map((entry, index) => {
     if (typeof entry === "string") {
-      return { path: normalizeAbsolutePath(entry, `filesystemExtraPaths[${index}]`), access: "ro" };
+      return {
+        path: normalizeAbsolutePath(entry, `filesystemExtraPaths[${index}]`),
+        access: "ro",
+      };
     }
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
-      throw new Error(`filesystemExtraPaths[${index}] must be an absolute path or { path, access } object.`);
+      throw new Error(
+        `filesystemExtraPaths[${index}] must be an absolute path or { path, access } object.`,
+      );
     }
     const raw = entry as Record<string, unknown>;
-    const access = raw.access === "rw" ? "rw" : raw.access === "ro" || raw.access == null ? "ro" : null;
+    const access =
+      raw.access === "rw"
+        ? "rw"
+        : raw.access === "ro" || raw.access == null
+          ? "ro"
+          : null;
     if (!access || typeof raw.path !== "string") {
-      throw new Error(`filesystemExtraPaths[${index}] must use access "ro" or "rw" and an absolute path.`);
+      throw new Error(
+        `filesystemExtraPaths[${index}] must use access "ro" or "rw" and an absolute path.`,
+      );
     }
-    return { path: normalizeAbsolutePath(raw.path, `filesystemExtraPaths[${index}].path`), access };
+    return {
+      path: normalizeAbsolutePath(
+        raw.path,
+        `filesystemExtraPaths[${index}].path`,
+      ),
+      access,
+    };
   });
 }

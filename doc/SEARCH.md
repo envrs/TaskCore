@@ -7,19 +7,19 @@ stuck in memory: an ID, a few title words, a technical name, or something in the
 conversation. The first screen should contain plausible answers, with enough
 context to explain each match.
 
-| Intent | Good result | Failure |
-|---|---|---|
-| Known task ID | Exact ID first, case-insensitive; accept `PAP-42`, `pap42`, `PAP 42` | A mention or neighboring ID beats the task |
-| Remembered title | Exact title, phrase, then all title words in any order | A recent comment mentioning those words beats the title |
-| Several concepts | Every meaningful query term contributes, including short terms such as API/UI | A task matches only one common word |
-| Exact phrase | Quoted text stays together and literal | Quotes silently behave like OR or fuzzy search |
-| Thread memory | Find words across task text, comments and current documents | Relevant content exists but the task cannot be found |
-| Technical text | Preserve underscores, percent signs, paths and numbers | SQL wildcard expansion or fuzzy IDs return unrelated work |
-| Typo | Conservative title-word correction; all other terms still required | Ignoring a short term changes the query's meaning |
-| Result explanation | Show the best evidence and link to its source | A title hit jumps into an unrelated comment |
-| Old work | Strong completed-task matches remain ahead of weak recent hits | Recency/activity replaces relevance |
-| Boundaries | Company, visibility, deletion and explicit filters always apply | Content leaks through counts, snippets or typo matches |
-| Operations | PostgreSQL only, synchronous current-row reads, bounded query/page sizes | A worker, remote index or eventual-consistency repair is required |
+| Intent             | Good result                                                                   | Failure                                                           |
+| ------------------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Known task ID      | Exact ID first, case-insensitive; accept `PAP-42`, `pap42`, `PAP 42`          | A mention or neighboring ID beats the task                        |
+| Remembered title   | Exact title, phrase, then all title words in any order                        | A recent comment mentioning those words beats the title           |
+| Several concepts   | Every meaningful query term contributes, including short terms such as API/UI | A task matches only one common word                               |
+| Exact phrase       | Quoted text stays together and literal                                        | Quotes silently behave like OR or fuzzy search                    |
+| Thread memory      | Find words across task text, comments and current documents                   | Relevant content exists but the task cannot be found              |
+| Technical text     | Preserve underscores, percent signs, paths and numbers                        | SQL wildcard expansion or fuzzy IDs return unrelated work         |
+| Typo               | Conservative title-word correction; all other terms still required            | Ignoring a short term changes the query's meaning                 |
+| Result explanation | Show the best evidence and link to its source                                 | A title hit jumps into an unrelated comment                       |
+| Old work           | Strong completed-task matches remain ahead of weak recent hits                | Recency/activity replaces relevance                               |
+| Boundaries         | Company, visibility, deletion and explicit filters always apply               | Content leaks through counts, snippets or typo matches            |
+| Operations         | PostgreSQL only, synchronous current-row reads, bounded query/page sizes      | A worker, remote index or eventual-consistency repair is required |
 
 Judge results on a 0–3 scale: **3** directly answers the remembered task intent,
 **2** is useful related work, **1** is only an incidental mention, **0** is
@@ -125,10 +125,10 @@ its query-plan branch is disabled in baseline mode.
 Compared against `2083bf6f9` using the same 31-task corpus and 24 queries (23
 queries with intended answers, plus one no-result query).
 
-| Surface | Intended answer first, before → after | MRR, before → after | nDCG@5, before → after |
-|---|---|---|---|
-| Full search | 17/23 → 23/23 | 0.828 → 1.000 | 0.904 → 0.999 |
-| Quick search / task list | 5/23 → 23/23 | 0.268 → 1.000 | 0.339 → 0.999 |
+| Surface                  | Intended answer first, before → after | MRR, before → after | nDCG@5, before → after |
+| ------------------------ | ------------------------------------- | ------------------- | ---------------------- |
+| Full search              | 17/23 → 23/23                         | 0.828 → 1.000       | 0.904 → 0.999          |
+| Quick search / task list | 5/23 → 23/23                          | 0.268 → 1.000       | 0.339 → 0.999          |
 
 The relevance gates pass. These results measure the authored corpus, not general
 search accuracy. The no-result query also returns no tasks in both surfaces.
@@ -143,14 +143,14 @@ The host was an Apple M5 Max with 128 GiB RAM, running an x86_64 PostgreSQL
 binary and other development tests concurrently. Treat timing deltas as local
 measurements, not production capacity or a controlled concurrency benchmark.
 
-| Query | Full p95 before → after (ms) | Quick p95 before → after (ms) |
-|---|---|---|
-| `GitHub OAuth` | 139 → 95 | 39 → 128 |
-| `OAuth callback GitHub` | 209 → 81 | 26 → 134 |
-| `mibile api` | 153 → 131 | 19 → 111 |
-| `search` | 172 → 41 | 22 → 67 |
-| `quasarxylophone` | 154 → 105 | 18 → 218 |
-| `routine` (matches all 10,000 added tasks) | 239 → 253 | 152 → 371 |
+| Query                                      | Full p95 before → after (ms) | Quick p95 before → after (ms) |
+| ------------------------------------------ | ---------------------------- | ----------------------------- |
+| `GitHub OAuth`                             | 139 → 95                     | 39 → 128                      |
+| `OAuth callback GitHub`                    | 209 → 81                     | 26 → 134                      |
+| `mibile api`                               | 153 → 131                    | 19 → 111                      |
+| `search`                                   | 172 → 41                     | 22 → 67                       |
+| `quasarxylophone`                          | 154 → 105                    | 18 → 218                      |
+| `routine` (matches all 10,000 added tasks) | 239 → 253                    | 152 → 371                     |
 
 Selective full searches improved. Quick search is more expensive: it now
 evaluates term coverage, searches documents, and can scan company titles for

@@ -2,11 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { config as loadDotenv, parse as parseEnvFileContents } from "dotenv";
-import { updateEnvFileContents, writeEnvFileAtomicallyIfChanged } from "@taskcore/shared/env-file";
+import {
+  updateEnvFileContents,
+  writeEnvFileAtomicallyIfChanged,
+} from "@taskcore/shared/env-file";
 import { resolveConfigPath } from "./store.js";
 
 const JWT_SECRET_ENV_KEY = "TASKCORE_AGENT_JWT_SECRET";
-const TOOL_ACTION_SIGNING_SECRET_ENV_KEY = "TASKCORE_TOOL_ACTION_SIGNING_SECRET";
+const TOOL_ACTION_SIGNING_SECRET_ENV_KEY =
+  "TASKCORE_TOOL_ACTION_SIGNING_SECRET";
 const TASKCORE_OWNED_ENV_KEY_PATTERN = /^TASKCORE_[A-Z0-9_]+$/;
 function resolveEnvFilePath(configPath?: string) {
   return path.resolve(path.dirname(resolveConfigPath(configPath)), ".env");
@@ -33,10 +37,13 @@ function emptyEnvFileContents() {
   ].join("\n");
 }
 
-function taskcoreOwnedEntries(entries: Record<string, string>): Record<string, string> {
+function taskcoreOwnedEntries(
+  entries: Record<string, string>,
+): Record<string, string> {
   return Object.fromEntries(
     Object.entries(entries).filter(
-      ([key, value]) => TASKCORE_OWNED_ENV_KEY_PATTERN.test(key) && value.trim().length > 0,
+      ([key, value]) =>
+        TASKCORE_OWNED_ENV_KEY_PATTERN.test(key) && value.trim().length > 0,
     ),
   );
 }
@@ -67,7 +74,9 @@ export function readAgentJwtSecretFromEnv(configPath?: string): string | null {
   return isNonEmpty(raw) ? raw!.trim() : null;
 }
 
-export function readAgentJwtSecretFromEnvFile(filePath = resolveEnvFilePath()): string | null {
+export function readAgentJwtSecretFromEnvFile(
+  filePath = resolveEnvFilePath(),
+): string | null {
   if (!fs.existsSync(filePath)) return null;
 
   const raw = fs.readFileSync(filePath, "utf-8");
@@ -76,7 +85,10 @@ export function readAgentJwtSecretFromEnvFile(filePath = resolveEnvFilePath()): 
   return isNonEmpty(value) ? value!.trim() : null;
 }
 
-export function ensureAgentJwtSecret(configPath?: string): { secret: string; created: boolean } {
+export function ensureAgentJwtSecret(configPath?: string): {
+  secret: string;
+  created: boolean;
+} {
   const existingEnv = readAgentJwtSecretFromEnv(configPath);
   if (existingEnv) {
     return { secret: existingEnv, created: false };
@@ -94,7 +106,10 @@ export function ensureAgentJwtSecret(configPath?: string): { secret: string; cre
   return { secret, created };
 }
 
-export function ensureToolActionSigningSecret(configPath?: string): { secret: string; created: boolean } {
+export function ensureToolActionSigningSecret(configPath?: string): {
+  secret: string;
+  created: boolean;
+} {
   loadAgentJwtEnvFile(resolveEnvFilePath(configPath));
   const existingEnv = process.env[TOOL_ACTION_SIGNING_SECRET_ENV_KEY];
   if (isNonEmpty(existingEnv)) {
@@ -102,31 +117,51 @@ export function ensureToolActionSigningSecret(configPath?: string): { secret: st
   }
 
   const envFilePath = resolveEnvFilePath(configPath);
-  const existingFile = readTaskcoreEnvEntries(envFilePath)[TOOL_ACTION_SIGNING_SECRET_ENV_KEY];
-  const secret = isNonEmpty(existingFile) ? existingFile.trim() : randomBytes(32).toString("hex");
+  const existingFile =
+    readTaskcoreEnvEntries(envFilePath)[TOOL_ACTION_SIGNING_SECRET_ENV_KEY];
+  const secret = isNonEmpty(existingFile)
+    ? existingFile.trim()
+    : randomBytes(32).toString("hex");
   const created = !isNonEmpty(existingFile);
 
   if (created) {
-    mergeTaskcoreEnvEntries({ [TOOL_ACTION_SIGNING_SECRET_ENV_KEY]: secret }, envFilePath);
+    mergeTaskcoreEnvEntries(
+      { [TOOL_ACTION_SIGNING_SECRET_ENV_KEY]: secret },
+      envFilePath,
+    );
   }
 
   return { secret, created };
 }
 
-export function writeAgentJwtEnv(secret: string, filePath = resolveEnvFilePath()): void {
+export function writeAgentJwtEnv(
+  secret: string,
+  filePath = resolveEnvFilePath(),
+): void {
   mergeTaskcoreEnvEntries({ [JWT_SECRET_ENV_KEY]: secret }, filePath);
 }
 
-export function readTaskcoreEnvEntries(filePath = resolveEnvFilePath()): Record<string, string> {
+export function readTaskcoreEnvEntries(
+  filePath = resolveEnvFilePath(),
+): Record<string, string> {
   if (!fs.existsSync(filePath)) return {};
   return parseEnvFile(fs.readFileSync(filePath, "utf-8"));
 }
 
-export function writeTaskcoreEnvEntries(entries: Record<string, string>, filePath = resolveEnvFilePath()): void {
-  const previousContents = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : null;
-  const nextContents = updateEnvFileContents(previousContents ?? emptyEnvFileContents(), taskcoreOwnedEntries(entries), {
-    valueEncoding: "minimal",
-  });
+export function writeTaskcoreEnvEntries(
+  entries: Record<string, string>,
+  filePath = resolveEnvFilePath(),
+): void {
+  const previousContents = fs.existsSync(filePath)
+    ? fs.readFileSync(filePath, "utf8")
+    : null;
+  const nextContents = updateEnvFileContents(
+    previousContents ?? emptyEnvFileContents(),
+    taskcoreOwnedEntries(entries),
+    {
+      valueEncoding: "minimal",
+    },
+  );
   writeEnvFileAtomicallyIfChanged(filePath, previousContents, nextContents);
 }
 

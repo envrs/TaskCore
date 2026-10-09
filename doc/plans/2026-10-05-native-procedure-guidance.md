@@ -92,14 +92,14 @@ unchanged pass. The remaining Codex delegation pair is uncomparable because
 baseline Docker setup timed out before its paid step; no behavioral grade or
 final result artifact exists for that cell.
 
-| Story and harness | Baseline | Candidate | Observed missing behavior |
-|---|---|---|---|
-| Codex hiring/reuse | PASS | PASS | None observed by the original oracle |
-| Codex delegation/feedback | No behavioral grade | FAIL | Parent remains blocked after the revised child finishes |
-| Claude hiring/reuse | FAIL | PASS | Baseline did not deliver the revised ZIP |
-| Claude delegation/feedback | PASS | FAIL | Candidate finishes the parent before the child revision |
-| OpenCode hiring/reuse | PASS | FAIL | Candidate credential-persistence guard fails |
-| OpenCode delegation/feedback | FAIL | PASS | Baseline finishes the parent before the child revision |
+| Story and harness            | Baseline            | Candidate | Observed missing behavior                               |
+| ---------------------------- | ------------------- | --------- | ------------------------------------------------------- |
+| Codex hiring/reuse           | PASS                | PASS      | None observed by the original oracle                    |
+| Codex delegation/feedback    | No behavioral grade | FAIL      | Parent remains blocked after the revised child finishes |
+| Claude hiring/reuse          | FAIL                | PASS      | Baseline did not deliver the revised ZIP                |
+| Claude delegation/feedback   | PASS                | FAIL      | Candidate finishes the parent before the child revision |
+| OpenCode hiring/reuse        | PASS                | FAIL      | Candidate credential-persistence guard fails            |
+| OpenCode delegation/feedback | FAIL                | PASS      | Baseline finishes the parent before the child revision  |
 
 The two new passes do not offset the new failures. The `aba7ec2` CI passed on
 attempt 2 after five infrastructure-interrupted jobs were recovered and its
@@ -170,13 +170,13 @@ baseline `aecfa3b6a5cab110a9b926e93705311bbcf4db47`. Both include the same
 measurement fixture and common eval repairs. Exactly 12 source/generated/unit
 paths differ; 256 common fixture files have identical bytes.
 
-| Normalized extracted component | Baseline bytes | Corrected candidate bytes | Change |
-|---|---:|---:|---:|
-| Fixed instructions, start/resume | 1,809 | 1,256 | −553 |
-| All 39 tool declarations including schemas | 44,944 | 45,037 | +93 |
-| Task input, start/resume | 1,993 | 1,993 | 0 |
-| Combined standing projection, start/resume | 48,781 | 48,321 | −460 |
-| OpenCode MCP tools/list declarations | 44,249 | 44,342 | +93 |
+| Normalized extracted component             | Baseline bytes | Corrected candidate bytes | Change |
+| ------------------------------------------ | -------------: | ------------------------: | -----: |
+| Fixed instructions, start/resume           |          1,809 |                     1,256 |   −553 |
+| All 39 tool declarations including schemas |         44,944 |                    45,037 |    +93 |
+| Task input, start/resume                   |          1,993 |                     1,993 |      0 |
+| Combined standing projection, start/resume |         48,781 |                    48,321 |   −460 |
+| OpenCode MCP tools/list declarations       |         44,249 |                    44,342 |    +93 |
 
 Scripted Codex, ACPX Claude and OpenCode deliveries give the same comparative
 change. The serialization of the extracted components is measured separately
@@ -197,11 +197,11 @@ workflow identity and the later measurement-only correction.
 - [Original candidate campaign](https://github.com/khulnasoft/taskcore/actions/runs/37325777217)
 - [Original baseline campaign](https://github.com/khulnasoft/taskcore/actions/runs/37325870695)
 
-| Profile | Hire/reuse baseline → candidate | Delegate/feedback baseline → candidate |
-|---|---|---|
-| Codex | PASS → PASS | PASS → FAIL |
-| ACPX Claude | PASS → FAIL | PASS → FAIL |
-| OpenCode | FAIL → FAIL | FAIL → PASS |
+| Profile     | Hire/reuse baseline → candidate | Delegate/feedback baseline → candidate |
+| ----------- | ------------------------------- | -------------------------------------- |
+| Codex       | PASS → PASS                     | PASS → FAIL                            |
+| ACPX Claude | PASS → FAIL                     | PASS → FAIL                            |
+| OpenCode    | FAIL → FAIL                     | FAIL → PASS                            |
 
 There are three new overall failures, one new pass, one unchanged pass and one
 unchanged failure. The candidate did not qualify. Final ledgers match the
@@ -244,11 +244,11 @@ with one attempt per campaign cell. The original campaign is preserved and is
 not relabeled as this revision. The common suite hash is
 `acd17b4acbd7051070531f7d7587131139900f54245b992eb7a62faacda8e334`.
 
-| Profile | Hire/reuse baseline → candidate | Delegate/feedback baseline → candidate |
-|---|---|---|
-| Codex | PASS → PASS | PASS → FAIL (recovery) |
-| ACPX Claude | PASS → PASS | PASS → PASS (recovery) |
-| OpenCode | PASS → FAIL | FAIL → FAIL |
+| Profile     | Hire/reuse baseline → candidate | Delegate/feedback baseline → candidate |
+| ----------- | ------------------------------- | -------------------------------------- |
+| Codex       | PASS → PASS                     | PASS → FAIL (recovery)                 |
+| ACPX Claude | PASS → PASS                     | PASS → PASS (recovery)                 |
+| OpenCode    | PASS → FAIL                     | FAIL → FAIL                            |
 
 There are **two new failures, zero new passes, three unchanged passes, one
 unchanged failure and zero pending pairs**. Workflow completion is not the

@@ -24,7 +24,10 @@
         { "name": "SERVE_UI", "value": "true" },
         { "name": "TASKCORE_HOME", "value": "/taskcore" },
         { "name": "TASKCORE_INSTANCE_ID", "value": "default" },
-        { "name": "TASKCORE_CONFIG", "value": "/taskcore/instances/default/config.json" },
+        {
+          "name": "TASKCORE_CONFIG",
+          "value": "/taskcore/instances/default/config.json"
+        },
         { "name": "TASKCORE_DEPLOYMENT_MODE", "value": "authenticated" },
         { "name": "TASKCORE_DEPLOYMENT_EXPOSURE", "value": "public" },
         { "name": "TASKCORE_PUBLIC_URL", "value": "https://<DOMAIN>" },
@@ -61,7 +64,10 @@
         }
       ],
       "healthCheck": {
-        "command": ["CMD-SHELL", "curl -f http://localhost:3100/api/health || exit 1"],
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:3100/api/health || exit 1"
+        ],
         "interval": 30,
         "timeout": 5,
         "retries": 3,

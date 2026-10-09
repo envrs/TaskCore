@@ -61,6 +61,7 @@ context and server-side ownership checks.
    connected socket peer, and every redirect are mediated before request bytes
    are written. Public deployments continue to deny the broader private and
    reserved address set.
+
 ## Protected Assets
 
 - OAuth tokens, refresh tokens, app-installation tokens, API keys, webhook

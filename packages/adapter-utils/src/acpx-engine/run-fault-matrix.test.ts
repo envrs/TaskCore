@@ -28,12 +28,21 @@ import { classifyWorkspaceRestoreFailure } from "../workspace-restore-merge.js";
 // Wrap the staging seam and both sandbox bridges so a test can stub them without
 // changing behavior for the other tests.
 vi.mock("@taskcore/adapter-utils/execution-target", async (importActual) => {
-  const actual = await importActual<typeof import("@taskcore/adapter-utils/execution-target")>();
+  const actual =
+    await importActual<
+      typeof import("@taskcore/adapter-utils/execution-target")
+    >();
   return {
     ...actual,
-    prepareAdapterExecutionTargetRuntime: vi.fn(actual.prepareAdapterExecutionTargetRuntime),
-    startAdapterExecutionTargetTaskcoreBridge: vi.fn(actual.startAdapterExecutionTargetTaskcoreBridge),
-    startAdapterExecutionTargetProcessSessionBridge: vi.fn(actual.startAdapterExecutionTargetProcessSessionBridge),
+    prepareAdapterExecutionTargetRuntime: vi.fn(
+      actual.prepareAdapterExecutionTargetRuntime,
+    ),
+    startAdapterExecutionTargetTaskcoreBridge: vi.fn(
+      actual.startAdapterExecutionTargetTaskcoreBridge,
+    ),
+    startAdapterExecutionTargetProcessSessionBridge: vi.fn(
+      actual.startAdapterExecutionTargetProcessSessionBridge,
+    ),
   };
 });
 
@@ -56,9 +65,16 @@ async function makeTempRoot() {
 
 afterEach(async () => {
   await Promise.all(
-    tempRoots.splice(0).map((root) =>
-      fs.rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }),
-    ),
+    tempRoots
+      .splice(0)
+      .map((root) =>
+        fs.rm(root, {
+          recursive: true,
+          force: true,
+          maxRetries: 5,
+          retryDelay: 50,
+        }),
+      ),
   );
 });
 
@@ -77,17 +93,26 @@ function createLocalSandboxRunner() {
     }) => {
       counter += 1;
       const command = input.command === "bash" ? "/bin/bash" : input.command;
-      return await runChildProcess(`acpx-sandbox-run-${counter}`, command, input.args ?? [], {
-        cwd: input.cwd ?? process.cwd(),
-        env: input.env ?? {},
-        stdin: input.stdin,
-        timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-        graceSec: 5,
-        onLog: input.onLog ?? (async () => {}),
-        onSpawn: input.onSpawn
-          ? async (meta) => input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
-          : undefined,
-      });
+      return await runChildProcess(
+        `acpx-sandbox-run-${counter}`,
+        command,
+        input.args ?? [],
+        {
+          cwd: input.cwd ?? process.cwd(),
+          env: input.env ?? {},
+          stdin: input.stdin,
+          timeoutSec: Math.max(
+            1,
+            Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+          ),
+          graceSec: 5,
+          onLog: input.onLog ?? (async () => {}),
+          onSpawn: input.onSpawn
+            ? async (meta) =>
+                input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
+            : undefined,
+        },
+      );
     },
   };
 }
@@ -156,12 +181,16 @@ function stubBridges(options: { stopRejects?: boolean } = {}) {
         throw new Error("bridge stop boom");
       })
     : vi.fn(async () => {});
-  vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(async () => {
-    return { env: {}, stop } as never;
-  });
-  vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementation(async () => {
-    return { agentCommand: null, stop } as never;
-  });
+  vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(
+    async () => {
+      return { env: {}, stop } as never;
+    },
+  );
+  vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementation(
+    async () => {
+      return { agentCommand: null, stop } as never;
+    },
+  );
 }
 
 async function setupRemoteSandbox() {
@@ -191,7 +220,12 @@ function remoteArgs(
   return {
     agent: { id: "agent-1", companyId: "company-1" },
     runtime: {},
-    config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+    config: {
+      agent: "custom",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+      cwd: localCwd,
+    },
     context: {},
     authToken: "real-run-jwt",
     executionTarget,
@@ -205,7 +239,9 @@ function remoteArgs(
 // Seed the managed home through the staging seam and return a per-run copy-back
 // so the run registers the managed_home resource. `teardownRejects` makes the
 // copy-back reject during the settlement sync-back.
-function managedHomeSeed(options: { teardownRejects?: boolean } = {}): AcpxEngineExecutorOptions["prepareRemoteManagedHome"] {
+function managedHomeSeed(
+  options: { teardownRejects?: boolean } = {},
+): AcpxEngineExecutorOptions["prepareRemoteManagedHome"] {
   return async (input) => {
     const stagedRuntime = await input.stage([]);
     return {
@@ -229,7 +265,10 @@ function managedHomeSeedWithClassifiedTeardownFailure(
     const stagedRuntime = await input.stage([]);
     return {
       stagedRuntime,
-      teardown: async () => ({ ok: false as const, code: classifyWorkspaceRestoreFailure(error) }),
+      teardown: async () => ({
+        ok: false as const,
+        code: classifyWorkspaceRestoreFailure(error),
+      }),
     };
   };
 }
@@ -265,9 +304,13 @@ function assertDispositionReport(
   for (const record of records) {
     expect(["finalized", "transferred"]).toContain(record.disposition);
     if (record.id === transferred) {
-      expect(record.disposition, `${record.id} must be transferred`).toBe("transferred");
+      expect(record.disposition, `${record.id} must be transferred`).toBe(
+        "transferred",
+      );
     } else {
-      expect(record.disposition, `${record.id} must be finalized`).toBe("finalized");
+      expect(record.disposition, `${record.id} must be finalized`).toBe(
+        "finalized",
+      );
     }
   }
 }
@@ -275,8 +318,16 @@ function assertDispositionReport(
 // The sandbox-lane resource set before the runtime is created (staging and
 // transport), and after (adds the runtime). Without a managed-home seed the
 // managed_home resource is absent.
-const SANDBOX_PRE_RUNTIME: ResourceId[] = ["staged_runtime", "staging_lease", "control_bridge", "agent_bridge"];
-const SANDBOX_WITH_RUNTIME: ResourceId[] = [...SANDBOX_PRE_RUNTIME, "acp_runtime"];
+const SANDBOX_PRE_RUNTIME: ResourceId[] = [
+  "staged_runtime",
+  "staging_lease",
+  "control_bridge",
+  "agent_bridge",
+];
+const SANDBOX_WITH_RUNTIME: ResourceId[] = [
+  ...SANDBOX_PRE_RUNTIME,
+  "acp_runtime",
+];
 const SANDBOX_WITH_MANAGED_HOME: ResourceId[] = [
   "staged_runtime",
   "managed_home",
@@ -296,9 +347,11 @@ describe("composed ACPX run fault matrix", () => {
     const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
     stubBridges();
     const capture = captureDisposition();
-    vi.mocked(prepareAdapterExecutionTargetRuntime).mockImplementationOnce(async () => {
-      throw new Error("staging boom");
-    });
+    vi.mocked(prepareAdapterExecutionTargetRuntime).mockImplementationOnce(
+      async () => {
+        throw new Error("staging boom");
+      },
+    );
     const execute = createAcpxEngineExecutor({
       warmHandles: new Map(),
       stagedRuntimes: new Map(),
@@ -308,7 +361,10 @@ describe("composed ACPX run fault matrix", () => {
     });
 
     await expect(
-      execute({ runId: "fault-build", ...remoteArgs(stateDir, localCwd, executionTarget) } as never),
+      execute({
+        runId: "fault-build",
+        ...remoteArgs(stateDir, localCwd, executionTarget),
+      } as never),
     ).rejects.toThrow("staging boom");
 
     assertDispositionReport(capture.last(), { acquired: [] });
@@ -320,10 +376,14 @@ describe("composed ACPX run fault matrix", () => {
     const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
     const capture = captureDisposition();
     const stop = vi.fn(async () => {});
-    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(async () => {
-      throw new Error("taskcore bridge boom");
-    });
-    vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementationOnce(
+    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementationOnce(
+      async () => {
+        throw new Error("taskcore bridge boom");
+      },
+    );
+    vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mockImplementationOnce(
       async () => ({ agentCommand: null, stop }) as never,
     );
     const execute = createAcpxEngineExecutor({
@@ -335,10 +395,15 @@ describe("composed ACPX run fault matrix", () => {
     });
 
     await expect(
-      execute({ runId: "fault-bridge", ...remoteArgs(stateDir, localCwd, executionTarget) } as never),
+      execute({
+        runId: "fault-bridge",
+        ...remoteArgs(stateDir, localCwd, executionTarget),
+      } as never),
     ).rejects.toThrow("taskcore bridge boom");
 
-    assertDispositionReport(capture.last(), { acquired: ["staged_runtime", "staging_lease"] });
+    assertDispositionReport(capture.last(), {
+      acquired: ["staged_runtime", "staging_lease"],
+    });
   });
 
   // Case 3 — a runtime-create failure settles the staging and transport resources.
@@ -483,7 +548,9 @@ describe("composed ACPX run fault matrix", () => {
 
     const result = await execute({
       runId: "fault-prepare",
-      ...remoteArgs(stateDir, localCwd, executionTarget, { context: throwingHandoffContext() }),
+      ...remoteArgs(stateDir, localCwd, executionTarget, {
+        context: throwingHandoffContext(),
+      }),
     } as never);
 
     expect(result.exitCode).toBe(1);
@@ -498,10 +565,17 @@ describe("composed ACPX run fault matrix", () => {
     const stateDir = path.join(root, "state");
     const cwd = path.join(root, "worktree");
     await fs.mkdir(cwd, { recursive: true });
-    const config = { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd };
+    const config = {
+      agent: "custom",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+      cwd,
+    };
 
     // A first clean host run mints the session params the second run resumes from.
-    const firstExecute = createAcpxEngineExecutor({ createRuntime: () => completedRuntime() });
+    const firstExecute = createAcpxEngineExecutor({
+      createRuntime: () => completedRuntime(),
+    });
     const first = await firstExecute({
       runId: "fault-resume-a",
       agent: { id: "agent-1", companyId: "company-1" },
@@ -523,7 +597,8 @@ describe("composed ACPX run fault matrix", () => {
         created += 1;
         return {
           ensureSession: async (session: Record<string, unknown>) => {
-            if (session.resumeSessionId) throw new Error("resume session not found");
+            if (session.resumeSessionId)
+              throw new Error("resume session not found");
             return okHandle;
           },
           startTurn: () => completedTurn(),
@@ -535,7 +610,9 @@ describe("composed ACPX run fault matrix", () => {
     const second = await secondExecute({
       runId: "fault-resume-b",
       agent: { id: "agent-1", companyId: "company-1" },
-      runtime: { sessionParams: (first as { sessionParams?: unknown }).sessionParams },
+      runtime: {
+        sessionParams: (first as { sessionParams?: unknown }).sessionParams,
+      },
       config,
       context: {},
       onLog: async () => {},
@@ -599,7 +676,10 @@ describe("composed ACPX run fault matrix", () => {
             events: (async function* () {
               await turnCancelled;
             })(),
-            result: turnCancelled.then(() => ({ status: "cancelled", stopReason: "cancelled" })),
+            result: turnCancelled.then(() => ({
+              status: "cancelled",
+              stopReason: "cancelled",
+            })),
             cancel: async () => {
               releaseTurn?.();
             },
@@ -612,7 +692,13 @@ describe("composed ACPX run fault matrix", () => {
     const result = await execute({
       runId: "fault-timeout",
       ...remoteArgs(stateDir, localCwd, executionTarget, {
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd, timeoutSec: 1 },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir,
+          cwd: localCwd,
+          timeoutSec: 1,
+        },
       }),
     } as never);
 
@@ -772,7 +858,8 @@ describe("composed ACPX run fault matrix", () => {
       stagedRuntimes: new Map(),
       stagingLocks: new Map(),
       createRuntime: () => completedRuntime(),
-      prepareRemoteManagedHome: managedHomeSeedWithClassifiedTeardownFailure(eaccesError),
+      prepareRemoteManagedHome:
+        managedHomeSeedWithClassifiedTeardownFailure(eaccesError),
     });
 
     const result = await execute({
@@ -782,7 +869,9 @@ describe("composed ACPX run fault matrix", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.resultJson?.status).toBe("completed");
-    expect(result.resultJson?.workspaceRestoreFailure).toBe("restore_permission_denied");
+    expect(result.resultJson?.workspaceRestoreFailure).toBe(
+      "restore_permission_denied",
+    );
     const serializedResult = JSON.stringify(result.resultJson);
     expect(serializedResult).not.toContain("/srv/telemetry-backend");
     expect(serializedResult).not.toContain(String(process.pid));
@@ -794,7 +883,11 @@ describe("composed ACPX run fault matrix", () => {
     const ledger = createRunResourceLedger();
     ledger.register({
       id: "acp_runtime",
-      payload: { runtime: {}, sessionHandle: {}, childProcessPid: null } as never,
+      payload: {
+        runtime: {},
+        sessionHandle: {},
+        childProcessPid: null,
+      } as never,
       scope: "per_run",
     });
     const noopSteps: SettlementSteps = {
@@ -812,7 +905,9 @@ describe("composed ACPX run fault matrix", () => {
     assertDispositionReport(report, { acquired: ["acp_runtime"] });
 
     // A second settlement of the same ledger is a structural error.
-    await expect(settleAcpRun(ledger, null, noopSteps)).rejects.toBeInstanceOf(LedgerStateError);
+    await expect(settleAcpRun(ledger, null, noopSteps)).rejects.toBeInstanceOf(
+      LedgerStateError,
+    );
   });
 
   // Case 16 — the host-lane credential gate. Constructed gate-passed: the runtime
@@ -825,12 +920,20 @@ describe("composed ACPX run fault matrix", () => {
     const ledger = createRunResourceLedger();
     ledger.register({
       id: "acp_runtime",
-      payload: { runtime: {}, sessionHandle: {}, childProcessPid: null } as never,
+      payload: {
+        runtime: {},
+        sessionHandle: {},
+        childProcessPid: null,
+      } as never,
       scope: "per_run",
     });
     let closed = false;
     const gatePassedSteps: SettlementSteps = {
-      reuseCandidate: () => ({ kind: "host", causePermitsSave: true, liveRunScopedCredentials: [] }),
+      reuseCandidate: () => ({
+        kind: "host",
+        causePermitsSave: true,
+        liveRunScopedCredentials: [],
+      }),
       endSession: (_slots, decision) => {
         if (decision.kind !== "save") closed = true;
       },
@@ -842,7 +945,10 @@ describe("composed ACPX run fault matrix", () => {
     };
     const gatePassedReport = await settleAcpRun(ledger, null, gatePassedSteps);
     expect(closed).toBe(false);
-    assertDispositionReport(gatePassedReport, { acquired: ["acp_runtime"], transferred: "acp_runtime" });
+    assertDispositionReport(gatePassedReport, {
+      acquired: ["acp_runtime"],
+      transferred: "acp_runtime",
+    });
 
     // Live host path: the engine populates the run-scoped credential, so the gate
     // fails, the runtime closes, and it never transfers.
@@ -871,7 +977,10 @@ describe("composed ACPX run fault matrix", () => {
 
     expect(result.exitCode).toBe(0);
     // The live host path closes and never transfers the runtime.
-    assertDispositionReport(capture.last(), { acquired: ["acp_runtime"], transferred: null });
+    assertDispositionReport(capture.last(), {
+      acquired: ["acp_runtime"],
+      transferred: null,
+    });
   });
 
   // Case 17 — a host-lane turn failure finalizes (closes) the runtime.
@@ -908,7 +1017,10 @@ describe("composed ACPX run fault matrix", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.resultJson?.phase).toBe("turn");
-    assertDispositionReport(capture.last(), { acquired: ["acp_runtime"], transferred: null });
+    assertDispositionReport(capture.last(), {
+      acquired: ["acp_runtime"],
+      transferred: null,
+    });
   });
 });
 
@@ -919,7 +1031,10 @@ describe("composed ACPX run per-phase telemetry", () => {
 
   it("emits a run.phase.timing event for each lifecycle phase a clean host run reaches", async () => {
     const root = await makeTempRoot();
-    const events: Array<{ eventType: string; payload?: Record<string, unknown> }> = [];
+    const events: Array<{
+      eventType: string;
+      payload?: Record<string, unknown>;
+    }> = [];
     const execute = createAcpxEngineExecutor({
       warmHandles: new Map(),
       createRuntime: () => completedRuntime(),
@@ -929,11 +1044,18 @@ describe("composed ACPX run per-phase telemetry", () => {
       runId: "phase-telemetry",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
-      onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
+      onEvent: async (event: {
+        eventType: string;
+        payload?: Record<string, unknown>;
+      }) => {
         events.push(event);
       },
     } as never);
@@ -944,12 +1066,24 @@ describe("composed ACPX run per-phase telemetry", () => {
       .map((event) => String(event.payload?.phase));
     // A clean host run runs the runtime, session, prepare, turn, and settlement
     // phases. Each phase emits a phase-timing event.
-    for (const phase of ["create_runtime", "ensure_session", "prepare_turn", "turn", "end_session"]) {
+    for (const phase of [
+      "create_runtime",
+      "ensure_session",
+      "prepare_turn",
+      "turn",
+      "end_session",
+    ]) {
       expect(phases, `missing phase telemetry for ${phase}`).toContain(phase);
     }
     // Every phase-timing event carries exactly the three closed fields.
-    for (const event of events.filter((entry) => entry.eventType === "run.phase.timing")) {
-      expect(Object.keys(event.payload ?? {}).sort()).toEqual(["durationMs", "outcome", "phase"]);
+    for (const event of events.filter(
+      (entry) => entry.eventType === "run.phase.timing",
+    )) {
+      expect(Object.keys(event.payload ?? {}).sort()).toEqual([
+        "durationMs",
+        "outcome",
+        "phase",
+      ]);
     }
   });
 });

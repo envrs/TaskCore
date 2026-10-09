@@ -57,12 +57,15 @@ const BRIDGE_TOKEN = "test-bridge-token-fixed-length-32";
 /** Wrap one side of a paired `Duplex` as a minimal fake `CommandManagedDuplexChannel`. */
 function fakeChannelFromDuplex(duplex: Duplex): CommandManagedDuplexChannel {
   const dataListeners: Array<(chunk: Uint8Array) => void> = [];
-  const exitListeners: Array<(exit: { exitCode: number | null; transportClosed?: boolean }) => void> = [];
+  const exitListeners: Array<
+    (exit: { exitCode: number | null; transportClosed?: boolean }) => void
+  > = [];
   duplex.on("data", (chunk: Buffer) => {
     for (const listener of dataListeners) listener(chunk);
   });
   duplex.on("end", () => {
-    for (const listener of exitListeners) listener({ exitCode: null, transportClosed: true });
+    for (const listener of exitListeners)
+      listener({ exitCode: null, transportClosed: true });
   });
   return {
     write: (data) => {
@@ -84,7 +87,9 @@ function fakeChannelFromDuplex(duplex: Duplex): CommandManagedDuplexChannel {
 }
 
 interface TestPairOptions {
-  forwardRequest?: (request: Http2BridgeForwardRequest) => Promise<Http2BridgeForwardResult>;
+  forwardRequest?: (
+    request: Http2BridgeForwardRequest,
+  ) => Promise<Http2BridgeForwardResult>;
   bridgeToken?: string;
   pingIntervalMs?: number;
   pingStallMs?: number;
@@ -110,7 +115,13 @@ function bindTestServer(options: TestPairOptions = {}) {
     (async (request: Http2BridgeForwardRequest) => ({
       status: 200,
       headers: { "content-type": "application/json" },
-      body: Buffer.from(JSON.stringify({ echoedMethod: request.method, echoedPath: request.pathname }), "utf8"),
+      body: Buffer.from(
+        JSON.stringify({
+          echoedMethod: request.method,
+          echoedPath: request.pathname,
+        }),
+        "utf8",
+      ),
     }));
   const handle = createHttp2BridgeServer({
     bridgeToken,
@@ -136,7 +147,8 @@ function bindTestServer(options: TestPairOptions = {}) {
 /** Bind the server, then connect the sandbox HTTP/2 client gateway to the
  * other side of the same paired in-memory `Duplex`. */
 function createTestPair(options: TestPairOptions = {}) {
-  const { handle, bridgeToken, clientSide, serverSide } = bindTestServer(options);
+  const { handle, bridgeToken, clientSide, serverSide } =
+    bindTestServer(options);
   const gateway = createSandboxHttp2BridgeGateway({
     bridgeToken,
     createConnection: () => clientSide,
@@ -155,13 +167,19 @@ function connectRawClient(
   clientSide: Duplex,
   settings?: http2.Settings,
 ): http2.ClientHttp2Session {
-  return http2.connect("http://bridge.internal", { createConnection: () => clientSide, settings });
+  return http2.connect("http://bridge.internal", {
+    createConnection: () => clientSide,
+    settings,
+  });
 }
 
 /** Track whether `forwardRequest` ran, so a test can prove a denied or
  * destroyed stream never reached it. Call `markCalled()` from inside
  * `forwardRequest`, then assert on `.called`. */
-function createForwarderCallTracker(): { called: boolean; markCalled: () => void } {
+function createForwarderCallTracker(): {
+  called: boolean;
+  markCalled: () => void;
+} {
   const tracker = {
     called: false,
     markCalled(): void {
@@ -238,7 +256,10 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
         return {
           status: 200,
           headers: {},
-          body: Buffer.from(JSON.stringify({ echoedPath: request.pathname }), "utf8"),
+          body: Buffer.from(
+            JSON.stringify({ echoedPath: request.pathname }),
+            "utf8",
+          ),
         };
       },
     });
@@ -273,7 +294,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // promises. The mechanism test below exercises the same code path with
     // small overrides, so the suite stays fast.
     expect(DEFAULT_HTTP2_BRIDGE_PING_STALL_MS).toBe(20_000);
-    expect(DEFAULT_HTTP2_BRIDGE_PING_INTERVAL_MS).toBeLessThan(DEFAULT_HTTP2_BRIDGE_PING_STALL_MS);
+    expect(DEFAULT_HTTP2_BRIDGE_PING_INTERVAL_MS).toBeLessThan(
+      DEFAULT_HTTP2_BRIDGE_PING_STALL_MS,
+    );
 
     const [serverSide] = duplexPair();
     // Nothing consumes the other side of the pair, so every PING frame the
@@ -303,7 +326,8 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // server push is disabled). The sandbox gateway observes it and can
     // classify its own dispatched stream IDs with `classifyStreamAgainstGoaway`.
     let hostSession: http2.ServerHttp2Session | undefined;
-    const goawayRecords: Array<{ lastStreamId: number; errorCode: number }> = [];
+    const goawayRecords: Array<{ lastStreamId: number; errorCode: number }> =
+      [];
     const { handle, bridgeToken, clientSide } = bindTestServer({
       onSession: (session) => {
         hostSession = session;
@@ -331,8 +355,12 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       });
       expect(goawayRecords).toHaveLength(1);
       expect(goawayRecords[0]?.lastStreamId).toBe(1);
-      expect(classifyStreamAgainstGoaway(1, goawayRecords[0]!.lastStreamId)).toBe("accepted");
-      expect(classifyStreamAgainstGoaway(3, goawayRecords[0]!.lastStreamId)).toBe("not_accepted");
+      expect(
+        classifyStreamAgainstGoaway(1, goawayRecords[0]!.lastStreamId),
+      ).toBe("accepted");
+      expect(
+        classifyStreamAgainstGoaway(3, goawayRecords[0]!.lastStreamId),
+      ).toBe("not_accepted");
     } finally {
       await gateway.close();
       await handle.close();
@@ -346,7 +374,11 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
           // Hold this one open long enough for the test to RST it.
           await new Promise((resolve) => setTimeout(resolve, 200));
         }
-        return { status: 200, headers: {}, body: Buffer.from(JSON.stringify({ path: request.pathname }), "utf8") };
+        return {
+          status: 200,
+          headers: {},
+          body: Buffer.from(JSON.stringify({ path: request.pathname }), "utf8"),
+        };
       },
     });
     const rawClient = connectRawClient(clientSide);
@@ -367,13 +399,18 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       await abortedOutcome;
 
       // The session survives: a second request completes normally.
-      const survivingResponse = await expectSessionStillServesARequest(rawClient, {
-        method: "GET",
-        path: "/api/companies/co1",
-        token: bridgeToken,
-      });
+      const survivingResponse = await expectSessionStillServesARequest(
+        rawClient,
+        {
+          method: "GET",
+          path: "/api/companies/co1",
+          token: bridgeToken,
+        },
+      );
       expect(survivingResponse.status).toBe(200);
-      expect(JSON.parse(survivingResponse.body)).toEqual({ path: "/api/companies/co1" });
+      expect(JSON.parse(survivingResponse.body)).toEqual({
+        path: "/api/companies/co1",
+      });
     } finally {
       rawClient.close();
       await handle.close();
@@ -437,14 +474,21 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
           // it settles only when the stream's own signal fires, so the test
           // proves the signal itself unblocks the handler.
           await new Promise<void>((_resolve, reject) => {
-            request.signal.addEventListener("abort", () => reject(new Error("aborted")), {
-              once: true,
-            });
+            request.signal.addEventListener(
+              "abort",
+              () => reject(new Error("aborted")),
+              {
+                once: true,
+              },
+            );
           }).catch(() => undefined);
         } else if (request.pathname === "/api/agents/survivor") {
           await survivorHeld;
         }
-        return { status: 200, body: Buffer.from(JSON.stringify({ path: request.pathname }), "utf8") };
+        return {
+          status: 200,
+          body: Buffer.from(JSON.stringify({ path: request.pathname }), "utf8"),
+        };
       },
     });
     const rawClient = connectRawClient(clientSide);
@@ -466,17 +510,19 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       // Capture the survivor stream's own response, so the test proves this
       // exact stream — the sibling of the aborted one, on the same session —
       // completes normally, not merely that the session admits a fresh one.
-      const survivorResponse = new Promise<{ status: number; body: string }>((resolve, reject) => {
-        let status = 0;
-        let body = "";
-        survivorStream.setEncoding("utf8");
-        survivorStream.on("response", (h) => {
-          status = Number(h[":status"]) || 0;
-        });
-        survivorStream.on("data", (chunk) => (body += chunk));
-        survivorStream.on("end", () => resolve({ status, body }));
-        survivorStream.on("error", reject);
-      });
+      const survivorResponse = new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          let status = 0;
+          let body = "";
+          survivorStream.setEncoding("utf8");
+          survivorStream.on("response", (h) => {
+            status = Number(h[":status"]) || 0;
+          });
+          survivorStream.on("data", (chunk) => (body += chunk));
+          survivorStream.on("end", () => resolve({ status, body }));
+          survivorStream.on("error", reject);
+        },
+      );
       abortedStream.end();
       survivorStream.end();
       // Give both requests time to reach the server and enter forwardRequest.
@@ -493,7 +539,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
 
       const response = await survivorResponse;
       expect(response.status).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({ path: "/api/agents/survivor" });
+      expect(JSON.parse(response.body)).toEqual({
+        path: "/api/agents/survivor",
+      });
     } finally {
       rawClient.close();
       await handle.close();
@@ -519,9 +567,19 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
               reject(new Error("aborted"));
               return;
             }
-            request.signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+            request.signal.addEventListener(
+              "abort",
+              () => reject(new Error("aborted")),
+              { once: true },
+            );
           });
-          return { status: 200, body: Buffer.from(JSON.stringify({ path: request.pathname }), "utf8") };
+          return {
+            status: 200,
+            body: Buffer.from(
+              JSON.stringify({ path: request.pathname }),
+              "utf8",
+            ),
+          };
         } finally {
           liveForwards -= 1;
         }
@@ -530,16 +588,19 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     const rawClient = connectRawClient(clientSide);
     try {
       const openAndCancelOneBatch = async (label: string) => {
-        const streams = Array.from({ length: HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS }, (_, index) =>
-          rawClient.request({
-            ":method": "GET",
-            ":path": `/api/issues/${label}-${index}`,
-            authorization: `Bearer ${bridgeToken}`,
-          }),
+        const streams = Array.from(
+          { length: HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS },
+          (_, index) =>
+            rawClient.request({
+              ":method": "GET",
+              ":path": `/api/issues/${label}-${index}`,
+              authorization: `Bearer ${bridgeToken}`,
+            }),
         );
         for (const stream of streams) stream.end();
         await new Promise((resolve) => setTimeout(resolve, 30));
-        for (const stream of streams) stream.close(http2.constants.NGHTTP2_CANCEL);
+        for (const stream of streams)
+          stream.close(http2.constants.NGHTTP2_CANCEL);
         await new Promise((resolve) => setTimeout(resolve, 30));
       };
 
@@ -551,7 +612,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       await openAndCancelOneBatch("first");
       await openAndCancelOneBatch("second");
 
-      expect(maxLiveForwards).toBeLessThanOrEqual(HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS);
+      expect(maxLiveForwards).toBeLessThanOrEqual(
+        HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS,
+      );
       expect(liveForwards).toBe(0);
     } finally {
       rawClient.close();
@@ -589,11 +652,14 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
 
       // The session survives the timed-out stream: a second, complete request
       // still succeeds.
-      const survivingResponse = await expectSessionStillServesARequest(rawClient, {
-        method: "POST",
-        path: "/api/issues/abc/comments",
-        token: bridgeToken,
-      });
+      const survivingResponse = await expectSessionStillServesARequest(
+        rawClient,
+        {
+          method: "POST",
+          path: "/api/issues/abc/comments",
+          token: bridgeToken,
+        },
+      );
       expect(survivingResponse.status).toBe(200);
     } finally {
       rawClient.close();
@@ -609,41 +675,48 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       requestBodyTimeoutMs: 80,
       forwardRequest: async (request) => ({
         status: 200,
-        body: Buffer.from(JSON.stringify({ bodyLength: request.body.byteLength }), "utf8"),
+        body: Buffer.from(
+          JSON.stringify({ bodyLength: request.body.byteLength }),
+          "utf8",
+        ),
       }),
     });
     const rawClient = connectRawClient(clientSide);
     try {
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const req = rawClient.request({
-          ":method": "POST",
-          ":path": "/api/issues/abc/comments",
-          authorization: `Bearer ${bridgeToken}`,
-        });
-        let status = 0;
-        let body = "";
-        req.setEncoding("utf8");
-        req.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        req.on("data", (chunk) => (body += chunk));
-        req.on("end", () => resolve({ status, body }));
-        req.on("error", reject);
-        // Five chunks, each inside the idle bound, summing past it.
-        let sent = 0;
-        const sendNext = () => {
-          if (sent >= 5) {
-            req.end();
-            return;
-          }
-          sent += 1;
-          req.write("chunk");
-          setTimeout(sendNext, 40);
-        };
-        sendNext();
-      });
+      const response = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const req = rawClient.request({
+            ":method": "POST",
+            ":path": "/api/issues/abc/comments",
+            authorization: `Bearer ${bridgeToken}`,
+          });
+          let status = 0;
+          let body = "";
+          req.setEncoding("utf8");
+          req.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => resolve({ status, body }));
+          req.on("error", reject);
+          // Five chunks, each inside the idle bound, summing past it.
+          let sent = 0;
+          const sendNext = () => {
+            if (sent >= 5) {
+              req.end();
+              return;
+            }
+            sent += 1;
+            req.write("chunk");
+            setTimeout(sendNext, 40);
+          };
+          sendNext();
+        },
+      );
       expect(response.status).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({ bodyLength: "chunk".length * 5 });
+      expect(JSON.parse(response.body)).toEqual({
+        bodyLength: "chunk".length * 5,
+      });
     } finally {
       rawClient.close();
       await handle.close();
@@ -697,11 +770,14 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
 
       // The session survives the stopped stream: a second, complete request
       // still succeeds.
-      const survivingResponse = await expectSessionStillServesARequest(rawClient, {
-        method: "POST",
-        path: "/api/issues/abc/comments",
-        token: bridgeToken,
-      });
+      const survivingResponse = await expectSessionStillServesARequest(
+        rawClient,
+        {
+          method: "POST",
+          path: "/api/issues/abc/comments",
+          token: bridgeToken,
+        },
+      );
       expect(survivingResponse.status).toBe(200);
     } finally {
       rawClient.close();
@@ -717,29 +793,34 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       requestBodyLifetimeCeilingMs: 5_000,
       forwardRequest: async (request) => ({
         status: 200,
-        body: Buffer.from(JSON.stringify({ bodyLength: request.body.byteLength }), "utf8"),
+        body: Buffer.from(
+          JSON.stringify({ bodyLength: request.body.byteLength }),
+          "utf8",
+        ),
       }),
     });
     const rawClient = connectRawClient(clientSide);
     try {
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const req = rawClient.request({
-          ":method": "POST",
-          ":path": "/api/issues/abc/comments",
-          authorization: `Bearer ${bridgeToken}`,
-        });
-        let status = 0;
-        let body = "";
-        req.setEncoding("utf8");
-        req.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        req.on("data", (chunk) => (body += chunk));
-        req.on("end", () => resolve({ status, body }));
-        req.on("error", reject);
-        req.write("chunk");
-        req.end();
-      });
+      const response = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const req = rawClient.request({
+            ":method": "POST",
+            ":path": "/api/issues/abc/comments",
+            authorization: `Bearer ${bridgeToken}`,
+          });
+          let status = 0;
+          let body = "";
+          req.setEncoding("utf8");
+          req.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => resolve({ status, body }));
+          req.on("error", reject);
+          req.write("chunk");
+          req.end();
+        },
+      );
       expect(response.status).toBe(200);
       expect(JSON.parse(response.body)).toEqual({ bodyLength: "chunk".length });
     } finally {
@@ -758,39 +839,49 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       requestBodyLifetimeCeilingMs: 5_000,
       forwardRequest: async (request) => {
         forwarderTracker.markCalled();
-        return { status: 200, body: Buffer.from(JSON.stringify({ bodyLength: request.body.byteLength }), "utf8") };
+        return {
+          status: 200,
+          body: Buffer.from(
+            JSON.stringify({ bodyLength: request.body.byteLength }),
+            "utf8",
+          ),
+        };
       },
     });
     const rawClient = connectRawClient(clientSide);
     try {
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const req = rawClient.request({
-          ":method": "POST",
-          ":path": "/api/issues/abc/comments",
-          authorization: `Bearer ${bridgeToken}`,
-        });
-        let status = 0;
-        let body = "";
-        req.setEncoding("utf8");
-        req.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        req.on("data", (chunk) => (body += chunk));
-        req.on("end", () => resolve({ status, body }));
-        req.on("error", reject);
-        void (async () => {
-          // Six chunks, 40ms apart (well inside the idle bound), each real
-          // progress.
-          for (let sent = 0; sent < 6; sent += 1) {
-            req.write("chunk");
-            await new Promise((r) => setTimeout(r, 40));
-          }
-          req.end();
-        })();
-      });
+      const response = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const req = rawClient.request({
+            ":method": "POST",
+            ":path": "/api/issues/abc/comments",
+            authorization: `Bearer ${bridgeToken}`,
+          });
+          let status = 0;
+          let body = "";
+          req.setEncoding("utf8");
+          req.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => resolve({ status, body }));
+          req.on("error", reject);
+          void (async () => {
+            // Six chunks, 40ms apart (well inside the idle bound), each real
+            // progress.
+            for (let sent = 0; sent < 6; sent += 1) {
+              req.write("chunk");
+              await new Promise((r) => setTimeout(r, 40));
+            }
+            req.end();
+          })();
+        },
+      );
       expect(forwarderTracker.called).toBe(true);
       expect(response.status).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({ bodyLength: "chunk".length * 6 });
+      expect(JSON.parse(response.body)).toEqual({
+        bodyLength: "chunk".length * 6,
+      });
     } finally {
       rawClient.close();
       await handle.close();
@@ -865,9 +956,15 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
         rawClient.once("remoteSettings", resolve);
       });
       expect(remoteSettings.enablePush).toBe(HTTP2_BRIDGE_ENABLE_PUSH);
-      expect(remoteSettings.maxConcurrentStreams).toBe(HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS);
-      expect(remoteSettings.maxHeaderListSize).toBe(HTTP2_BRIDGE_MAX_HEADER_LIST_SIZE);
-      expect(remoteSettings.headerTableSize).toBe(HTTP2_BRIDGE_HEADER_TABLE_SIZE);
+      expect(remoteSettings.maxConcurrentStreams).toBe(
+        HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS,
+      );
+      expect(remoteSettings.maxHeaderListSize).toBe(
+        HTTP2_BRIDGE_MAX_HEADER_LIST_SIZE,
+      );
+      expect(remoteSettings.headerTableSize).toBe(
+        HTTP2_BRIDGE_HEADER_TABLE_SIZE,
+      );
     } finally {
       rawClient.close();
       await handle.close();
@@ -885,7 +982,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // `HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES` uses this exact same formula to
     // enforce it as a real per-route cap, not merely a derived figure.
     const expectedRouteBudget =
-      HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS * 4 * DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES;
+      HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS *
+      4 *
+      DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES;
     expect(expectedRouteBudget).toBe(168_820_736);
     expect(HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES).toBe(expectedRouteBudget);
   });
@@ -896,12 +995,16 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       try {
         expect(owner.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES)).toBe(true);
         expect(owner.heldBytes).toBe(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES);
-        expect(getBridgeBodyReservedBytesForTest()).toBe(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES);
+        expect(getBridgeBodyReservedBytesForTest()).toBe(
+          HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES,
+        );
 
         // One more byte passes the ceiling: denied, and it holds no bytes.
         expect(owner.reserve(1)).toBe(false);
         expect(owner.heldBytes).toBe(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES);
-        expect(getBridgeBodyReservedBytesForTest()).toBe(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES);
+        expect(getBridgeBodyReservedBytesForTest()).toBe(
+          HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES,
+        );
       } finally {
         owner.release();
       }
@@ -911,7 +1014,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       const owner = createBridgeBodyReservation();
       try {
         // The chunk-array reservation alone passes comfortably.
-        const chunkArrayBytes = Math.floor(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES * 0.6);
+        const chunkArrayBytes = Math.floor(
+          HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES * 0.6,
+        );
         expect(owner.reserve(chunkArrayBytes)).toBe(true);
 
         // The concatenated `Buffer.concat` copy is a second, separate live
@@ -953,14 +1058,20 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       const owner = createBridgeBodyReservation(routeLedger);
       try {
         expect(owner.reserve(HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES)).toBe(true);
-        expect(routeLedger.reservedBytes).toBe(HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES);
+        expect(routeLedger.reservedBytes).toBe(
+          HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES,
+        );
 
         expect(owner.reserve(1)).toBe(false);
         expect(owner.heldBytes).toBe(HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES);
-        expect(routeLedger.reservedBytes).toBe(HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES);
+        expect(routeLedger.reservedBytes).toBe(
+          HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES,
+        );
         // The process-wide total only ever grew by what this owner actually
         // holds: the denied byte reserved against neither total.
-        expect(getBridgeBodyReservedBytesForTest()).toBe(HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES);
+        expect(getBridgeBodyReservedBytesForTest()).toBe(
+          HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES,
+        );
       } finally {
         owner.release();
       }
@@ -1030,7 +1141,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
         // Wait until route A's forward actually holds its own ceiling —
         // not merely until the request was sent — before checking route B.
         await routeAReserved;
-        expect(getBridgeBodyReservedBytesForTest()).toBeGreaterThanOrEqual(HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES);
+        expect(getBridgeBodyReservedBytesForTest()).toBeGreaterThanOrEqual(
+          HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES,
+        );
 
         // Route A now holds its own entire per-route ceiling, live. The
         // process-wide total still has headroom (1 GiB minus one 161 MiB
@@ -1113,7 +1226,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
               resolve();
               return;
             }
-            request.signal.addEventListener("abort", () => resolve(), { once: true });
+            request.signal.addEventListener("abort", () => resolve(), {
+              once: true,
+            });
           });
           return { status: 200 };
         },
@@ -1276,7 +1391,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
             resolve();
             return;
           }
-          request.signal.addEventListener("abort", () => resolve(), { once: true });
+          request.signal.addEventListener("abort", () => resolve(), {
+            once: true,
+          });
         });
         await forwardHeld;
         forwardSettled = true;
@@ -1395,20 +1512,25 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     });
     const rawClient = connectRawClient(clientSide);
     try {
-      const response = await new Promise<{ status: number }>((resolve, reject) => {
-        // No `authorization` header: the token check denies this stream
-        // before its body is ever read.
-        const req = rawClient.request({ ":method": "POST", ":path": "/api/issues/abc/comments" });
-        let status = 0;
-        req.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        req.on("data", () => undefined);
-        req.on("end", () => resolve({ status }));
-        req.on("error", reject);
-        req.write(Buffer.alloc(50_000, "a"));
-        req.end();
-      });
+      const response = await new Promise<{ status: number }>(
+        (resolve, reject) => {
+          // No `authorization` header: the token check denies this stream
+          // before its body is ever read.
+          const req = rawClient.request({
+            ":method": "POST",
+            ":path": "/api/issues/abc/comments",
+          });
+          let status = 0;
+          req.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          req.on("data", () => undefined);
+          req.on("end", () => resolve({ status }));
+          req.on("error", reject);
+          req.write(Buffer.alloc(50_000, "a"));
+          req.end();
+        },
+      );
       expect(response.status).toBe(401);
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(getBridgeBodyReservedBytesForTest()).toBe(0);
@@ -1426,7 +1548,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // destroys the stream, or the client can see a reset instead of the
     // full response body asserted below.
     const filler = createBridgeBodyReservation();
-    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - 100)).toBe(true);
+    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - 100)).toBe(
+      true,
+    );
     const forwarderTracker = createForwarderCallTracker();
     const { handle, bridgeToken, clientSide } = bindTestServer({
       forwardRequest: async () => {
@@ -1436,40 +1560,46 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     });
     const rawClient = connectRawClient(clientSide);
     try {
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const req = rawClient.request({
-          ":method": "POST",
-          ":path": "/api/issues/abc/comments",
-          authorization: `Bearer ${bridgeToken}`,
-        });
-        let status = 0;
-        let body = "";
-        req.setEncoding("utf8");
-        req.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        req.on("data", (chunk) => (body += chunk));
-        req.on("end", () => resolve({ status, body }));
-        req.on("error", reject);
-        // Ten times the 100 bytes of headroom the filler above left.
-        req.end(Buffer.alloc(1_000, "a"));
-      });
+      const response = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const req = rawClient.request({
+            ":method": "POST",
+            ":path": "/api/issues/abc/comments",
+            authorization: `Bearer ${bridgeToken}`,
+          });
+          let status = 0;
+          let body = "";
+          req.setEncoding("utf8");
+          req.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => resolve({ status, body }));
+          req.on("error", reject);
+          // Ten times the 100 bytes of headroom the filler above left.
+          req.end(Buffer.alloc(1_000, "a"));
+        },
+      );
       expect(response.status).toBe(503);
       expect(forwarderTracker.called).toBe(false);
       // A raw reset delivers no body at all: parsing it here proves the
       // full JSON response actually reached the client, not merely the
       // status line.
       expect(JSON.parse(response.body)).toEqual({
-        error: "The bridge host reached its reserved process body byte ceiling. Retry later.",
+        error:
+          "The bridge host reached its reserved process body byte ceiling. Retry later.",
       });
 
       // The stream ended with a real response, not a raw reset: the session
       // stays healthy, so a second, complete request still succeeds.
-      const survivingResponse = await expectSessionStillServesARequest(rawClient, {
-        method: "GET",
-        path: "/api/agents/me",
-        token: bridgeToken,
-      });
+      const survivingResponse = await expectSessionStillServesARequest(
+        rawClient,
+        {
+          method: "GET",
+          path: "/api/agents/me",
+          token: bridgeToken,
+        },
+      );
       expect(survivingResponse.status).toBe(200);
     } finally {
       rawClient.close();
@@ -1487,7 +1617,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // protocol layer, regardless of the fake transport's own buffering —
     // the same deterministic stall a real stalled peer produces.
     const filler = createBridgeBodyReservation();
-    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - 100)).toBe(true);
+    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - 100)).toBe(
+      true,
+    );
     const forwarderTracker = createForwarderCallTracker();
     const { handle, bridgeToken, clientSide } = bindTestServer({
       capacityDenialSettleDeadlineMs: 30,
@@ -1525,12 +1657,17 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
 
       // The stream's slot freed too. Restore a normal flow-control window
       // first: only the denied stream above needs to stall.
-      await new Promise<void>((resolve) => rawClient.settings({ initialWindowSize: 65_535 }, () => resolve()));
-      const survivingResponse = await expectSessionStillServesARequest(rawClient, {
-        method: "GET",
-        path: "/api/agents/me",
-        token: bridgeToken,
-      });
+      await new Promise<void>((resolve) =>
+        rawClient.settings({ initialWindowSize: 65_535 }, () => resolve()),
+      );
+      const survivingResponse = await expectSessionStillServesARequest(
+        rawClient,
+        {
+          method: "GET",
+          path: "/api/agents/me",
+          token: bridgeToken,
+        },
+      );
       expect(survivingResponse.status).toBe(200);
     } finally {
       rawClient.close();
@@ -1582,12 +1719,17 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
 
       // The stream's slot freed too. Restore a normal flow-control window
       // first: only the stalled stream above needs to stall.
-      await new Promise<void>((resolve) => rawClient.settings({ initialWindowSize: 65_535 }, () => resolve()));
-      const survivingResponse = await expectSessionStillServesARequest(rawClient, {
-        method: "GET",
-        path: "/api/agents/me",
-        token: bridgeToken,
-      });
+      await new Promise<void>((resolve) =>
+        rawClient.settings({ initialWindowSize: 65_535 }, () => resolve()),
+      );
+      const survivingResponse = await expectSessionStillServesARequest(
+        rawClient,
+        {
+          method: "GET",
+          path: "/api/agents/me",
+          token: bridgeToken,
+        },
+      );
       expect(survivingResponse.status).toBe(200);
     } finally {
       rawClient.close();
@@ -1649,39 +1791,45 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     });
     const rawClient = connectRawClient(clientSide);
     try {
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const req = rawClient.request({
-          ":method": "GET",
-          ":path": "/api/agents/me",
-          authorization: `Bearer ${bridgeToken}`,
-        });
-        let status = 0;
-        let body = "";
-        req.setEncoding("utf8");
-        req.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        req.on("data", (chunk) => (body += chunk));
-        req.on("end", () => resolve({ status, body }));
-        req.on("error", reject);
-        req.end();
-      });
+      const response = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const req = rawClient.request({
+            ":method": "GET",
+            ":path": "/api/agents/me",
+            authorization: `Bearer ${bridgeToken}`,
+          });
+          let status = 0;
+          let body = "";
+          req.setEncoding("utf8");
+          req.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => resolve({ status, body }));
+          req.on("error", reject);
+          req.end();
+        },
+      );
       expect(response.status).toBe(503);
       expect(forwarderTracker.called).toBe(true);
       // A raw reset delivers no body at all: parsing it here proves the
       // full JSON response actually reached the client, not merely the
       // status line.
       expect(JSON.parse(response.body)).toEqual({
-        error: "The bridge host reached its reserved process body byte ceiling. Retry later.",
+        error:
+          "The bridge host reached its reserved process body byte ceiling. Retry later.",
       });
 
       // The stream ended with a real response, not a raw reset: the session
       // stays healthy, so a second, complete request still succeeds.
-      const survivingResponse = await expectSessionStillServesARequest(rawClient, {
-        method: "GET",
-        path: "/api/agents/me",
-        token: bridgeToken,
-      });
+      const survivingResponse = await expectSessionStillServesARequest(
+        rawClient,
+        {
+          method: "GET",
+          path: "/api/agents/me",
+          token: bridgeToken,
+        },
+      );
       expect(survivingResponse.status).toBe(200);
     } finally {
       rawClient.close();
@@ -1697,7 +1845,11 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // must never call `Buffer.concat` at all.
     const chunkBytes = 200_000;
     const filler = createBridgeBodyReservation();
-    expect(filler.reserve(HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - Math.floor(chunkBytes * 1.5))).toBe(true);
+    expect(
+      filler.reserve(
+        HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES - Math.floor(chunkBytes * 1.5),
+      ),
+    ).toBe(true);
     const concatSpy = vi.spyOn(Buffer, "concat");
     const forwarderTracker = createForwarderCallTracker();
     const { handle, bridgeToken, clientSide } = bindTestServer({
@@ -1708,35 +1860,39 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     });
     const rawClient = connectRawClient(clientSide);
     try {
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        const req = rawClient.request({
-          ":method": "POST",
-          ":path": "/api/issues/abc/comments",
-          authorization: `Bearer ${bridgeToken}`,
-        });
-        let status = 0;
-        let body = "";
-        req.setEncoding("utf8");
-        req.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        req.on("data", (chunk) => (body += chunk));
-        req.on("end", () => resolve({ status, body }));
-        req.on("error", reject);
-        req.write(Buffer.alloc(chunkBytes, "a"), () => {
-          // Give the host a turn to receive the one chunk and reserve its
-          // bytes before this test ends the stream and triggers the
-          // concatenated-copy reservation attempt.
-          setTimeout(() => {
-            // The chunk-array reservation alone must already hold, on top of
-            // the filler above, exactly the one chunk's bytes: the
-            // concatenated-copy reservation has not run yet, because the
-            // stream has not ended.
-            expect(getBridgeBodyReservedBytesForTest()).toBe(filler.heldBytes + chunkBytes);
-            req.end();
-          }, 50);
-        });
-      });
+      const response = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const req = rawClient.request({
+            ":method": "POST",
+            ":path": "/api/issues/abc/comments",
+            authorization: `Bearer ${bridgeToken}`,
+          });
+          let status = 0;
+          let body = "";
+          req.setEncoding("utf8");
+          req.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => resolve({ status, body }));
+          req.on("error", reject);
+          req.write(Buffer.alloc(chunkBytes, "a"), () => {
+            // Give the host a turn to receive the one chunk and reserve its
+            // bytes before this test ends the stream and triggers the
+            // concatenated-copy reservation attempt.
+            setTimeout(() => {
+              // The chunk-array reservation alone must already hold, on top of
+              // the filler above, exactly the one chunk's bytes: the
+              // concatenated-copy reservation has not run yet, because the
+              // stream has not ended.
+              expect(getBridgeBodyReservedBytesForTest()).toBe(
+                filler.heldBytes + chunkBytes,
+              );
+              req.end();
+            }, 50);
+          });
+        },
+      );
       expect(response.status).toBe(503);
       expect(forwarderTracker.called).toBe(false);
       expect(concatSpy).not.toHaveBeenCalled();
@@ -1750,16 +1906,25 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
 
   describe("parseCanonicalBridgeRequestPath", () => {
     it("parses an origin-form path with a query exactly one time", () => {
-      const result = parseCanonicalBridgeRequestPath({ ":path": "/api/issues/abc?foo=bar" });
-      expect(result).toEqual({ ok: true, value: { pathname: "/api/issues/abc", query: "?foo=bar" } });
+      const result = parseCanonicalBridgeRequestPath({
+        ":path": "/api/issues/abc?foo=bar",
+      });
+      expect(result).toEqual({
+        ok: true,
+        value: { pathname: "/api/issues/abc", query: "?foo=bar" },
+      });
     });
 
     it("test_a_non_origin_form_path_is_rejected", () => {
-      expect(parseCanonicalBridgeRequestPath({ ":path": "http://evil.example/api" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "http://evil.example/api" }),
+      ).toEqual({
         ok: false,
         reason: "non_origin_form",
       });
-      expect(parseCanonicalBridgeRequestPath({ ":path": "//evil.example/api" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "//evil.example/api" }),
+      ).toEqual({
         ok: false,
         reason: "non_origin_form",
       });
@@ -1770,31 +1935,45 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     });
 
     it("test_an_encoded_separator_or_a_dot_segment_is_rejected", () => {
-      expect(parseCanonicalBridgeRequestPath({ ":path": "/api%2fissues/abc" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "/api%2fissues/abc" }),
+      ).toEqual({
         ok: false,
         reason: "encoded_slash",
       });
-      expect(parseCanonicalBridgeRequestPath({ ":path": "/api\\issues/abc" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "/api\\issues/abc" }),
+      ).toEqual({
         ok: false,
         reason: "backslash",
       });
-      expect(parseCanonicalBridgeRequestPath({ ":path": "/api/issues\0/abc" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "/api/issues\0/abc" }),
+      ).toEqual({
         ok: false,
         reason: "nul_byte",
       });
-      expect(parseCanonicalBridgeRequestPath({ ":path": "/api/%00/abc" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "/api/%00/abc" }),
+      ).toEqual({
         ok: false,
         reason: "nul_byte",
       });
-      expect(parseCanonicalBridgeRequestPath({ ":path": "/api/../secrets" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "/api/../secrets" }),
+      ).toEqual({
         ok: false,
         reason: "dot_segment",
       });
-      expect(parseCanonicalBridgeRequestPath({ ":path": "/api/%2e%2e/secrets" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "/api/%2e%2e/secrets" }),
+      ).toEqual({
         ok: false,
         reason: "dot_segment",
       });
-      expect(parseCanonicalBridgeRequestPath({ ":path": "/api/./issues" })).toEqual({
+      expect(
+        parseCanonicalBridgeRequestPath({ ":path": "/api/./issues" }),
+      ).toEqual({
         ok: false,
         reason: "dot_segment",
       });
@@ -1802,12 +1981,17 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
 
     it("rejects a duplicate pseudo-header", () => {
       expect(
-        parseCanonicalBridgeRequestPath({ ":path": ["/api/agents/me", "/api/agents/other"] } as never),
+        parseCanonicalBridgeRequestPath({
+          ":path": ["/api/agents/me", "/api/agents/other"],
+        } as never),
       ).toEqual({ ok: false, reason: "duplicate_pseudo_header" });
     });
 
     it("rejects a missing path", () => {
-      expect(parseCanonicalBridgeRequestPath({})).toEqual({ ok: false, reason: "missing_path" });
+      expect(parseCanonicalBridgeRequestPath({})).toEqual({
+        ok: false,
+        reason: "missing_path",
+      });
     });
   });
 
@@ -1830,25 +2014,33 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     const { handle, clientSide } = bindTestServer({
       forwardRequest: async (request) => {
         forwarderTracker.markCalled();
-        return { status: 200, body: Buffer.from(JSON.stringify({ path: request.pathname }), "utf8") };
+        return {
+          status: 200,
+          body: Buffer.from(JSON.stringify({ path: request.pathname }), "utf8"),
+        };
       },
     });
     const rawClient = connectRawClient(clientSide);
     try {
-      const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
-        // No `authorization` header at all: the stream never carries a token.
-        const req = rawClient.request({ ":method": "GET", ":path": "/api/agents/me" });
-        let status = 0;
-        let body = "";
-        req.on("response", (headers) => {
-          status = Number(headers[":status"]) || 0;
-        });
-        req.setEncoding("utf8");
-        req.on("data", (chunk) => (body += chunk));
-        req.on("end", () => resolve({ status, body }));
-        req.on("error", reject);
-        req.end();
-      });
+      const response = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          // No `authorization` header at all: the stream never carries a token.
+          const req = rawClient.request({
+            ":method": "GET",
+            ":path": "/api/agents/me",
+          });
+          let status = 0;
+          let body = "";
+          req.on("response", (headers) => {
+            status = Number(headers[":status"]) || 0;
+          });
+          req.setEncoding("utf8");
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => resolve({ status, body }));
+          req.on("error", reject);
+          req.end();
+        },
+      );
       expect(response.status).toBe(401);
       expect(forwarderTracker.called).toBe(false);
     } finally {
@@ -1898,11 +2090,14 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
 
       // The session survives the freed stream: a second, complete request
       // still succeeds, proving the session itself stayed open and healthy.
-      const survivingResponse = await expectSessionStillServesARequest(rawClient, {
-        method: "GET",
-        path: "/api/agents/me",
-        token: BRIDGE_TOKEN,
-      });
+      const survivingResponse = await expectSessionStillServesARequest(
+        rawClient,
+        {
+          method: "GET",
+          path: "/api/agents/me",
+          token: BRIDGE_TOKEN,
+        },
+      );
       expect(survivingResponse.status).toBe(200);
     } finally {
       rawClient.close();
@@ -1930,10 +2125,16 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
         ["GET", "/api/secrets", 403],
       ] as const) {
         const response = await gateway.forwardRequest({
-          method, path, query: "", headers: {}, body: Buffer.alloc(0), receivedToken: BRIDGE_TOKEN,
+          method,
+          path,
+          query: "",
+          headers: {},
+          body: Buffer.alloc(0),
+          receivedToken: BRIDGE_TOKEN,
         });
         expect(response.status).toBe(status);
-        if (status === 200) expect(JSON.parse(response.body!.toString())).toEqual(schema);
+        if (status === 200)
+          expect(JSON.parse(response.body!.toString())).toEqual(schema);
       }
       expect(forwarded).toEqual(["GET /api/openapi.json"]);
     } finally {
@@ -1990,7 +2191,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // The wrapper really does add bytes on top of the file content alone —
     // otherwise this test would prove nothing about framing headroom.
     expect(multipartBody.byteLength).toBeGreaterThan(maxAttachmentBytes);
-    expect(multipartBody.byteLength).toBeLessThanOrEqual(DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES);
+    expect(multipartBody.byteLength).toBeLessThanOrEqual(
+      DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES,
+    );
 
     let receivedBodyBytes = 0;
     const { gateway, handle } = createTestPair({
@@ -2005,7 +2208,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
         method: "POST",
         path: "/api/companies/co-1/issues/issue-1/attachments",
         query: "",
-        headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
+        headers: {
+          "content-type": `multipart/form-data; boundary=${boundary}`,
+        },
         body: multipartBody,
         receivedToken: BRIDGE_TOKEN,
       });
@@ -2088,7 +2293,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       stop: () => undefined,
       close: async () => undefined,
     };
-    const duplex = wrapDuplexChannelAsNodeDuplex(channel, { maxBufferedReadBytes: 1_000_000 });
+    const duplex = wrapDuplexChannelAsNodeDuplex(channel, {
+      maxBufferedReadBytes: 1_000_000,
+    });
     const received: Buffer[] = [];
     // The first chunk alone passes the readable side's default 64 KiB
     // high-water mark, so `push()` reports the readable side full. The two
@@ -2109,7 +2316,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     });
     await drainedAll;
 
-    expect(Buffer.concat(received).toString("utf8").endsWith("-second--third-")).toBe(true);
+    expect(
+      Buffer.concat(received).toString("utf8").endsWith("-second--third-"),
+    ).toBe(true);
   });
 
   it("wrapDuplexChannelAsNodeDuplex stops the channel and destroys the duplex once the bounded read backpressure buffer overflows", async () => {
@@ -2131,12 +2340,16 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // forces `push()` to report the readable side full; the overflow this
     // test proves comes from the queue that follows, not from that first
     // chunk on its own.
-    const duplex = wrapDuplexChannelAsNodeDuplex(channel, { maxBufferedReadBytes: 80_000 });
+    const duplex = wrapDuplexChannelAsNodeDuplex(channel, {
+      maxBufferedReadBytes: 80_000,
+    });
     // No consumer ever attaches, so the readable side never drains: every
     // chunk past the first, which alone passes the default high-water mark,
     // fills the bounded queue instead of the unbounded internal buffer a
     // caller ignoring `push()`'s return would grow.
-    const errored = new Promise<Error>((resolve) => duplex.on("error", resolve));
+    const errored = new Promise<Error>((resolve) =>
+      duplex.on("error", resolve),
+    );
 
     dataListener?.(Buffer.alloc(70_000, "a")); // passes the high-water mark and the cap; still pushed directly.
     dataListener?.(Buffer.alloc(30_000, "b")); // queues: 30,000 of the 80,000-byte cap.
@@ -2167,7 +2380,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // No consumer ever attaches, so the readable side never drains.
     expect(DEFAULT_HTTP2_BRIDGE_MAX_BUFFERED_READ_BYTES).toBe(524_288);
     const duplex = wrapDuplexChannelAsNodeDuplex(channel);
-    const errored = new Promise<Error>((resolve) => duplex.on("error", resolve));
+    const errored = new Promise<Error>((resolve) =>
+      duplex.on("error", resolve),
+    );
 
     dataListener?.(Buffer.alloc(70_000, "a")); // passes the default high-water mark; still pushed directly.
     dataListener?.(Buffer.alloc(500_000, "b")); // queues most of the 524,288-byte default cap.
@@ -2195,8 +2410,12 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
     // No consumer ever attaches, and the queue is empty when this chunk
     // arrives, so a check that only bounds the queue's cumulative size (and
     // not one chunk's own size) would let this chunk reach `push()` unbound.
-    const duplex = wrapDuplexChannelAsNodeDuplex(channel, { maxBufferedReadBytes: 5_000 });
-    const errored = new Promise<Error>((resolve) => duplex.on("error", resolve));
+    const duplex = wrapDuplexChannelAsNodeDuplex(channel, {
+      maxBufferedReadBytes: 5_000,
+    });
+    const errored = new Promise<Error>((resolve) =>
+      duplex.on("error", resolve),
+    );
 
     dataListener?.(Buffer.alloc(10_000, "a")); // exceeds the 5,000-byte cap on its own, on the very first chunk.
 
@@ -2226,7 +2445,9 @@ describe("createHttp2BridgeServer + createSandboxHttp2BridgeGateway", () => {
       maxBufferedReadBytes: 10_000_000,
       readBackpressureStallMs: 40,
     });
-    const errored = new Promise<Error>((resolve) => duplex.on("error", resolve));
+    const errored = new Promise<Error>((resolve) =>
+      duplex.on("error", resolve),
+    );
 
     dataListener?.(Buffer.alloc(70_000, "a")); // passes the high-water mark; pushed directly, no consumer drains it.
     dataListener?.(Buffer.from("queued-and-never-drained")); // queues; no "data" listener ever attaches to drain it.

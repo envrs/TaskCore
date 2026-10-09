@@ -3,7 +3,12 @@ import { createUsageCheckpointLog } from "@taskcore/adapter-utils/usage-checkpoi
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { inferOpenAiCompatibleBiller, resolveManagedOpenAiBilling, type AdapterExecutionContext, type AdapterExecutionResult } from "@taskcore/adapter-utils";
+import {
+  inferOpenAiCompatibleBiller,
+  resolveManagedOpenAiBilling,
+  type AdapterExecutionContext,
+  type AdapterExecutionResult,
+} from "@taskcore/adapter-utils";
 import { buildCodexAuthInboundProvision } from "./codex-auth-merge-scripts.js";
 import { copyBackCodexAuth } from "./codex-auth-copyback.js";
 import {
@@ -62,7 +67,8 @@ import {
   type LocalProcessSandboxOptions,
 } from "@taskcore/adapter-utils/local-process-sandbox";
 import {
-  parseCodexJsonl, createCodexJsonlParser,
+  parseCodexJsonl,
+  createCodexJsonlParser,
   classifyCodexAuthRefreshFailure,
   extractCodexRetryNotBefore,
   isCodexHarnessCrash,
@@ -166,7 +172,11 @@ function signalCodexChild(
   target: { pid: number | null; processGroupId: number | null },
   signal: NodeJS.Signals,
 ): boolean {
-  if (process.platform !== "win32" && target.processGroupId && target.processGroupId > 0) {
+  if (
+    process.platform !== "win32" &&
+    target.processGroupId &&
+    target.processGroupId > 0
+  ) {
     try {
       process.kill(-target.processGroupId, signal);
       return true;
@@ -185,29 +195,40 @@ function signalCodexChild(
   return false;
 }
 
-function hasNonEmptyEnvValue(env: Record<string, string>, key: string): boolean {
+function hasNonEmptyEnvValue(
+  env: Record<string, string>,
+  key: string,
+): boolean {
   const raw = env[key];
   return typeof raw === "string" && raw.trim().length > 0;
 }
 
-function resolveCodexBillingType(env: Record<string, string>): "api" | "subscription" {
+function resolveCodexBillingType(
+  env: Record<string, string>,
+): "api" | "subscription" {
   // Codex uses API-key auth when OPENAI_API_KEY is present; otherwise rely on local login/session auth.
   return hasNonEmptyEnvValue(env, "OPENAI_API_KEY") ? "api" : "subscription";
 }
 
-function resolveCodexBiller(env: Record<string, string>, billingType: "api" | "subscription"): string {
+function resolveCodexBiller(
+  env: Record<string, string>,
+  billingType: "api" | "subscription",
+): string {
   const openAiCompatibleBiller = inferOpenAiCompatibleBiller(env, "openai");
   if (openAiCompatibleBiller === "openrouter") return "openrouter";
-  return billingType === "subscription" ? "chatgpt" : openAiCompatibleBiller ?? "openai";
+  return billingType === "subscription"
+    ? "chatgpt"
+    : (openAiCompatibleBiller ?? "openai");
 }
 
 async function isLikelyTaskcoreRepoRoot(candidate: string): Promise<boolean> {
-  const [hasWorkspace, hasPackageJson, hasServerDir, hasAdapterUtilsDir] = await Promise.all([
-    pathExists(path.join(candidate, "pnpm-workspace.yaml")),
-    pathExists(path.join(candidate, "package.json")),
-    pathExists(path.join(candidate, "server")),
-    pathExists(path.join(candidate, "packages", "adapter-utils")),
-  ]);
+  const [hasWorkspace, hasPackageJson, hasServerDir, hasAdapterUtilsDir] =
+    await Promise.all([
+      pathExists(path.join(candidate, "pnpm-workspace.yaml")),
+      pathExists(path.join(candidate, "package.json")),
+      pathExists(path.join(candidate, "server")),
+      pathExists(path.join(candidate, "packages", "adapter-utils")),
+    ]);
 
   return hasWorkspace && hasPackageJson && hasServerDir && hasAdapterUtilsDir;
 }
@@ -220,7 +241,10 @@ async function isLikelyTaskcoreRuntimeSkillPath(
   if (path.basename(candidate) !== skillName) return false;
   const skillsRoot = path.dirname(candidate);
   if (path.basename(skillsRoot) !== "skills") return false;
-  if (options.requireSkillMarkdown !== false && !(await pathExists(path.join(candidate, "SKILL.md")))) {
+  if (
+    options.requireSkillMarkdown !== false &&
+    !(await pathExists(path.join(candidate, "SKILL.md")))
+  ) {
     return false;
   }
 
@@ -241,7 +265,9 @@ async function pruneBrokenUnavailableTaskcoreSkillSymlinks(
   onLog: AdapterExecutionContext["onLog"],
 ) {
   const allowed = new Set(Array.from(allowedSkillNames));
-  const entries = await fs.readdir(skillsHome, { withFileTypes: true }).catch(() => []);
+  const entries = await fs
+    .readdir(skillsHome, { withFileTypes: true })
+    .catch(() => []);
 
   for (const entry of entries) {
     if (allowed.has(entry.name) || !entry.isSymbolicLink()) continue;
@@ -285,7 +311,9 @@ type CodexTransientFallbackMode =
   | "fresh_session"
   | "fresh_session_safer_invocation";
 
-function readCodexTransientFallbackMode(context: Record<string, unknown>): CodexTransientFallbackMode | null {
+function readCodexTransientFallbackMode(
+  context: Record<string, unknown>,
+): CodexTransientFallbackMode | null {
   const value = asString(context.codexTransientFallbackMode, "").trim();
   switch (value) {
     case "same_session":
@@ -298,18 +326,28 @@ function readCodexTransientFallbackMode(context: Record<string, unknown>): Codex
   }
 }
 
-function fallbackModeUsesSaferInvocation(mode: CodexTransientFallbackMode | null): boolean {
-  return mode === "safer_invocation" || mode === "fresh_session_safer_invocation";
+function fallbackModeUsesSaferInvocation(
+  mode: CodexTransientFallbackMode | null,
+): boolean {
+  return (
+    mode === "safer_invocation" || mode === "fresh_session_safer_invocation"
+  );
 }
 
-function fallbackModeUsesFreshSession(mode: CodexTransientFallbackMode | null): boolean {
+function fallbackModeUsesFreshSession(
+  mode: CodexTransientFallbackMode | null,
+): boolean {
   return mode === "fresh_session" || mode === "fresh_session_safer_invocation";
 }
 
-function managedMcpGatewaysFromContext(context: Record<string, unknown>): ManagedCodexMcpGateway[] {
+function managedMcpGatewaysFromContext(
+  context: Record<string, unknown>,
+): ManagedCodexMcpGateway[] {
   const managedMcp = parseObject(context.taskcoreManagedMcp);
   if (managedMcp.managedMcpOnly !== true) return [];
-  const gateways = Array.isArray(managedMcp.gateways) ? managedMcp.gateways : [];
+  const gateways = Array.isArray(managedMcp.gateways)
+    ? managedMcp.gateways
+    : [];
   return gateways
     .map((raw): ManagedCodexMcpGateway | null => {
       const gateway = parseObject(raw);
@@ -338,7 +376,11 @@ async function probeSandboxCodexAuthJson(input: {
   target: MaybeResolvedExecutionTarget;
   cwd: string;
 }): Promise<SandboxCodexAuthProbeResult> {
-  if (!input.target || input.target.kind !== "remote" || input.target.transport !== "sandbox") {
+  if (
+    !input.target ||
+    input.target.kind !== "remote" ||
+    input.target.transport !== "sandbox"
+  ) {
     return "absent";
   }
 
@@ -450,7 +492,11 @@ async function emitSandboxAuthPrecedenceWarningIfNeeded(input: {
   onLog: AdapterExecutionContext["onLog"];
   onEvent: AdapterExecutionContext["onEvent"];
 }): Promise<void> {
-  if (!input.target || input.target.kind !== "remote" || input.target.transport !== "sandbox") {
+  if (
+    !input.target ||
+    input.target.kind !== "remote" ||
+    input.target.transport !== "sandbox"
+  ) {
     return;
   }
 
@@ -489,7 +535,9 @@ function buildCodexTransientHandoffNote(input: {
 }): string {
   return [
     "Taskcore session handoff:",
-    input.previousSessionId ? `- Previous session: ${input.previousSessionId}` : "",
+    input.previousSessionId
+      ? `- Previous session: ${input.previousSessionId}`
+      : "",
     "- Rotation reason: repeated Codex transient remote-compaction failures",
     `- Fallback mode: ${input.fallbackMode}`,
     input.continuationSummaryBody
@@ -505,17 +553,21 @@ export async function ensureCodexSkillsInjected(
   onLog: AdapterExecutionContext["onLog"],
   options: EnsureCodexSkillsInjectedOptions = {},
 ) {
-  const allSkillsEntries = options.skillsEntries
-    ?? (await readTaskcoreRuntimeSkillEntries({}, __moduleDir)).filter(
+  const allSkillsEntries =
+    options.skillsEntries ??
+    (await readTaskcoreRuntimeSkillEntries({}, __moduleDir)).filter(
       (entry) => !isTaskcoreSkillSourceMissing(entry),
     );
   const desiredSkillNames =
     options.desiredSkillNames ?? allSkillsEntries.map((entry) => entry.key);
   const desiredSet = new Set(desiredSkillNames);
-  const skillsEntries = allSkillsEntries.filter((entry) => desiredSet.has(entry.key));
+  const skillsEntries = allSkillsEntries.filter((entry) =>
+    desiredSet.has(entry.key),
+  );
   if (skillsEntries.length === 0) return;
 
-  const skillsHome = options.skillsHome ?? resolveCodexSkillsDir(resolveSharedCodexHomeDir());
+  const skillsHome =
+    options.skillsHome ?? resolveCodexSkillsDir(resolveSharedCodexHomeDir());
   await fs.mkdir(skillsHome, { recursive: true });
   const linkSkill = options.linkSkill;
   for (const entry of skillsEntries) {
@@ -531,7 +583,10 @@ export async function ensureCodexSkillsInjected(
         if (
           resolvedLinkedPath &&
           resolvedLinkedPath !== entry.source &&
-          (await isLikelyTaskcoreRuntimeSkillPath(resolvedLinkedPath, entry.runtimeName))
+          (await isLikelyTaskcoreRuntimeSkillPath(
+            resolvedLinkedPath,
+            entry.runtimeName,
+          ))
         ) {
           await fs.unlink(target);
           if (linkSkill) {
@@ -547,7 +602,11 @@ export async function ensureCodexSkillsInjected(
         }
       }
 
-      const result = await ensureTaskcoreSkillSymlink(entry.source, target, linkSkill);
+      const result = await ensureTaskcoreSkillSymlink(
+        entry.source,
+        target,
+        linkSkill,
+      );
       if (result === "skipped") continue;
 
       await onLog(
@@ -569,7 +628,9 @@ export async function ensureCodexSkillsInjected(
   );
 }
 
-export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult> {
+export async function execute(
+  ctx: AdapterExecutionContext,
+): Promise<AdapterExecutionResult> {
   const providerStop = createProviderStoppedBoundary(ctx.onProviderStopped);
   const engineSelection = await resolveCodexExecutionEngineForRun(ctx);
   if (engineSelection.unavailableReason) {
@@ -588,7 +649,18 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     return executeCodexAcp(ctx);
   }
 
-  const { runId, agent, runtime, config, context, onLog, onMeta, onEvent, onSpawn, authToken } = ctx;
+  const {
+    runId,
+    agent,
+    runtime,
+    config,
+    context,
+    onLog,
+    onMeta,
+    onEvent,
+    onSpawn,
+    authToken,
+  } = ctx;
 
   const promptTemplate = asString(
     config.promptTemplate,
@@ -611,17 +683,22 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const agentHome = asString(workspaceContext.agentHome, "");
   const workspaceHints = Array.isArray(context.taskcoreWorkspaces)
     ? context.taskcoreWorkspaces.filter(
-        (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
+        (value): value is Record<string, unknown> =>
+          typeof value === "object" && value !== null,
       )
     : [];
-  const runtimeServiceIntents = Array.isArray(context.taskcoreRuntimeServiceIntents)
+  const runtimeServiceIntents = Array.isArray(
+    context.taskcoreRuntimeServiceIntents,
+  )
     ? context.taskcoreRuntimeServiceIntents.filter(
-        (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
+        (value): value is Record<string, unknown> =>
+          typeof value === "object" && value !== null,
       )
     : [];
   const runtimeServices = Array.isArray(context.taskcoreRuntimeServices)
     ? context.taskcoreRuntimeServices.filter(
-        (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
+        (value): value is Record<string, unknown> =>
+          typeof value === "object" && value !== null,
       )
     : [];
   const runtimePrimaryUrl = asString(context.taskcoreRuntimePrimaryUrl, "");
@@ -629,38 +706,58 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     executionTarget: ctx.executionTarget,
     legacyRemoteExecution: ctx.executionTransport?.remoteExecution,
   });
-  const targetWorkspaceRealization = executionTarget?.workspaceRealization ?? null;
+  const targetWorkspaceRealization =
+    executionTarget?.workspaceRealization ?? null;
   const configuredCwd = asString(config.cwd, "");
-  const useConfiguredInsteadOfAgentHome = workspaceSource === "agent_home" && configuredCwd.length > 0;
-  const effectiveWorkspaceCwd = targetWorkspaceRealization?.mode === "in_place"
-    ? targetWorkspaceRealization.authoritativeRoot
-    : useConfiguredInsteadOfAgentHome ? "" : workspaceCwd;
+  const useConfiguredInsteadOfAgentHome =
+    workspaceSource === "agent_home" && configuredCwd.length > 0;
+  const effectiveWorkspaceCwd =
+    targetWorkspaceRealization?.mode === "in_place"
+      ? targetWorkspaceRealization.authoritativeRoot
+      : useConfiguredInsteadOfAgentHome
+        ? ""
+        : workspaceCwd;
   const cwd = effectiveWorkspaceCwd || configuredCwd || process.cwd();
   const envConfig = parseObject(config.env);
-  const executionTargetIsRemote = adapterExecutionTargetIsRemote(executionTarget);
+  const executionTargetIsRemote =
+    adapterExecutionTargetIsRemote(executionTarget);
   let configuredCodexHome =
-    typeof envConfig.CODEX_HOME === "string" && envConfig.CODEX_HOME.trim().length > 0
+    typeof envConfig.CODEX_HOME === "string" &&
+    envConfig.CODEX_HOME.trim().length > 0
       ? path.resolve(envConfig.CODEX_HOME.trim())
       : null;
   const connectorSourceHome = configuredCodexHome;
-  const connectorSkillDigest = typeof config.taskcoreConnectorSkillDigest === "string"
-    && /^[a-f0-9]{64}$/.test(config.taskcoreConnectorSkillDigest) ? config.taskcoreConnectorSkillDigest : null;
+  const connectorSkillDigest =
+    typeof config.taskcoreConnectorSkillDigest === "string" &&
+    /^[a-f0-9]{64}$/.test(config.taskcoreConnectorSkillDigest)
+      ? config.taskcoreConnectorSkillDigest
+      : null;
   if (connectorSkillDigest) {
     // Never mount assignment-specific skills into the shared company/user home.
     // A different skill revision gets a new home, so revoked/changed resources
     // cannot survive as stale symlinks or bleed into another agent's session.
-    configuredCodexHome = path.join(resolveManagedCodexHomeDir(process.env, agent.companyId),
-      "connector-runtimes", agent.id, connectorSkillDigest);
+    configuredCodexHome = path.join(
+      resolveManagedCodexHomeDir(process.env, agent.companyId),
+      "connector-runtimes",
+      agent.id,
+      connectorSkillDigest,
+    );
   }
-  const codexSkillEntries = (await readTaskcoreRuntimeSkillEntries(config, __moduleDir))
+  const codexSkillEntries = (
+    await readTaskcoreRuntimeSkillEntries(config, __moduleDir)
+  )
     // A missing-source entry would become a dangling skill symlink; skip it.
     .filter((entry) => !isTaskcoreSkillSourceMissing(entry));
-  const desiredSkillNames = resolveCodexDesiredSkillNames(config, codexSkillEntries);
+  const desiredSkillNames = resolveCodexDesiredSkillNames(
+    config,
+    codexSkillEntries,
+  );
   if (!executionTargetIsRemote) {
     await ensureAbsoluteDirectory(cwd, { createIfMissing: true });
   }
   const configuredOpenAiApiKey =
-    typeof envConfig.OPENAI_API_KEY === "string" && envConfig.OPENAI_API_KEY.trim().length > 0
+    typeof envConfig.OPENAI_API_KEY === "string" &&
+    envConfig.OPENAI_API_KEY.trim().length > 0
       ? envConfig.OPENAI_API_KEY.trim()
       : null;
   // A configured CODEX_HOME that lives under the Taskcore-managed company tree
@@ -679,13 +776,17 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   // additive: the managed home still symlinks the shared `auth.json`, now at its
   // freshest same-identity copy. The off-switch (default on) skips the vend.
   if (!config.managedAiConnection && isCodexAuthCacheEnabled(process.env)) {
-    const sharedHomeAuthPath = path.join(resolveSharedCodexHomeDir(process.env), "auth.json");
+    const sharedHomeAuthPath = path.join(
+      resolveSharedCodexHomeDir(process.env),
+      "auth.json",
+    );
     // This caller reads `process.env` directly and holds no separate `env`
     // object, so `selectVendCredential` falls back to its own `process.env`
     // default for the merge lock root.
     await selectVendCredential(
       sharedHomeAuthPath,
-      (accountId) => resolveCodexAuthCacheEntryPath(process.env, accountId, agent.companyId),
+      (accountId) =>
+        resolveCodexAuthCacheEntryPath(process.env, accountId, agent.companyId),
       (line) => onLog("stdout", `${line}\n`),
     ).catch(async (error) => {
       // The vend is best-effort and additive. A vend failure must never block a
@@ -697,20 +798,31 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       void error;
     });
   }
-  if (configuredCodexHome == null || (connectorSkillDigest && connectorSourceHome == null)) {
+  if (
+    configuredCodexHome == null ||
+    (connectorSkillDigest && connectorSourceHome == null)
+  ) {
     await prepareManagedCodexHome(process.env, onLog, agent.companyId, {
       apiKey: configuredOpenAiApiKey,
     });
   }
   if (configuredHomeIsManaged && configuredCodexHome) {
-    const seedEnv = connectorSkillDigest ? {
-      ...process.env, CODEX_HOME: connectorSourceHome ?? resolveManagedCodexHomeDir(process.env, agent.companyId),
-    } : process.env;
+    const seedEnv = connectorSkillDigest
+      ? {
+          ...process.env,
+          CODEX_HOME:
+            connectorSourceHome ??
+            resolveManagedCodexHomeDir(process.env, agent.companyId),
+        }
+      : process.env;
     await seedManagedCodexHome(configuredCodexHome, seedEnv, onLog, {
       apiKey: configuredOpenAiApiKey,
     });
   }
-  const defaultCodexHome = resolveManagedCodexHomeDir(process.env, agent.companyId);
+  const defaultCodexHome = resolveManagedCodexHomeDir(
+    process.env,
+    agent.companyId,
+  );
   const effectiveCodexHome = configuredCodexHome ?? defaultCodexHome;
   await fs.mkdir(effectiveCodexHome, { recursive: true });
 
@@ -756,11 +868,13 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       await onLog("stdout", `[taskcore] ${note}\n`);
     }
     const taskcoreBaseEnv = buildTaskcoreEnv(agent, ctx.agentIdentity);
-    const runtimeMcpGateways = (ctx.runtimeMcp?.getServers() ?? []).map((server) => ({
-      name: server.name,
-      endpointPath: server.url,
-      bearerToken: server.token,
-    }));
+    const runtimeMcpGateways = (ctx.runtimeMcp?.getServers() ?? []).map(
+      (server) => ({
+        name: server.name,
+        endpointPath: server.url,
+        bearerToken: server.token,
+      }),
+    );
     const managedMcpGateways = mergeManagedCodexMcpGateways(
       runtimeMcpGateways,
       managedMcpGatewaysFromContext(context),
@@ -782,22 +896,20 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     // Inject skills into the same CODEX_HOME that Codex will actually run with
     // (managed home in the default case, or an explicit override from adapter config).
     const codexSkillsDir = resolveCodexSkillsDir(effectiveCodexHome);
-    await ensureCodexSkillsInjected(
-      onLog,
-      {
-        skillsHome: codexSkillsDir,
-        skillsEntries: codexSkillEntries,
-        desiredSkillNames,
-      },
-    );
+    await ensureCodexSkillsInjected(onLog, {
+      skillsHome: codexSkillsDir,
+      skillsEntries: codexSkillEntries,
+      desiredSkillNames,
+    });
     const timeoutSec = resolveAdapterExecutionTargetTimeoutSec(
       executionTarget,
       asNumber(config.timeoutSec, 0),
     );
     const graceSec = asNumber(config.graceSec, 20);
-    let effectiveExecutionCwd = targetWorkspaceRealization?.mode === "in_place"
-      ? targetWorkspaceRealization.authoritativeRoot
-      : adapterExecutionTargetRemoteCwd(executionTarget, cwd);
+    let effectiveExecutionCwd =
+      targetWorkspaceRealization?.mode === "in_place"
+        ? targetWorkspaceRealization.authoritativeRoot
+        : adapterExecutionTargetRemoteCwd(executionTarget, cwd);
     const preparedExecutionTargetRuntime = executionTargetIsRemote
       ? await (async () => {
           await onLog(
@@ -812,7 +924,9 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           // the single-use `auth.json`) are dereferenced to bytes. This drops the
           // large runtime state (`sessions/`, `*.sqlite`, `plugins/`, …) that the
           // 4-name denylist missed and that a sandbox run never needs.
-          stagedCodexHomeDir = await stageCodexHomeForSync(effectiveCodexHome, { runId });
+          stagedCodexHomeDir = await stageCodexHomeForSync(effectiveCodexHome, {
+            runId,
+          });
           return await prepareAdapterExecutionTargetRuntime({
             runId,
             target: executionTarget,
@@ -850,16 +964,28 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
                 // `auth.json` at), not the in-sandbox symlink.
                 restore: async ({ assetDir, readFile }) =>
                   void (await copyBackCodexAuth({
-                    readSandboxAuth: () => readFile(path.posix.join(assetDir, "auth.json")),
-                    hostAuthPath: path.join(config.managedAiConnection ? effectiveCodexHome : resolveSharedCodexHomeDir(process.env), "auth.json"),
+                    readSandboxAuth: () =>
+                      readFile(path.posix.join(assetDir, "auth.json")),
+                    hostAuthPath: path.join(
+                      config.managedAiConnection
+                        ? effectiveCodexHome
+                        : resolveSharedCodexHomeDir(process.env),
+                      "auth.json",
+                    ),
                     log: (line) => onLog("stdout", `${line}\n`),
                     // Additive cache write (sandbox to host): also cache the
                     // sandbox subscription credential in its per-identity slot,
                     // keyed by the real `account_id`. Company-scoped root; the
                     // helper ensures the slot directory private and containment-
                     // guarded. The off-switch (default on) is read inside.
-                    resolveCacheEntryPath: config.managedAiConnection ? undefined : (accountId) =>
-                      ensureCodexAuthCacheEntryDir(process.env, accountId, agent.companyId),
+                    resolveCacheEntryPath: config.managedAiConnection
+                      ? undefined
+                      : (accountId) =>
+                          ensureCodexAuthCacheEntryDir(
+                            process.env,
+                            accountId,
+                            agent.companyId,
+                          ),
                     env: process.env,
                   })),
                 // No `exclude` denylist: `stagedCodexHomeDir` already contains
@@ -873,16 +999,30 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     if (preparedExecutionTargetRuntime?.workspaceRemoteDir) {
       effectiveExecutionCwd = preparedExecutionTargetRuntime.workspaceRemoteDir;
     }
-    const runtimeExecutionTarget = overrideAdapterExecutionTargetRemoteCwd(executionTarget, effectiveExecutionCwd);
+    const runtimeExecutionTarget = overrideAdapterExecutionTargetRemoteCwd(
+      executionTarget,
+      effectiveExecutionCwd,
+    );
     const executionTargetIsSandbox =
-      runtimeExecutionTarget?.kind === "remote" && runtimeExecutionTarget.transport === "sandbox";
+      runtimeExecutionTarget?.kind === "remote" &&
+      runtimeExecutionTarget.transport === "sandbox";
     const restoreRemoteWorkspace = preparedExecutionTargetRuntime
-      ? () => preparedExecutionTargetRuntime.restoreWorkspace((line) => onLog("stdout", line))
+      ? () =>
+          preparedExecutionTargetRuntime.restoreWorkspace((line) =>
+            onLog("stdout", line),
+          )
       : null;
-    let taskcoreBridge: Awaited<ReturnType<typeof startAdapterExecutionTargetTaskcoreBridge>> = null;
+    let taskcoreBridge: Awaited<
+      ReturnType<typeof startAdapterExecutionTargetTaskcoreBridge>
+    > = null;
     const remoteCodexHome = executionTargetIsRemote
-      ? preparedExecutionTargetRuntime?.assetDirs.home ??
-        path.posix.join(effectiveExecutionCwd, ".taskcore-runtime", "codex", "home")
+      ? (preparedExecutionTargetRuntime?.assetDirs.home ??
+        path.posix.join(
+          effectiveExecutionCwd,
+          ".taskcore-runtime",
+          "codex",
+          "home",
+        ))
       : null;
     await emitSandboxAuthPrecedenceWarningIfNeeded({
       runId,
@@ -896,27 +1036,41 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     const env: Record<string, string> = { ...taskcoreBaseEnv };
     env.TASKCORE_RUN_ID = runId;
     const wakeTaskId =
-      (typeof context.taskId === "string" && context.taskId.trim().length > 0 && context.taskId.trim()) ||
-      (typeof context.issueId === "string" && context.issueId.trim().length > 0 && context.issueId.trim()) ||
+      (typeof context.taskId === "string" &&
+        context.taskId.trim().length > 0 &&
+        context.taskId.trim()) ||
+      (typeof context.issueId === "string" &&
+        context.issueId.trim().length > 0 &&
+        context.issueId.trim()) ||
       null;
     const wakeReason =
-      typeof context.wakeReason === "string" && context.wakeReason.trim().length > 0
+      typeof context.wakeReason === "string" &&
+      context.wakeReason.trim().length > 0
         ? context.wakeReason.trim()
         : null;
     const wakeCommentId =
-      (typeof context.wakeCommentId === "string" && context.wakeCommentId.trim().length > 0 && context.wakeCommentId.trim()) ||
-      (typeof context.commentId === "string" && context.commentId.trim().length > 0 && context.commentId.trim()) ||
+      (typeof context.wakeCommentId === "string" &&
+        context.wakeCommentId.trim().length > 0 &&
+        context.wakeCommentId.trim()) ||
+      (typeof context.commentId === "string" &&
+        context.commentId.trim().length > 0 &&
+        context.commentId.trim()) ||
       null;
     const approvalId =
-      typeof context.approvalId === "string" && context.approvalId.trim().length > 0
+      typeof context.approvalId === "string" &&
+      context.approvalId.trim().length > 0
         ? context.approvalId.trim()
         : null;
     const approvalStatus =
-      typeof context.approvalStatus === "string" && context.approvalStatus.trim().length > 0
+      typeof context.approvalStatus === "string" &&
+      context.approvalStatus.trim().length > 0
         ? context.approvalStatus.trim()
         : null;
     const linkedIssueIds = Array.isArray(context.issueIds)
-      ? context.issueIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      ? context.issueIds.filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
       : [];
     const issueWorkMode = readTaskcoreIssueWorkModeFromContext(context);
     if (wakeTaskId) {
@@ -958,10 +1112,13 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     });
     if (targetWorkspaceRealization) {
       env.TASKCORE_WORKSPACE_REALIZATION_MODE = targetWorkspaceRealization.mode;
-      env.TASKCORE_WORKSPACE_AUTHORITATIVE_ROOT = targetWorkspaceRealization.authoritativeRoot;
+      env.TASKCORE_WORKSPACE_AUTHORITATIVE_ROOT =
+        targetWorkspaceRealization.authoritativeRoot;
     }
     if (runtimeServiceIntents.length > 0) {
-      env.TASKCORE_RUNTIME_SERVICE_INTENTS_JSON = JSON.stringify(runtimeServiceIntents);
+      env.TASKCORE_RUNTIME_SERVICE_INTENTS_JSON = JSON.stringify(
+        runtimeServiceIntents,
+      );
     }
     if (runtimeServices.length > 0) {
       env.TASKCORE_RUNTIME_SERVICES_JSON = JSON.stringify(runtimeServices);
@@ -973,12 +1130,21 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     if (authToken) {
       env.TASKCORE_API_KEY = authToken;
     }
-    if (executionTargetIsRemote && adapterExecutionTargetUsesTaskcoreBridge(runtimeExecutionTarget)) {
+    if (
+      executionTargetIsRemote &&
+      adapterExecutionTargetUsesTaskcoreBridge(runtimeExecutionTarget)
+    ) {
       taskcoreBridge = await startAdapterExecutionTargetTaskcoreBridge({
         runId,
         target: runtimeExecutionTarget,
-        enableSandboxDuplexBridge: adapterExecutionTargetEnablesSandboxDuplexBridge(runtimeExecutionTarget),
-        duplexObservabilityRecorder: adapterExecutionTargetDuplexObservabilityRecorder(runtimeExecutionTarget),
+        enableSandboxDuplexBridge:
+          adapterExecutionTargetEnablesSandboxDuplexBridge(
+            runtimeExecutionTarget,
+          ),
+        duplexObservabilityRecorder:
+          adapterExecutionTargetDuplexObservabilityRecorder(
+            runtimeExecutionTarget,
+          ),
         runtimeRootDir: preparedExecutionTargetRuntime?.runtimeRootDir,
         adapterKey: "codex",
         timeoutSec,
@@ -995,24 +1161,34 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       ),
     );
     const managedBilling = resolveManagedOpenAiBilling(config.managedAiRouting);
-    const billingType = managedBilling?.billingType ?? resolveCodexBillingType(effectiveEnv);
-    const biller = managedBilling?.biller ?? resolveCodexBiller(effectiveEnv, billingType);
+    const billingType =
+      managedBilling?.billingType ?? resolveCodexBillingType(effectiveEnv);
+    const biller =
+      managedBilling?.biller ?? resolveCodexBiller(effectiveEnv, billingType);
     const networkScope = parseLocalProcessNetworkScope(config.networkScope);
-    const filesystemScope = parseLocalProcessFilesystemScope(config.filesystemScope);
+    const filesystemScope = parseLocalProcessFilesystemScope(
+      config.filesystemScope,
+    );
     const localProcessSandbox: LocalProcessSandboxOptions | null =
       (filesystemScope || networkScope) && !executionTargetIsRemote
         ? {
             workspaceDir: effectiveExecutionCwd,
             filesystemScope,
             managedPaths: [{ path: effectiveCodexHome, access: "rw" }],
-            extraPaths: parseLocalProcessSandboxExtraPaths(config.filesystemExtraPaths),
-            pathAliases: targetWorkspaceRealization?.mode === "copy"
-              ? targetWorkspaceRealization.pathAliases
-              : [],
-            outboundRestorePaths: targetWorkspaceRealization?.outboundRestorePaths ?? [],
+            extraPaths: parseLocalProcessSandboxExtraPaths(
+              config.filesystemExtraPaths,
+            ),
+            pathAliases:
+              targetWorkspaceRealization?.mode === "copy"
+                ? targetWorkspaceRealization.pathAliases
+                : [],
+            outboundRestorePaths:
+              targetWorkspaceRealization?.outboundRestorePaths ?? [],
             homeDir: filesystemScope ? effectiveCodexHome : null,
             networkScope,
-            networkAllowlist: parseLocalProcessNetworkAllowlist(config.networkAllowlist),
+            networkAllowlist: parseLocalProcessNetworkAllowlist(
+              config.networkAllowlist,
+            ),
             networkTrustedUrls: [
               taskcoreBaseEnv.TASKCORE_API_URL,
               ...runtimeMcpGateways.map((gateway) => gateway.endpointPath),
@@ -1021,7 +1197,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           }
         : null;
     if (localProcessSandbox) {
-      const scopes = [filesystemScope ? "workspace filesystem" : null, networkScope ? `${networkScope} network` : null]
+      const scopes = [
+        filesystemScope ? "workspace filesystem" : null,
+        networkScope ? `${networkScope} network` : null,
+      ]
         .filter(Boolean)
         .join(" and ");
       await onLog(
@@ -1045,38 +1224,68 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       graceSec,
       onLog,
     });
-    await ensureAdapterExecutionTargetCommandResolvable(command, executionTarget, cwd, runtimeEnv);
-    const resolvedCommand = await resolveAdapterExecutionTargetCommandForLogs(command, executionTarget, cwd, runtimeEnv);
+    await ensureAdapterExecutionTargetCommandResolvable(
+      command,
+      executionTarget,
+      cwd,
+      runtimeEnv,
+    );
+    const resolvedCommand = await resolveAdapterExecutionTargetCommandForLogs(
+      command,
+      executionTarget,
+      cwd,
+      runtimeEnv,
+    );
     const loggedEnv = buildInvocationEnvForLogs(env, {
       runtimeEnv,
       includeRuntimeKeys: ["HOME"],
       resolvedCommand,
     });
 
-    const monitorResolution = resolveCodexInactivityTimeout(config.outputInactivityTimeoutMs);
+    const monitorResolution = resolveCodexInactivityTimeout(
+      config.outputInactivityTimeoutMs,
+    );
     if (monitorResolution.mode === "disabled") {
       await onLog(
         "stdout",
         `[taskcore] Codex output inactivity monitor is DISABLED via adapterConfig.outputInactivityTimeoutMs=null. Hung codex runs will only be detected by the platform-level silent-run safety net.\n`,
       );
-    } else if (monitorResolution.mode === "default" && "reason" in monitorResolution) {
+    } else if (
+      monitorResolution.mode === "default" &&
+      "reason" in monitorResolution
+    ) {
       await onLog(
         "stdout",
         `[taskcore] Ignoring non-positive adapterConfig.outputInactivityTimeoutMs; falling back to default ${monitorResolution.timeoutMs}ms.\n`,
       );
     }
     const runtimeSessionParams = parseObject(runtime.sessionParams);
-    const runtimeSessionId = asString(runtimeSessionParams.sessionId, runtime.sessionId ?? "");
+    const runtimeSessionId = asString(
+      runtimeSessionParams.sessionId,
+      runtime.sessionId ?? "",
+    );
     const runtimeSessionCwd = asString(runtimeSessionParams.cwd, "");
-    const runtimeRemoteExecution = parseObject(runtimeSessionParams.remoteExecution);
+    const runtimeRemoteExecution = parseObject(
+      runtimeSessionParams.remoteExecution,
+    );
     const canResumeSession =
       runtimeSessionId.length > 0 &&
-      (runtimeSessionCwd.length === 0 || path.resolve(runtimeSessionCwd) === path.resolve(effectiveExecutionCwd)) &&
-      adapterExecutionTargetSessionMatches(runtimeRemoteExecution, runtimeExecutionTarget);
+      (runtimeSessionCwd.length === 0 ||
+        path.resolve(runtimeSessionCwd) ===
+          path.resolve(effectiveExecutionCwd)) &&
+      adapterExecutionTargetSessionMatches(
+        runtimeRemoteExecution,
+        runtimeExecutionTarget,
+      );
     const codexTransientFallbackMode = readCodexTransientFallbackMode(context);
-    const forceSaferInvocation = fallbackModeUsesSaferInvocation(codexTransientFallbackMode);
-    const forceFreshSession = fallbackModeUsesFreshSession(codexTransientFallbackMode);
-    const sessionId = canResumeSession && !forceFreshSession ? runtimeSessionId : null;
+    const forceSaferInvocation = fallbackModeUsesSaferInvocation(
+      codexTransientFallbackMode,
+    );
+    const forceFreshSession = fallbackModeUsesFreshSession(
+      codexTransientFallbackMode,
+    );
+    const sessionId =
+      canResumeSession && !forceFreshSession ? runtimeSessionId : null;
     if (executionTargetIsRemote && runtimeSessionId && !canResumeSession) {
       await onLog(
         "stdout",
@@ -1088,12 +1297,20 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         `[taskcore] Codex session "${runtimeSessionId}" was saved for cwd "${runtimeSessionCwd}" and will not be resumed in "${effectiveExecutionCwd}".\n`,
       );
     }
-    const instructionsFilePath = asString(config.instructionsFilePath, "").trim();
-    const instructionsDir = instructionsFilePath ? `${path.dirname(instructionsFilePath)}/` : "";
+    const instructionsFilePath = asString(
+      config.instructionsFilePath,
+      "",
+    ).trim();
+    const instructionsDir = instructionsFilePath
+      ? `${path.dirname(instructionsFilePath)}/`
+      : "";
     let instructionsPrefix = "";
     if (instructionsFilePath) {
       try {
-        const instructionsContents = await fs.readFile(instructionsFilePath, "utf8");
+        const instructionsContents = await fs.readFile(
+          instructionsFilePath,
+          "utf8",
+        );
         instructionsPrefix =
           `${instructionsContents}\n\n` +
           `The above agent instructions were loaded from ${instructionsFilePath}. ` +
@@ -1108,7 +1325,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     }
     const repoAgentsNote =
       "Codex exec automatically applies repo-scoped AGENTS.md instructions from the current workspace; Taskcore does not currently suppress that discovery.";
-    const bootstrapPromptTemplate = asString(config.bootstrapPromptTemplate, "");
+    const bootstrapPromptTemplate = asString(
+      config.bootstrapPromptTemplate,
+      "",
+    );
     const templateData = {
       agentId: agent.id,
       companyId: agent.companyId,
@@ -1118,36 +1338,50 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       run: { id: runId, source: "on_demand" },
       context,
     };
-    const continuationSummary = parseObject(context.taskcoreContinuationSummary);
-    const continuationSummaryBody = asString(continuationSummary.body, "").trim() || null;
-    const codexFallbackHandoffNote =
-      forceFreshSession
-        ? buildCodexTransientHandoffNote({
-            previousSessionId: runtimeSessionId || runtime.sessionId || null,
-            fallbackMode: codexTransientFallbackMode ?? "fresh_session",
-            continuationSummaryBody,
-          })
-        : "";
+    const continuationSummary = parseObject(
+      context.taskcoreContinuationSummary,
+    );
+    const continuationSummaryBody =
+      asString(continuationSummary.body, "").trim() || null;
+    const codexFallbackHandoffNote = forceFreshSession
+      ? buildCodexTransientHandoffNote({
+          previousSessionId: runtimeSessionId || runtime.sessionId || null,
+          fallbackMode: codexTransientFallbackMode ?? "fresh_session",
+          continuationSummaryBody,
+        })
+      : "";
     const runAttempt = async (resumeSessionId: string | null) => {
-      await hydrateFreshSessionHandoff(ctx, { resumedSession: Boolean(resumeSessionId) });
+      await hydrateFreshSessionHandoff(ctx, {
+        resumedSession: Boolean(resumeSessionId),
+      });
       const renderedBootstrapPrompt =
         !resumeSessionId && bootstrapPromptTemplate.trim().length > 0
           ? renderTemplate(bootstrapPromptTemplate, templateData).trim()
           : "";
-      const { taskContextNote, wakePrompt } = selectTaskcorePromptSections(context, {
-        resumedSession: Boolean(resumeSessionId),
-        includeCommunicationGuidance: false,
-      });
-      const shouldUseResumeDeltaPrompt = Boolean(resumeSessionId) && wakePrompt.length > 0;
-      const promptInstructionsPrefix = shouldUseResumeDeltaPrompt ? "" : instructionsPrefix;
+      const { taskContextNote, wakePrompt } = selectTaskcorePromptSections(
+        context,
+        {
+          resumedSession: Boolean(resumeSessionId),
+          includeCommunicationGuidance: false,
+        },
+      );
+      const shouldUseResumeDeltaPrompt =
+        Boolean(resumeSessionId) && wakePrompt.length > 0;
+      const promptInstructionsPrefix = shouldUseResumeDeltaPrompt
+        ? ""
+        : instructionsPrefix;
       const commandNotes = (() => {
         if (!instructionsFilePath) {
           const notes = [repoAgentsNote];
           if (forceSaferInvocation) {
-            notes.push("Codex transient fallback requested safer invocation settings for this retry.");
+            notes.push(
+              "Codex transient fallback requested safer invocation settings for this retry.",
+            );
           }
           if (forceFreshSession) {
-            notes.push("Codex transient fallback forced a fresh session with a continuation handoff.");
+            notes.push(
+              "Codex transient fallback forced a fresh session with a continuation handoff.",
+            );
           }
           return notes;
         }
@@ -1159,10 +1393,14 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
               repoAgentsNote,
             ];
             if (forceSaferInvocation) {
-              notes.push("Codex transient fallback requested safer invocation settings for this retry.");
+              notes.push(
+                "Codex transient fallback requested safer invocation settings for this retry.",
+              );
             }
             if (forceFreshSession) {
-              notes.push("Codex transient fallback forced a fresh session with a continuation handoff.");
+              notes.push(
+                "Codex transient fallback forced a fresh session with a continuation handoff.",
+              );
             }
             return notes;
           }
@@ -1172,10 +1410,14 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
             repoAgentsNote,
           ];
           if (forceSaferInvocation) {
-            notes.push("Codex transient fallback requested safer invocation settings for this retry.");
+            notes.push(
+              "Codex transient fallback requested safer invocation settings for this retry.",
+            );
           }
           if (forceFreshSession) {
-            notes.push("Codex transient fallback forced a fresh session with a continuation handoff.");
+            notes.push(
+              "Codex transient fallback forced a fresh session with a continuation handoff.",
+            );
           }
           return notes;
         }
@@ -1184,10 +1426,14 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           repoAgentsNote,
         ];
         if (forceSaferInvocation) {
-          notes.push("Codex transient fallback requested safer invocation settings for this retry.");
+          notes.push(
+            "Codex transient fallback requested safer invocation settings for this retry.",
+          );
         }
         if (forceFreshSession) {
-          notes.push("Codex transient fallback forced a fresh session with a continuation handoff.");
+          notes.push(
+            "Codex transient fallback forced a fresh session with a continuation handoff.",
+          );
         }
         return notes;
       })();
@@ -1199,14 +1445,21 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       if (preparedRuntimeConfig.notes.length > 0) {
         commandNotes.unshift(...preparedRuntimeConfig.notes);
       }
-      const renderedPrompt = shouldUseResumeDeltaPrompt || isTaskcoreRecoveryWakePayload(context.taskcoreWake)
-        ? ""
-        : renderTemplate(promptTemplate, templateData);
-      const sessionHandoffNote = asString(context.taskcoreSessionHandoffMarkdown, "").trim();
+      const renderedPrompt =
+        shouldUseResumeDeltaPrompt ||
+        isTaskcoreRecoveryWakePayload(context.taskcoreWake)
+          ? ""
+          : renderTemplate(promptTemplate, templateData);
+      const sessionHandoffNote = asString(
+        context.taskcoreSessionHandoffMarkdown,
+        "",
+      ).trim();
       const prompt = joinPromptSections([
         promptInstructionsPrefix,
         renderedBootstrapPrompt,
-        selectInitialCommunicationGuidance(context, { resumedSession: Boolean(resumeSessionId) }),
+        selectInitialCommunicationGuidance(context, {
+          resumedSession: Boolean(resumeSessionId),
+        }),
         wakePrompt,
         codexFallbackHandoffNote,
         sessionHandoffNote,
@@ -1231,18 +1484,47 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         },
       );
       const args = execArgs.args;
-      const pricingContext = execArgs.fastModeApplied ? { serviceTier: "fast" } : undefined;
+      const pricingContext = execArgs.fastModeApplied
+        ? { serviceTier: "fast" }
+        : undefined;
       if (ctx.agentIdentity) {
-        const identityNames = ["TASKCORE_AGENT_KEY_ID", "TASKCORE_AGENT_PUBLIC_KEY", "TASKCORE_AGENT_PRIVATE_KEY"];
-        const shellKeys = [...new Set([
-          "PATH", "HOME", "LANG", "LANGUAGE", "LC_ALL", "LC_CTYPE", "TZ", "TMPDIR", "TEMP", "TMP", "CODEX_HOME",
-          // Keep Codex's default secret-name exclusions except for the scoped
-          // Taskcore API token used by the agent skill. Never include host env.
-          ...Object.keys(env).filter(key => key === "TASKCORE_API_KEY" || !/key|secret|token/i.test(key)),
-          ...identityNames,
-        ])];
-        args.unshift("-c", "features.shell_snapshot=false", "-c", 'shell_environment_policy.inherit="all"', "-c", "shell_environment_policy.ignore_default_excludes=true",
-          "-c", `shell_environment_policy.include_only=${JSON.stringify(shellKeys)}`);
+        const identityNames = [
+          "TASKCORE_AGENT_KEY_ID",
+          "TASKCORE_AGENT_PUBLIC_KEY",
+          "TASKCORE_AGENT_PRIVATE_KEY",
+        ];
+        const shellKeys = [
+          ...new Set([
+            "PATH",
+            "HOME",
+            "LANG",
+            "LANGUAGE",
+            "LC_ALL",
+            "LC_CTYPE",
+            "TZ",
+            "TMPDIR",
+            "TEMP",
+            "TMP",
+            "CODEX_HOME",
+            // Keep Codex's default secret-name exclusions except for the scoped
+            // Taskcore API token used by the agent skill. Never include host env.
+            ...Object.keys(env).filter(
+              (key) =>
+                key === "TASKCORE_API_KEY" || !/key|secret|token/i.test(key),
+            ),
+            ...identityNames,
+          ]),
+        ];
+        args.unshift(
+          "-c",
+          "features.shell_snapshot=false",
+          "-c",
+          'shell_environment_policy.inherit="all"',
+          "-c",
+          "shell_environment_policy.ignore_default_excludes=true",
+          "-c",
+          `shell_environment_policy.include_only=${JSON.stringify(shellKeys)}`,
+        );
       }
       const commandNotesWithFastMode =
         execArgs.fastModeIgnoredReason == null
@@ -1255,7 +1537,8 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           cwd: effectiveExecutionCwd,
           commandNotes: commandNotesWithFastMode,
           commandArgs: args.map((value, idx) => {
-            if (idx === args.length - 1 && value !== "-") return `<prompt ${prompt.length} chars>`;
+            if (idx === args.length - 1 && value !== "-")
+              return `<prompt ${prompt.length} chars>`;
             return value;
           }),
           env: loggedEnv,
@@ -1269,11 +1552,19 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       let monitorTerminationSignal: NodeJS.Signals | null = null;
       let monitorElapsedMs = 0;
       let monitorTimeoutMs = 0;
-      let killTarget: { pid: number | null; processGroupId: number | null } | null = null;
+      let killTarget: {
+        pid: number | null;
+        processGroupId: number | null;
+      } | null = null;
       let sigkillTimer: ReturnType<typeof setTimeout> | null = null;
       let monitorLogPromise: Promise<unknown> | null = null;
-      const processActivityMonitor: { current: CodexProcessActivityMonitorHandle | null } = { current: null };
-      const resolvedMonitorTimeoutMs = monitorResolution.mode === "disabled" ? null : monitorResolution.timeoutMs;
+      const processActivityMonitor: {
+        current: CodexProcessActivityMonitorHandle | null;
+      } = { current: null };
+      const resolvedMonitorTimeoutMs =
+        monitorResolution.mode === "disabled"
+          ? null
+          : monitorResolution.timeoutMs;
 
       const monitor =
         monitorResolution.mode === "disabled"
@@ -1282,11 +1573,15 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
               timeoutMs: monitorResolution.timeoutMs,
               onFire: (state) => {
                 monitorFired = true;
-                monitorElapsedMs = (state.firedAt ?? Date.now()) - state.lastEventAt;
+                monitorElapsedMs =
+                  (state.firedAt ?? Date.now()) - state.lastEventAt;
                 monitorTimeoutMs = monitorResolution.timeoutMs;
-                const message = formatOutputInactivityMonitorErrorMessage(monitorElapsedMs);
+                const message =
+                  formatOutputInactivityMonitorErrorMessage(monitorElapsedMs);
                 const elapsedSec = Math.round(monitorElapsedMs / 1000);
-                const timeoutSecLabel = Math.round(monitorResolution.timeoutMs / 1000);
+                const timeoutSecLabel = Math.round(
+                  monitorResolution.timeoutMs / 1000,
+                );
                 const logLine =
                   `[taskcore] adapter.invoke ${message}; ` +
                   `timeoutMs=${monitorResolution.timeoutMs} elapsedSinceLastEventMs=${monitorElapsedMs} ` +
@@ -1298,9 +1593,14 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
                 // the promise so the surrounding try/finally can await flush before
                 // the run resolves. Without this the diagnostic that explains the
                 // kill could be dropped if the child exits faster than onLog flushes.
-                monitorLogPromise = Promise.resolve(onLog("stderr", logLine)).catch(() => {});
+                monitorLogPromise = Promise.resolve(
+                  onLog("stderr", logLine),
+                ).catch(() => {});
                 const target = killTarget;
-                if (!target || (target.pid == null && target.processGroupId == null)) {
+                if (
+                  !target ||
+                  (target.pid == null && target.processGroupId == null)
+                ) {
                   return;
                 }
                 const sentSig = signalCodexChild(target, "SIGTERM");
@@ -1310,15 +1610,29 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
                   const stillSent = signalCodexChild(target, "SIGKILL");
                   if (stillSent) monitorTerminationSignal = "SIGKILL";
                 }, CODEX_OUTPUT_INACTIVITY_MONITOR_SIGTERM_GRACE_MS);
-                if (typeof (sigkillTimer as { unref?: () => void }).unref === "function") {
+                if (
+                  typeof (sigkillTimer as { unref?: () => void }).unref ===
+                  "function"
+                ) {
                   (sigkillTimer as { unref: () => void }).unref();
                 }
               },
             });
 
-      const wrappedOnSpawn = async (meta: { pid: number; processGroupId: number | null; startedAt: string }) => {
-        killTarget = { pid: meta.pid ?? null, processGroupId: meta.processGroupId };
-        if (monitor && resolvedMonitorTimeoutMs !== null && !executionTargetIsRemote) {
+      const wrappedOnSpawn = async (meta: {
+        pid: number;
+        processGroupId: number | null;
+        startedAt: string;
+      }) => {
+        killTarget = {
+          pid: meta.pid ?? null,
+          processGroupId: meta.processGroupId,
+        };
+        if (
+          monitor &&
+          resolvedMonitorTimeoutMs !== null &&
+          !executionTargetIsRemote
+        ) {
           processActivityMonitor.current = createCodexProcessActivityMonitor({
             pid: meta.pid,
             processGroupId: meta.processGroupId,
@@ -1335,34 +1649,55 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       };
 
       const consumeAccounting = createCodexJsonlParser();
-      const accountingLog = createUsageCheckpointLog(onLog, ctx.onUsage, stdout => {
-        const parsed = consumeAccounting(stdout);
-        return { usage: parsed.usageReported ? parsed.usage : undefined, costStatus: parsed.usageComplete ? undefined : "unpriced", usageBasis: "per_run", provider: "openai", biller, billingType, model, pricingContext, costUsd: null, complete: parsed.usageComplete };
-      });
+      const accountingLog = createUsageCheckpointLog(
+        onLog,
+        ctx.onUsage,
+        (stdout) => {
+          const parsed = consumeAccounting(stdout);
+          return {
+            usage: parsed.usageReported ? parsed.usage : undefined,
+            costStatus: parsed.usageComplete ? undefined : "unpriced",
+            usageBasis: "per_run",
+            provider: "openai",
+            biller,
+            billingType,
+            model,
+            pricingContext,
+            costUsd: null,
+            complete: parsed.usageComplete,
+          };
+        },
+      );
       try {
-        const proc = await runAdapterExecutionTargetProcess(runId, runtimeExecutionTarget, command, args, {
-          onProcessStopped: providerStop.beginInvocation(),
-          cwd,
-          env,
-          stdin: prompt,
-          timeoutSec,
-          graceSec,
-          onSpawn: wrappedOnSpawn,
-          onRuntimeProgress: ctx.onRuntimeProgress,
-          onLog: async (stream, chunk) => {
-            monitor?.noteOutputChunk(stream, chunk);
-            if (stream === "stdout") {
-              await accountingLog(stream, chunk);
-              return;
-            }
-            const cleaned = stripCodexRolloutNoise(chunk);
-            if (!cleaned.trim()) return;
-            await onLog(stream, cleaned);
+        const proc = await runAdapterExecutionTargetProcess(
+          runId,
+          runtimeExecutionTarget,
+          command,
+          args,
+          {
+            onProcessStopped: providerStop.beginInvocation(),
+            cwd,
+            env,
+            stdin: prompt,
+            timeoutSec,
+            graceSec,
+            onSpawn: wrappedOnSpawn,
+            onRuntimeProgress: ctx.onRuntimeProgress,
+            onLog: async (stream, chunk) => {
+              monitor?.noteOutputChunk(stream, chunk);
+              if (stream === "stdout") {
+                await accountingLog(stream, chunk);
+                return;
+              }
+              const cleaned = stripCodexRolloutNoise(chunk);
+              if (!cleaned.trim()) return;
+              await onLog(stream, cleaned);
+            },
+            runLogTail: taskcoreBridge?.runLogTail,
+            settleRunDisposition: taskcoreBridge?.settleRunDisposition,
+            localProcessSandbox,
           },
-          runLogTail: taskcoreBridge?.runLogTail,
-          settleRunDisposition: taskcoreBridge?.settleRunDisposition,
-          localProcessSandbox,
-        });
+        );
         await accountingLog.flush();
         const cleanedStderr = stripCodexRolloutNoise(proc.stderr);
         return {
@@ -1398,19 +1733,33 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
 
     const toResult = (
       attempt: {
-        proc: { exitCode: number | null; signal: string | null; timedOut: boolean; stdout: string; stderr: string; errorCode?: string | null };
+        proc: {
+          exitCode: number | null;
+          signal: string | null;
+          timedOut: boolean;
+          stdout: string;
+          stderr: string;
+          errorCode?: string | null;
+        };
         rawStderr: string;
         parsed: ReturnType<typeof parseCodexJsonl>;
         pricingContext?: AdapterExecutionResult["pricingContext"];
         monitor?:
           | { fired: false }
-          | { fired: true; terminationSignal: NodeJS.Signals | null; elapsedMsSinceLastEvent: number; timeoutMs: number };
+          | {
+              fired: true;
+              terminationSignal: NodeJS.Signals | null;
+              elapsedMsSinceLastEvent: number;
+              timeoutMs: number;
+            };
       },
       clearSessionOnMissingSession = false,
       isRetry = false,
     ): AdapterExecutionResult => {
       if (attempt.monitor?.fired) {
-        const errorMessage = formatOutputInactivityMonitorErrorMessage(attempt.monitor.elapsedMsSinceLastEvent);
+        const errorMessage = formatOutputInactivityMonitorErrorMessage(
+          attempt.monitor.elapsedMsSinceLastEvent,
+        );
         return {
           exitCode: null,
           signal: attempt.monitor.terminationSignal ?? attempt.proc.signal,
@@ -1420,7 +1769,9 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           errorMessage,
           errorCode: "codex_output_inactivity_monitor",
           errorFamily: null,
-          usage: attempt.parsed.usageReported ? attempt.parsed.usage : undefined,
+          usage: attempt.parsed.usageReported
+            ? attempt.parsed.usage
+            : undefined,
           usageBasis: attempt.parsed.usageBasis,
           sessionId: null,
           sessionParams: null,
@@ -1452,7 +1803,9 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           timedOut: true,
           usageComplete: attempt.parsed.usageComplete,
           costStatus: attempt.parsed.usageComplete ? undefined : "unpriced",
-          usage: attempt.parsed.usageReported ? attempt.parsed.usage : undefined,
+          usage: attempt.parsed.usageReported
+            ? attempt.parsed.usage
+            : undefined,
           usageBasis: "per_run",
           provider: "openai",
           biller,
@@ -1468,22 +1821,29 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       const canFallbackToRuntimeSession = !isRetry && !forceFreshSession;
       const resolvedSessionId =
         attempt.parsed.sessionId ??
-        (canFallbackToRuntimeSession ? (runtimeSessionId ?? runtime.sessionId ?? null) : null);
+        (canFallbackToRuntimeSession
+          ? (runtimeSessionId ?? runtime.sessionId ?? null)
+          : null);
       const resolvedSessionParams = resolvedSessionId
         ? ({
-          sessionId: resolvedSessionId,
-          cwd: effectiveExecutionCwd,
-          ...(executionTargetIsRemote
-            ? {
-                remoteExecution: adapterExecutionTargetSessionIdentity(runtimeExecutionTarget),
-              }
-            : {}),
-          ...(workspaceId ? { workspaceId } : {}),
-          ...(workspaceRepoUrl ? { repoUrl: workspaceRepoUrl } : {}),
-          ...(workspaceRepoRef ? { repoRef: workspaceRepoRef } : {}),
-        } as Record<string, unknown>)
+            sessionId: resolvedSessionId,
+            cwd: effectiveExecutionCwd,
+            ...(executionTargetIsRemote
+              ? {
+                  remoteExecution: adapterExecutionTargetSessionIdentity(
+                    runtimeExecutionTarget,
+                  ),
+                }
+              : {}),
+            ...(workspaceId ? { workspaceId } : {}),
+            ...(workspaceRepoUrl ? { repoUrl: workspaceRepoUrl } : {}),
+            ...(workspaceRepoRef ? { repoRef: workspaceRepoRef } : {}),
+          } as Record<string, unknown>)
         : null;
-      const parsedError = typeof attempt.parsed.errorMessage === "string" ? attempt.parsed.errorMessage.trim() : "";
+      const parsedError =
+        typeof attempt.parsed.errorMessage === "string"
+          ? attempt.parsed.errorMessage.trim()
+          : "";
       const stderrLine = firstMeaningfulStderrLine(attempt.proc.stderr);
       const fallbackErrorMessage =
         parsedError ||
@@ -1533,7 +1893,11 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         });
       const errorFamily =
         authRefreshFailure ??
-        (providerQuota ? "provider_quota" : transientUpstream || harnessCrash ? "transient_upstream" : null);
+        (providerQuota
+          ? "provider_quota"
+          : transientUpstream || harnessCrash
+            ? "transient_upstream"
+            : null);
 
       return {
         exitCode: attempt.proc.exitCode,
@@ -1542,9 +1906,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         usageComplete: attempt.parsed.usageComplete,
         costStatus: attempt.parsed.usageComplete ? undefined : "unpriced",
         errorMessage:
-          (attempt.proc.exitCode ?? 0) === 0
-            ? null
-            : fallbackErrorMessage,
+          (attempt.proc.exitCode ?? 0) === 0 ? null : fallbackErrorMessage,
         errorCode:
           // Forward the transport-level error code from the run-disposition
           // seam first. A lost duplex control channel surfaces the typed
@@ -1552,16 +1914,18 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           attempt.proc.errorCode
             ? attempt.proc.errorCode
             : authRefreshFailure
-            ? authRefreshFailure
-            : providerQuota
-            ? "provider_quota"
-            : transientUpstream
-            ? "codex_transient_upstream"
-            : harnessCrash
-            ? "codex_harness_crash"
-            : null,
+              ? authRefreshFailure
+              : providerQuota
+                ? "provider_quota"
+                : transientUpstream
+                  ? "codex_transient_upstream"
+                  : harnessCrash
+                    ? "codex_harness_crash"
+                    : null,
         errorFamily,
-        retryNotBefore: transientRetryNotBefore ? transientRetryNotBefore.toISOString() : null,
+        retryNotBefore: transientRetryNotBefore
+          ? transientRetryNotBefore.toISOString()
+          : null,
         usage: attempt.parsed.usageReported ? attempt.parsed.usage : undefined,
         usageBasis: attempt.parsed.usageBasis,
         sessionId: resolvedSessionId,
@@ -1577,12 +1941,24 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           stdout: attempt.proc.stdout,
           stderr: attempt.proc.stderr,
           ...(errorFamily ? { errorFamily } : {}),
-          ...(transientRetryNotBefore ? { retryNotBefore: transientRetryNotBefore.toISOString() } : {}),
-          ...(transientRetryNotBefore ? { transientRetryNotBefore: transientRetryNotBefore.toISOString() } : {}),
-          ...(providerQuota && transientRetryNotBefore ? { providerQuotaRetryNotBefore: transientRetryNotBefore.toISOString() } : {}),
+          ...(transientRetryNotBefore
+            ? { retryNotBefore: transientRetryNotBefore.toISOString() }
+            : {}),
+          ...(transientRetryNotBefore
+            ? { transientRetryNotBefore: transientRetryNotBefore.toISOString() }
+            : {}),
+          ...(providerQuota && transientRetryNotBefore
+            ? {
+                providerQuotaRetryNotBefore:
+                  transientRetryNotBefore.toISOString(),
+              }
+            : {}),
         },
         summary: attempt.parsed.summary,
-        clearSession: Boolean((clearSessionOnMissingSession || forceFreshSession) && !resolvedSessionId),
+        clearSession: Boolean(
+          (clearSessionOnMissingSession || forceFreshSession) &&
+          !resolvedSessionId,
+        ),
       };
     };
 
@@ -1655,14 +2031,16 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     // (teardown AND error), never only the happy path. Cleanup failure is
     // logged, not fatal — a leaked temp dir must not crash the run.
     if (stagedCodexHomeDir) {
-      await fs.rm(stagedCodexHomeDir, { recursive: true, force: true }).catch(async (error) => {
-        await onLog(
-          "stderr",
-          `[taskcore] Failed to remove staged Codex home "${stagedCodexHomeDir}": ${
-            error instanceof Error ? error.message : String(error)
-          }\n`,
-        );
-      });
+      await fs
+        .rm(stagedCodexHomeDir, { recursive: true, force: true })
+        .catch(async (error) => {
+          await onLog(
+            "stderr",
+            `[taskcore] Failed to remove staged Codex home "${stagedCodexHomeDir}": ${
+              error instanceof Error ? error.message : String(error)
+            }\n`,
+          );
+        });
     }
     // Restore the managed config.toml so TASKCORE_CODEX_PROVIDERS changes
     // (or removal) between runs never leave stale provider routing behind. This

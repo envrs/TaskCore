@@ -24,7 +24,12 @@ function isVersionSelector(value: unknown): value is number | "latest" {
  * invalid variable name or an unknown binding shape.
  */
 export function parseEnvBindings(bindings: unknown): Record<string, unknown> {
-  if (typeof bindings !== "object" || bindings === null || Array.isArray(bindings)) return {};
+  if (
+    typeof bindings !== "object" ||
+    bindings === null ||
+    Array.isArray(bindings)
+  )
+    return {};
   const env: Record<string, unknown> = {};
   for (const [key, raw] of Object.entries(bindings)) {
     if (!ENV_KEY_RE.test(key)) continue;
@@ -51,7 +56,9 @@ export function parseEnvBindings(bindings: unknown): Record<string, unknown> {
         type: "user_secret_ref",
         key: rec.key,
         ...(isVersionSelector(rec.version) ? { version: rec.version } : {}),
-        ...(typeof rec.required === "boolean" ? { required: rec.required } : {}),
+        ...(typeof rec.required === "boolean"
+          ? { required: rec.required }
+          : {}),
         ...(typeof rec.allowMissingOverride === "boolean"
           ? { allowMissingOverride: rec.allowMissingOverride }
           : {}),

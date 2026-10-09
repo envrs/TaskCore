@@ -14,15 +14,29 @@ describe("env-lab command", () => {
     const statePath = resolveEnvLabSshStatePath("fixture-test");
 
     expect(statePath).toContain(
-      path.join("instances", "fixture-test", "env-lab", "ssh-fixture", "state.json"),
+      path.join(
+        "instances",
+        "fixture-test",
+        "env-lab",
+        "ssh-fixture",
+        "state.json",
+      ),
     );
   });
 
   it("reports doctor status for an instance without a running fixture", async () => {
-    const status = await collectEnvLabDoctorStatus({ instance: "fixture-test-missing" });
+    const status = await collectEnvLabDoctorStatus({
+      instance: "fixture-test-missing",
+    });
 
     expect(status.statePath).toContain(
-      path.join("instances", "fixture-test-missing", "env-lab", "ssh-fixture", "state.json"),
+      path.join(
+        "instances",
+        "fixture-test-missing",
+        "env-lab",
+        "ssh-fixture",
+        "state.json",
+      ),
     );
     expect(typeof status.ssh.supported).toBe("boolean");
     expect(status.ssh.running).toBe(false);
@@ -41,7 +55,9 @@ describe("env-lab cleanup command hint", () => {
   // checkout runs this module from `<root>/src/commands/env-lab.ts`, so the
   // resolver reads that layout and returns the tsx runner and source entry.
   function sourceInvocation(root: string) {
-    return resolveEnvLabCliInvocation(path.join(root, "src", "commands", "env-lab.ts"));
+    return resolveEnvLabCliInvocation(
+      path.join(root, "src", "commands", "env-lab.ts"),
+    );
   }
 
   // Resolve a bundled-build invocation for a fabricated package root. The bundled
@@ -154,7 +170,9 @@ describe("env-lab cleanup command hint", () => {
 
   for (const { label, root } of dangerousRoots) {
     it(`keeps a checkout path with ${label} inert in the cleanup hint`, () => {
-      const command = buildEnvLabCleanupCommand({ invocation: sourceInvocation(root) });
+      const command = buildEnvLabCleanupCommand({
+        invocation: sourceInvocation(root),
+      });
       const tokens = tokenizePosix(command);
       const tsxBin = path.join(root, "node_modules", "tsx", "dist", "cli.mjs");
       const entry = path.join(root, "src", "index.ts");
@@ -183,7 +201,9 @@ describe("env-lab cleanup command hint", () => {
   });
 
   it("omits the instance flag when the doctor command uses the default instance", () => {
-    const command = buildEnvLabCleanupCommand({ invocation: sourceInvocation("/tmp/checkout") });
+    const command = buildEnvLabCleanupCommand({
+      invocation: sourceInvocation("/tmp/checkout"),
+    });
 
     // Without a selected instance, `env-lab down` resolves the same default
     // instance the doctor command inspected. Do not add an empty flag.
@@ -212,14 +232,21 @@ describe("env-lab cleanup command hint", () => {
 
     // The published package ships one `dist/index.js` file and no tsx runner, so
     // node runs that file directly.
-    expect(tokens).toEqual(["node", path.join("/opt/pkg", "dist", "index.js"), "env-lab", "down"]);
+    expect(tokens).toEqual([
+      "node",
+      path.join("/opt/pkg", "dist", "index.js"),
+      "env-lab",
+      "down",
+    ]);
     expect(command).not.toContain("tsx");
     expect(command).not.toContain(path.join("src", "index.ts"));
   });
 
   it("keeps a bundled package path with shell metacharacters inert", () => {
     const root = "/opt/$(touch pwned)/pkg";
-    const command = buildEnvLabCleanupCommand({ invocation: bundledInvocation(root) });
+    const command = buildEnvLabCleanupCommand({
+      invocation: bundledInvocation(root),
+    });
     const tokens = tokenizePosix(command);
     const entry = path.join(root, "dist", "index.js");
 
@@ -246,9 +273,13 @@ describe("env-lab doctor cleanup hint instance", () => {
   // `p.log`, so the test replaces each channel and reads the captured lines.
   function captureDoctorMessages(): string[] {
     const messages: string[] = [];
-    vi.spyOn(p.log, "message").mockImplementation((message?: string | string[]) => {
-      messages.push(Array.isArray(message) ? message.join("\n") : (message ?? ""));
-    });
+    vi.spyOn(p.log, "message").mockImplementation(
+      (message?: string | string[]) => {
+        messages.push(
+          Array.isArray(message) ? message.join("\n") : (message ?? ""),
+        );
+      },
+    );
     vi.spyOn(p.log, "success").mockImplementation(() => {});
     vi.spyOn(p.log, "warn").mockImplementation(() => {});
     vi.spyOn(p.log, "info").mockImplementation(() => {});

@@ -9,24 +9,24 @@ Status: First-release implementation in review; local paid acceptance verified a
 
 Codex or Claude can be where someone thinks and works. Taskcore supplies the persistent organization: who owns a task, which tools they can use, what happened, what needs approval, and what continues after the conversation ends.
 
-| Layer | Responsibility |
-| --- | --- |
-| Taskcore core | Companies, agents, tasks, documents, execution, budgets, approvals |
-| Capability and authorization layer | What this caller may do, under which identity and task context |
-| MCP endpoint / gateway | Exposes those capabilities to outside clients |
-| Plugin | Packages the connection with instructions for using Taskcore effectively |
-| Team template | Creates a useful starting organization inside Taskcore |
-| Store listing | Helps people discover and install the plugin |
+| Layer                              | Responsibility                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| Taskcore core                      | Companies, agents, tasks, documents, execution, budgets, approvals       |
+| Capability and authorization layer | What this caller may do, under which identity and task context           |
+| MCP endpoint / gateway             | Exposes those capabilities to outside clients                            |
+| Plugin                             | Packages the connection with instructions for using Taskcore effectively |
+| Team template                      | Creates a useful starting organization inside Taskcore                   |
+| Store listing                      | Helps people discover and install the plugin                             |
 
 A plugin brings someone into Taskcore and teaches their assistant how to work with it. The durable team and its authority remain in Taskcore. The first product is one Taskcore plugin that lets a person use their team, with hosted onboarding for newcomers. Broader agent gateways follow on the same foundation.
 
 ## 2. Three experiences
 
-| Experience | Example | Identity and execution |
-| --- | --- | --- |
-| Use Taskcore as me | Show what's blocked and add my feedback. | Connected person's permissions and attribution. |
-| Delegate to my team | Have our researcher investigate competitors. | Person creates work; Taskcore agent executes through normal scheduling and governance. |
-| Work as an agent | This Codex session will work as our engineer on this task. | Explicitly authorized external session acts as the named agent and claims the task. |
+| Experience          | Example                                                    | Identity and execution                                                                 |
+| ------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Use Taskcore as me  | Show what's blocked and add my feedback.                   | Connected person's permissions and attribution.                                        |
+| Delegate to my team | Have our researcher investigate competitors.               | Person creates work; Taskcore agent executes through normal scheduling and governance. |
+| Work as an agent    | This Codex session will work as our engineer on this task. | Explicitly authorized external session acts as the named agent and claims the task.    |
 
 Distinguish these in the connection UI and audit history. Selecting an agent to receive work never silently switches the caller into that agent's identity. An agent gateway is an access point to the agent's authorized capabilities. Its URL identifies the gateway; a separate credential authorizes access. Copying the URL alone confers no authority.
 
@@ -82,11 +82,11 @@ OpenAI requires individually exposed operations for review and disallows hidden 
 
 Use one shared MCP implementation and shared workflow content, with vendor-specific packaging:
 
-| Ecosystem | Packaging |
-| --- | --- |
-| ChatGPT and Codex | One plugin containing skills and a remote MCP connection, through the shared directory; current submission permits one connected MCP server per plugin. |
-| Claude | Submit the server as a connector and the workflows as a plugin; pair them using the same server URL. |
-| Direct/private clients | Configure an instance or agent gateway directly; private plugins optionally supply instructions. |
+| Ecosystem              | Packaging                                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ChatGPT and Codex      | One plugin containing skills and a remote MCP connection, through the shared directory; current submission permits one connected MCP server per plugin. |
+| Claude                 | Submit the server as a connector and the workflows as a plugin; pair them using the same server URL.                                                    |
+| Direct/private clients | Configure an instance or agent gateway directly; private plugins optionally supply instructions.                                                        |
 
 Maintain shared content with separate package outputs: OpenAI portable `plugin.json` and Claude `.claude-plugin/plugin.json`. Bundle three workflows: review my team, delegate work, follow up on results. Skills teach the workflow; server authorization enforces limits. Essential functionality requires neither hooks nor embedded UI.
 
@@ -141,7 +141,6 @@ Defaults: one public listing, hosted onboarding, first-party public tools, broad
 - [Claude publication](https://claude.com/docs/directory/publish)
 - [Claude connector submission](https://claude.com/docs/connectors/building/submission)
 - [Claude authentication](https://claude.com/docs/connectors/building/authentication)
-
 
 ## Initial implementation record (2026-09-30; historical)
 
@@ -316,7 +315,6 @@ The [dated results record](2026-10-01-public-mcp-paid-eval-results.md) includes
 source fingerprints, models, costs, reports, failure classifications and the
 remaining hosted/store and repository-wide verification gates. These local paid
 results do not close those release gates.
-
 
 ## PR qualification and merge consequences (2026-10-01)
 

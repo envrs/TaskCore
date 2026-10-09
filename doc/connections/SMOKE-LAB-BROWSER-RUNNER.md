@@ -19,10 +19,10 @@ shows up in the **Smoke Lab tab** and the **dashboard "Integration smoke" card**
 The Smoke Lab feature **fail-closes** on public exposure only
 (`server/src/services/smoke-lab.ts` → `assertEnabled()`):
 
-| Requirement | Why |
-|---|---|
-| `experimental.enableSmokeLab = true` | feature flag (board experimental settings) |
-| deployment exposure ≠ `public` | never expose the fake OAuth provider / loopback MCP sidecars to the open internet |
+| Requirement                          | Why                                                                               |
+| ------------------------------------ | --------------------------------------------------------------------------------- |
+| `experimental.enableSmokeLab = true` | feature flag (board experimental settings)                                        |
+| deployment exposure ≠ `public`       | never expose the fake OAuth provider / loopback MCP sidecars to the open internet |
 
 The auth mode (`local_trusted` vs `authenticated`) and `NODE_ENV` do **not** gate
 the Smoke Lab — a private box is a private box. Every smoke-lab service method calls
@@ -57,18 +57,17 @@ plain `curl`/`fetch` with an `Origin: <base>` header is a board actor. On an
 `authenticated` instance (Tailscale dev, `:45439`) you instead log in —
 `POST /api/auth/sign-in/email` with QA creds — and carry the `*.session_token`
 cookie; board **mutations** also require the `Origin` header. A control-plane **run
-JWT is NOT accepted by a separate worktree instance's DB** — cross-instance tokens
-403.
+JWT is NOT accepted by a separate worktree instance's DB** — cross-instance tokens 403.
 
 ---
 
 ## 1. Auth model for the results API
 
-| Endpoint group | Authz | Actor that works here |
-|---|---|---|
-| `services/start`, `services/stop`, `install-fixtures`, `reset`, `services` (GET) | `assertBoard` | board only (local_trusted implicit board, or session cookie) |
-| `runs`, `runs/:id`, `runs/:id/steps`, `runs/:id` (PATCH) | `assertBoardOrAgent` | board **or** an agent run JWT |
-| `oauth/authorize|token|userinfo|revoke` | flag+deployment gated, unauthenticated | the fake provider itself |
+| Endpoint group                                                                   | Authz                | Actor that works here                                        |
+| -------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------ |
+| `services/start`, `services/stop`, `install-fixtures`, `reset`, `services` (GET) | `assertBoard`        | board only (local_trusted implicit board, or session cookie) |
+| `runs`, `runs/:id`, `runs/:id/steps`, `runs/:id` (PATCH)                         | `assertBoardOrAgent` | board **or** an agent run JWT                                |
+| `oauth/authorize                                                                 | token                | userinfo                                                     | revoke` | flag+deployment gated, unauthenticated | the fake provider itself |
 
 So the hybrid the ticket asks for: **start services / install fixtures through
 the board UI**, **post step results with the run JWT** (or the board session on
@@ -111,7 +110,7 @@ For each `ciSmokeLabScenarios` entry, drive the browser + board API through:
    governance evidence via fixture metadata on Activity.)
 7. **revoke** — gateway scenario: create a run-scoped gateway session, list tools
    (200), revoke, re-list (401). Others: `PATCH …/tool-connections/:id
-   {enabled:false}` then re-enable. Screenshot the connection.
+{enabled:false}` then re-enable. Screenshot the connection.
 8. **audit-evidence** — re-assert the audit row; screenshot Activity.
 
 Record each step: `POST /api/companies/:cid/smoke-lab/runs/:runId/steps` with

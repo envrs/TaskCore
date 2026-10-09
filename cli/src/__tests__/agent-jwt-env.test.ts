@@ -58,7 +58,9 @@ describe("agent jwt env helpers", () => {
   it("loads secret from .env next to explicit config path", () => {
     const configPath = tempConfigPath();
     const envPath = resolveAgentJwtEnvFile(configPath);
-    fs.writeFileSync(envPath, "TASKCORE_AGENT_JWT_SECRET=test-secret\n", { mode: 0o600 });
+    fs.writeFileSync(envPath, "TASKCORE_AGENT_JWT_SECRET=test-secret\n", {
+      mode: 0o600,
+    });
 
     const loaded = readAgentJwtSecretFromEnv(configPath);
     expect(loaded).toBe("test-secret");
@@ -68,7 +70,9 @@ describe("agent jwt env helpers", () => {
   it("doctor check passes when secret exists in adjacent .env", () => {
     const configPath = tempConfigPath();
     const envPath = resolveAgentJwtEnvFile(configPath);
-    fs.writeFileSync(envPath, "TASKCORE_AGENT_JWT_SECRET=check-secret\n", { mode: 0o600 });
+    fs.writeFileSync(envPath, "TASKCORE_AGENT_JWT_SECRET=check-secret\n", {
+      mode: 0o600,
+    });
 
     const result = agentJwtSecretCheck(configPath);
     expect(result.status).toBe("pass");
@@ -87,7 +91,9 @@ describe("agent jwt env helpers", () => {
 
     const contents = fs.readFileSync(envPath, "utf-8");
     expect(contents).toContain('TASKCORE_WORKTREE_COLOR="#439edb"');
-    expect(readTaskcoreEnvEntries(envPath).TASKCORE_WORKTREE_COLOR).toBe("#439edb");
+    expect(readTaskcoreEnvEntries(envPath).TASKCORE_WORKTREE_COLOR).toBe(
+      "#439edb",
+    );
   });
 
   it("preserves operator content and CRLF while updating only managed entries", () => {
@@ -116,17 +122,19 @@ describe("agent jwt env helpers", () => {
     );
 
     const updated = fs.readFileSync(envPath, "utf8");
-    expect(updated).toBe([
-      "# operator comment",
-      "DATABASE_URL='postgres://operator:encoded@localhost/taskcore'",
-      "",
-      'export TASKCORE_HOME = "/new path"  # managed path',
-      "TASKCORE_DUPLICATE=current",
-      'TASKCORE_DUPLICATE="current"',
-      "UNKNOWN_VALUE=operator-owned",
-      'TASKCORE_WORKTREE_COLOR="#439edb"',
-      "",
-    ].join("\r\n"));
+    expect(updated).toBe(
+      [
+        "# operator comment",
+        "DATABASE_URL='postgres://operator:encoded@localhost/taskcore'",
+        "",
+        'export TASKCORE_HOME = "/new path"  # managed path',
+        "TASKCORE_DUPLICATE=current",
+        'TASKCORE_DUPLICATE="current"',
+        "UNKNOWN_VALUE=operator-owned",
+        'TASKCORE_WORKTREE_COLOR="#439edb"',
+        "",
+      ].join("\r\n"),
+    );
     expect(updated.replaceAll("\r\n", "")).not.toContain("\n");
   });
 
@@ -136,7 +144,7 @@ describe("agent jwt env helpers", () => {
     const original = [
       "# preserve this file byte-for-byte",
       "export TASKCORE_HOME = '/same path'",
-      "UNKNOWN=\"operator encoding\"",
+      'UNKNOWN="operator encoding"',
       "",
     ].join("\n");
     fs.writeFileSync(envPath, original, { mode: 0o600 });

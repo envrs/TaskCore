@@ -3,7 +3,8 @@ import pc from "picocolors";
 function parseJson(line: string): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(line);
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+      return null;
     return parsed as Record<string, unknown>;
   } catch {
     return null;
@@ -69,7 +70,9 @@ export function printAcpxStreamEvent(raw: string, debug: boolean): void {
     const permissionMode = asString(parsed.permissionMode);
     const tail = [mode, permissionMode].filter(Boolean).join(" / ");
     const suffix = tail ? ` [${tail}]` : "";
-    console.log(pc.blue(`${agent} session${session ? `: ${session}` : ""}${suffix}`));
+    console.log(
+      pc.blue(`${agent} session${session ? `: ${session}` : ""}${suffix}`),
+    );
     return;
   }
   if (type === "acpx.text_delta") {
@@ -85,7 +88,9 @@ export function printAcpxStreamEvent(raw: string, debug: boolean): void {
     const name = asString(parsed.name, "acp_tool");
     const status = asString(parsed.status);
     const id = pickToolUseId(parsed);
-    const header = status ? `tool_call: ${name} [${status}]` : `tool_call: ${name}`;
+    const header = status
+      ? `tool_call: ${name} [${status}]`
+      : `tool_call: ${name}`;
     const idSuffix = id ? ` (${id})` : "";
     const isError = status === "failed" || status === "cancelled";
     console.log((isError ? pc.red : pc.yellow)(`${header}${idSuffix}`));
@@ -99,7 +104,11 @@ export function printAcpxStreamEvent(raw: string, debug: boolean): void {
   }
   if (type === "acpx.tool_result") {
     const isError = parsed.isError === true || parsed.error !== undefined;
-    console.log((isError ? pc.red : pc.cyan)(`tool_result: ${asString(parsed.name, "acp_tool")}`));
+    console.log(
+      (isError ? pc.red : pc.cyan)(
+        `tool_result: ${asString(parsed.name, "acp_tool")}`,
+      ),
+    );
     const content = stringify(parsed.content ?? parsed.output ?? parsed.error);
     if (content) console.log((isError ? pc.red : pc.gray)(content));
     return;
@@ -109,7 +118,10 @@ export function printAcpxStreamEvent(raw: string, debug: boolean): void {
     return;
   }
   if (type === "acpx.result") {
-    const summary = asString(parsed.summary, asString(parsed.stopReason, asString(parsed.subtype, "complete")));
+    const summary = asString(
+      parsed.summary,
+      asString(parsed.stopReason, asString(parsed.subtype, "complete")),
+    );
     console.log(pc.blue(`result: ${summary}`));
     return;
   }

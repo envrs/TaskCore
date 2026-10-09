@@ -38,7 +38,11 @@ Do not report the same incident through both paths or retry failed submissions.
 and its active run (`Authorization: Bearer …`, `X-Taskcore-Run-Id: …`):
 
 ```json
-{"kind":"suggestion","body":"The tool returned before persistence completed. Wait for the write before returning success.","idempotencyKey":"write-completion-1"}
+{
+  "kind": "suggestion",
+  "body": "The tool returned before persistence completed. Wait for the write before returning success.",
+  "idempotencyKey": "write-completion-1"
+}
 ```
 
 Only these three fields are accepted. Identity and the optional task reference
@@ -147,9 +151,9 @@ The Daytona verification used base image
 and the Linux runner built from `abf47b5953d14aa7a8dbf2941460b5df8a4d66c3`
 (binary SHA-256 `c794141152ae2e2986da0df14b01a54e4448949e06ec4031c83bad8a9fff8bac`).
 
-| Environment | Runner | Complaint row | Suggestion row | Submitted at (UTC) |
-| --- | --- | --- | --- | --- |
-| Local | Legacy Codex | `59413a00-1de2-4bb1-bcc6-9c4b54c64aa6` | `3db2364d-3e15-4f47-846f-875d3902999d` | 20:35:10 |
-| Local | Native Codex | `5da22b5f-41df-4de5-8ba0-d9345ab01267` | `2d5abe17-dd41-403c-a5ee-4729f2d58921` | 20:35:26–20:35:27 |
-| Daytona | Legacy Codex | `27c9d0aa-8477-409f-9da0-e8ffa48dee50` | `209681c9-d1e9-4ce1-999e-48fa07692389` | 20:33:07–20:33:09 |
-| Daytona | Native Codex | `6eb001bb-4bcf-43f7-8717-f662f53dc7c3` | `77c383d8-a997-49e5-a33e-25c70e15c0b2` | 20:31:54 |
+| Environment | Runner       | Complaint row                          | Suggestion row                         | Submitted at (UTC) |
+| ----------- | ------------ | -------------------------------------- | -------------------------------------- | ------------------ |
+| Local       | Legacy Codex | `59413a00-1de2-4bb1-bcc6-9c4b54c64aa6` | `3db2364d-3e15-4f47-846f-875d3902999d` | 20:35:10           |
+| Local       | Native Codex | `5da22b5f-41df-4de5-8ba0-d9345ab01267` | `2d5abe17-dd41-403c-a5ee-4729f2d58921` | 20:35:26–20:35:27  |
+| Daytona     | Legacy Codex | `27c9d0aa-8477-409f-9da0-e8ffa48dee50` | `209681c9-d1e9-4ce1-999e-48fa07692389` | 20:33:07–20:33:09  |
+| Daytona     | Native Codex | `6eb001bb-4bcf-43f7-8717-f662f53dc7c3` | `77c383d8-a997-49e5-a33e-25c70e15c0b2` | 20:31:54           |

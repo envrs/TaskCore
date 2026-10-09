@@ -70,7 +70,9 @@ export function createRunResourceLedger(): AcquiredRunResources {
         );
       }
       if (slots.has(registration.id)) {
-        throw new LedgerStateError(`resource slot "${registration.id}" is already filled`);
+        throw new LedgerStateError(
+          `resource slot "${registration.id}" is already filled`,
+        );
       }
       slots.set(registration.id, {
         id: registration.id,
@@ -94,7 +96,9 @@ export function createRunResourceLedger(): AcquiredRunResources {
       // seal again.
       const missing = required.filter((id) => !slots.has(id));
       if (missing.length > 0) {
-        throw new LedgerStateError(`seal is missing required resource(s): ${missing.join(", ")}`);
+        throw new LedgerStateError(
+          `seal is missing required resource(s): ${missing.join(", ")}`,
+        );
       }
       // Promote every promotable startup_rollback entry to per_run in one pass.
       // The resource now lives through the whole run, so settlement owns it.
@@ -112,7 +116,9 @@ export function createRunResourceLedger(): AcquiredRunResources {
       // The one-time claim. Check the state first, so a second claim throws
       // before it can mark a disposition or hand the resources out again.
       if (state === "consumed") {
-        throw new LedgerStateError("run resources are already taken for settlement");
+        throw new LedgerStateError(
+          "run resources are already taken for settlement",
+        );
       }
       state = "consumed";
       const entries: SettledResourceEntry[] = [];
@@ -194,7 +200,10 @@ export function createScopedCleanupRegistry(): ScopedCleanupRegistry {
         }
       }
       if (errors.length > 0) {
-        throw new AggregateError(errors, `cleanup scope "${scope}" had ${errors.length} failure(s)`);
+        throw new AggregateError(
+          errors,
+          `cleanup scope "${scope}" had ${errors.length} failure(s)`,
+        );
       }
     },
   };

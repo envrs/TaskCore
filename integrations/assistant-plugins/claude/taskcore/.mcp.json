@@ -2,7 +2,7 @@
   "mcpServers": {
     "taskcore": {
       "type": "http",
-      "url": "http://localhost:3100/mcp/taskcore"
+      "url": "http://127.0.0.1:3100/mcp/taskcore"
     }
   }
 }

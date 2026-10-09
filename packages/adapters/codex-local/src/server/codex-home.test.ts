@@ -20,14 +20,32 @@ describe("mergeManagedCodexMcpGateways", () => {
   it("keeps runtime gateways and appends non-overlapping context gateways", () => {
     expect(
       mergeManagedCodexMcpGateways(
-        [{ name: "runtime", endpointPath: "/runtime", bearerToken: "runtime-token" }],
         [
-          { name: "runtime", endpointPath: "/stale", bearerToken: "stale-token" },
-          { name: "manual", endpointPath: "/manual", bearerToken: "manual-token" },
+          {
+            name: "runtime",
+            endpointPath: "/runtime",
+            bearerToken: "runtime-token",
+          },
+        ],
+        [
+          {
+            name: "runtime",
+            endpointPath: "/stale",
+            bearerToken: "stale-token",
+          },
+          {
+            name: "manual",
+            endpointPath: "/manual",
+            bearerToken: "manual-token",
+          },
         ],
       ),
     ).toEqual([
-      { name: "runtime", endpointPath: "/runtime", bearerToken: "runtime-token" },
+      {
+        name: "runtime",
+        endpointPath: "/runtime",
+        bearerToken: "runtime-token",
+      },
       { name: "manual", endpointPath: "/manual", bearerToken: "manual-token" },
     ]);
   });
@@ -39,7 +57,9 @@ describe("codex managed home", () => {
   });
 
   it("treats a concurrently-created expected auth symlink as success", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-home-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-home-"),
+    );
     const sharedCodexHome = path.join(root, "shared-codex-home");
     const taskcoreHome = path.join(root, "taskcore-home");
     const managedCodexHome = path.join(
@@ -57,12 +77,14 @@ describe("codex managed home", () => {
     await fs.writeFile(sharedAuth, '{"OPENAI_API_KEY":"shared"}\n', "utf8");
 
     const originalSymlink = fs.symlink.bind(fs);
-    vi.spyOn(fs, "symlink").mockImplementationOnce(async (source, target, type) => {
-      await originalSymlink(source, target, type);
-      const error = new Error("file already exists") as NodeJS.ErrnoException;
-      error.code = "EEXIST";
-      throw error;
-    });
+    vi.spyOn(fs, "symlink").mockImplementationOnce(
+      async (source, target, type) => {
+        await originalSymlink(source, target, type);
+        const error = new Error("file already exists") as NodeJS.ErrnoException;
+        error.code = "EEXIST";
+        throw error;
+      },
+    );
 
     try {
       await expect(
@@ -78,14 +100,18 @@ describe("codex managed home", () => {
       ).resolves.toBe(managedCodexHome);
 
       expect((await fs.lstat(managedAuth)).isSymbolicLink()).toBe(true);
-      expect(await fs.realpath(managedAuth)).toBe(await fs.realpath(sharedAuth));
+      expect(await fs.realpath(managedAuth)).toBe(
+        await fs.realpath(sharedAuth),
+      );
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
   });
 
   it("still throws on EEXIST when a raced-in auth symlink points elsewhere", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-home-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-home-"),
+    );
     const sharedCodexHome = path.join(root, "shared-codex-home");
     const taskcoreHome = path.join(root, "taskcore-home");
     const managedCodexHome = path.join(
@@ -105,12 +131,14 @@ describe("codex managed home", () => {
     await fs.writeFile(wrongAuth, '{"token":"other"}\n', "utf8");
 
     const originalSymlink = fs.symlink.bind(fs);
-    vi.spyOn(fs, "symlink").mockImplementationOnce(async (_source, target, type) => {
-      await originalSymlink(wrongAuth, target, type);
-      const error = new Error("file already exists") as NodeJS.ErrnoException;
-      error.code = "EEXIST";
-      throw error;
-    });
+    vi.spyOn(fs, "symlink").mockImplementationOnce(
+      async (_source, target, type) => {
+        await originalSymlink(wrongAuth, target, type);
+        const error = new Error("file already exists") as NodeJS.ErrnoException;
+        error.code = "EEXIST";
+        throw error;
+      },
+    );
 
     try {
       await expect(
@@ -139,7 +167,9 @@ describe("codex managed home", () => {
   // source token rotated. `ensureSymlink` now heals the upgrade path by
   // unlinking the stale copy and creating a symlink to the live source.
   it("replaces a stale regular-file auth.json with a symlink to the live source (#5028)", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-home-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-home-"),
+    );
     try {
       const sharedCodexHome = path.join(root, "shared-codex-home");
       const taskcoreHome = path.join(root, "taskcore-home");
@@ -185,7 +215,9 @@ describe("codex managed home", () => {
   // ensureSymlink runs — so the heal branch never executes there. Call
   // ensureSymlink directly to prove the unlink-and-recreate path itself.
   it("ensureSymlink: unlinks a stale regular file and recreates the symlink", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-ensure-symlink-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-ensure-symlink-"),
+    );
     try {
       const source = path.join(root, "live-source.json");
       const target = path.join(root, "stale-target.json");
@@ -205,7 +237,9 @@ describe("codex managed home", () => {
   // directory in place rather than throwing EISDIR. We treat a directory at
   // this path as operator-owned, not a stale Taskcore copy.
   it("ensureSymlink: leaves an unexpected directory in place instead of throwing", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-ensure-symlink-dir-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-ensure-symlink-dir-"),
+    );
     try {
       const source = path.join(root, "live-source.json");
       const target = path.join(root, "unexpected-dir");
@@ -216,12 +250,13 @@ describe("codex managed home", () => {
       await expect(ensureSymlink(target, source)).resolves.toBeUndefined();
 
       expect((await fs.lstat(target)).isDirectory()).toBe(true);
-      expect(await fs.readFile(path.join(target, "sentinel"), "utf8")).toBe("keep-me");
+      expect(await fs.readFile(path.join(target, "sentinel"), "utf8")).toBe(
+        "keep-me",
+      );
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
   });
-
 });
 
 describe("isManagedCodexHomePath", () => {
@@ -245,42 +280,68 @@ describe("isManagedCodexHomePath", () => {
 
   it("treats the shared company home as managed", () => {
     expect(
-      isManagedCodexHomePath(env, "company-1", path.join(companyRoot, "codex-home")),
+      isManagedCodexHomePath(
+        env,
+        "company-1",
+        path.join(companyRoot, "codex-home"),
+      ),
     ).toBe(true);
   });
 
   it("treats a path outside the company tree as an external override", () => {
-    expect(isManagedCodexHomePath(env, "company-1", "/home/dev/.codex")).toBe(false);
+    expect(isManagedCodexHomePath(env, "company-1", "/home/dev/.codex")).toBe(
+      false,
+    );
     expect(
       isManagedCodexHomePath(
         env,
         "company-1",
-        path.resolve("/srv/taskcore/instances/default/companies/company-2/codex-home"),
+        path.resolve(
+          "/srv/taskcore/instances/default/companies/company-2/codex-home",
+        ),
       ),
     ).toBe(false);
   });
 
   it("returns false without a companyId", () => {
-    expect(isManagedCodexHomePath(env, undefined, path.join(companyRoot, "codex-home"))).toBe(
-      false,
-    );
+    expect(
+      isManagedCodexHomePath(
+        env,
+        undefined,
+        path.join(companyRoot, "codex-home"),
+      ),
+    ).toBe(false);
   });
 });
 
 describe("codexHomeHasUsableAuth", () => {
   it("is true for credential-bearing auth.json and false when missing", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-auth-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-auth-"),
+    );
     try {
       expect(await codexHomeHasUsableAuth(root)).toBe(false);
       await fs.writeFile(path.join(root, "auth.json"), "{}", "utf8");
       expect(await codexHomeHasUsableAuth(root)).toBe(false);
       await fs.writeFile(path.join(root, "auth.json"), '{"foo":"bar"}', "utf8");
       expect(await codexHomeHasUsableAuth(root)).toBe(false);
-      await fs.writeFile(path.join(root, "auth.json"), '{"token":"shared"}', "utf8");
+      await fs.writeFile(
+        path.join(root, "auth.json"),
+        '{"token":"shared"}',
+        "utf8",
+      );
       expect(await codexHomeHasUsableAuth(root)).toBe(false);
-      await fs.writeFile(path.join(root, "auth.json"), '{"access_token":"shared"}', "utf8");
+      await fs.writeFile(
+        path.join(root, "auth.json"),
+        '{"access_token":"shared"}',
+        "utf8",
+      );
       expect(await codexHomeHasUsableAuth(root)).toBe(false);
-      await fs.writeFile(path.join(root, "auth.json"), '{"OPENAI_API_KEY":"shared"}', "utf8");
+      await fs.writeFile(
+        path.join(root, "auth.json"),
+        '{"OPENAI_API_KEY":"shared"}',
+        "utf8",
+      );
       expect(await codexHomeHasUsableAuth(root)).toBe(true);
     } finally {
       await fs.rm(root, { recursive: true, force: true });
@@ -288,7 +349,9 @@ describe("codexHomeHasUsableAuth", () => {
   });
 
   it("recognizes the Codex 0.143 AuthDotJson subscription shape", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-auth-modern-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-auth-modern-"),
+    );
     try {
       await fs.writeFile(
         path.join(root, "auth.json"),
@@ -311,7 +374,9 @@ describe("codexHomeHasUsableAuth", () => {
   });
 
   it("treats subscription auth without account_id or token material as unusable", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-auth-modern-invalid-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-auth-modern-invalid-"),
+    );
     try {
       await fs.writeFile(
         path.join(root, "auth.json"),
@@ -344,9 +409,14 @@ describe("codexHomeHasUsableAuth", () => {
   });
 
   it("is false for a dangling auth.json symlink", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-auth-dangling-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-auth-dangling-"),
+    );
     try {
-      await fs.symlink(path.join(root, "missing-source.json"), path.join(root, "auth.json"));
+      await fs.symlink(
+        path.join(root, "missing-source.json"),
+        path.join(root, "auth.json"),
+      );
       expect(await codexHomeHasUsableAuth(root)).toBe(false);
     } finally {
       await fs.rm(root, { recursive: true, force: true });
@@ -356,7 +426,9 @@ describe("codexHomeHasUsableAuth", () => {
 
 describe("seedManagedCodexHome", () => {
   it("symlinks auth.json from the shared source into an explicit per-agent home", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-"),
+    );
     try {
       const sharedCodexHome = path.join(root, "shared-codex-home");
       const agentHome = path.join(
@@ -375,7 +447,11 @@ describe("seedManagedCodexHome", () => {
       await fs.mkdir(sharedCodexHome, { recursive: true });
       await fs.writeFile(sharedAuth, '{"OPENAI_API_KEY":"shared"}', "utf8");
 
-      await seedManagedCodexHome(agentHome, { CODEX_HOME: sharedCodexHome }, async () => {});
+      await seedManagedCodexHome(
+        agentHome,
+        { CODEX_HOME: sharedCodexHome },
+        async () => {},
+      );
 
       expect((await fs.lstat(agentAuth)).isSymbolicLink()).toBe(true);
       expect(await fs.realpath(agentAuth)).toBe(await fs.realpath(sharedAuth));
@@ -385,16 +461,25 @@ describe("seedManagedCodexHome", () => {
   });
 
   it("writes an API-key auth.json into the home when an apiKey is supplied", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-apikey-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-apikey-"),
+    );
     try {
       const agentHome = path.join(root, "agent-home");
       const emptyShared = path.join(root, "empty-shared");
       await fs.mkdir(emptyShared, { recursive: true });
-      await seedManagedCodexHome(agentHome, { CODEX_HOME: emptyShared }, async () => {}, {
-        apiKey: "sk-test-123",
-      });
+      await seedManagedCodexHome(
+        agentHome,
+        { CODEX_HOME: emptyShared },
+        async () => {},
+        {
+          apiKey: "sk-test-123",
+        },
+      );
 
-      const written = JSON.parse(await fs.readFile(path.join(agentHome, "auth.json"), "utf8"));
+      const written = JSON.parse(
+        await fs.readFile(path.join(agentHome, "auth.json"), "utf8"),
+      );
       expect(written).toEqual({ OPENAI_API_KEY: "sk-test-123" });
     } finally {
       await fs.rm(root, { recursive: true, force: true });
@@ -425,7 +510,9 @@ describe("seedManagedCodexHome", () => {
     });
 
   it("keeps a promoted subscription auth.json when the shared source has no auth", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-promoted-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-promoted-"),
+    );
     try {
       const companyHome = path.join(root, "company-home");
       const emptyShared = path.join(root, "empty-shared");
@@ -434,7 +521,11 @@ describe("seedManagedCodexHome", () => {
       await fs.mkdir(companyHome, { recursive: true });
       await fs.writeFile(path.join(companyHome, "auth.json"), promoted, "utf8");
 
-      await seedManagedCodexHome(companyHome, { CODEX_HOME: emptyShared }, async () => {});
+      await seedManagedCodexHome(
+        companyHome,
+        { CODEX_HOME: emptyShared },
+        async () => {},
+      );
 
       const kept = path.join(companyHome, "auth.json");
       expect((await fs.lstat(kept)).isSymbolicLink()).toBe(false);
@@ -445,7 +536,9 @@ describe("seedManagedCodexHome", () => {
   });
 
   it("keeps a promoted subscription auth.json whose identity differs from the shared source", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-foreign-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-foreign-"),
+    );
     try {
       const companyHome = path.join(root, "company-home");
       const sharedCodexHome = path.join(root, "shared-codex-home");
@@ -459,7 +552,11 @@ describe("seedManagedCodexHome", () => {
       await fs.mkdir(companyHome, { recursive: true });
       await fs.writeFile(path.join(companyHome, "auth.json"), promoted, "utf8");
 
-      await seedManagedCodexHome(companyHome, { CODEX_HOME: sharedCodexHome }, async () => {});
+      await seedManagedCodexHome(
+        companyHome,
+        { CODEX_HOME: sharedCodexHome },
+        async () => {},
+      );
 
       const kept = path.join(companyHome, "auth.json");
       expect((await fs.lstat(kept)).isSymbolicLink()).toBe(false);
@@ -470,15 +567,25 @@ describe("seedManagedCodexHome", () => {
   });
 
   it("still replaces a same-identity stale regular copy with the shared symlink once the source is strictly fresher (#5028)", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-stale-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-stale-"),
+    );
     try {
       const companyHome = path.join(root, "company-home");
       const sharedCodexHome = path.join(root, "shared-codex-home");
       // The live source has rotated since the stale copy was written, so its
       // last_refresh is strictly greater — the real #5028 shape.
-      const fresh = subscriptionAuth("acct-same", "fresh", "2026-07-09T02:00:00Z");
+      const fresh = subscriptionAuth(
+        "acct-same",
+        "fresh",
+        "2026-07-09T02:00:00Z",
+      );
       await fs.mkdir(sharedCodexHome, { recursive: true });
-      await fs.writeFile(path.join(sharedCodexHome, "auth.json"), fresh, "utf8");
+      await fs.writeFile(
+        path.join(sharedCodexHome, "auth.json"),
+        fresh,
+        "utf8",
+      );
       await fs.mkdir(companyHome, { recursive: true });
       await fs.writeFile(
         path.join(companyHome, "auth.json"),
@@ -486,7 +593,11 @@ describe("seedManagedCodexHome", () => {
         "utf8",
       );
 
-      await seedManagedCodexHome(companyHome, { CODEX_HOME: sharedCodexHome }, async () => {});
+      await seedManagedCodexHome(
+        companyHome,
+        { CODEX_HOME: sharedCodexHome },
+        async () => {},
+      );
 
       const healed = path.join(companyHome, "auth.json");
       expect((await fs.lstat(healed)).isSymbolicLink()).toBe(true);
@@ -501,11 +612,17 @@ describe("seedManagedCodexHome", () => {
     // than the host copy the user was failing with. Swapping it for the shared
     // symlink here would sign the company back in with that failing credential
     // right after the login that replaced it.
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-newer-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-newer-"),
+    );
     try {
       const companyHome = path.join(root, "company-home");
       const sharedCodexHome = path.join(root, "shared-codex-home");
-      const promoted = subscriptionAuth("acct-same", "promoted", "2026-07-09T02:00:00Z");
+      const promoted = subscriptionAuth(
+        "acct-same",
+        "promoted",
+        "2026-07-09T02:00:00Z",
+      );
       await fs.mkdir(sharedCodexHome, { recursive: true });
       await fs.writeFile(
         path.join(sharedCodexHome, "auth.json"),
@@ -515,7 +632,11 @@ describe("seedManagedCodexHome", () => {
       await fs.mkdir(companyHome, { recursive: true });
       await fs.writeFile(path.join(companyHome, "auth.json"), promoted, "utf8");
 
-      await seedManagedCodexHome(companyHome, { CODEX_HOME: sharedCodexHome }, async () => {});
+      await seedManagedCodexHome(
+        companyHome,
+        { CODEX_HOME: sharedCodexHome },
+        async () => {},
+      );
 
       const kept = path.join(companyHome, "auth.json");
       expect((await fs.lstat(kept)).isSymbolicLink()).toBe(false);
@@ -538,7 +659,9 @@ describe("seedManagedCodexHome", () => {
       { source: "2026-07-09T02:00:00Z", target: null },
     ];
     for (const { source, target } of cases) {
-      const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-tie-"));
+      const root = await fs.mkdtemp(
+        path.join(os.tmpdir(), "taskcore-codex-seed-tie-"),
+      );
       try {
         const companyHome = path.join(root, "company-home");
         const sharedCodexHome = path.join(root, "shared-codex-home");
@@ -552,7 +675,11 @@ describe("seedManagedCodexHome", () => {
         await fs.mkdir(companyHome, { recursive: true });
         await fs.writeFile(path.join(companyHome, "auth.json"), file, "utf8");
 
-        await seedManagedCodexHome(companyHome, { CODEX_HOME: sharedCodexHome }, async () => {});
+        await seedManagedCodexHome(
+          companyHome,
+          { CODEX_HOME: sharedCodexHome },
+          async () => {},
+        );
 
         const kept = path.join(companyHome, "auth.json");
         expect((await fs.lstat(kept)).isSymbolicLink()).toBe(false);
@@ -564,7 +691,9 @@ describe("seedManagedCodexHome", () => {
   });
 
   it("keeps the usable target when the shared source exists but cannot be read", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-src-err-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-src-err-"),
+    );
     try {
       const companyHome = path.join(root, "company-home");
       const sharedCodexHome = path.join(root, "shared-codex-home");
@@ -572,12 +701,18 @@ describe("seedManagedCodexHome", () => {
       // EISDIR — a deterministic present-but-unreadable source. Removal plus
       // the existence-only symlink pass would link the home to a source no
       // downstream reader can use, so the usable target must survive.
-      await fs.mkdir(path.join(sharedCodexHome, "auth.json"), { recursive: true });
+      await fs.mkdir(path.join(sharedCodexHome, "auth.json"), {
+        recursive: true,
+      });
       await fs.mkdir(companyHome, { recursive: true });
       const target = subscriptionAuth("acct-unknown-source", "target");
       await fs.writeFile(path.join(companyHome, "auth.json"), target, "utf8");
 
-      await seedManagedCodexHome(companyHome, { CODEX_HOME: sharedCodexHome }, async () => {});
+      await seedManagedCodexHome(
+        companyHome,
+        { CODEX_HOME: sharedCodexHome },
+        async () => {},
+      );
 
       const kept = path.join(companyHome, "auth.json");
       expect((await fs.lstat(kept)).isSymbolicLink()).toBe(false);
@@ -594,25 +729,42 @@ describe("seedManagedCodexHome", () => {
     // promotion/vend/copy-back own — a strictly-fresher same-identity shared
     // source must NOT trigger the #5028 heal here, or the bound account is
     // silently swapped for the host login.
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-store-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-store-"),
+    );
     try {
       const sharedCodexHome = path.join(root, "shared-codex-home");
       const entryHome = path.join(
-        root, "taskcore-home", "instances", "default", "companies", "company-1", "codex-auth-cache", "acct-bound",
+        root,
+        "taskcore-home",
+        "instances",
+        "default",
+        "companies",
+        "company-1",
+        "codex-auth-cache",
+        "acct-bound",
       );
       const env = {
         CODEX_HOME: sharedCodexHome,
         TASKCORE_HOME: path.join(root, "taskcore-home"),
         TASKCORE_INSTANCE_ID: "default",
       };
-      const stored = subscriptionAuth("acct-same", "stored", "2026-07-09T01:00:00Z");
+      const stored = subscriptionAuth(
+        "acct-same",
+        "stored",
+        "2026-07-09T01:00:00Z",
+      );
       await fs.mkdir(sharedCodexHome, { recursive: true });
       await fs.writeFile(
         path.join(sharedCodexHome, "auth.json"),
         subscriptionAuth("acct-same", "host", "2026-07-09T02:00:00Z"),
         "utf8",
       );
-      await fs.writeFile(path.join(sharedCodexHome, "config.toml"), 'model = "gpt-5"\n', "utf8");
+      await fs.writeFile(
+        path.join(sharedCodexHome, "config.toml"),
+        'model = "gpt-5"\n',
+        "utf8",
+      );
       await fs.mkdir(entryHome, { recursive: true });
       await fs.writeFile(path.join(entryHome, "auth.json"), stored, "utf8");
 
@@ -623,49 +775,79 @@ describe("seedManagedCodexHome", () => {
       expect(await fs.readFile(kept, "utf8")).toBe(stored);
       // The static shared config still copies in, so a bound run gets the
       // same config a per-agent home gets.
-      expect(await fs.readFile(path.join(entryHome, "config.toml"), "utf8")).toBe('model = "gpt-5"\n');
+      expect(
+        await fs.readFile(path.join(entryHome, "config.toml"), "utf8"),
+      ).toBe('model = "gpt-5"\n');
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
   });
 
   it("refuses an API-key rewrite of a credential-store entry's auth.json", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-store-apikey-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-store-apikey-"),
+    );
     try {
       const sharedCodexHome = path.join(root, "shared-codex-home");
       const entryHome = path.join(
-        root, "taskcore-home", "instances", "default", "companies", "company-1", "codex-auth-cache", "acct-bound",
+        root,
+        "taskcore-home",
+        "instances",
+        "default",
+        "companies",
+        "company-1",
+        "codex-auth-cache",
+        "acct-bound",
       );
       const env = {
         CODEX_HOME: sharedCodexHome,
         TASKCORE_HOME: path.join(root, "taskcore-home"),
         TASKCORE_INSTANCE_ID: "default",
       };
-      const stored = subscriptionAuth("acct-bound-id", "stored", "2026-07-09T01:00:00Z");
+      const stored = subscriptionAuth(
+        "acct-bound-id",
+        "stored",
+        "2026-07-09T01:00:00Z",
+      );
       await fs.mkdir(sharedCodexHome, { recursive: true });
       await fs.mkdir(entryHome, { recursive: true });
       await fs.writeFile(path.join(entryHome, "auth.json"), stored, "utf8");
       const logs: string[] = [];
 
-      await seedManagedCodexHome(entryHome, env, async (_stream, line) => {
-        logs.push(line);
-      }, { apiKey: "sk-configured" });
+      await seedManagedCodexHome(
+        entryHome,
+        env,
+        async (_stream, line) => {
+          logs.push(line);
+        },
+        { apiKey: "sk-configured" },
+      );
 
-      expect(await fs.readFile(path.join(entryHome, "auth.json"), "utf8")).toBe(stored);
-      expect(logs.join("\n")).toContain("Refusing to write an API-key auth.json into credential-store entry");
+      expect(await fs.readFile(path.join(entryHome, "auth.json"), "utf8")).toBe(
+        stored,
+      );
+      expect(logs.join("\n")).toContain(
+        "Refusing to write an API-key auth.json into credential-store entry",
+      );
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
   });
 
   it("still removes an apikey-mode auth.json so the chatgpt-mode symlink is restored", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-apikey-residue-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-apikey-residue-"),
+    );
     try {
       const companyHome = path.join(root, "company-home");
       const sharedCodexHome = path.join(root, "shared-codex-home");
       const shared = subscriptionAuth("acct-host", "host");
       await fs.mkdir(sharedCodexHome, { recursive: true });
-      await fs.writeFile(path.join(sharedCodexHome, "auth.json"), shared, "utf8");
+      await fs.writeFile(
+        path.join(sharedCodexHome, "auth.json"),
+        shared,
+        "utf8",
+      );
       await fs.mkdir(companyHome, { recursive: true });
       await fs.writeFile(
         path.join(companyHome, "auth.json"),
@@ -673,7 +855,11 @@ describe("seedManagedCodexHome", () => {
         "utf8",
       );
 
-      await seedManagedCodexHome(companyHome, { CODEX_HOME: sharedCodexHome }, async () => {});
+      await seedManagedCodexHome(
+        companyHome,
+        { CODEX_HOME: sharedCodexHome },
+        async () => {},
+      );
 
       const healed = path.join(companyHome, "auth.json");
       expect((await fs.lstat(healed)).isSymbolicLink()).toBe(true);
@@ -687,7 +873,9 @@ describe("seedManagedCodexHome", () => {
 // Startup backfill for already-isolated managed homes.
 describe("reconcileManagedCodexHome", () => {
   async function makeFixture() {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-reconcile-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-reconcile-"),
+    );
     const sharedCodexHome = path.join(root, "shared-codex-home");
     const taskcoreHome = path.join(root, "taskcore-home");
     const agentHome = path.join(
@@ -726,7 +914,9 @@ describe("reconcileManagedCodexHome", () => {
       expect(first.status).toBe("seeded");
       expect(first.home).toBe(fx.agentHome);
       expect((await fs.lstat(fx.agentAuth)).isSymbolicLink()).toBe(true);
-      expect(await fs.realpath(fx.agentAuth)).toBe(await fs.realpath(fx.sharedAuth));
+      expect(await fs.realpath(fx.agentAuth)).toBe(
+        await fs.realpath(fx.sharedAuth),
+      );
 
       const second = await reconcileManagedCodexHome({
         companyId: "company-1",
@@ -735,7 +925,9 @@ describe("reconcileManagedCodexHome", () => {
       });
       expect(second.status).toBe("already_seeded");
       expect((await fs.lstat(fx.agentAuth)).isSymbolicLink()).toBe(true);
-      expect(await fs.realpath(fx.agentAuth)).toBe(await fs.realpath(fx.sharedAuth));
+      expect(await fs.realpath(fx.agentAuth)).toBe(
+        await fs.realpath(fx.sharedAuth),
+      );
     } finally {
       await fs.rm(fx.root, { recursive: true, force: true });
     }
@@ -832,7 +1024,9 @@ describe("reconcileManagedCodexHome", () => {
 
       expect(result.status).toBe("seeded");
       expect((await fs.lstat(fx.agentAuth)).isSymbolicLink()).toBe(true);
-      expect(await fs.realpath(fx.agentAuth)).toBe(await fs.realpath(fx.sharedAuth));
+      expect(await fs.realpath(fx.agentAuth)).toBe(
+        await fs.realpath(fx.sharedAuth),
+      );
     } finally {
       await fs.rm(fx.root, { recursive: true, force: true });
     }
@@ -869,7 +1063,9 @@ describe("reconcileManagedCodexHome", () => {
 
 describe("evaluateCodexCredentialReadiness", () => {
   async function makeFixture() {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-readiness-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-readiness-"),
+    );
     const sharedCodexHome = path.join(root, "shared-codex-home");
     const taskcoreHome = path.join(root, "taskcore-home");
     const companyRoot = path.join(
@@ -880,7 +1076,12 @@ describe("evaluateCodexCredentialReadiness", () => {
       "company-1",
     );
     const managedCompanyHome = path.join(companyRoot, "codex-home");
-    const managedAgentHome = path.join(companyRoot, "agents", "agent-1", "codex-home");
+    const managedAgentHome = path.join(
+      companyRoot,
+      "agents",
+      "agent-1",
+      "codex-home",
+    );
     const env: NodeJS.ProcessEnv = {
       CODEX_HOME: sharedCodexHome,
       TASKCORE_HOME: taskcoreHome,
@@ -892,7 +1093,11 @@ describe("evaluateCodexCredentialReadiness", () => {
 
   async function writeUsableAuth(home: string) {
     await fs.mkdir(home, { recursive: true });
-    await fs.writeFile(path.join(home, "auth.json"), '{"OPENAI_API_KEY":"sk-live"}\n', "utf8");
+    await fs.writeFile(
+      path.join(home, "auth.json"),
+      '{"OPENAI_API_KEY":"sk-live"}\n',
+      "utf8",
+    );
   }
 
   it("flags a managed home with no source auth and empty OPENAI_API_KEY as not ready", async () => {
@@ -904,7 +1109,11 @@ describe("evaluateCodexCredentialReadiness", () => {
         configuredCodexHome: fx.managedAgentHome,
         configuredApiKey: "",
       });
-      expect(result).toMatchObject({ managed: true, authMode: "subscription", ready: false });
+      expect(result).toMatchObject({
+        managed: true,
+        authMode: "subscription",
+        ready: false,
+      });
       expect(result.effectiveHome).toBe(path.resolve(fx.managedAgentHome));
     } finally {
       await fs.rm(fx.root, { recursive: true, force: true });
@@ -920,7 +1129,11 @@ describe("evaluateCodexCredentialReadiness", () => {
         configuredCodexHome: fx.managedAgentHome,
         configuredApiKey: "sk-agent-key",
       });
-      expect(result).toMatchObject({ managed: true, authMode: "api", ready: true });
+      expect(result).toMatchObject({
+        managed: true,
+        authMode: "api",
+        ready: true,
+      });
     } finally {
       await fs.rm(fx.root, { recursive: true, force: true });
     }
@@ -936,7 +1149,11 @@ describe("evaluateCodexCredentialReadiness", () => {
         configuredCodexHome: fx.managedAgentHome,
         configuredApiKey: "",
       });
-      expect(result).toMatchObject({ managed: true, authMode: "subscription", ready: true });
+      expect(result).toMatchObject({
+        managed: true,
+        authMode: "subscription",
+        ready: true,
+      });
     } finally {
       await fs.rm(fx.root, { recursive: true, force: true });
     }
@@ -952,7 +1169,11 @@ describe("evaluateCodexCredentialReadiness", () => {
         configuredCodexHome: fx.managedAgentHome,
         configuredApiKey: "",
       });
-      expect(result).toMatchObject({ managed: true, authMode: "subscription", ready: true });
+      expect(result).toMatchObject({
+        managed: true,
+        authMode: "subscription",
+        ready: true,
+      });
     } finally {
       await fs.rm(fx.root, { recursive: true, force: true });
     }
@@ -967,7 +1188,11 @@ describe("evaluateCodexCredentialReadiness", () => {
         configuredCodexHome: null,
         configuredApiKey: "",
       });
-      expect(result).toMatchObject({ managed: true, authMode: "subscription", ready: false });
+      expect(result).toMatchObject({
+        managed: true,
+        authMode: "subscription",
+        ready: false,
+      });
       expect(result.effectiveHome).toBe(path.resolve(fx.managedCompanyHome));
     } finally {
       await fs.rm(fx.root, { recursive: true, force: true });
@@ -992,27 +1217,34 @@ describe("evaluateCodexCredentialReadiness", () => {
   });
 
   it("replaces the managed MCP block and clears stale servers for an empty runtime set", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-mcp-config-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-mcp-config-"),
+    );
     try {
       const alphaHome = path.join(root, "agent-alpha");
       const zeroHome = path.join(root, "agent-zero");
       await writeManagedCodexMcpConfig({
         codexHome: alphaHome,
         apiBaseUrl: "https://taskcore.example",
-        gateways: [{
-          name: "alpha",
-          endpointPath: "https://taskcore.example/api/tool-gateway/gateways/alpha/mcp",
-          bearerToken: "alpha-token",
-        }],
+        gateways: [
+          {
+            name: "alpha",
+            endpointPath:
+              "https://taskcore.example/api/tool-gateway/gateways/alpha/mcp",
+            bearerToken: "alpha-token",
+          },
+        ],
       });
       await writeManagedCodexMcpConfig({
         codexHome: zeroHome,
         apiBaseUrl: "https://taskcore.example",
-        gateways: [{
-          name: "stale",
-          endpointPath: "/api/tool-gateway/gateways/stale/mcp",
-          bearerToken: "stale-token",
-        }],
+        gateways: [
+          {
+            name: "stale",
+            endpointPath: "/api/tool-gateway/gateways/stale/mcp",
+            bearerToken: "stale-token",
+          },
+        ],
       });
       await writeManagedCodexMcpConfig({
         codexHome: zeroHome,
@@ -1020,10 +1252,18 @@ describe("evaluateCodexCredentialReadiness", () => {
         gateways: [],
       });
 
-      const alpha = await fs.readFile(path.join(alphaHome, "config.toml"), "utf8");
-      const zero = await fs.readFile(path.join(zeroHome, "config.toml"), "utf8");
+      const alpha = await fs.readFile(
+        path.join(alphaHome, "config.toml"),
+        "utf8",
+      );
+      const zero = await fs.readFile(
+        path.join(zeroHome, "config.toml"),
+        "utf8",
+      );
       expect(alpha).toContain('[mcp_servers."alpha"]');
-      expect(alpha).toContain('http_headers = { Authorization = "Bearer alpha-token" }');
+      expect(alpha).toContain(
+        'http_headers = { Authorization = "Bearer alpha-token" }',
+      );
       expect(alpha).not.toMatch(/^headers\s*=/m);
       expect(zero).not.toContain("mcp_servers.");
       expect(zero).not.toContain("stale-token");
@@ -1034,10 +1274,12 @@ describe("evaluateCodexCredentialReadiness", () => {
   });
 
   it("restricts permissions on an existing managed MCP config", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-mcp-config-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-mcp-config-"),
+    );
     try {
       const configPath = path.join(root, "config.toml");
-      await fs.writeFile(configPath, "model = \"gpt-5\"\n", { mode: 0o644 });
+      await fs.writeFile(configPath, 'model = "gpt-5"\n', { mode: 0o644 });
 
       await writeManagedCodexMcpConfig({
         codexHome: root,
@@ -1061,7 +1303,9 @@ describe("stageCodexHomeForSync", () => {
   // `auth.json` as a symlink into a separate source-bytes file and a populated
   // `skills/` symlink, mirroring the real managed home) plus decoy runtime
   // state the allowlist must NOT copy.
-  async function buildFakeHome(root: string): Promise<{ home: string; authBytes: string; skillBytes: string }> {
+  async function buildFakeHome(
+    root: string,
+  ): Promise<{ home: string; authBytes: string; skillBytes: string }> {
     const home = path.join(root, "codex-home");
     const authSource = path.join(root, "shared", "auth.json");
     const skillSource = path.join(root, "shared", "skill-src.md");
@@ -1075,7 +1319,11 @@ describe("stageCodexHomeForSync", () => {
     await fs.mkdir(home, { recursive: true });
     // auth.json is a symlink into the shared source (single-use rotating tokens).
     await fs.symlink(authSource, path.join(home, "auth.json"));
-    await fs.writeFile(path.join(home, "config.toml"), "model_provider = \"taskcore\"\n", "utf8");
+    await fs.writeFile(
+      path.join(home, "config.toml"),
+      'model_provider = "taskcore"\n',
+      "utf8",
+    );
     await fs.writeFile(path.join(home, "config.json"), "{}\n", "utf8");
     await fs.writeFile(path.join(home, "instructions.md"), "hi\n", "utf8");
     // skills/ is a directory of symlinks.
@@ -1096,7 +1344,9 @@ describe("stageCodexHomeForSync", () => {
   }
 
   it("stages exactly the allowlist, derefs auth.json to bytes, and excludes decoys", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-"),
+    );
     let staged: string | null = null;
     try {
       const { home, authBytes, skillBytes } = await buildFakeHome(root);
@@ -1106,7 +1356,13 @@ describe("stageCodexHomeForSync", () => {
       expect(entries).toEqual([...CODEX_SYNC_ALLOWLIST].sort());
 
       // Decoys must be absent.
-      for (const decoy of ["logs_2.sqlite", "state_5.sqlite", "plugins", "sessions", "tmp"]) {
+      for (const decoy of [
+        "logs_2.sqlite",
+        "state_5.sqlite",
+        "plugins",
+        "sessions",
+        "tmp",
+      ]) {
         expect(entries).not.toContain(decoy);
       }
 
@@ -1121,7 +1377,9 @@ describe("stageCodexHomeForSync", () => {
       expect(await fs.readFile(stagedSkill, "utf8")).toBe(skillBytes);
 
       // config.toml (post-rewrite state) carried through.
-      expect(await fs.readFile(path.join(staged, "config.toml"), "utf8")).toContain("model_provider");
+      expect(
+        await fs.readFile(path.join(staged, "config.toml"), "utf8"),
+      ).toContain("model_provider");
     } finally {
       if (staged) await fs.rm(staged, { recursive: true, force: true });
       await fs.rm(root, { recursive: true, force: true });
@@ -1130,7 +1388,9 @@ describe("stageCodexHomeForSync", () => {
 
   // C1 — staged credential file must be mode 0600 (not the world-readable default).
   it("writes the staged auth.json with mode 0600", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-mode-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-mode-"),
+    );
     let staged: string | null = null;
     try {
       const { home } = await buildFakeHome(root);
@@ -1146,7 +1406,9 @@ describe("stageCodexHomeForSync", () => {
   // config.toml carries the managed MCP `Authorization: Bearer …` header and is
   // secret-bearing; the staged copy must be 0600, not the world-readable default.
   it("writes the staged config.toml (managed MCP bearer header) with mode 0600", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-toml-mode-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-toml-mode-"),
+    );
     let staged: string | null = null;
     try {
       const home = path.join(root, "codex-home");
@@ -1155,11 +1417,12 @@ describe("stageCodexHomeForSync", () => {
       // and is persisted 0600 on disk.
       await fs.writeFile(
         path.join(home, "config.toml"),
-        "[mcp_servers.taskcore]\nheaders = { Authorization = \"Bearer secret-token\" }\n",
+        '[mcp_servers.taskcore]\nheaders = { Authorization = "Bearer secret-token" }\n',
         { mode: 0o600 },
       );
       staged = await stageCodexHomeForSync(home, { runId: "run-toml-mode" });
-      const mode = (await fs.stat(path.join(staged, "config.toml"))).mode & 0o777;
+      const mode =
+        (await fs.stat(path.join(staged, "config.toml"))).mode & 0o777;
       expect(mode).toBe(0o600);
     } finally {
       if (staged) await fs.rm(staged, { recursive: true, force: true });
@@ -1170,12 +1433,19 @@ describe("stageCodexHomeForSync", () => {
   // Least privilege: no staged regular file needs group/other read, so every
   // one (config.json, instructions.md — not just credentials) is staged 0600.
   it("writes every staged regular file with mode 0600", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-all-mode-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-all-mode-"),
+    );
     let staged: string | null = null;
     try {
       const { home } = await buildFakeHome(root);
       staged = await stageCodexHomeForSync(home, { runId: "run-all-mode" });
-      for (const entry of ["auth.json", "config.toml", "config.json", "instructions.md"]) {
+      for (const entry of [
+        "auth.json",
+        "config.toml",
+        "config.json",
+        "instructions.md",
+      ]) {
         const mode = (await fs.stat(path.join(staged, entry))).mode & 0o777;
         expect(mode, `${entry} should be staged 0600`).toBe(0o600);
       }
@@ -1187,7 +1457,9 @@ describe("stageCodexHomeForSync", () => {
 
   // C2 — staged dir must be 0700 (mkdtemp guarantees this on POSIX).
   it("creates the staged dir with mode 0700", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-dir-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-dir-"),
+    );
     let staged: string | null = null;
     try {
       const { home } = await buildFakeHome(root);
@@ -1201,7 +1473,9 @@ describe("stageCodexHomeForSync", () => {
   });
 
   it("skips absent optional entries without throwing", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-absent-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-absent-"),
+    );
     let staged: string | null = null;
     try {
       // Keyring-credential mode: no auth.json, no config.json.
@@ -1219,12 +1493,17 @@ describe("stageCodexHomeForSync", () => {
   });
 
   it("treats a dangling auth.json symlink as absent (skips it, no throw)", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-dangling-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-dangling-"),
+    );
     let staged: string | null = null;
     try {
       const home = path.join(root, "codex-home");
       await fs.mkdir(home, { recursive: true });
-      await fs.symlink(path.join(root, "gone", "auth.json"), path.join(home, "auth.json"));
+      await fs.symlink(
+        path.join(root, "gone", "auth.json"),
+        path.join(home, "auth.json"),
+      );
       await fs.writeFile(path.join(home, "config.toml"), "x\n", "utf8");
 
       staged = await stageCodexHomeForSync(home, { runId: "run-dangling" });
@@ -1238,25 +1517,36 @@ describe("stageCodexHomeForSync", () => {
   // C3 + C4 — an unexpected I/O error must reject (fail-closed, not partial)
   // AND remove the temp dir it created (cleanup on the error path).
   it("fails closed and removes the temp dir on an unexpected I/O error", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-fail-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-fail-"),
+    );
     try {
       const { home } = await buildFakeHome(root);
 
       let createdDir: string | null = null;
       const realMkdtemp = fs.mkdtemp.bind(fs);
-      vi.spyOn(fs, "mkdtemp").mockImplementation(async (prefix: string, ...rest: unknown[]) => {
-        const dir = await (realMkdtemp as typeof fs.mkdtemp)(prefix, ...(rest as []));
-        createdDir = dir as string;
-        return dir;
-      });
+      vi.spyOn(fs, "mkdtemp").mockImplementation(
+        async (prefix: string, ...rest: unknown[]) => {
+          const dir = await (realMkdtemp as typeof fs.mkdtemp)(
+            prefix,
+            ...(rest as []),
+          );
+          createdDir = dir as string;
+          return dir;
+        },
+      );
       vi.spyOn(fs, "readFile").mockRejectedValue(
         Object.assign(new Error("boom"), { code: "EACCES" }),
       );
 
-      await expect(stageCodexHomeForSync(home, { runId: "run-fail" })).rejects.toThrow("boom");
+      await expect(
+        stageCodexHomeForSync(home, { runId: "run-fail" }),
+      ).rejects.toThrow("boom");
       expect(createdDir).not.toBeNull();
       // The staged temp dir was cleaned up despite the failure.
-      await expect(fs.access(createdDir as unknown as string)).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(
+        fs.access(createdDir as unknown as string),
+      ).rejects.toMatchObject({ code: "ENOENT" });
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }
@@ -1267,7 +1557,9 @@ describe("stageCodexHomeForSync", () => {
   // stores skill packages in a shared location) and are dereferenced normally;
   // all resulting files land 0600 inside the 0700 staged dir.
   it("skips circular skill symlinks (ELOOP) without throwing", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-circular-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-circular-"),
+    );
     let staged: string | null = null;
     try {
       const home = path.join(root, "codex-home");
@@ -1276,7 +1568,11 @@ describe("stageCodexHomeForSync", () => {
       const circularLink = path.join(home, "skills", "loop.md");
       await fs.symlink(circularLink, circularLink);
       // A normal skill file — must still be staged.
-      await fs.writeFile(path.join(home, "skills", "legit.md"), "# ok\n", "utf8");
+      await fs.writeFile(
+        path.join(home, "skills", "legit.md"),
+        "# ok\n",
+        "utf8",
+      );
 
       staged = await stageCodexHomeForSync(home, { runId: "run-circular" });
       const stagedSkillEntries = await fs.readdir(path.join(staged, "skills"));
@@ -1292,20 +1588,35 @@ describe("stageCodexHomeForSync", () => {
 
   // Skill staging retains executable permission with owner-only access.
   it("retains skill executable bits without group or world permissions", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-skill-mode-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-skill-mode-"),
+    );
     let staged: string | null = null;
     try {
       const home = path.join(root, "codex-home");
-      await fs.mkdir(path.join(home, "skills", "my-skill"), { recursive: true });
+      await fs.mkdir(path.join(home, "skills", "my-skill"), {
+        recursive: true,
+      });
       // Typical source modes: readable doc (0644) and executable script (0755);
       // documents land 0600, scripts 0700 in the staged dir.
-      await fs.writeFile(path.join(home, "skills", "my-skill", "SKILL.md"), "# skill\n", { mode: 0o644 });
-      await fs.writeFile(path.join(home, "skills", "my-skill", "run.sh"), "#!/bin/sh\n", { mode: 0o755 });
+      await fs.writeFile(
+        path.join(home, "skills", "my-skill", "SKILL.md"),
+        "# skill\n",
+        { mode: 0o644 },
+      );
+      await fs.writeFile(
+        path.join(home, "skills", "my-skill", "run.sh"),
+        "#!/bin/sh\n",
+        { mode: 0o755 },
+      );
 
       staged = await stageCodexHomeForSync(home, { runId: "run-skill-mode" });
       for (const rel of ["my-skill/SKILL.md", "my-skill/run.sh"]) {
-        const mode = (await fs.stat(path.join(staged, "skills", rel))).mode & 0o777;
-        expect(mode, `skills/${rel} mode`).toBe(rel.endsWith(".sh") ? 0o700 : 0o600);
+        const mode =
+          (await fs.stat(path.join(staged, "skills", rel))).mode & 0o777;
+        expect(mode, `skills/${rel} mode`).toBe(
+          rel.endsWith(".sh") ? 0o700 : 0o600,
+        );
       }
     } finally {
       if (staged) await fs.rm(staged, { recursive: true, force: true });
@@ -1319,7 +1630,9 @@ describe("stageCodexHomeForSync", () => {
   // exhausted. Cycle detection must let staging finish while still copying the
   // real content and skipping the self-referential link.
   it("does not infinitely traverse an ancestor directory link (back -> .) inside a skill", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-cycle-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-cycle-"),
+    );
     let staged: string | null = null;
     try {
       const home = path.join(root, "codex-home");
@@ -1334,10 +1647,15 @@ describe("stageCodexHomeForSync", () => {
 
       // Completed without hanging; the real file is staged and the cyclic link
       // produced no runaway nested `back/back/…` chain (it is skipped entirely).
-      expect(await fs.readdir(path.join(staged, "skills", "my-skill"))).toEqual(["SKILL.md"]);
-      expect(await fs.readFile(path.join(staged, "skills", "my-skill", "SKILL.md"), "utf8")).toBe(
-        "# skill\n",
+      expect(await fs.readdir(path.join(staged, "skills", "my-skill"))).toEqual(
+        ["SKILL.md"],
       );
+      expect(
+        await fs.readFile(
+          path.join(staged, "skills", "my-skill", "SKILL.md"),
+          "utf8",
+        ),
+      ).toBe("# skill\n");
     } finally {
       if (staged) await fs.rm(staged, { recursive: true, force: true });
       await fs.rm(root, { recursive: true, force: true });
@@ -1349,7 +1667,9 @@ describe("stageCodexHomeForSync", () => {
   // dereferenced into the staged asset — otherwise a malformed/compromised skill
   // could smuggle host secrets past CODEX_SYNC_ALLOWLIST.
   it("does not stage a nested skill symlink that escapes the skill root", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-escape-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-escape-"),
+    );
     let staged: string | null = null;
     try {
       const home = path.join(root, "codex-home");
@@ -1370,7 +1690,9 @@ describe("stageCodexHomeForSync", () => {
 
       staged = await stageCodexHomeForSync(home, { runId: "run-escape" });
 
-      const stagedEntries = await fs.readdir(path.join(staged, "skills", "my-skill"));
+      const stagedEntries = await fs.readdir(
+        path.join(staged, "skills", "my-skill"),
+      );
       // The legit in-skill file is staged…
       expect(stagedEntries).toContain("SKILL.md");
       // …but neither escaping link is followed into the staged asset.
@@ -1387,12 +1709,18 @@ describe("stageCodexHomeForSync", () => {
   // never adopted as a containment root — otherwise the whole home
   // (`sessions/`, `*.sqlite`, …) would be dragged into the staged skills asset.
   it("skips a top-level skills entry that resolves to an ancestor of skills/", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-stage-ancestor-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-stage-ancestor-"),
+    );
     let staged: string | null = null;
     try {
       const home = path.join(root, "codex-home");
       await fs.mkdir(path.join(home, "skills"), { recursive: true });
-      await fs.writeFile(path.join(home, "skills", "legit.md"), "# ok\n", "utf8");
+      await fs.writeFile(
+        path.join(home, "skills", "legit.md"),
+        "# ok\n",
+        "utf8",
+      );
       // Runtime state in the home that must never reach the staged asset.
       await fs.writeFile(path.join(home, "logs.sqlite"), "x", "utf8");
       // `up -> ..` resolves to the home dir (an ancestor of skills/).

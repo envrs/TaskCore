@@ -18,15 +18,23 @@ const {
   startAdapterExecutionTargetTaskcoreBridge,
 } = vi.hoisted(() => ({
   ensureAdapterExecutionTargetCommandResolvable: vi.fn(async () => undefined),
-  ensureAdapterExecutionTargetRuntimeCommandInstalled: vi.fn(async () => undefined),
+  ensureAdapterExecutionTargetRuntimeCommandInstalled: vi.fn(
+    async () => undefined,
+  ),
   prepareAdapterExecutionTargetRuntime: vi.fn(async () => ({
-    target: { kind: "remote", transport: "sandbox", remoteCwd: "/sandbox/workspace" },
+    target: {
+      kind: "remote",
+      transport: "sandbox",
+      remoteCwd: "/sandbox/workspace",
+    },
     workspaceRemoteDir: "/sandbox/workspace",
     runtimeRootDir: "/sandbox/.taskcore-runtime",
     assetDirs: { home: "/sandbox/.taskcore-runtime/codex/home" },
     restoreWorkspace: vi.fn(async () => undefined),
   })),
-  resolveAdapterExecutionTargetCommandForLogs: vi.fn(async () => "/usr/bin/codex"),
+  resolveAdapterExecutionTargetCommandForLogs: vi.fn(
+    async () => "/usr/bin/codex",
+  ),
   runAdapterExecutionTargetProcess: vi.fn(async () => ({
     exitCode: 0,
     signal: null,
@@ -49,9 +57,9 @@ const {
 }));
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     ensureAdapterExecutionTargetCommandResolvable,
@@ -79,7 +87,9 @@ describe("codex sandbox auth precedence warning", () => {
   });
 
   it("logs and emits a run event when sandbox login is shadowed by host auth", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-auth-precedence-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-auth-precedence-"),
+    );
     cleanupDirs.push(root);
     const workspaceDir = path.join(root, "workspace");
     const hostCodexHome = path.join(root, "host-codex-home");
@@ -92,7 +102,12 @@ describe("codex sandbox auth precedence warning", () => {
     );
 
     const logs: Array<{ stream: "stdout" | "stderr"; chunk: string }> = [];
-    const events: Array<{ eventType: string; level?: string; message?: string; payload?: Record<string, unknown> }> = [];
+    const events: Array<{
+      eventType: string;
+      level?: string;
+      message?: string;
+      payload?: Record<string, unknown>;
+    }> = [];
 
     await execute({
       runId: "run-auth-precedence",
@@ -133,7 +148,9 @@ describe("codex sandbox auth precedence warning", () => {
 
     // The home asset now ships a curated *staged* allowlist dir (not the raw
     // host CODEX_HOME) and carries no `exclude` denylist.
-    const runtimeCall = (prepareAdapterExecutionTargetRuntime.mock.calls[0] as unknown[])?.[0] as {
+    const runtimeCall = (
+      prepareAdapterExecutionTargetRuntime.mock.calls[0] as unknown[]
+    )?.[0] as {
       assets: Array<{ key: string; localDir: string; exclude?: string[] }>;
     };
     const homeAsset = runtimeCall.assets.find((asset) => asset.key === "home");
@@ -143,7 +160,11 @@ describe("codex sandbox auth precedence warning", () => {
     expect(homeAsset?.exclude).toBeUndefined();
     expect(runAdapterExecutionTargetShellCommand).toHaveBeenCalledWith(
       "run-auth-precedence",
-      expect.objectContaining({ kind: "remote", transport: "sandbox", remoteCwd: "/sandbox/workspace" }),
+      expect.objectContaining({
+        kind: "remote",
+        transport: "sandbox",
+        remoteCwd: "/sandbox/workspace",
+      }),
       CODEX_SANDBOX_AUTH_EXISTS_COMMAND,
       expect.objectContaining({ env: {}, timeoutSec: 5 }),
     );

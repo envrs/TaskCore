@@ -38,14 +38,16 @@ const {
       };
     }),
     describeAdapterExecutionTarget: vi.fn(() => "Daytona"),
-    resolveAdapterExecutionTargetCwd: vi.fn(() => "/home/daytona/taskcore-workspace"),
+    resolveAdapterExecutionTargetCwd: vi.fn(
+      () => "/home/daytona/taskcore-workspace",
+    ),
   };
 });
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     ensureAdapterExecutionTargetDirectory,
@@ -109,7 +111,9 @@ describe("claude sandbox hello probe diagnostics", () => {
     });
 
     expect(result.status).toBe("fail");
-    const failed = result.checks.find((check) => check.code === "claude_hello_probe_failed");
+    const failed = result.checks.find(
+      (check) => check.code === "claude_hello_probe_failed",
+    );
     expect(failed).toBeTruthy();
     // The public check carries only a fixed message and hint, no raw detail.
     expect(failed?.detail).toBeUndefined();
@@ -144,7 +148,9 @@ describe("claude sandbox hello probe diagnostics", () => {
       environmentName: "Daytona",
     });
 
-    const failed = result.checks.find((check) => check.code === "claude_hello_probe_failed");
+    const failed = result.checks.find(
+      (check) => check.code === "claude_hello_probe_failed",
+    );
     expect(failed).toBeTruthy();
     expect(failed?.detail).toBeUndefined();
     const checkText = JSON.stringify(result.checks);
@@ -207,9 +213,15 @@ describe("claude sandbox hello probe diagnostics", () => {
       environmentName: "Daytona",
     });
 
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_auth_required")).toBe(true);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_auth_required",
+      ),
+    ).toBe(true);
     // The login gate code stays stable so the user interface can offer login.
-    expect(result.checks.some((check) => check.code === "adapter_auth_missing")).toBe(true);
+    expect(
+      result.checks.some((check) => check.code === "adapter_auth_missing"),
+    ).toBe(true);
     const checkText = JSON.stringify(result.checks);
     expect(checkText).not.toContain(marker);
     const loggedText = JSON.stringify(warnSpy.mock.calls);
@@ -246,8 +258,14 @@ describe("claude sandbox hello probe diagnostics", () => {
 
     // An auth failure returns the canonical login gate code, so the user
     // interface can offer login.
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_auth_required")).toBe(true);
-    expect(result.checks.some((check) => check.code === "adapter_auth_missing")).toBe(true);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_auth_required",
+      ),
+    ).toBe(true);
+    expect(
+      result.checks.some((check) => check.code === "adapter_auth_missing"),
+    ).toBe(true);
     // The raw probe text, including the bearer marker, never reaches a check.
     expect(JSON.stringify(result.checks)).not.toContain(marker);
     warnSpy.mockRestore();
@@ -274,9 +292,17 @@ describe("claude sandbox hello probe diagnostics", () => {
       environmentName: "Daytona",
     });
 
-    expect(result.checks.some((check) => check.code === "adapter_auth_missing")).toBe(false);
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_auth_required")).toBe(false);
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_passed")).toBe(true);
+    expect(
+      result.checks.some((check) => check.code === "adapter_auth_missing"),
+    ).toBe(false);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_auth_required",
+      ),
+    ).toBe(false);
+    expect(
+      result.checks.some((check) => check.code === "claude_hello_probe_passed"),
+    ).toBe(true);
   });
 
   it("keeps a transient failure with an assistant token phrase off the login gate", async () => {
@@ -301,9 +327,19 @@ describe("claude sandbox hello probe diagnostics", () => {
       environmentName: "Daytona",
     });
 
-    expect(result.checks.some((check) => check.code === "adapter_auth_missing")).toBe(false);
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_auth_required")).toBe(false);
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_transient_upstream")).toBe(true);
+    expect(
+      result.checks.some((check) => check.code === "adapter_auth_missing"),
+    ).toBe(false);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_auth_required",
+      ),
+    ).toBe(false);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_transient_upstream",
+      ),
+    ).toBe(true);
   });
 
   it("keeps an unexpected successful summary out of every check", async () => {
@@ -433,9 +469,19 @@ describe("claude sandbox hello probe diagnostics", () => {
       environmentName: "Daytona",
     });
 
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_usage_limited")).toBe(true);
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_transient_upstream")).toBe(false);
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_failed")).toBe(false);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_usage_limited",
+      ),
+    ).toBe(true);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_transient_upstream",
+      ),
+    ).toBe(false);
+    expect(
+      result.checks.some((check) => check.code === "claude_hello_probe_failed"),
+    ).toBe(false);
   });
 
   it("classifies overload failures as a transient warning, not a hard fail", async () => {
@@ -456,9 +502,19 @@ describe("claude sandbox hello probe diagnostics", () => {
       environmentName: "Daytona",
     });
 
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_transient_upstream")).toBe(true);
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_usage_limited")).toBe(false);
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_failed")).toBe(false);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_transient_upstream",
+      ),
+    ).toBe(true);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_usage_limited",
+      ),
+    ).toBe(false);
+    expect(
+      result.checks.some((check) => check.code === "claude_hello_probe_failed"),
+    ).toBe(false);
   });
 
   it("keeps the failed check free of a detail when only the system/init line is present", async () => {
@@ -476,7 +532,9 @@ describe("claude sandbox hello probe diagnostics", () => {
       environmentName: "Daytona",
     });
 
-    const failed = result.checks.find((check) => check.code === "claude_hello_probe_failed");
+    const failed = result.checks.find(
+      (check) => check.code === "claude_hello_probe_failed",
+    );
     expect(failed?.detail).toBeUndefined();
     expect(JSON.stringify(result.checks)).not.toContain('"subtype":"init"');
   });
@@ -503,23 +561,46 @@ describe("claude auth mode hints", () => {
       environmentName: "Daytona",
     });
 
-    const hint = result.checks.find((check) => check.code === "claude_oauth_token_configured");
+    const hint = result.checks.find(
+      (check) => check.code === "claude_oauth_token_configured",
+    );
     expect(hint).toBeTruthy();
     expect(hint?.level).toBe("info");
     expect(hint?.detail).toContain("configured environment variables");
     expect(
-      result.checks.some((check) => check.code === "claude_anthropic_api_key_overrides_subscription"),
+      result.checks.some(
+        (check) =>
+          check.code === "claude_anthropic_api_key_overrides_subscription",
+      ),
     ).toBe(false);
   });
 
   it("reports an intentionally selected managed API account without a subscription warning", async () => {
     probeResult.value = { exitCode: 0, stdout: successStdout, stderr: "" };
-    const result = await testEnvironment({ companyId: "company-1", adapterType: "claude_local",
-      config: { engine: "cli", command: "claude", managedAiConnection: { provider: "anthropic", method: "api_key" }, env: { ANTHROPIC_API_KEY: "api-test-key" } },
-      executionTarget: sandboxTarget, environmentName: "Daytona",
+    const result = await testEnvironment({
+      companyId: "company-1",
+      adapterType: "claude_local",
+      config: {
+        engine: "cli",
+        command: "claude",
+        managedAiConnection: { provider: "anthropic", method: "api_key" },
+        env: { ANTHROPIC_API_KEY: "api-test-key" },
+      },
+      executionTarget: sandboxTarget,
+      environmentName: "Daytona",
     });
-    expect(result.checks.find(check => check.code === "claude_anthropic_api_key_overrides_subscription")).toMatchObject({ level: "info", message: "Using the selected Claude API connection." });
-    expect(JSON.stringify(result.checks)).not.toContain("Unset ANTHROPIC_API_KEY");
+    expect(
+      result.checks.find(
+        (check) =>
+          check.code === "claude_anthropic_api_key_overrides_subscription",
+      ),
+    ).toMatchObject({
+      level: "info",
+      message: "Using the selected Claude API connection.",
+    });
+    expect(JSON.stringify(result.checks)).not.toContain(
+      "Unset ANTHROPIC_API_KEY",
+    );
   });
 
   it("keeps the API-key warning authoritative when both ANTHROPIC_API_KEY and the token are set", async () => {
@@ -541,9 +622,16 @@ describe("claude auth mode hints", () => {
     });
 
     expect(
-      result.checks.some((check) => check.code === "claude_anthropic_api_key_overrides_subscription"),
+      result.checks.some(
+        (check) =>
+          check.code === "claude_anthropic_api_key_overrides_subscription",
+      ),
     ).toBe(true);
-    expect(result.checks.some((check) => check.code === "claude_oauth_token_configured")).toBe(false);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_oauth_token_configured",
+      ),
+    ).toBe(false);
   });
 });
 
@@ -586,7 +674,9 @@ describe("claude CLI local hello probe hardening", () => {
     }
     // The mocked cwd resolver returns a sandbox path; the local probe reads it
     // as the cwd, so no host directory is touched.
-    resolveAdapterExecutionTargetCwd.mockReturnValue("/home/daytona/taskcore-workspace");
+    resolveAdapterExecutionTargetCwd.mockReturnValue(
+      "/home/daytona/taskcore-workspace",
+    );
   });
 
   afterEach(async () => {
@@ -595,7 +685,10 @@ describe("claude CLI local hello probe hardening", () => {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
-    if (tempDir) await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
+    if (tempDir)
+      await rm(tempDir, { recursive: true, force: true }).catch(
+        () => undefined,
+      );
     tempDir = null;
   });
 
@@ -622,7 +715,8 @@ describe("claude CLI local hello probe hardening", () => {
     });
 
     expect(runAdapterExecutionTargetProcess).toHaveBeenCalledTimes(1);
-    const call = runAdapterExecutionTargetProcess.mock.calls[0] as unknown as unknown[];
+    const call = runAdapterExecutionTargetProcess.mock
+      .calls[0] as unknown as unknown[];
     const spawnedCommand = call[2] as string;
     const spawnedEnv = (call[4] as { env: Record<string, string> }).env;
     // The trusted resolved claude executable, never the caller command path.
@@ -643,39 +737,50 @@ describe("claude CLI local hello probe hardening", () => {
     ["claude-fable-5-1", "2.1.251"],
     ["claude-opus-5-5", "2.1.280"],
     ["claude-sonnet-5-5", "2.1.284"],
-  ])("warns without executing %s when runtime PATH selects a different executable", async (model, minimumVersion) => {
-    const runtimeDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-cli-runtime-path-"));
-    const runtimeClaudePath = path.join(runtimeDir, "claude");
-    await writeFile(runtimeClaudePath, "#!/bin/sh\nexit 0\n");
-    await chmod(runtimeClaudePath, 0o755);
+  ])(
+    "warns without executing %s when runtime PATH selects a different executable",
+    async (model, minimumVersion) => {
+      const runtimeDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-cli-runtime-path-"),
+      );
+      const runtimeClaudePath = path.join(runtimeDir, "claude");
+      await writeFile(runtimeClaudePath, "#!/bin/sh\nexit 0\n");
+      await chmod(runtimeClaudePath, 0o755);
 
-    try {
-      probeResult.value = { exitCode: 0, stdout: `${minimumVersion} (Claude Code)\n`, stderr: "" };
+      try {
+        probeResult.value = {
+          exitCode: 0,
+          stdout: `${minimumVersion} (Claude Code)\n`,
+          stderr: "",
+        };
 
-      const result = await testEnvironment({
-        companyId: "company-1",
-        adapterType: "claude_local",
-        config: {
-          engine: "cli",
-          command: "claude",
-          model,
-          env: { PATH: runtimeDir },
-        },
-        executionTarget: null,
-        environmentName: null,
-      });
+        const result = await testEnvironment({
+          companyId: "company-1",
+          adapterType: "claude_local",
+          config: {
+            engine: "cli",
+            command: "claude",
+            model,
+            env: { PATH: runtimeDir },
+          },
+          executionTarget: null,
+          environmentName: null,
+        });
 
-      expect(result.status).toBe("warn");
-      expect(result.checks).toContainEqual(expect.objectContaining({
-        code: "claude_cli_version_probe_mismatch",
-        hint: `Ensure the runtime-selected Claude Code is ${minimumVersion} or newer. Execution will verify that exact executable before launch.`,
-        level: "warn",
-      }));
-      expect(runAdapterExecutionTargetProcess).not.toHaveBeenCalled();
-    } finally {
-      await rm(runtimeDir, { recursive: true, force: true });
-    }
-  });
+        expect(result.status).toBe("warn");
+        expect(result.checks).toContainEqual(
+          expect.objectContaining({
+            code: "claude_cli_version_probe_mismatch",
+            hint: `Ensure the runtime-selected Claude Code is ${minimumVersion} or newer. Execution will verify that exact executable before launch.`,
+            level: "warn",
+          }),
+        );
+        expect(runAdapterExecutionTargetProcess).not.toHaveBeenCalled();
+      } finally {
+        await rm(runtimeDir, { recursive: true, force: true });
+      }
+    },
+  );
 
   it("names the local host target on every result", async () => {
     probeResult.value = { exitCode: 0, stdout: successStdout, stderr: "" };
@@ -688,7 +793,9 @@ describe("claude CLI local hello probe hardening", () => {
       environmentName: null,
     });
 
-    const targetCheck = result.checks.find((check) => check.code === "claude_environment_target");
+    const targetCheck = result.checks.find(
+      (check) => check.code === "claude_environment_target",
+    );
     expect(targetCheck).toBeTruthy();
     expect(targetCheck?.message).toContain("Taskcore host");
   });

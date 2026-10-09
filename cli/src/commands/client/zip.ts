@@ -49,10 +49,17 @@ function crc32(bytes: Uint8Array) {
  * order and carry no timestamps, so the same content always produces the
  * same bytes and a re-run resumes its content-addressed transfer.
  */
-export function createStoredZipArchive(files: Record<string, Uint8Array>, rootPath: string): Uint8Array {
-  const entries = Object.entries(files).sort(([left], [right]) => left.localeCompare(right));
+export function createStoredZipArchive(
+  files: Record<string, Uint8Array>,
+  rootPath: string,
+): Uint8Array {
+  const entries = Object.entries(files).sort(([left], [right]) =>
+    left.localeCompare(right),
+  );
   if (entries.length > ZIP_MAX_ENTRIES) {
-    throw new Error(`Package has too many files to zip (${entries.length}; the zip format caps at ${ZIP_MAX_ENTRIES}).`);
+    throw new Error(
+      `Package has too many files to zip (${entries.length}; the zip format caps at ${ZIP_MAX_ENTRIES}).`,
+    );
   }
   const encoder = new TextEncoder();
   const localChunks: Uint8Array[] = [];
@@ -90,12 +97,20 @@ export function createStoredZipArchive(files: Record<string, Uint8Array>, rootPa
     localChunks.push(localHeader, body);
     centralChunks.push(centralHeader);
     localOffset += localHeader.length + body.length;
-    if (body.length > ZIP_MAX_OFFSET_BYTES || localOffset > ZIP_MAX_OFFSET_BYTES) {
-      throw new Error("Package is too large to zip in memory (zip64 archives are not supported).");
+    if (
+      body.length > ZIP_MAX_OFFSET_BYTES ||
+      localOffset > ZIP_MAX_OFFSET_BYTES
+    ) {
+      throw new Error(
+        "Package is too large to zip in memory (zip64 archives are not supported).",
+      );
     }
   }
 
-  const centralDirectoryLength = centralChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const centralDirectoryLength = centralChunks.reduce(
+    (sum, chunk) => sum + chunk.length,
+    0,
+  );
   const archive = new Uint8Array(localOffset + centralDirectoryLength + 22);
   let offset = 0;
   for (const chunk of localChunks) {

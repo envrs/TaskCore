@@ -61,9 +61,7 @@
       "method": "managed",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "default"
-      ],
+      "requestedScopes": ["default"],
       "capability": "write",
       "supportedActions": "Create/update tasks and projects authorized by the account.",
       "evidence": [
@@ -78,9 +76,7 @@
       "method": "mcp-own-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "default"
-      ],
+      "requestedScopes": ["default"],
       "capability": "write",
       "supportedActions": "Create/update tasks and projects authorized by the account.",
       "evidence": [
@@ -95,10 +91,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "read",
-        "write"
-      ],
+      "requestedScopes": ["read", "write"],
       "capability": "write",
       "supportedActions": "Publication/subscriber actions exposed by the MCP catalog.",
       "evidence": [
@@ -203,9 +196,7 @@
       "requestedScopes": [],
       "capability": "provider-controlled",
       "supportedActions": "Create/stop browser sessions and run browser tasks under the API key.",
-      "evidence": [
-        "https://docs.browser-use.com/cloud/api-v4-overview"
-      ],
+      "evidence": ["https://docs.browser-use.com/cloud/api-v4-overview"],
       "reviewedAt": "2026-09-30",
       "liveProof": "not-run",
       "keyPermissions": "Create/stop browser sessions and run browser tasks under the API key. Create a key with read and write permissions for these actions; Taskcore cannot increase an existing key\u2019s permissions."
@@ -215,11 +206,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "openid",
-        "profile",
-        "email"
-      ],
+      "requestedScopes": ["openid", "profile", "email"],
       "capability": "read",
       "supportedActions": "None: nonprofit/funder discovery and research.",
       "evidence": [
@@ -255,10 +242,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "user:read",
-        "account:read"
-      ],
+      "requestedScopes": ["user:read", "account:read"],
       "capability": "provider-controlled",
       "supportedActions": "Cloudflare API actions selected at provider consent or on the API token. Identity scopes alone do not grant account writes.",
       "evidence": [
@@ -312,9 +296,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "mcp:all"
-      ],
+      "requestedScopes": ["mcp:all"],
       "capability": "write",
       "supportedActions": "Modify documents/tables permitted by the account.",
       "evidence": [
@@ -348,9 +330,7 @@
       "requestedScopes": [],
       "capability": "provider-controlled",
       "supportedActions": "Add/process knowledge and manage authorized datasets.",
-      "evidence": [
-        "https://docs.cognee.ai/cognee-cloud/connections/cloud-mcp"
-      ],
+      "evidence": ["https://docs.cognee.ai/cognee-cloud/connections/cloud-mcp"],
       "reviewedAt": "2026-09-30",
       "liveProof": "not-run",
       "keyPermissions": "Add/process knowledge and manage authorized datasets. Create a key with read and write permissions for these actions; Taskcore cannot increase an existing key\u2019s permissions."
@@ -363,9 +343,7 @@
       "requestedScopes": [],
       "capability": "provider-controlled",
       "supportedActions": "Actions depend on the configured toolkits and upstream connected accounts.",
-      "evidence": [
-        "https://docs.composio.dev/docs/composio-connect"
-      ],
+      "evidence": ["https://docs.composio.dev/docs/composio-connect"],
       "reviewedAt": "2026-09-30",
       "liveProof": "not-run"
     },
@@ -406,12 +384,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "email",
-        "offline_access",
-        "openid",
-        "profile"
-      ],
+      "requestedScopes": ["email", "offline_access", "openid", "profile"],
       "capability": "provider-controlled",
       "supportedActions": "Provider/account dependent; published metadata is identity-only, so no write guarantee.",
       "evidence": [
@@ -444,9 +417,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "mcp:read"
-      ],
+      "requestedScopes": ["mcp:read"],
       "capability": "read",
       "supportedActions": "Query the organization's customer feedback and retrieve cited quotes. OAuth targets the same official read-only MCP; the separate beta Enterpret Agent write MCP is out of scope.",
       "evidence": [
@@ -465,9 +436,7 @@
       "requestedScopes": [],
       "capability": "provider-controlled",
       "supportedActions": "Actions depend on the custom MCP endpoint and configured services.",
-      "evidence": [
-        "https://executor.sh/docs/mcp-proxy"
-      ],
+      "evidence": ["https://executor.sh/docs/mcp-proxy"],
       "reviewedAt": "2026-09-30",
       "liveProof": "not-run"
     },
@@ -476,10 +445,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "email",
-        "profile"
-      ],
+      "requestedScopes": ["email", "profile"],
       "capability": "provider-controlled",
       "supportedActions": "Share/revoke meeting access, rename/move meetings and create soundbites where the authenticated owner or team-admin role permits. The MCP resource requests profile/email, not separate mutation scopes.",
       "evidence": [
@@ -512,9 +478,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "mcp"
-      ],
+      "requestedScopes": ["mcp"],
       "capability": "write",
       "supportedActions": "Read AI visibility, mentions, citations, answers and competitor data; browse and curate tracked topics and prompts (create, generate, move, tag, and replace keyword lists); pull SEO keyword, GA4, Search Console, PostHog and Google Ads/OpenAI Ads reports; run the content pipeline from brief to article and publish to a connected CMS as a draft, to staging or live; read and edit organization memory files and skills; create, assign and update Action Center items; ask Ask Gauge questions. Access is limited to the organization chosen during consent.",
       "evidence": [
@@ -578,9 +542,7 @@
       "method": "taskcore-read",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/gmail.readonly"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/gmail.readonly"],
       "capability": "read",
       "supportedActions": "Search and read messages, threads, drafts, and labels.",
       "evidence": [
@@ -595,9 +557,7 @@
       "method": "customer-read-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/gmail.readonly"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/gmail.readonly"],
       "capability": "read",
       "supportedActions": "Search and read messages, threads, drafts, and labels.",
       "evidence": [
@@ -800,9 +760,7 @@
       "method": "taskcore-read",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/documents.readonly"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/documents.readonly"],
       "capability": "read",
       "supportedActions": "Read document text and structure.",
       "evidence": [
@@ -817,9 +775,7 @@
       "method": "customer-read-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/documents.readonly"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/documents.readonly"],
       "capability": "read",
       "supportedActions": "Read document text and structure.",
       "evidence": [
@@ -834,9 +790,7 @@
       "method": "taskcore-write",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/documents"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/documents"],
       "capability": "write",
       "supportedActions": "Read and update documents.",
       "evidence": [
@@ -851,9 +805,7 @@
       "method": "customer-write-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/documents"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/documents"],
       "capability": "write",
       "supportedActions": "Read and update documents.",
       "evidence": [
@@ -868,9 +820,7 @@
       "method": "taskcore-read",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/drive.readonly"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/drive.readonly"],
       "capability": "read",
       "supportedActions": "Search and read files and metadata.",
       "evidence": [
@@ -885,9 +835,7 @@
       "method": "customer-read-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/drive.readonly"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/drive.readonly"],
       "capability": "read",
       "supportedActions": "Search and read files and metadata.",
       "evidence": [
@@ -1010,9 +958,7 @@
       "method": "taskcore-write",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/spreadsheets"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/spreadsheets"],
       "capability": "write",
       "supportedActions": "Read and update spreadsheet values, formulas, and dimensions.",
       "evidence": [
@@ -1027,9 +973,7 @@
       "method": "customer-write-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/spreadsheets"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/spreadsheets"],
       "capability": "write",
       "supportedActions": "Read and update spreadsheet values, formulas, and dimensions.",
       "evidence": [
@@ -1093,9 +1037,7 @@
       "method": "taskcore-write",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/presentations"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/presentations"],
       "capability": "write",
       "supportedActions": "Read and update presentations.",
       "evidence": [
@@ -1110,9 +1052,7 @@
       "method": "customer-write-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "https://www.googleapis.com/auth/presentations"
-      ],
+      "requestedScopes": ["https://www.googleapis.com/auth/presentations"],
       "capability": "write",
       "supportedActions": "Read and update presentations.",
       "evidence": [
@@ -1170,9 +1110,7 @@
       "requestedScopes": [],
       "capability": "provider-controlled",
       "supportedActions": "Create peers/sessions and save memory under the API key project.",
-      "evidence": [
-        "https://honcho.dev/docs/v3/guides/integrations/mcp"
-      ],
+      "evidence": ["https://honcho.dev/docs/v3/guides/integrations/mcp"],
       "reviewedAt": "2026-09-30",
       "liveProof": "not-run"
     },
@@ -1181,12 +1119,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "read-mcp",
-        "read-repos",
-        "contribute-repos",
-        "jobs"
-      ],
+      "requestedScopes": ["read-mcp", "read-repos", "contribute-repos", "jobs"],
       "capability": "write",
       "supportedActions": "Create/contribute repositories and schedule/run jobs; users must enable those tools in HF MCP settings. Paid compute still requires an eligible account.",
       "evidence": [
@@ -1240,9 +1173,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "openid"
-      ],
+      "requestedScopes": ["openid"],
       "capability": "provider-controlled",
       "supportedActions": "Launch/manage browsers, profiles, apps and browser automation.",
       "evidence": [
@@ -1273,10 +1204,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "read",
-        "write"
-      ],
+      "requestedScopes": ["read", "write"],
       "capability": "write",
       "supportedActions": "Create/update issues and other authorized workspace resources.",
       "evidence": [
@@ -1291,10 +1219,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "api",
-        "offline_access"
-      ],
+      "requestedScopes": ["api", "offline_access"],
       "capability": "provider-controlled",
       "supportedActions": "Account-authorized scans/campaigns; subscription credits apply.",
       "evidence": [
@@ -1326,12 +1251,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "openid",
-        "profile",
-        "email",
-        "offline_access"
-      ],
+      "requestedScopes": ["openid", "profile", "email", "offline_access"],
       "capability": "provider-controlled",
       "supportedActions": "Deploy/redeploy/stop servers and edit server configuration under the signed-in role.",
       "evidence": [
@@ -1350,9 +1270,7 @@
       "requestedScopes": [],
       "capability": "provider-controlled",
       "supportedActions": "Add/update/delete memories under the API key account.",
-      "evidence": [
-        "https://docs.mem0.ai/platform/mem0-mcp"
-      ],
+      "evidence": ["https://docs.mem0.ai/platform/mem0-mcp"],
       "reviewedAt": "2026-09-30",
       "liveProof": "not-run",
       "keyPermissions": "Add/update/delete memories under the API key account. Create a key with read and write permissions for these actions; Taskcore cannot increase an existing key\u2019s permissions."
@@ -1362,12 +1280,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "boards:read",
-        "boards:write",
-        "openid",
-        "email"
-      ],
+      "requestedScopes": ["boards:read", "boards:write", "openid", "email"],
       "capability": "write",
       "supportedActions": "Create board content/diagrams and act on comments; board/team ACLs apply.",
       "evidence": [
@@ -1422,11 +1335,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "offline_access",
-        "read",
-        "write"
-      ],
+      "requestedScopes": ["offline_access", "read", "write"],
       "capability": "write",
       "supportedActions": "Deploy/manage sites via the account; no Claude-specific scope is required for Taskcore.",
       "evidence": [
@@ -1441,10 +1350,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "read",
-        "write"
-      ],
+      "requestedScopes": ["read", "write"],
       "capability": "write",
       "supportedActions": "Create, describe and delete projects and branches; manage computes, roles, databases and snapshots; run SQL and apply schema changes; configure Neon Auth and the Data API; read logs. Optional project pinning and read-only mode narrow the hosted server.",
       "evidence": [
@@ -1477,9 +1383,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "default"
-      ],
+      "requestedScopes": ["default"],
       "capability": "write",
       "supportedActions": "Create/update pages and databases shared with the authenticated account.",
       "evidence": [
@@ -1510,10 +1414,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "openid",
-        "offline_access"
-      ],
+      "requestedScopes": ["openid", "offline_access"],
       "capability": "read",
       "supportedActions": "None: content discovery and retrieval.",
       "evidence": [
@@ -1746,11 +1647,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "openid",
-        "offline_access",
-        "workspace:member"
-      ],
+      "requestedScopes": ["openid", "offline_access", "workspace:member"],
       "capability": "provider-controlled",
       "supportedActions": "Project/service/deployment operations in authorized workspaces; workspace:member and account role bound access.",
       "evidence": [
@@ -1801,9 +1698,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "full_access"
-      ],
+      "requestedScopes": ["full_access"],
       "capability": "write",
       "supportedActions": "Send email and manage domains/templates/account resources. full_access covers the MCP management tools as well as sending.",
       "evidence": [
@@ -1819,9 +1714,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "global"
-      ],
+      "requestedScopes": ["global"],
       "capability": "write",
       "supportedActions": "Edit content permitted by project role; global is MCP authorization, not a bypass of project ACLs.",
       "evidence": [
@@ -1905,9 +1798,7 @@
       "requestedScopes": [],
       "capability": "read",
       "supportedActions": "None: analytics retrieval; subscription entitlements apply.",
-      "evidence": [
-        "https://developers.similarweb.com/docs/similarweb-mcp"
-      ],
+      "evidence": ["https://developers.similarweb.com/docs/similarweb-mcp"],
       "reviewedAt": "2026-09-30",
       "liveProof": "not-run",
       "keyPermissions": "None: analytics retrieval; subscription entitlements apply. A read-only key is sufficient."
@@ -1964,9 +1855,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "mcp"
-      ],
+      "requestedScopes": ["mcp"],
       "capability": "provider-controlled",
       "supportedActions": "Account- and sandbox-specific writes selected during Stripe consent; financial approvals and restricted-key permissions remain.",
       "evidence": [
@@ -2061,12 +1950,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "openid",
-        "profile",
-        "email",
-        "offline_access"
-      ],
+      "requestedScopes": ["openid", "profile", "email", "offline_access"],
       "capability": "provider-controlled",
       "supportedActions": "Save memories/documents in the workspace selected at provider consent; read/write choice is provider-controlled.",
       "evidence": [
@@ -2084,9 +1968,7 @@
       "requestedScopes": [],
       "capability": "read",
       "supportedActions": "None: web search and page fetch tools (usage is billed to the Telem account).",
-      "evidence": [
-        "https://docs.telem.ai"
-      ],
+      "evidence": ["https://docs.telem.ai"],
       "reviewedAt": "2026-10-03",
       "liveProof": "not-run",
       "keyPermissions": "None: web search and page fetch tools (usage is billed to the Telem account). Any Telem API key works."
@@ -2111,10 +1993,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "tasks:write",
-        "tasks:read"
-      ],
+      "requestedScopes": ["tasks:write", "tasks:read"],
       "capability": "write",
       "supportedActions": "Create/update tasks in the authenticated account.",
       "evidence": [
@@ -2129,9 +2008,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "data:read_write"
-      ],
+      "requestedScopes": ["data:read_write"],
       "capability": "write",
       "supportedActions": "Create/update tasks and projects in the authenticated account.",
       "evidence": [
@@ -2146,9 +2023,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "openid"
-      ],
+      "requestedScopes": ["openid"],
       "capability": "provider-controlled",
       "supportedActions": "Account/team-authorized project and deployment actions; identity scope is not an admin permission.",
       "evidence": [
@@ -2180,9 +2055,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "offline_access"
-      ],
+      "requestedScopes": ["offline_access"],
       "capability": "provider-controlled",
       "supportedActions": "Site editing and business operations under the signed-in Wix role.",
       "evidence": [
@@ -2222,10 +2095,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "Tools",
-        "offline_access"
-      ],
+      "requestedScopes": ["Tools", "offline_access"],
       "capability": "read",
       "supportedActions": "None: search, contents and research tools (usage may be billed).",
       "evidence": [
@@ -2274,9 +2144,7 @@
       "requestedScopes": [],
       "capability": "provider-controlled",
       "supportedActions": "Run only the actions configured by the user in the generated Zapier MCP endpoint; a URL cannot add actions or permissions.",
-      "evidence": [
-        "https://docs.zapier.com/mcp/quickstart"
-      ],
+      "evidence": ["https://docs.zapier.com/mcp/quickstart"],
       "reviewedAt": "2026-09-30",
       "liveProof": "not-run"
     },
@@ -2285,10 +2153,7 @@
       "method": "mcp-oauth",
       "auth": "oauth",
       "policy": "explicit",
-      "requestedScopes": [
-        "graph:read",
-        "graph:write"
-      ],
+      "requestedScopes": ["graph:read", "graph:write"],
       "capability": "write",
       "supportedActions": "Write memory graphs authorized for the signed-in identity.",
       "evidence": [

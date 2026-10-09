@@ -9,7 +9,7 @@
  *   checkLinkedIssue(prBody, prTitle) → { passed, failures }
  *   hasInlineIssueDescription(prBody) → boolean
  */
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath } from "node:url";
 
 const ISSUE_PATTERNS = [
   /(?:fixes|closes|resolves|refs)\s+#\d+/i,
@@ -18,7 +18,15 @@ const ISSUE_PATTERNS = [
 ];
 
 // Prefixes where neither a linked issue nor an inline description is required
-const SKIP_ISSUE_PREFIXES = ['docs', 'chore', 'build', 'ci', 'style', 'test', 'revert'];
+const SKIP_ISSUE_PREFIXES = [
+  "docs",
+  "chore",
+  "build",
+  "ci",
+  "style",
+  "test",
+  "revert",
+];
 
 // Minimum number of template fields the PR body must match to count as an
 // inline issue description.
@@ -30,52 +38,66 @@ const INLINE_DESCRIPTION_MIN_FIELDS = 3;
 // `Label:`). Matching is case-insensitive.
 const TEMPLATE_FIELDS = {
   bug: [
-    ['What happened', 'What happened?'],
-    ['Expected behavior', 'Expected behaviour'],
-    ['Steps to reproduce', 'Reproduction steps', 'Repro steps'],
-    ['Taskcore version', 'Taskcore version or commit', 'Version or commit', 'Version/commit'],
-    ['Deployment mode'],
+    ["What happened", "What happened?"],
+    ["Expected behavior", "Expected behaviour"],
+    ["Steps to reproduce", "Reproduction steps", "Repro steps"],
+    [
+      "Taskcore version",
+      "Taskcore version or commit",
+      "Version or commit",
+      "Version/commit",
+    ],
+    ["Deployment mode"],
   ],
   feature: [
-    ['Problem or motivation', 'Problem', 'Motivation'],
-    ['Proposed solution', 'Solution'],
-    ['Alternatives considered', 'Alternatives'],
-    ['Roadmap alignment', 'Roadmap'],
+    ["Problem or motivation", "Problem", "Motivation"],
+    ["Proposed solution", "Solution"],
+    ["Alternatives considered", "Alternatives"],
+    ["Roadmap alignment", "Roadmap"],
   ],
   adapter: [
-    ['Agent or provider', 'Agent', 'Provider', 'Adapter'],
-    ["Why this adapter is useful", "Why it's useful", 'Why useful', 'Use case'],
-    ['How the agent is invoked', 'How it is invoked', "How it's invoked", 'Invocation'],
+    ["Agent or provider", "Agent", "Provider", "Adapter"],
+    ["Why this adapter is useful", "Why it's useful", "Why useful", "Use case"],
+    [
+      "How the agent is invoked",
+      "How it is invoked",
+      "How it's invoked",
+      "Invocation",
+    ],
   ],
   // Labels below match .github/ISSUE_TEMPLATE/enhancement.yml exactly.
   enhancement: [
-    ['What existing behavior does this improve?', 'What existing behavior does this improve'],
-    ['Subsystem affected'],
-    ['Current behavior'],
-    ['Proposed behavior'],
-    ['Reason and benefit'],
-    ['Breaking changes'],
+    [
+      "What existing behavior does this improve?",
+      "What existing behavior does this improve",
+    ],
+    ["Subsystem affected"],
+    ["Current behavior"],
+    ["Proposed behavior"],
+    ["Reason and benefit"],
+    ["Breaking changes"],
   ],
   // Labels below match .github/ISSUE_TEMPLATE/docs_issue.yml exactly. The
   // template has 4 distinct fields, so it meets the 3-field minimum. A
   // "docs"-prefixed PR skips this check; this set helps a non-"docs"-prefixed
   // PR that describes a documentation issue inline.
   docs: [
-    ['Issue type'],
-    ['Where is the issue?', 'Where is the issue'],
+    ["Issue type"],
+    ["Where is the issue?", "Where is the issue"],
     ["What's wrong?", "What's wrong"],
-    ['Suggested fix'],
+    ["Suggested fix"],
   ],
 };
 
 function escapeRegExp(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // A generic "label line" is a markdown heading (`## Label`) or a bolded label on
 // its own line (`**Label**`). The content scan stops at a label line, because
 // that line starts a new field.
-const LABEL_LINE = /^\s*(?:#{1,6}\s+\S|(?:\*\*|__)[^*_].*(?:\*\*|__)\s*[:?]?\s*$)/;
+const LABEL_LINE =
+  /^\s*(?:#{1,6}\s+\S|(?:\*\*|__)[^*_].*(?:\*\*|__)\s*[:?]?\s*$)/;
 
 // Build the regex that matches one field label on its own line.
 function labelLinePattern(label) {
@@ -84,7 +106,7 @@ function labelLinePattern(label) {
   // Examples: "## What happened?", "**Expected behavior**", "Problem:".
   return new RegExp(
     `^\\s*(?:#{1,6}\\s+|\\*\\*\\s*|__\\s*)?${esc}(?:\\s*[:?])?(?:\\s*\\*\\*|\\s*__)?\\s*$`,
-    'i'
+    "i",
   );
 }
 
@@ -100,7 +122,9 @@ const KNOWN_LABEL_PATTERNS = Object.values(TEMPLATE_FIELDS)
 // Return true if the line starts a new field. The line is a heading, a bold
 // label, or a plain line that equals a known field label.
 function isFieldBoundary(line) {
-  return LABEL_LINE.test(line) || KNOWN_LABEL_PATTERNS.some(p => p.test(line));
+  return (
+    LABEL_LINE.test(line) || KNOWN_LABEL_PATTERNS.some((p) => p.test(line))
+  );
 }
 
 // Return true if the line holds real content, not a bare placeholder. The
@@ -110,7 +134,10 @@ function lineHasContent(line) {
   let text = line.trim();
   if (!text) return false;
   // Drop a leading list marker ("- ", "* ", "1. ") before the check.
-  text = text.replace(/^[-*+]\s*/, '').replace(/^\d+[.)]\s*/, '').trim();
+  text = text
+    .replace(/^[-*+]\s*/, "")
+    .replace(/^\d+[.)]\s*/, "")
+    .trim();
   if (!text) return false;
   // Treat a whole-line bracket placeholder ("[describe here]") as empty.
   if (/^\[.*\]$/.test(text)) return false;
@@ -122,7 +149,7 @@ function lineHasContent(line) {
 function isFieldFilled(lines, variants) {
   const patterns = variants.map(labelLinePattern);
   for (let i = 0; i < lines.length; i += 1) {
-    if (!patterns.some(p => p.test(lines[i]))) continue;
+    if (!patterns.some((p) => p.test(lines[i]))) continue;
     for (let j = i + 1; j < lines.length; j += 1) {
       if (isFieldBoundary(lines[j])) break; // next field starts here
       if (lineHasContent(lines[j])) return true;
@@ -143,7 +170,7 @@ function countMatchedFields(lines, fieldSet) {
 // issue links ("Fixes: #123") inside comments, so the gate must not read them
 // as author content.
 function stripHtmlComments(body) {
-  return body.replace(/<!--[\s\S]*?-->/g, '');
+  return body.replace(/<!--[\s\S]*?-->/g, "");
 }
 
 export function hasInlineIssueDescription(body) {
@@ -164,7 +191,7 @@ function parsePrefix(title) {
   return match ? match[1].toLowerCase() : null;
 }
 
-export function checkLinkedIssue(body, prTitle = '') {
+export function checkLinkedIssue(body, prTitle = "") {
   const prefix = parsePrefix(prTitle);
 
   if (prefix && SKIP_ISSUE_PREFIXES.includes(prefix)) {
@@ -172,28 +199,33 @@ export function checkLinkedIssue(body, prTitle = '') {
   }
 
   if (!body || !body.trim()) {
-    return { passed: false, failures: ['PR body is empty — please fill out the PR template'] };
+    return {
+      passed: false,
+      failures: ["PR body is empty — please fill out the PR template"],
+    };
   }
 
-  const linked = ISSUE_PATTERNS.some(p => p.test(stripHtmlComments(body)));
+  const linked = ISSUE_PATTERNS.some((p) => p.test(stripHtmlComments(body)));
   const inlined = hasInlineIssueDescription(body);
   const passed = linked || inlined;
 
   return {
     passed,
-    failures: passed ? [] : [
-      'No linked issue or inline issue description found — either tag an existing issue ' +
-      'with `Fixes #NNN` / `Closes #NNN` / `Refs #NNN`, or describe the underlying issue ' +
-      'inline in the PR body following one of our issue templates ' +
-      '(https://github.com/khulnasoft/taskcore/tree/master/.github/ISSUE_TEMPLATE). ' +
-      'See CONTRIBUTING.md → "Link Issues or Describe Them In-PR".',
-    ],
+    failures: passed
+      ? []
+      : [
+          "No linked issue or inline issue description found — either tag an existing issue " +
+            "with `Fixes #NNN` / `Closes #NNN` / `Refs #NNN`, or describe the underlying issue " +
+            "inline in the PR body following one of our issue templates " +
+            "(https://github.com/khulnasoft/taskcore/tree/master/.github/ISSUE_TEMPLATE). " +
+            'See CONTRIBUTING.md → "Link Issues or Describe Them In-PR".',
+        ],
   };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const body = process.env.PR_BODY ?? '';
-  const title = process.env.PR_TITLE ?? '';
+  const body = process.env.PR_BODY ?? "";
+  const title = process.env.PR_TITLE ?? "";
   const result = checkLinkedIssue(body, title);
   console.log(JSON.stringify(result));
   process.exit(result.passed ? 0 : 1);

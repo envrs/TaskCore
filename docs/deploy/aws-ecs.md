@@ -349,6 +349,7 @@ HTTP_LISTENER_ARN=$(aws elbv2 create-listener \
 ```
 
 Point your DNS to the ALB:
+
 - Create a CNAME or ALIAS record for `$TASKCORE_DOMAIN` -> `$ALB_DNS`
 
 ## 10. Create ECS Service
@@ -404,6 +405,7 @@ curl -sf https://$TASKCORE_DOMAIN/api/health
 ```
 
 **Healthy indicators:**
+
 - ECS task status: `RUNNING`, health: `HEALTHY`
 - Logs show `plugin job coordinator started` and `plugin-loader: loadAll complete`
 - `/api/health` returns 200
@@ -564,17 +566,17 @@ aws logs delete-log-group --log-group-name /ecs/taskcore
 
 ## Cost Reference
 
-| Service | Config | Monthly |
-|---------|--------|---------|
-| ECS Fargate | 2 vCPU, 4 GB, 24/7 | ~$70 |
-| RDS Postgres | db.t4g.micro, 20 GB | ~$15 |
-| ALB | 1 LCU average | ~$22 |
-| NAT Gateway | 1 AZ (if using private subnets) | ~$35 |
-| EFS | 1 GB Standard | ~$0.30 |
-| Secrets Manager | 5 secrets | ~$2 |
-| CloudWatch Logs | ~1 GB/mo | ~$0.50 |
-| ECR | ~1 GB | ~$0.10 |
-| **Total (public subnets, no NAT)** | | **~$110/mo** |
-| **Total (private subnets + NAT)** | | **~$145/mo** |
+| Service                            | Config                          | Monthly      |
+| ---------------------------------- | ------------------------------- | ------------ |
+| ECS Fargate                        | 2 vCPU, 4 GB, 24/7              | ~$70         |
+| RDS Postgres                       | db.t4g.micro, 20 GB             | ~$15         |
+| ALB                                | 1 LCU average                   | ~$22         |
+| NAT Gateway                        | 1 AZ (if using private subnets) | ~$35         |
+| EFS                                | 1 GB Standard                   | ~$0.30       |
+| Secrets Manager                    | 5 secrets                       | ~$2          |
+| CloudWatch Logs                    | ~1 GB/mo                        | ~$0.50       |
+| ECR                                | ~1 GB                           | ~$0.10       |
+| **Total (public subnets, no NAT)** |                                 | **~$110/mo** |
+| **Total (private subnets + NAT)**  |                                 | **~$145/mo** |
 
 Use Fargate Spot and scheduled scaling to 0 during off-hours to reduce to ~$60-85/mo.

@@ -19,7 +19,10 @@ const BEDROCK_MODELS: AdapterModel[] = [
   { id: "us.anthropic.claude-opus-5-5", label: "Bedrock Opus 5.5" },
   // Sonnet 5.5's documented Bedrock ID is dateless, like Fable 5.1 and Opus 5.5.
   { id: "us.anthropic.claude-sonnet-5-5", label: "Bedrock Sonnet 5.5" },
-  { id: "us.anthropic.claude-haiku-4-5-20251001-v1:0", label: "Bedrock Haiku 4.5" },
+  {
+    id: "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    label: "Bedrock Haiku 4.5",
+  },
   { id: "us.anthropic.claude-fable-5", label: "Bedrock Fable 5" },
   { id: "us.anthropic.claude-opus-5", label: "Bedrock Opus 5" },
   { id: "us.anthropic.claude-opus-4-8", label: "Bedrock Opus 4.8" },
@@ -27,10 +30,18 @@ const BEDROCK_MODELS: AdapterModel[] = [
   { id: "us.anthropic.claude-opus-4-6-v1", label: "Bedrock Opus 4.6" },
   { id: "us.anthropic.claude-sonnet-5", label: "Bedrock Sonnet 5" },
   { id: "us.anthropic.claude-sonnet-4-6", label: "Bedrock Sonnet 4.6" },
-  { id: "us.anthropic.claude-sonnet-4-5-20250929-v2:0", label: "Bedrock Sonnet 4.5" },
+  {
+    id: "us.anthropic.claude-sonnet-4-5-20250929-v2:0",
+    label: "Bedrock Sonnet 4.5",
+  },
 ];
 
-let cached: { keyFingerprint: string; baseUrl: string; expiresAt: number; models: AdapterModel[] } | null = null;
+let cached: {
+  keyFingerprint: string;
+  baseUrl: string;
+  expiresAt: number;
+  models: AdapterModel[];
+} | null = null;
 
 function isBedrockEnv(): boolean {
   return (
@@ -42,7 +53,10 @@ function isBedrockEnv(): boolean {
 }
 
 function fingerprint(apiKey: string): string {
-  const digest = createHash("sha256").update(apiKey).digest("base64url").slice(0, 16);
+  const digest = createHash("sha256")
+    .update(apiKey)
+    .digest("base64url")
+    .slice(0, 16);
   return `${apiKey.length}:${digest}`;
 }
 
@@ -60,10 +74,7 @@ function dedupeModels(models: AdapterModel[]): AdapterModel[] {
 
 function mergedWithFallback(models: AdapterModel[]): AdapterModel[] {
   // The Anthropic API returns models in its own order; the picker shows the curated one.
-  return sortClaudeModels(dedupeModels([
-    ...models,
-    ...DIRECT_MODELS,
-  ]));
+  return sortClaudeModels(dedupeModels([...models, ...DIRECT_MODELS]));
 }
 
 function resolveAnthropicApiKey(): string | null {
@@ -73,12 +84,20 @@ function resolveAnthropicApiKey(): string | null {
 
 function resolveAnthropicBaseUrl(): string {
   const baseUrl = process.env.ANTHROPIC_BASE_URL?.trim();
-  return baseUrl && baseUrl.length > 0 ? baseUrl.replace(/\/+$/, "") : "https://api.anthropic.com";
+  return baseUrl && baseUrl.length > 0
+    ? baseUrl.replace(/\/+$/, "")
+    : "https://api.anthropic.com";
 }
 
-async function fetchAnthropicModels(apiKey: string, baseUrl: string): Promise<AdapterModel[]> {
+async function fetchAnthropicModels(
+  apiKey: string,
+  baseUrl: string,
+): Promise<AdapterModel[]> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), ANTHROPIC_MODELS_TIMEOUT_MS);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    ANTHROPIC_MODELS_TIMEOUT_MS,
+  );
   try {
     const response = await fetch(`${baseUrl}${ANTHROPIC_MODELS_ENDPOINT}`, {
       headers: {
@@ -95,9 +114,11 @@ async function fetchAnthropicModels(apiKey: string, baseUrl: string): Promise<Ad
     for (const item of data) {
       if (typeof item !== "object" || item === null) continue;
       const record = item as { id?: unknown; display_name?: unknown };
-      if (typeof record.id !== "string" || record.id.trim().length === 0) continue;
+      if (typeof record.id !== "string" || record.id.trim().length === 0)
+        continue;
       const displayName =
-        typeof record.display_name === "string" && record.display_name.trim().length > 0
+        typeof record.display_name === "string" &&
+        record.display_name.trim().length > 0
           ? record.display_name
           : record.id;
       models.push({
@@ -116,7 +137,9 @@ async function fetchAnthropicModels(apiKey: string, baseUrl: string): Promise<Ad
   }
 }
 
-async function loadClaudeModels(options?: { forceRefresh?: boolean }): Promise<AdapterModel[]> {
+async function loadClaudeModels(options?: {
+  forceRefresh?: boolean;
+}): Promise<AdapterModel[]> {
   if (isBedrockEnv()) return sortClaudeModels(dedupeModels(BEDROCK_MODELS));
 
   const fallback = sortClaudeModels(dedupeModels(DIRECT_MODELS));
@@ -148,7 +171,12 @@ async function loadClaudeModels(options?: { forceRefresh?: boolean }): Promise<A
     return merged;
   }
 
-  if (cached && cached.keyFingerprint === keyFingerprint && cached.baseUrl === baseUrl && cached.models.length > 0) {
+  if (
+    cached &&
+    cached.keyFingerprint === keyFingerprint &&
+    cached.baseUrl === baseUrl &&
+    cached.models.length > 0
+  ) {
     return cached.models;
   }
 
@@ -175,5 +203,7 @@ export function resetClaudeModelsCacheForTests() {
 /** Check whether a model ID is a Bedrock-native identifier (not an Anthropic API short name). */
 /** Bedrock model IDs use region-qualified prefixes (e.g. us.anthropic.*, eu.anthropic.*) or ARNs. */
 export function isBedrockModelId(model: string): boolean {
-  return /^\w+\.anthropic\./.test(model) || model.startsWith("arn:aws:bedrock:");
+  return (
+    /^\w+\.anthropic\./.test(model) || model.startsWith("arn:aws:bedrock:")
+  );
 }

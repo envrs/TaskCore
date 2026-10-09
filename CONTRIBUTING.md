@@ -64,7 +64,7 @@ Either way, a reviewer should be able to understand the underlying issue without
 
 ### No Internal Issue References
 
-Many contributors run their own Taskcore instance to manage their work. Issue ids and links from *your* instance are private — reviewers and other contributors cannot open them, so they show up as clutter or broken links.
+Many contributors run their own Taskcore instance to manage their work. Issue ids and links from _your_ instance are private — reviewers and other contributors cannot open them, so they show up as clutter or broken links.
 
 In your PR title, description, commits, and comments, **only reference public GitHub issues and PRs** — `#123`, `Fixes #123` / `Closes #123` / `Refs #123`, or full `https://github.com/khulnasoft/taskcore/...` URLs.
 

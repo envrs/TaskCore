@@ -22,14 +22,20 @@ export interface CodexProcessActivityMonitorHandle {
   stop(): void;
 }
 
-function parseProcStat(stat: string): { processGroupId: number; cpuTicks: number } | null {
+function parseProcStat(
+  stat: string,
+): { processGroupId: number; cpuTicks: number } | null {
   const commandEnd = stat.lastIndexOf(")");
   if (commandEnd < 0) return null;
-  const fields = stat.slice(commandEnd + 2).trim().split(/\s+/);
+  const fields = stat
+    .slice(commandEnd + 2)
+    .trim()
+    .split(/\s+/);
   const processGroupId = Number(fields[2]);
   const userTicks = Number(fields[11]);
   const systemTicks = Number(fields[12]);
-  if (![processGroupId, userTicks, systemTicks].every(Number.isFinite)) return null;
+  if (![processGroupId, userTicks, systemTicks].every(Number.isFinite))
+    return null;
   return { processGroupId, cpuTicks: userTicks + systemTicks };
 }
 
@@ -47,8 +53,11 @@ export async function sampleCodexProcessActivity(
   processGroupId: number | null,
 ): Promise<CodexProcessActivitySnapshot | null> {
   if (process.platform !== "linux") return null;
-  const targetProcessGroupId = processGroupId && processGroupId > 0 ? processGroupId : null;
-  const entries = targetProcessGroupId ? await fs.readdir("/proc") : [String(pid)];
+  const targetProcessGroupId =
+    processGroupId && processGroupId > 0 ? processGroupId : null;
+  const entries = targetProcessGroupId
+    ? await fs.readdir("/proc")
+    : [String(pid)];
   const processIds: number[] = [];
   let cpuTicks = 0;
   let ioBytes = 0;
@@ -57,11 +66,19 @@ export async function sampleCodexProcessActivity(
     entries.map(async (entry) => {
       if (!/^\d+$/.test(entry)) return;
       try {
-        const parsed = parseProcStat(await fs.readFile(`/proc/${entry}/stat`, "utf8"));
+        const parsed = parseProcStat(
+          await fs.readFile(`/proc/${entry}/stat`, "utf8"),
+        );
         if (!parsed) return;
-        if (targetProcessGroupId !== null && parsed.processGroupId !== targetProcessGroupId) return;
+        if (
+          targetProcessGroupId !== null &&
+          parsed.processGroupId !== targetProcessGroupId
+        )
+          return;
         if (targetProcessGroupId === null && Number(entry) !== pid) return;
-        const io = await fs.readFile(`/proc/${entry}/io`, "utf8").catch(() => "");
+        const io = await fs
+          .readFile(`/proc/${entry}/io`, "utf8")
+          .catch(() => "");
         processIds.push(Number(entry));
         cpuTicks += parsed.cpuTicks;
         ioBytes += parseProcIo(io);
@@ -79,10 +96,15 @@ export async function sampleCodexProcessActivity(
 export function createCodexProcessActivityMonitor(
   options: CodexProcessActivityMonitorOptions,
 ): CodexProcessActivityMonitorHandle {
-  const intervalMs = options.intervalMs ?? CODEX_PROCESS_ACTIVITY_POLL_INTERVAL_MS;
-  const sample = options.sample ?? (() => sampleCodexProcessActivity(options.pid, options.processGroupId));
+  const intervalMs =
+    options.intervalMs ?? CODEX_PROCESS_ACTIVITY_POLL_INTERVAL_MS;
+  const sample =
+    options.sample ??
+    (() => sampleCodexProcessActivity(options.pid, options.processGroupId));
   const setTimer = options.setTimer ?? ((cb, ms) => setTimeout(cb, ms));
-  const clearTimer = options.clearTimer ?? ((handle) => clearTimeout(handle as ReturnType<typeof setTimeout>));
+  const clearTimer =
+    options.clearTimer ??
+    ((handle) => clearTimeout(handle as ReturnType<typeof setTimeout>));
   const minimumCpuTickDelta = Math.max(1, Math.floor(intervalMs / 1_000));
   let previous: CodexProcessActivitySnapshot | null = null;
   let timer: unknown = null;

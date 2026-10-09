@@ -32,7 +32,10 @@ class FakeClock {
       let nextHandle: number | null = null;
       let nextTimer: { fireAt: number; cb: () => void } | null = null;
       for (const [h, timer] of this.timers) {
-        if (timer.fireAt <= targetMs && (!nextTimer || timer.fireAt < nextTimer.fireAt)) {
+        if (
+          timer.fireAt <= targetMs &&
+          (!nextTimer || timer.fireAt < nextTimer.fireAt)
+        ) {
           nextHandle = h;
           nextTimer = timer;
         }
@@ -99,13 +102,15 @@ describe("resolveCodexInactivityTimeout", () => {
 
 describe("formatOutputInactivityMonitorErrorMessage", () => {
   it("formats minutes and seconds", () => {
-    expect(formatOutputInactivityMonitorErrorMessage(0)).toBe("monitor: no codex activity (output or process) for 0m 0s");
+    expect(formatOutputInactivityMonitorErrorMessage(0)).toBe(
+      "monitor: no codex activity (output or process) for 0m 0s",
+    );
     expect(formatOutputInactivityMonitorErrorMessage(7 * 60 * 1000)).toBe(
       "monitor: no codex activity (output or process) for 7m 0s",
     );
-    expect(formatOutputInactivityMonitorErrorMessage(7 * 60 * 1000 + 12_000)).toBe(
-      "monitor: no codex activity (output or process) for 7m 12s",
-    );
+    expect(
+      formatOutputInactivityMonitorErrorMessage(7 * 60 * 1000 + 12_000),
+    ).toBe("monitor: no codex activity (output or process) for 7m 12s");
     expect(formatOutputInactivityMonitorErrorMessage(45_000)).toBe(
       "monitor: no codex activity (output or process) for 0m 45s",
     );
@@ -131,7 +136,10 @@ describe("createCodexOutputInactivityMonitor (acceptance criteria 1: fires)", ()
 
     // One event right after spawn.
     clock.advance(50);
-    monitor.noteOutputChunk("stdout", '{"type":"thread.started","thread_id":"abc"}\n');
+    monitor.noteOutputChunk(
+      "stdout",
+      '{"type":"thread.started","thread_id":"abc"}\n',
+    );
     expect(fires).toHaveLength(0);
     expect(monitor.state().parsedEventCount).toBe(1);
 
@@ -265,7 +273,10 @@ describe("createCodexOutputInactivityMonitor (acceptance criteria 2: does not fi
     // Pump events at threshold-1s intervals for 12 cycles (~84 minutes).
     for (let i = 0; i < 12; i += 1) {
       clock.advance(timeoutMs - 1_000);
-      monitor.noteOutputChunk("stdout", `{"type":"item.completed","item":{"type":"agent_message","text":"tick ${i}"}}\n`);
+      monitor.noteOutputChunk(
+        "stdout",
+        `{"type":"item.completed","item":{"type":"agent_message","text":"tick ${i}"}}\n`,
+      );
       expect(fireCount).toBe(0);
     }
 

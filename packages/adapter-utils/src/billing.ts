@@ -1,6 +1,8 @@
 function readEnv(env: NodeJS.ProcessEnv, key: string): string | null {
   const value = env[key];
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 export function inferOpenAiCompatibleBiller(
@@ -17,10 +19,12 @@ export function inferOpenAiCompatibleBiller(
   if (baseUrl) {
     try {
       const url = new URL(baseUrl);
-      if (url.protocol === "https:" && url.hostname === "openrouter.ai") return "openrouter";
+      if (url.protocol === "https:" && url.hostname === "openrouter.ai")
+        return "openrouter";
       // An OpenAI-compatible endpoint does not imply OpenAI prices. Do not
       // assign direct-provider estimates to a proxy or an unknown endpoint.
-      if (url.protocol !== "https:" || url.hostname !== "api.openai.com") return "unknown";
+      if (url.protocol !== "https:" || url.hostname !== "api.openai.com")
+        return "unknown";
     } catch {
       return "unknown";
     }
@@ -35,7 +39,10 @@ export function resolveManagedOpenAiBilling(routing: unknown) {
   if (!routing || typeof routing !== "object") return undefined;
   return {
     provider: "openai",
-    biller: (routing as { kind?: unknown }).kind === "openrouter" ? "openrouter" : "unknown",
+    biller:
+      (routing as { kind?: unknown }).kind === "openrouter"
+        ? "openrouter"
+        : "unknown",
     billingType: "api" as const,
   };
 }

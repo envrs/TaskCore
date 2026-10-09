@@ -76,8 +76,11 @@ export interface CopyBackCodexAuthInput {
  * finally cleans it up otherwise), so a failure never leaves a partial file.
  * Never logs token bytes — only the decision outcome.
  */
-export async function copyBackCodexAuth(input: CopyBackCodexAuthInput): Promise<CopyBackCodexAuthOutcome> {
-  const { readSandboxAuth, hostAuthPath, log, resolveCacheEntryPath, env } = input;
+export async function copyBackCodexAuth(
+  input: CopyBackCodexAuthInput,
+): Promise<CopyBackCodexAuthOutcome> {
+  const { readSandboxAuth, hostAuthPath, log, resolveCacheEntryPath, env } =
+    input;
 
   // Read first (outside the lock) — a read never mutates the host, so there is
   // nothing to serialize yet. A genuinely absent sandbox `auth.json` (ENOENT —
@@ -106,7 +109,10 @@ export async function copyBackCodexAuth(input: CopyBackCodexAuthInput): Promise<
       // Stage on the same filesystem as the host target so both the predicate read
       // and the final rename stay device-local (rename across devices is not
       // atomic and would fail with EXDEV).
-      const stagedTempPath = path.join(hostDir, `.auth.json.copyback-${process.pid}-${randomUUID()}.tmp`);
+      const stagedTempPath = path.join(
+        hostDir,
+        `.auth.json.copyback-${process.pid}-${randomUUID()}.tmp`,
+      );
       // `wx` + explicit mode create the temp private (0600) and fail if it somehow
       // already exists, so we never write through a pre-existing symlink.
       const handle = await open(stagedTempPath, "wx", 0o600);
@@ -114,9 +120,13 @@ export async function copyBackCodexAuth(input: CopyBackCodexAuthInput): Promise<
         await handle.writeFile(sandboxAuthBytes);
         await handle.close();
 
-        const decision = await decideCodexAuthMerge(stagedTempPath, hostAuthPath, {
-          errorLabel: "codex auth copy-back",
-        });
+        const decision = await decideCodexAuthMerge(
+          stagedTempPath,
+          hostAuthPath,
+          {
+            errorLabel: "codex auth copy-back",
+          },
+        );
         if (decision === USE_SOURCE_EXIT) {
           // Atomic same-directory swap; rename preserves the temp's 0600 mode.
           await rename(stagedTempPath, hostAuthPath);
@@ -169,7 +179,12 @@ export async function copyBackCodexAuth(input: CopyBackCodexAuthInput): Promise<
       const sandboxAccountId = readSubscriptionAccountId(sandboxAuthBytes);
       if (sandboxAccountId) {
         const cacheEntryPath = await resolveCacheEntryPath(sandboxAccountId);
-        await writeCodexAuthCacheEntry({ sandboxAuthBytes, cacheEntryPath, log, env });
+        await writeCodexAuthCacheEntry({
+          sandboxAuthBytes,
+          cacheEntryPath,
+          log,
+          env,
+        });
       }
     } catch (error) {
       // Log only the errno code, never the error message. The message embeds the

@@ -20,10 +20,16 @@ const result = await service.decide(context, {
   state: { title: task.title },
   questions: {
     billing: { type: "boolean", instructions: "Is this about billing?" },
-    team: { type: "choice", instructions: "Which team should handle it?",
-      criteria: { billing: "Payments", support: "Product support" } },
-    urgency: { type: "score", instructions: "How urgent is it?",
-      criteria: ["Routine", "Soon", "Immediately"] },
+    team: {
+      type: "choice",
+      instructions: "Which team should handle it?",
+      criteria: { billing: "Payments", support: "Product support" },
+    },
+    urgency: {
+      type: "score",
+      instructions: "How urgent is it?",
+      criteria: ["Routine", "Soon", "Immediately"],
+    },
   },
 });
 ```
@@ -52,13 +58,13 @@ History follows company cost visibility and rechecks task access before returnin
 
 All paths are under `/api/companies/:companyId/decision-model`:
 
-| Method/path | Access and behavior |
-| --- | --- |
-| `GET /` | Board; returns manager capability and settings/compatible choices to connection managers |
-| `PUT /` | Connection manager; validates and audits configuration |
-| `GET /availability` | Authenticated company caller; local authorization check |
-| `POST /test` | Connection manager; fixed server-owned three-question sample, ignoring client prompts/identity |
-| `GET /history` | Existing company cost-read rules; date bounds and limit up to 500 |
+| Method/path         | Access and behavior                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| `GET /`             | Board; returns manager capability and settings/compatible choices to connection managers       |
+| `PUT /`             | Connection manager; validates and audits configuration                                         |
+| `GET /availability` | Authenticated company caller; local authorization check                                        |
+| `POST /test`        | Connection manager; fixed server-owned three-question sample, ignoring client prompts/identity |
+| `GET /history`      | Existing company cost-read rules; date bounds and limit up to 500                              |
 
 There is no general HTTP decision execution endpoint.
 

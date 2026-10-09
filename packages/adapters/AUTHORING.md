@@ -38,7 +38,7 @@ How to apply:
   `workspace_finalize=failed` on the execution workspace, which gates
   dependent issue wakes until the next successful finalize. Do not swallow
   restore errors.
-- A transported workspace copy *may* carry the local workspace's `origin`
+- A transported workspace copy _may_ carry the local workspace's `origin`
   remote URL so that branches in the copy stay publishable by the agent or an
   operator who holds credentials — the transport helpers copy the URL as
   metadata only. The copy is allowlist-based and fails closed

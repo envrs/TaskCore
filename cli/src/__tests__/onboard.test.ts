@@ -78,13 +78,17 @@ function createExistingConfigFixture() {
   };
 
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
-  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, {
+    mode: 0o600,
+  });
 
   return { configPath, configText: fs.readFileSync(configPath, "utf8") };
 }
 
 function createFreshConfigPath() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-onboard-fresh-"));
+  const root = fs.mkdtempSync(
+    path.join(os.tmpdir(), "taskcore-onboard-fresh-"),
+  );
   return path.join(root, ".taskcore", "config.json");
 }
 
@@ -126,19 +130,31 @@ describe("onboard", () => {
 
     await onboard({ config: fixture.configPath });
 
-    expect(fs.readFileSync(fixture.configPath, "utf8")).toBe(fixture.configText);
+    expect(fs.readFileSync(fixture.configPath, "utf8")).toBe(
+      fixture.configText,
+    );
     expect(fs.existsSync(`${fixture.configPath}.backup`)).toBe(false);
-    expect(fs.existsSync(path.join(path.dirname(fixture.configPath), ".env"))).toBe(true);
+    expect(
+      fs.existsSync(path.join(path.dirname(fixture.configPath), ".env")),
+    ).toBe(true);
   });
 
   it("preserves an existing config when rerun with --yes", async () => {
     const fixture = createExistingConfigFixture();
 
-    await onboard({ config: fixture.configPath, yes: true, invokedByRun: true });
+    await onboard({
+      config: fixture.configPath,
+      yes: true,
+      invokedByRun: true,
+    });
 
-    expect(fs.readFileSync(fixture.configPath, "utf8")).toBe(fixture.configText);
+    expect(fs.readFileSync(fixture.configPath, "utf8")).toBe(
+      fixture.configText,
+    );
     expect(fs.existsSync(`${fixture.configPath}.backup`)).toBe(false);
-    expect(fs.existsSync(path.join(path.dirname(fixture.configPath), ".env"))).toBe(true);
+    expect(
+      fs.existsSync(path.join(path.dirname(fixture.configPath), ".env")),
+    ).toBe(true);
   });
 
   it("does not opt into opening a browser for a non-interactive existing setup", async () => {
@@ -146,35 +162,58 @@ describe("onboard", () => {
 
     await onboard({ config: fixture.configPath, yes: true });
 
-    expect(runCommandMock).toHaveBeenCalledWith({ config: fixture.configPath, repair: true, yes: true });
+    expect(runCommandMock).toHaveBeenCalledWith({
+      config: fixture.configPath,
+      repair: true,
+      yes: true,
+    });
     expect(process.env.TASKCORE_OPEN_ON_LISTEN).toBeUndefined();
   });
 
   it.each([
     ["existing", () => createExistingConfigFixture().configPath],
     ["fresh", () => createFreshConfigPath()],
-  ])("opens the browser once while an interactive %s setup starts", async (_label, configPathForTest) => {
-    const configPath = configPathForTest();
-    const stdinIsTTY = process.stdin.isTTY;
-    const stdoutIsTTY = process.stdout.isTTY;
-    let openOnListenDuringRun: string | undefined;
-    Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: true });
-    Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: true });
-    runCommandMock.mockImplementation(async () => {
-      openOnListenDuringRun = process.env.TASKCORE_OPEN_ON_LISTEN;
-    });
+  ])(
+    "opens the browser once while an interactive %s setup starts",
+    async (_label, configPathForTest) => {
+      const configPath = configPathForTest();
+      const stdinIsTTY = process.stdin.isTTY;
+      const stdoutIsTTY = process.stdout.isTTY;
+      let openOnListenDuringRun: string | undefined;
+      Object.defineProperty(process.stdin, "isTTY", {
+        configurable: true,
+        value: true,
+      });
+      Object.defineProperty(process.stdout, "isTTY", {
+        configurable: true,
+        value: true,
+      });
+      runCommandMock.mockImplementation(async () => {
+        openOnListenDuringRun = process.env.TASKCORE_OPEN_ON_LISTEN;
+      });
 
-    try {
-      await onboard({ config: configPath, yes: true });
-    } finally {
-      Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: stdinIsTTY });
-      Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: stdoutIsTTY });
-    }
+      try {
+        await onboard({ config: configPath, yes: true });
+      } finally {
+        Object.defineProperty(process.stdin, "isTTY", {
+          configurable: true,
+          value: stdinIsTTY,
+        });
+        Object.defineProperty(process.stdout, "isTTY", {
+          configurable: true,
+          value: stdoutIsTTY,
+        });
+      }
 
-    expect(runCommandMock).toHaveBeenCalledWith({ config: configPath, repair: true, yes: true });
-    expect(openOnListenDuringRun).toBe("true");
-    expect(process.env.TASKCORE_OPEN_ON_LISTEN).toBeUndefined();
-  });
+      expect(runCommandMock).toHaveBeenCalledWith({
+        config: configPath,
+        repair: true,
+        yes: true,
+      });
+      expect(openOnListenDuringRun).toBe("true");
+      expect(process.env.TASKCORE_OPEN_ON_LISTEN).toBeUndefined();
+    },
+  );
 
   it.each([
     ["TASKCORE_NO_BROWSER", "1"],
@@ -184,8 +223,14 @@ describe("onboard", () => {
     const stdinIsTTY = process.stdin.isTTY;
     const stdoutIsTTY = process.stdout.isTTY;
     let openOnListenDuringRun: string | undefined;
-    Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: true });
-    Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: true });
+    Object.defineProperty(process.stdin, "isTTY", {
+      configurable: true,
+      value: true,
+    });
+    Object.defineProperty(process.stdout, "isTTY", {
+      configurable: true,
+      value: true,
+    });
     process.env[key] = value;
     runCommandMock.mockImplementation(async () => {
       openOnListenDuringRun = process.env.TASKCORE_OPEN_ON_LISTEN;
@@ -194,11 +239,21 @@ describe("onboard", () => {
     try {
       await onboard({ config: configPath, yes: true });
     } finally {
-      Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: stdinIsTTY });
-      Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: stdoutIsTTY });
+      Object.defineProperty(process.stdin, "isTTY", {
+        configurable: true,
+        value: stdinIsTTY,
+      });
+      Object.defineProperty(process.stdout, "isTTY", {
+        configurable: true,
+        value: stdoutIsTTY,
+      });
     }
 
-    expect(runCommandMock).toHaveBeenCalledWith({ config: configPath, repair: true, yes: true });
+    expect(runCommandMock).toHaveBeenCalledWith({
+      config: configPath,
+      repair: true,
+      yes: true,
+    });
     expect(openOnListenDuringRun).not.toBe("true");
     expect(process.env[key]).toBe(value);
   });
@@ -224,7 +279,9 @@ describe("onboard", () => {
 
     await onboard({ config: configPath, yes: true, invokedByRun: true });
 
-    const raw = JSON.parse(fs.readFileSync(configPath, "utf8")) as TaskcoreConfig;
+    const raw = JSON.parse(
+      fs.readFileSync(configPath, "utf8"),
+    ) as TaskcoreConfig;
     expect(raw.server.deploymentMode).toBe("local_trusted");
     expect(raw.server.exposure).toBe("private");
     expect(raw.server.bind).toBe("loopback");
@@ -232,7 +289,9 @@ describe("onboard", () => {
   });
 
   it("creates instance-root config and data paths for a fresh TASKCORE_HOME", async () => {
-    const home = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-onboard-home-"));
+    const home = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-onboard-home-"),
+    );
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-onboard-cwd-"));
     process.chdir(cwd);
     process.env.TASKCORE_HOME = home;
@@ -241,26 +300,46 @@ describe("onboard", () => {
 
     const instanceRoot = path.join(home, "instances", "default");
     const configPath = path.join(instanceRoot, "config.json");
-    const raw = JSON.parse(fs.readFileSync(configPath, "utf8")) as TaskcoreConfig;
+    const raw = JSON.parse(
+      fs.readFileSync(configPath, "utf8"),
+    ) as TaskcoreConfig;
 
-    expect(raw.database.embeddedPostgresDataDir).toBe(path.join(instanceRoot, "db"));
-    expect(raw.database.backup.dir).toBe(path.join(instanceRoot, "data", "backups"));
+    expect(raw.database.embeddedPostgresDataDir).toBe(
+      path.join(instanceRoot, "db"),
+    );
+    expect(raw.database.backup.dir).toBe(
+      path.join(instanceRoot, "data", "backups"),
+    );
     expect(raw.logging.logDir).toBe(path.join(instanceRoot, "logs"));
-    expect(raw.storage.localDisk.baseDir).toBe(path.join(instanceRoot, "data", "storage"));
-    expect(raw.secrets.localEncrypted.keyFilePath).toBe(path.join(instanceRoot, "secrets", "master.key"));
+    expect(raw.storage.localDisk.baseDir).toBe(
+      path.join(instanceRoot, "data", "storage"),
+    );
+    expect(raw.secrets.localEncrypted.keyFilePath).toBe(
+      path.join(instanceRoot, "secrets", "master.key"),
+    );
     expect(fs.existsSync(path.join(instanceRoot, ".env"))).toBe(true);
-    expect(fs.readFileSync(path.join(instanceRoot, ".env"), "utf8"))
-      .toContain("TASKCORE_TOOL_ACTION_SIGNING_SECRET=");
-    expect(fs.existsSync(path.join(instanceRoot, "secrets", "master.key"))).toBe(true);
+    expect(fs.readFileSync(path.join(instanceRoot, ".env"), "utf8")).toContain(
+      "TASKCORE_TOOL_ACTION_SIGNING_SECRET=",
+    );
+    expect(
+      fs.existsSync(path.join(instanceRoot, "secrets", "master.key")),
+    ).toBe(true);
   });
 
   it("supports authenticated/private quickstart bind presets", async () => {
     const configPath = createFreshConfigPath();
     process.env.TASKCORE_TAILNET_BIND_HOST = "100.64.0.8";
 
-    await onboard({ config: configPath, yes: true, invokedByRun: true, bind: "tailnet" });
+    await onboard({
+      config: configPath,
+      yes: true,
+      invokedByRun: true,
+      bind: "tailnet",
+    });
 
-    const raw = JSON.parse(fs.readFileSync(configPath, "utf8")) as TaskcoreConfig;
+    const raw = JSON.parse(
+      fs.readFileSync(configPath, "utf8"),
+    ) as TaskcoreConfig;
     expect(raw.server.deploymentMode).toBe("authenticated");
     expect(raw.server.exposure).toBe("private");
     expect(raw.server.bind).toBe("tailnet");
@@ -273,12 +352,19 @@ describe("onboard", () => {
     process.env.PATH = "";
 
     try {
-      await onboard({ config: configPath, yes: true, invokedByRun: true, bind: "tailnet" });
+      await onboard({
+        config: configPath,
+        yes: true,
+        invokedByRun: true,
+        bind: "tailnet",
+      });
     } finally {
       process.env.PATH = ORIGINAL_PATH;
     }
 
-    const raw = JSON.parse(fs.readFileSync(configPath, "utf8")) as TaskcoreConfig;
+    const raw = JSON.parse(
+      fs.readFileSync(configPath, "utf8"),
+    ) as TaskcoreConfig;
     expect(raw.server.deploymentMode).toBe("authenticated");
     expect(raw.server.exposure).toBe("private");
     expect(raw.server.bind).toBe("tailnet");
@@ -291,7 +377,9 @@ describe("onboard", () => {
 
     await onboard({ config: configPath, yes: true, invokedByRun: true });
 
-    const raw = JSON.parse(fs.readFileSync(configPath, "utf8")) as TaskcoreConfig;
+    const raw = JSON.parse(
+      fs.readFileSync(configPath, "utf8"),
+    ) as TaskcoreConfig;
     expect(raw.server.deploymentMode).toBe("local_trusted");
     expect(raw.server.exposure).toBe("private");
     expect(raw.server.bind).toBe("loopback");

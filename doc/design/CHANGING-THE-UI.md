@@ -22,7 +22,7 @@ pnpm test:storybook-visual:update   # accept my intentional changes as the new b
 
 ## Recipe 1 — change how something looks everywhere
 
-*"Make the corners rounder." "That amber is too loud." "Bump the smallest text size."*
+_"Make the corners rounder." "That amber is too loud." "Bump the smallest text size."_
 
 1. Find the token in `ui/src/index.css` (they're named and commented: `--radius`, `--status-task-todo`, `--text-micro`, …).
 2. Change the value.

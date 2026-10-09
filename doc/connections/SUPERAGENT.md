@@ -22,7 +22,7 @@ redirects to `www`, and Superagent documents that some MCP clients fail on
 that redirect for POST requests.
 
 This curated connection is the polished route: it provides branding, key
-guidance, and a billable/destructive-tool warning. None of it is *required* to
+guidance, and a billable/destructive-tool warning. None of it is _required_ to
 reach Superagent's server. It can also be connected generically from
 **Connect your own MCP server** with the same URL and header. See
 [Connecting any remote MCP server](./GENERIC-REMOTE-MCP.md).
@@ -103,14 +103,14 @@ server. Narrowing is done with per-action policies.
 
 ## Manifest
 
-| Field | Value |
-| --- | --- |
-| Slug | `superagent` |
-| Category | `developer` |
-| Method | `mcp-api-key` (`customer` ownership, risk tier S4) |
-| Server URL | `https://www.superagent.sh/mcp` |
-| Credential | `authorization`, password, required, placeholder `sk_live_...` |
-| Key placement | header `Authorization`, prefix `Bearer ` |
+| Field         | Value                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------- |
+| Slug          | `superagent`                                                                                      |
+| Category      | `developer`                                                                                       |
+| Method        | `mcp-api-key` (`customer` ownership, risk tier S4)                                                |
+| Server URL    | `https://www.superagent.sh/mcp`                                                                   |
+| Credential    | `authorization`, password, required, placeholder `sk_live_...`                                    |
+| Key placement | header `Authorization`, prefix `Bearer `                                                          |
 | Console links | keys `https://www.superagent.sh/app/settings#api-keys`, docs `https://www.superagent.sh/docs/mcp` |
 
 The definition is generated from the `superagent` row in
@@ -141,8 +141,8 @@ avatar of Superagent's official GitHub organization (`superagent-ai`, whose
 profile links `https://superagent.sh`), published as a 460×460 transparent
 PNG. That file is used unchanged in both themes.
 
-| File | Source | SHA-256 |
-| --- | --- | --- |
+| File                                             | Source                                                        | SHA-256                                                            |
+| ------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `ui/public/brands/apps/superagent.png` (460×460) | `https://avatars.githubusercontent.com/u/152537519?v=4&s=512` | `2c731c7a4cdaabe2ed341b141dc75608e23b362b9a6e5ee81d1c7a373154fbcf` |
 
 ## Validation hook

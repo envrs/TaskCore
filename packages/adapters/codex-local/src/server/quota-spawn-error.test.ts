@@ -13,11 +13,16 @@ vi.mock("node:child_process", async (importOriginal) => {
   const cp = await importOriginal<typeof import("node:child_process")>();
   return {
     ...cp,
-    spawn: (...args: Parameters<typeof cp.spawn>) => mockSpawn(...args) as ReturnType<typeof cp.spawn>,
+    spawn: (...args: Parameters<typeof cp.spawn>) =>
+      mockSpawn(...args) as ReturnType<typeof cp.spawn>,
   };
 });
 
-import { fetchCodexQuota, fetchCodexRpcQuota, getQuotaWindows } from "./quota.js";
+import {
+  fetchCodexQuota,
+  fetchCodexRpcQuota,
+  getQuotaWindows,
+} from "./quota.js";
 
 function createChildThatErrorsOnMicrotask(err: Error): ChildProcess {
   const child = new EventEmitter() as ChildProcess;
@@ -46,9 +51,13 @@ function createRpcChild(response?: (request: RpcRequest) => unknown) {
     write: vi.fn((line: string) => {
       const request = JSON.parse(line) as RpcRequest;
       if (request.id == null) return;
-      const message = response ? response(request) : { id: request.id, result: {} };
+      const message = response
+        ? response(request)
+        : { id: request.id, result: {} };
       if (message !== undefined) {
-        queueMicrotask(() => stdout.emit("data", JSON.stringify(message) + "\n"));
+        queueMicrotask(() =>
+          stdout.emit("data", JSON.stringify(message) + "\n"),
+        );
       }
     }),
     end: vi.fn(),
@@ -71,7 +80,9 @@ describe("CodexRpcClient spawn failures", () => {
     // reads $CODEX_HOME/auth.json (default ~/.codex). Point CODEX_HOME at an
     // empty temp directory so we never hit real host auth or the WHAM network.
     previousCodexHome = process.env.CODEX_HOME;
-    isolatedCodexHome = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-codex-spawn-test-"));
+    isolatedCodexHome = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-codex-spawn-test-"),
+    );
     process.env.CODEX_HOME = isolatedCodexHome;
   });
 
@@ -95,21 +106,40 @@ describe("CodexRpcClient spawn failures", () => {
 
   it("reads account quota with a supported approval policy and never starts a model turn", async () => {
     const { child, stdin, kill } = createRpcChild((request) => {
-      const result = request.method === "account/rateLimits/read"
-        ? { rateLimits: { primary: { usedPercent: 37, windowDurationMins: 300 } } }
-        : {};
+      const result =
+        request.method === "account/rateLimits/read"
+          ? {
+              rateLimits: {
+                primary: { usedPercent: 37, windowDurationMins: 300 },
+              },
+            }
+          : {};
       return { id: request.id, result };
     });
     mockSpawn.mockImplementation((_command, args: string[]) => {
-      if (args.includes("untrusted")) return createChildThatErrorsOnMicrotask(new Error("invalid approval policy"));
+      if (args.includes("untrusted"))
+        return createChildThatErrorsOnMicrotask(
+          new Error("invalid approval policy"),
+        );
       return child;
     });
 
     const result = await fetchCodexRpcQuota();
-    expect(result.windows).toEqual([expect.objectContaining({ usedPercent: 37 })]);
-    expect(mockSpawn).toHaveBeenCalledWith("codex", ["-s", "read-only", "-a", "on-request", "app-server"], expect.any(Object));
-    expect(stdin.write.mock.calls.map(([line]) => JSON.parse(line).method)).toEqual([
-      "initialize", "initialized", "account/rateLimits/read", "account/read",
+    expect(result.windows).toEqual([
+      expect.objectContaining({ usedPercent: 37 }),
+    ]);
+    expect(mockSpawn).toHaveBeenCalledWith(
+      "codex",
+      ["-s", "read-only", "-a", "on-request", "app-server"],
+      expect.any(Object),
+    );
+    expect(
+      stdin.write.mock.calls.map(([line]) => JSON.parse(line).method),
+    ).toEqual([
+      "initialize",
+      "initialized",
+      "account/rateLimits/read",
+      "account/read",
     ]);
     expect(stdin.end).toHaveBeenCalledOnce();
     expect(kill).toHaveBeenCalledWith("SIGTERM");
@@ -117,22 +147,43 @@ describe("CodexRpcClient spawn failures", () => {
   });
 
   it("rejects RPC error envelopes and preserves their authentication classification", async () => {
-    const { child, kill } = createRpcChild((request) => request.method === "account/rateLimits/read"
-      ? { id: request.id, error: { code: -32000, message: "OAuth failed: refresh token has expired" } }
-      : { id: request.id, result: {} });
+    const { child, kill } = createRpcChild((request) =>
+      request.method === "account/rateLimits/read"
+        ? {
+            id: request.id,
+            error: {
+              code: -32000,
+              message: "OAuth failed: refresh token has expired",
+            },
+          }
+        : { id: request.id, result: {} },
+    );
     mockSpawn.mockReturnValue(child);
 
     const result = await getQuotaWindows();
 
-    expect(result).toMatchObject({ ok: false, source: "codex-rpc", errorFamily: "refresh_token_expired", windows: [] });
+    expect(result).toMatchObject({
+      ok: false,
+      source: "codex-rpc",
+      errorFamily: "refresh_token_expired",
+      windows: [],
+    });
     expect(kill).toHaveBeenCalledWith("SIGTERM");
   });
 
-  it.each([null, [], "invalid", 17, undefined])("rejects an invalid result envelope (%s)", async (result) => {
-    const { child } = createRpcChild((request) => ({ id: request.id, result }));
-    mockSpawn.mockReturnValue(child);
-    await expect(fetchCodexRpcQuota()).rejects.toThrow("invalid quota response");
-  });
+  it.each([null, [], "invalid", 17, undefined])(
+    "rejects an invalid result envelope (%s)",
+    async (result) => {
+      const { child } = createRpcChild((request) => ({
+        id: request.id,
+        result,
+      }));
+      mockSpawn.mockReturnValue(child);
+      await expect(fetchCodexRpcQuota()).rejects.toThrow(
+        "invalid quota response",
+      );
+    },
+  );
 
   it("tolerates non-object lines and parses fragmented, out-of-order replies", async () => {
     const probe = createRpcChild();
@@ -140,11 +191,22 @@ describe("CodexRpcClient spawn failures", () => {
     probe.stdin.write.mockImplementation((line) => {
       const request = JSON.parse(line) as RpcRequest;
       if (request.method === "initialize") {
-        queueMicrotask(() => probe.stdout.emit("data", 'null\n[]\nnot-json\n{"id":1,"result":{}}\n'));
+        queueMicrotask(() =>
+          probe.stdout.emit(
+            "data",
+            'null\n[]\nnot-json\n{"id":1,"result":{}}\n',
+          ),
+        );
       } else if (request.method === "account/read") {
         queueMicrotask(() => {
-          probe.stdout.emit("data", '{"id":3,"result":{"account":{"email":"test@example.com"}}}\n{"id":2,');
-          probe.stdout.emit("data", '"result":{"rateLimits":{"primary":{"usedPercent":37}}}}\n');
+          probe.stdout.emit(
+            "data",
+            '{"id":3,"result":{"account":{"email":"test@example.com"}}}\n{"id":2,',
+          );
+          probe.stdout.emit(
+            "data",
+            '"result":{"rateLimits":{"primary":{"usedPercent":37}}}}\n',
+          );
         });
       }
     });
@@ -153,15 +215,20 @@ describe("CodexRpcClient spawn failures", () => {
     expect(result.windows[0].usedPercent).toBe(37);
   });
 
-  it.each([false, true])("bounds stdout buffering with and without a completed frame (newline: %s)", async (newline) => {
-    const probe = createRpcChild(() => undefined);
-    mockSpawn.mockReturnValue(probe.child);
-    const result = fetchCodexRpcQuota();
-    probe.stdout.emit("data", "x".repeat(64 * 1024));
-    probe.stdout.emit("data", "x" + (newline ? "\n" : ""));
-    await expect(result).rejects.toThrow("response exceeded the quota probe limit");
-    expect(probe.kill).toHaveBeenCalledWith("SIGTERM");
-  });
+  it.each([false, true])(
+    "bounds stdout buffering with and without a completed frame (newline: %s)",
+    async (newline) => {
+      const probe = createRpcChild(() => undefined);
+      mockSpawn.mockReturnValue(probe.child);
+      const result = fetchCodexRpcQuota();
+      probe.stdout.emit("data", "x".repeat(64 * 1024));
+      probe.stdout.emit("data", "x" + (newline ? "\n" : ""));
+      await expect(result).rejects.toThrow(
+        "response exceeded the quota probe limit",
+      );
+      expect(probe.kill).toHaveBeenCalledWith("SIGTERM");
+    },
+  );
 
   it("bounds stderr diagnostics when the process exits", async () => {
     const probe = createRpcChild(() => undefined);
@@ -170,7 +237,7 @@ describe("CodexRpcClient spawn failures", () => {
     probe.stderr.emit("data", "x".repeat(128 * 1024));
     probe.stderr.emit("data", " end of diagnostic");
     probe.child.emit("exit", 1);
-    const error = await result as Error;
+    const error = (await result) as Error;
     expect(error.message.length).toBeLessThanOrEqual(4_000);
     expect(error.message).toMatch(/end of diagnostic$/);
   });
@@ -186,16 +253,21 @@ describe("CodexRpcClient spawn failures", () => {
 
   it("clears other pending requests when a probe times out and kills a child that ignores SIGTERM", async () => {
     vi.useFakeTimers();
-    const probe = createRpcChild((request) => request.method === "initialize"
-      ? { id: request.id, result: {} }
-      : undefined);
+    const probe = createRpcChild((request) =>
+      request.method === "initialize"
+        ? { id: request.id, result: {} }
+        : undefined,
+    );
     probe.kill.mockImplementation((signal) => {
-      if (signal === "SIGKILL") queueMicrotask(() => probe.child.emit("close", null));
+      if (signal === "SIGKILL")
+        queueMicrotask(() => probe.child.emit("close", null));
       return true;
     });
     mockSpawn.mockReturnValue(probe.child);
     const result = fetchCodexRpcQuota();
-    const rejected = expect(result).rejects.toThrow("timed out on account/rateLimits/read");
+    const rejected = expect(result).rejects.toThrow(
+      "timed out on account/rateLimits/read",
+    );
     await vi.advanceTimersByTimeAsync(6_000);
     expect(probe.stdin.end).toHaveBeenCalledOnce();
     expect(probe.kill.mock.calls).toEqual([["SIGTERM"]]);
@@ -220,8 +292,16 @@ describe("CodexRpcClient spawn failures", () => {
   });
 
   it("reaps a real subprocess that ignores SIGTERM", async () => {
-    const { spawn: spawnReal } = await vi.importActual<typeof import("node:child_process")>("node:child_process");
-    const child = spawnReal(process.execPath, ["--input-type=commonjs", "-e", `
+    const { spawn: spawnReal } =
+      await vi.importActual<typeof import("node:child_process")>(
+        "node:child_process",
+      );
+    const child = spawnReal(
+      process.execPath,
+      [
+        "--input-type=commonjs",
+        "-e",
+        `
       process.on("SIGTERM", () => {});
       setInterval(() => {}, 60_000);
       require("node:readline").createInterface({ input: process.stdin }).on("line", (line) => {
@@ -232,7 +312,10 @@ describe("CodexRpcClient spawn failures", () => {
           : {};
         process.stdout.write(JSON.stringify({ id: request.id, result }) + "\\n");
       });
-    `], { stdio: ["pipe", "pipe", "pipe"] });
+    `,
+      ],
+      { stdio: ["pipe", "pipe", "pipe"] },
+    );
     mockSpawn.mockReturnValue(child);
     try {
       const result = await fetchCodexRpcQuota();
@@ -242,12 +325,17 @@ describe("CodexRpcClient spawn failures", () => {
       expect(child.stdout.destroyed).toBe(true);
       expect(child.stderr.destroyed).toBe(true);
     } finally {
-      if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+      if (child.exitCode === null && child.signalCode === null)
+        child.kill("SIGKILL");
     }
   });
 
   it("classifies app-server refresh-token failures as quota probe auth errors", async () => {
-    mockSpawn.mockImplementation(() => createChildThatErrorsOnMicrotask(new Error("OAuth failed: refresh token has expired")));
+    mockSpawn.mockImplementation(() =>
+      createChildThatErrorsOnMicrotask(
+        new Error("OAuth failed: refresh token has expired"),
+      ),
+    );
 
     const result = await getQuotaWindows();
 
@@ -268,17 +356,24 @@ describe("CodexRpcClient spawn failures", () => {
       }),
       "utf8",
     );
-    mockSpawn.mockImplementation(() => createChildThatErrorsOnMicrotask(new Error("OAuth failed: refresh token has expired")));
+    mockSpawn.mockImplementation(() =>
+      createChildThatErrorsOnMicrotask(
+        new Error("OAuth failed: refresh token has expired"),
+      ),
+    );
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(
-        JSON.stringify({
-          rate_limit: {
-            primary_window: { used_percent: 0.5, reset_at: 1_711_111_111 },
-          },
-        }),
-        { status: 200, headers: { "content-type": "application/json" } },
-      )),
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              rate_limit: {
+                primary_window: { used_percent: 0.5, reset_at: 1_711_111_111 },
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+      ),
     );
 
     const result = await getQuotaWindows();
@@ -306,10 +401,15 @@ describe("CodexRpcClient spawn failures", () => {
       }),
       "utf8",
     );
-    mockSpawn.mockImplementation(() => createChildThatErrorsOnMicrotask(new Error("spawn codex ENOENT")));
+    mockSpawn.mockImplementation(() =>
+      createChildThatErrorsOnMicrotask(new Error("spawn codex ENOENT")),
+    );
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response("OAuth failed: invalid_grant", { status: 401 })),
+      vi.fn(
+        async () =>
+          new Response("OAuth failed: invalid_grant", { status: 401 }),
+      ),
     );
 
     const result = await getQuotaWindows();
@@ -320,7 +420,9 @@ describe("CodexRpcClient spawn failures", () => {
     expect(result.error).toContain("chatgpt wham api returned 401");
     expect(result.error).not.toContain("invalid_grant");
     expect(JSON.stringify(result)).not.toContain("access-token-fixture-secret");
-    expect(JSON.stringify(result)).not.toContain("refresh-token-fixture-secret");
+    expect(JSON.stringify(result)).not.toContain(
+      "refresh-token-fixture-secret",
+    );
   });
 
   it("limits WHAM error response buffering before classifying auth failures", async () => {
@@ -350,7 +452,9 @@ describe("CodexRpcClient spawn failures", () => {
       vi.fn(async () => new Response(body, { status: 401 })),
     );
 
-    await expect(fetchCodexQuota("access-token-fixture-secret", null)).rejects.toMatchObject({
+    await expect(
+      fetchCodexQuota("access-token-fixture-secret", null),
+    ).rejects.toMatchObject({
       name: "CodexQuotaAuthError",
       errorFamily: "refresh_token_invalidated",
     });
@@ -369,7 +473,9 @@ describe("CodexRpcClient spawn failures", () => {
       }),
       "utf8",
     );
-    mockSpawn.mockImplementation(() => createChildThatErrorsOnMicrotask(new Error("spawn codex ENOENT")));
+    mockSpawn.mockImplementation(() =>
+      createChildThatErrorsOnMicrotask(new Error("spawn codex ENOENT")),
+    );
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response("unauthorized", { status: 401 })),
@@ -381,7 +487,9 @@ describe("CodexRpcClient spawn failures", () => {
     expect(result.errorFamily).toBeUndefined();
     expect(result.error).toContain("chatgpt wham api returned 401");
     expect(JSON.stringify(result)).not.toContain("access-token-fixture-secret");
-    expect(JSON.stringify(result)).not.toContain("refresh-token-fixture-secret");
+    expect(JSON.stringify(result)).not.toContain(
+      "refresh-token-fixture-secret",
+    );
   });
 
   it("does not crash the process when codex is missing; getQuotaWindows returns ok: false", async () => {
@@ -391,7 +499,9 @@ describe("CodexRpcClient spawn failures", () => {
       syscall: "spawn codex",
       path: "codex",
     });
-    mockSpawn.mockImplementation(() => createChildThatErrorsOnMicrotask(enoent));
+    mockSpawn.mockImplementation(() =>
+      createChildThatErrorsOnMicrotask(enoent),
+    );
 
     const result = await getQuotaWindows();
 

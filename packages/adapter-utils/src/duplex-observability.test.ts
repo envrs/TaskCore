@@ -19,18 +19,32 @@ describe("duplex observability: HTTP/2 event mapping (accepted security fix 7)",
       const reason = mapHttp2EventToDuplexLossReason(event);
       expect(DUPLEX_LOSS_REASONS).toContain(reason);
     }
-    expect(mapHttp2EventToDuplexLossReason("session_error")).toBe("rpc_failure");
-    expect(mapHttp2EventToDuplexLossReason("session_goaway")).toBe("transport_closed");
-    expect(mapHttp2EventToDuplexLossReason("session_stall")).toBe("heartbeat_timeout");
+    expect(mapHttp2EventToDuplexLossReason("session_error")).toBe(
+      "rpc_failure",
+    );
+    expect(mapHttp2EventToDuplexLossReason("session_goaway")).toBe(
+      "transport_closed",
+    );
+    expect(mapHttp2EventToDuplexLossReason("session_stall")).toBe(
+      "heartbeat_timeout",
+    );
     expect(mapHttp2EventToDuplexLossReason("write_error")).toBe("write_error");
-    expect(mapHttp2EventToDuplexLossReason("transport_closed")).toBe("transport_closed");
-    expect(mapHttp2EventToDuplexLossReason("channel_exit")).toBe("provider_exit");
+    expect(mapHttp2EventToDuplexLossReason("transport_closed")).toBe(
+      "transport_closed",
+    );
+    expect(mapHttp2EventToDuplexLossReason("channel_exit")).toBe(
+      "provider_exit",
+    );
   });
 
   it("test_an_unknown_telemetry_input_maps_to_other", () => {
     // An unknown event name, a raw provider error string, and a missing value
     // all map to `other`. No raw text ever reaches a sink through this map.
-    expect(mapHttp2EventToDuplexLossReason("ECONNRESET: read failed at socket.js:42")).toBe("other");
+    expect(
+      mapHttp2EventToDuplexLossReason(
+        "ECONNRESET: read failed at socket.js:42",
+      ),
+    ).toBe("other");
     expect(mapHttp2EventToDuplexLossReason("some_future_event")).toBe("other");
     expect(mapHttp2EventToDuplexLossReason(null)).toBe("other");
     expect(mapHttp2EventToDuplexLossReason(undefined)).toBe("other");

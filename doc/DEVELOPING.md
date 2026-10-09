@@ -702,7 +702,6 @@ Slack callback diagnostics tolerate HTTP between a TLS proxy and Taskcore when t
 port, and path still match. A changed authority or path remains stale. This comparison only affects
 health display; it does not trust forwarded headers or alter Slack signature verification.
 
-
 ## Docker Quickstart (No local Node install)
 
 Build and run Taskcore in Docker:
@@ -894,7 +893,6 @@ The shared scan subprocess sets `GIT_OPTIONAL_LOCKS=0`, including when a caller 
 
 Workspace snapshots list ignored paths with `git ls-files --others --ignored --exclude-standard --directory -z` so ignored directory contents do not require a full status walk. Changed, untracked, deleted, and ignored filename lists stream into private SQLite manifests. There is no total filename-list byte limit. The parser and each sink chunk are limited to 64 KiB, and each SQLite connection uses a 1 MiB page cache with disk-backed temporary storage. Records must be complete NUL-delimited UTF-8 paths. Invalid, oversized, or incomplete records fail the scan. Explicit file selection excludes files created after the scan. Buffered browser/guard and referenced-source scan bounds stay unchanged. Snapshot failures retain their typed cause instead of becoming a non-Git-folder result. During pre-provider setup, scan timeouts and queue saturation use the existing two automatic failure retries with a 30-second delay. Cancellation, output limits, and other Git errors stop with specific recovery guidance. See `doc/execution-semantics.md` for the ownership and retry-budget contract.
 
-
 Snapshot scans default to a 30-minute execution deadline, including disk backpressure, rather than the short interactive scan deadline. Set `TASKCORE_WORKSPACE_GIT_SNAPSHOT_TIMEOUT_MS` to allow slower storage or larger trees (1 second to 24 hours). Disk capacity, filesystem path limits, Git's own resource use, and this execution budget remain practical limits. Each manifest is admitted with a page allowance equal to one quarter of the available bytes above the host reserve at creation. SQLite enforces that allowance before page allocation, so one snapshot cannot consume all available storage. This is a disk-capacity admission policy, not a fixed filename-list byte or record limit. Nested repository and baseline manifests receive separate allowances from the remaining capacity. Manifest writers also check available disk space before creation and at most every 1 MiB of input thereafter. They stop below a 256 MiB free-space reserve. `TASKCORE_WORKSPACE_MANIFEST_MIN_FREE_BYTES` can raise or lower the reserve, with a 64 MiB minimum. Concurrent writers can consume space between checks; filesystem quota and write errors still fail the operation. The scheduler keeps the active slot until the child, pipes, and pending sink write finish. Snapshot failures cancel sibling producers and settle all started producers before removing temporary storage.
 
 Workspace baselines, nested-repository subsets, and merge lookups also use disk-backed manifests. Local archive input uses NUL list files. Deletion replay uploads a NUL manifest and runs bounded argument batches with ancestor symlink checks. Git ignored paths are literal indexed exclusions for staging, baseline capture, and the host merge. Restore transport uses the fixed/configured archive exclusions; it can transfer a remotely created ignored file, but the host merge excludes it. The v2 native recovery descriptor contains manifest references, not file arrays. Recovery checks controller-owned paths and content digests before reading records. Existing v1 descriptors remain readable. Transient manifests are removed on preparation failure and restore completion; native manifests remain until the durable recovery lifecycle is cleaned up.
@@ -1022,15 +1020,15 @@ Opening a managed workspace board no longer depends on knowing which cloned pass
 
 - **Issue** — `POST /api/execution-workspaces/{id}/login-handoff` (board actors only). The ticket is bound to the caller's user id and email, the execution workspace id, the workspace's company id, the isolated instance id, the live runtime origin, a nonce, and a ~90 s expiry. Nothing in the request body influences that binding; only the landing path is caller-supplied and it is reduced to a same-origin path before signing.
 - **Exchange** — `GET /api/auth/{workspace-handoff}/exchange?ticket=…` on the workspace itself, registered as a Better Auth plugin so session creation and cookie signing use Better Auth's own path. It verifies the signature, expiry, origin, instance, workspace, company, the cloned user's email, and an active membership **in that company**, records the nonce so a replay loses, and answers with an HTTP redirect — which is what keeps the ticket out of browser history. Request logs redact the `ticket` parameter.
-- **Fallback** — direct email/password sign-in still works and the UI labels it accurately as *snapshot-local credentials*. A rejected ticket redirects to `/auth?workspaceHandoffError=<reason>` rather than failing opaquely.
+- **Fallback** — direct email/password sign-in still works and the UI labels it accurately as _snapshot-local credentials_. A rejected ticket redirects to `/auth?workspaceHandoffError=<reason>` rather than failing opaquely.
 
 Key material is derived, never shared. The control plane keeps a root secret (`TASKCORE_WORKSPACE_HANDOFF_SECRET`, or a domain-separated derivation from the instance's existing signing secret when that is unset) and injects only per-workspace values into the guest process:
 
-| Variable | Purpose |
-| --- | --- |
-| `TASKCORE_WORKSPACE_HANDOFF_KEY` | Per-workspace ticket verification key. A guest cannot mint a ticket for a sibling workspace. |
-| `TASKCORE_WORKSPACE_READINESS_TOKEN` | Bearer token the control plane presents to read this workspace's protected readiness. |
-| `TASKCORE_EXECUTION_WORKSPACE_ID` | Execution workspace the guest was provisioned for, used for identity checks. |
+| Variable                                  | Purpose                                                                                                                                                                           |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TASKCORE_WORKSPACE_HANDOFF_KEY`          | Per-workspace ticket verification key. A guest cannot mint a ticket for a sibling workspace.                                                                                      |
+| `TASKCORE_WORKSPACE_READINESS_TOKEN`      | Bearer token the control plane presents to read this workspace's protected readiness.                                                                                             |
+| `TASKCORE_EXECUTION_WORKSPACE_ID`         | Execution workspace the guest was provisioned for, used for identity checks.                                                                                                      |
 | `TASKCORE_EXECUTION_WORKSPACE_COMPANY_ID` | Company whose board the guest represents. Scopes both the membership check and the readiness probes, so "some company in the clone is fine" cannot pass for the one being opened. |
 
 Protected `/api/health` on a cloned workspace additionally carries a `workspace` block — `state`, `databaseReady`, `cloneDataReady`, `authHandoffReady`, `seedState`, `seedPhase`, `instanceId`, `executionWorkspaceId`, `failurePhase`. Public health stays redacted. Managed runtime start will not publish `running / healthy` unless that block agrees and names this exact instance and workspace, and runtime-service work products are refreshed from the live runtime row so a port change cannot leave a stale user-facing URL.
@@ -1041,20 +1039,20 @@ The workspace UI surfaces `Provisioning database`, `Validating clone`, `Ready`, 
 
 **`npx taskcore worktree init [options]`** — Create repo-local config/env and an isolated instance for the current worktree.
 
-| Option | Description |
-|---|---|
-| `--name <name>` | Display name used to derive the instance id |
-| `--instance <id>` | Explicit isolated instance id |
-| `--home <path>` | Home root for worktree instances (default: `~/.taskcore-worktrees`) |
-| `--from-config <path>` | Source config.json to seed from |
-| `--from-data-dir <path>` | Source TASKCORE_HOME used when deriving the source config |
-| `--from-instance <id>` | Source instance id (default: `default`) |
-| `--server-port <port>` | Preferred server port |
-| `--db-port <port>` | Preferred embedded Postgres port |
-| `--seed-mode <mode>` | Seed profile: `minimal` or `full` (default: `minimal`) |
-| `--no-seed` | Defer database copying until first use |
-| `--empty` | Create an empty instance with fresh signing secrets and disable automatic copying |
-| `--force` | Replace existing repo-local config and isolated instance data |
+| Option                   | Description                                                                       |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| `--name <name>`          | Display name used to derive the instance id                                       |
+| `--instance <id>`        | Explicit isolated instance id                                                     |
+| `--home <path>`          | Home root for worktree instances (default: `~/.taskcore-worktrees`)               |
+| `--from-config <path>`   | Source config.json to seed from                                                   |
+| `--from-data-dir <path>` | Source TASKCORE_HOME used when deriving the source config                         |
+| `--from-instance <id>`   | Source instance id (default: `default`)                                           |
+| `--server-port <port>`   | Preferred server port                                                             |
+| `--db-port <port>`       | Preferred embedded Postgres port                                                  |
+| `--seed-mode <mode>`     | Seed profile: `minimal` or `full` (default: `minimal`)                            |
+| `--no-seed`              | Defer database copying until first use                                            |
+| `--empty`                | Create an empty instance with fresh signing secrets and disable automatic copying |
+| `--force`                | Replace existing repo-local config and isolated instance data                     |
 
 Examples:
 
@@ -1081,16 +1079,16 @@ For an already-created worktree where you want the CLI to decide whether to rebu
 
 **`npx taskcore worktree repair [options]`** — Repair the current linked worktree by default, or create/repair a named linked worktree under `.taskcore/worktrees/` when `--branch` is provided. The command never targets the primary checkout unless you explicitly pass `--branch`.
 
-| Option | Description |
-|---|---|
-| `--branch <name>` | Existing branch/worktree selector to repair, or a branch name to create under `.taskcore/worktrees` |
-| `--home <path>` | Home root for worktree instances (default: `~/.taskcore-worktrees`) |
-| `--from-config <path>` | Source config.json to seed from |
-| `--from-data-dir <path>` | Source `TASKCORE_HOME` used when deriving the source config |
-| `--from-instance <id>` | Source instance id when deriving the source config (default: `default`) |
-| `--seed-mode <mode>` | Seed profile: `minimal` or `full` (default: `minimal`) |
-| `--no-seed` | Repair metadata only when bootstrapping a missing worktree config |
-| `--allow-live-target` | Override the guard that requires the target worktree DB to be stopped first |
+| Option                   | Description                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `--branch <name>`        | Existing branch/worktree selector to repair, or a branch name to create under `.taskcore/worktrees` |
+| `--home <path>`          | Home root for worktree instances (default: `~/.taskcore-worktrees`)                                 |
+| `--from-config <path>`   | Source config.json to seed from                                                                     |
+| `--from-data-dir <path>` | Source `TASKCORE_HOME` used when deriving the source config                                         |
+| `--from-instance <id>`   | Source instance id when deriving the source config (default: `default`)                             |
+| `--seed-mode <mode>`     | Seed profile: `minimal` or `full` (default: `minimal`)                                              |
+| `--no-seed`              | Repair metadata only when bootstrapping a missing worktree config                                   |
+| `--allow-live-target`    | Override the guard that requires the target worktree DB to be stopped first                         |
 
 Examples:
 
@@ -1109,17 +1107,17 @@ For an already-created worktree where you want to keep the existing repo-local c
 
 **`npx taskcore worktree reseed [options]`** — Re-seed an existing worktree-local instance from another Taskcore instance or worktree while preserving the target worktree's current config, ports, and instance identity.
 
-| Option | Description |
-|---|---|
-| `--from <worktree>` | Source worktree path, directory name, branch name, or `current` |
-| `--to <worktree>` | Target worktree path, directory name, branch name, or `current` (defaults to `current`) |
-| `--from-config <path>` | Source config.json to seed from |
-| `--from-data-dir <path>` | Source `TASKCORE_HOME` used when deriving the source config |
-| `--from-instance <id>` | Source instance id when deriving the source config |
-| `--seed-mode <mode>` | Seed profile: `minimal` or `full` (default: `full`) |
-| `--yes` | Skip the destructive confirmation prompt |
-| `--allow-live-target` | Override the guard that requires the target worktree DB to be stopped first |
-| `--backup-target` | Retain a recoverable full target-DB backup before reseeding |
+| Option                   | Description                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------- |
+| `--from <worktree>`      | Source worktree path, directory name, branch name, or `current`                         |
+| `--to <worktree>`        | Target worktree path, directory name, branch name, or `current` (defaults to `current`) |
+| `--from-config <path>`   | Source config.json to seed from                                                         |
+| `--from-data-dir <path>` | Source `TASKCORE_HOME` used when deriving the source config                             |
+| `--from-instance <id>`   | Source instance id when deriving the source config                                      |
+| `--seed-mode <mode>`     | Seed profile: `minimal` or `full` (default: `full`)                                     |
+| `--yes`                  | Skip the destructive confirmation prompt                                                |
+| `--allow-live-target`    | Override the guard that requires the target worktree DB to be stopped first             |
+| `--backup-target`        | Retain a recoverable full target-DB backup before reseeding                             |
 
 Examples:
 
@@ -1143,20 +1141,20 @@ Managed workspace repair uses this same verified full-reseed contract through `P
 
 **`npx taskcore worktree:make <name> [options]`** — Create `~/NAME` as a git worktree, then initialize an isolated Taskcore instance inside it. This combines `git worktree add` with `worktree init` in a single step.
 
-| Option | Description |
-|---|---|
-| `--start-point <ref>` | Remote ref to base the new branch on (e.g. `origin/main`) |
-| `--instance <id>` | Explicit isolated instance id |
-| `--home <path>` | Home root for worktree instances (default: `~/.taskcore-worktrees`) |
-| `--from-config <path>` | Source config.json to seed from |
-| `--from-data-dir <path>` | Source TASKCORE_HOME used when deriving the source config |
-| `--from-instance <id>` | Source instance id (default: `default`) |
-| `--server-port <port>` | Preferred server port |
-| `--db-port <port>` | Preferred embedded Postgres port |
-| `--seed-mode <mode>` | Seed profile: `minimal` or `full` (default: `minimal`) |
-| `--no-seed` | Defer database copying until first use |
-| `--empty` | Create an empty instance with fresh signing secrets and disable automatic copying |
-| `--force` | Replace existing repo-local config and isolated instance data |
+| Option                   | Description                                                                       |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| `--start-point <ref>`    | Remote ref to base the new branch on (e.g. `origin/main`)                         |
+| `--instance <id>`        | Explicit isolated instance id                                                     |
+| `--home <path>`          | Home root for worktree instances (default: `~/.taskcore-worktrees`)               |
+| `--from-config <path>`   | Source config.json to seed from                                                   |
+| `--from-data-dir <path>` | Source TASKCORE_HOME used when deriving the source config                         |
+| `--from-instance <id>`   | Source instance id (default: `default`)                                           |
+| `--server-port <port>`   | Preferred server port                                                             |
+| `--db-port <port>`       | Preferred embedded Postgres port                                                  |
+| `--seed-mode <mode>`     | Seed profile: `minimal` or `full` (default: `minimal`)                            |
+| `--no-seed`              | Defer database copying until first use                                            |
+| `--empty`                | Create an empty instance with fresh signing secrets and disable automatic copying |
+| `--force`                | Replace existing repo-local config and isolated instance data                     |
 
 Examples:
 
@@ -1168,10 +1166,10 @@ npx taskcore worktree:make experiment --no-seed
 
 **`npx taskcore worktree env [options]`** — Print shell exports for the current worktree-local Taskcore instance.
 
-| Option | Description |
-|---|---|
-| `-c, --config <path>` | Path to config file |
-| `--json` | Print JSON instead of shell exports |
+| Option                | Description                         |
+| --------------------- | ----------------------------------- |
+| `-c, --config <path>` | Path to config file                 |
+| `--json`              | Print JSON instead of shell exports |
 
 Examples:
 

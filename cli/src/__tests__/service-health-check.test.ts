@@ -10,7 +10,10 @@ import {
   renderLaunchdPlist,
   renderSystemdUnit,
 } from "../services/service-manager.js";
-import { resolveRestartExpectedVersion, withHotRestartLock } from "../commands/service.js";
+import {
+  resolveRestartExpectedVersion,
+  withHotRestartLock,
+} from "../commands/service.js";
 import type { TaskcoreConfig } from "../config/schema.js";
 import { buildLocalHealthUrl } from "../utils/health-url.js";
 
@@ -24,18 +27,23 @@ let previousServiceManaged: string | undefined;
 beforeEach(() => {
   previousTaskcoreHome = process.env.TASKCORE_HOME;
   previousServiceManaged = process.env.TASKCORE_SERVICE_MANAGED;
-  process.env.TASKCORE_HOME = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-service-restart-"));
+  process.env.TASKCORE_HOME = fs.mkdtempSync(
+    path.join(os.tmpdir(), "taskcore-service-restart-"),
+  );
 });
 
 afterEach(() => {
   if (previousTaskcoreHome === undefined) delete process.env.TASKCORE_HOME;
   else process.env.TASKCORE_HOME = previousTaskcoreHome;
-  if (previousServiceManaged === undefined) delete process.env.TASKCORE_SERVICE_MANAGED;
+  if (previousServiceManaged === undefined)
+    delete process.env.TASKCORE_SERVICE_MANAGED;
   else process.env.TASKCORE_SERVICE_MANAGED = previousServiceManaged;
 });
 
 function managerFixture(active = true) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-service-doctor-"));
+  const root = fs.mkdtempSync(
+    path.join(os.tmpdir(), "taskcore-service-doctor-"),
+  );
   const definitionPath = path.join(root, "taskcore.service");
   fs.writeFileSync(definitionPath, "unit");
   return {
@@ -68,7 +76,9 @@ describe("service health doctor checks", () => {
     process.env.TASKCORE_SERVICE_MANAGED = "1";
     const detect = vi.fn();
     const probe = vi.fn();
-    await expect(serviceHealthChecks(config, { detect, probe })).resolves.toEqual([]);
+    await expect(
+      serviceHealthChecks(config, { detect, probe }),
+    ).resolves.toEqual([]);
     expect(detect).not.toHaveBeenCalled();
     expect(probe).not.toHaveBeenCalled();
   });
@@ -82,17 +92,27 @@ describe("service health doctor checks", () => {
   it("serializes concurrent restarts for the same instance", async () => {
     const order: string[] = [];
     let releaseFirst!: () => void;
-    const firstBlocked = new Promise<void>((resolve) => { releaseFirst = resolve; });
-    const first = withHotRestartLock("default", async () => {
-      order.push("first-start");
-      await firstBlocked;
-      order.push("first-end");
-    }, { pollMs: 5 });
+    const firstBlocked = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    const first = withHotRestartLock(
+      "default",
+      async () => {
+        order.push("first-start");
+        await firstBlocked;
+        order.push("first-end");
+      },
+      { pollMs: 5 },
+    );
 
     await vi.waitFor(() => expect(order).toEqual(["first-start"]));
-    const second = withHotRestartLock("default", async () => {
-      order.push("second-start");
-    }, { pollMs: 5 });
+    const second = withHotRestartLock(
+      "default",
+      async () => {
+        order.push("second-start");
+      },
+      { pollMs: 5 },
+    );
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(order).toEqual(["first-start"]);
 
@@ -102,24 +122,35 @@ describe("service health doctor checks", () => {
   });
 
   it("reclaims restart locks left by terminated processes", async () => {
-    const lockPath = path.join(process.env.TASKCORE_HOME!, "instances", "default", "hot-restart.lock");
+    const lockPath = path.join(
+      process.env.TASKCORE_HOME!,
+      "instances",
+      "default",
+      "hot-restart.lock",
+    );
     fs.mkdirSync(path.dirname(lockPath), { recursive: true });
     fs.writeFileSync(lockPath, "424242:stale-token\n");
     const callback = vi.fn(async () => "restarted");
 
-    await expect(withHotRestartLock("default", callback, {
-      pollMs: 1,
-      timeoutMs: 20,
-      isProcessAlive: () => false,
-    })).resolves.toBe("restarted");
+    await expect(
+      withHotRestartLock("default", callback, {
+        pollMs: 1,
+        timeoutMs: 20,
+        isProcessAlive: () => false,
+      }),
+    ).resolves.toBe("restarted");
 
     expect(callback).toHaveBeenCalledOnce();
     expect(fs.existsSync(lockPath)).toBe(false);
   });
 
   it("brackets configured IPv6 hosts in health URLs", () => {
-    expect(buildLocalHealthUrl("::1", 3100)).toBe("http://[::1]:3100/api/health");
-    expect(buildLocalHealthUrl("::", 3100)).toBe("http://127.0.0.1:3100/api/health");
+    expect(buildLocalHealthUrl("::1", 3100)).toBe(
+      "http://[::1]:3100/api/health",
+    );
+    expect(buildLocalHealthUrl("::", 3100)).toBe(
+      "http://127.0.0.1:3100/api/health",
+    );
   });
 
   it("passes for a current, active, healthy service", async () => {
@@ -161,7 +192,9 @@ describe("isExecutableFile", () => {
     await expect(isExecutableFile(executable)).resolves.toBe(true);
     await expect(isExecutableFile(plain)).resolves.toBe(false);
     await expect(isExecutableFile(dir)).resolves.toBe(false);
-    await expect(isExecutableFile(path.join(dir, "missing"))).resolves.toBe(false);
+    await expect(isExecutableFile(path.join(dir, "missing"))).resolves.toBe(
+      false,
+    );
   });
 });
 
@@ -194,8 +227,15 @@ describe("service runtime shim awareness", () => {
 
   it("blames the missing binary, not a port conflict, when the shim is gone", async () => {
     const results = await serviceHealthChecks({} as never, {
-      detect: vi.fn(async () => ({ supported: true as const, manager: inactiveManager() as never })),
-      probe: vi.fn(async () => ({ ok: false, version: null, error: "fetch failed" })),
+      detect: vi.fn(async () => ({
+        supported: true as const,
+        manager: inactiveManager() as never,
+      })),
+      probe: vi.fn(async () => ({
+        ok: false,
+        version: null,
+        error: "fetch failed",
+      })),
       shimPresent: vi.fn(async () => false),
     });
     const runtime = results.find((r) => r.name === "Service runtime");
@@ -209,8 +249,15 @@ describe("service runtime shim awareness", () => {
     manager.installedExecutablePath = vi.fn(async () => "/custom/bin/taskcore");
     const shimPresent = vi.fn(async () => false);
     const results = await serviceHealthChecks({} as never, {
-      detect: vi.fn(async () => ({ supported: true as const, manager: manager as never })),
-      probe: vi.fn(async () => ({ ok: false, version: null, error: "fetch failed" })),
+      detect: vi.fn(async () => ({
+        supported: true as const,
+        manager: manager as never,
+      })),
+      probe: vi.fn(async () => ({
+        ok: false,
+        version: null,
+        error: "fetch failed",
+      })),
       shimPresent,
     });
     const runtime = results.find((r) => r.name === "Service runtime");
@@ -218,18 +265,25 @@ describe("service runtime shim awareness", () => {
     expect(runtime?.message).toContain("/custom/bin/taskcore");
     expect(runtime?.repairHint).toContain("/custom/bin/taskcore");
     expect(runtime?.repairHint).toContain("unset TASKCORE_SHIM_PATH");
-    expect(runtime?.repairHint).toContain("`taskcore install` followed by `taskcore service install`");
+    expect(runtime?.repairHint).toContain(
+      "`taskcore install` followed by `taskcore service install`",
+    );
   });
 
   it("attributes a healthy foreign responder instead of reporting Healthy", async () => {
     const results = await serviceHealthChecks({} as never, {
-      detect: vi.fn(async () => ({ supported: true as const, manager: inactiveManager() as never })),
+      detect: vi.fn(async () => ({
+        supported: true as const,
+        manager: inactiveManager() as never,
+      })),
       probe: vi.fn(async () => ({ ok: true, version: "9.9.9" })),
       shimPresent: vi.fn(async () => true),
     });
     const healthResult = results.find((r) => r.name === "Service health");
     expect(healthResult?.status).toBe("warn");
-    expect(healthResult?.message).toContain("but not from ing.taskcore.taskcore");
+    expect(healthResult?.message).toContain(
+      "but not from ing.taskcore.taskcore",
+    );
     const runtime = results.find((r) => r.name === "Service runtime");
     expect(runtime?.message).toContain("serving another Taskcore process");
   });
@@ -237,19 +291,41 @@ describe("service runtime shim awareness", () => {
 
 describe("definition executable extraction", () => {
   it("round-trips through both renderers", () => {
-    const unit = renderSystemdUnit({ instanceId: "default", shimPath: "/custom/bin/taskcore", homeDir: "/home/x/.taskcore" });
+    const unit = renderSystemdUnit({
+      instanceId: "default",
+      shimPath: "/custom/bin/taskcore",
+      homeDir: "/home/x/.taskcore",
+    });
     expect(extractExecutableFromSystemdUnit(unit)).toBe("/custom/bin/taskcore");
-    const plist = renderLaunchdPlist({ instanceId: "default", shimPath: "/custom/bin/taskcore", homeDir: "/home/x/.taskcore", stdoutPath: "/tmp/o.log", stderrPath: "/tmp/e.log" });
-    expect(extractExecutableFromLaunchdPlist(plist)).toBe("/custom/bin/taskcore");
+    const plist = renderLaunchdPlist({
+      instanceId: "default",
+      shimPath: "/custom/bin/taskcore",
+      homeDir: "/home/x/.taskcore",
+      stdoutPath: "/tmp/o.log",
+      stderrPath: "/tmp/e.log",
+    });
+    expect(extractExecutableFromLaunchdPlist(plist)).toBe(
+      "/custom/bin/taskcore",
+    );
     expect(extractExecutableFromSystemdUnit("garbage")).toBe(null);
     expect(extractExecutableFromLaunchdPlist("garbage")).toBe(null);
   });
 
   it("round-trips paths the renderers escape", () => {
     const hostile = '/tmp/we"ird $pa%th & <x>/taskcore';
-    const unit = renderSystemdUnit({ instanceId: "default", shimPath: hostile, homeDir: "/home/x/.taskcore" });
+    const unit = renderSystemdUnit({
+      instanceId: "default",
+      shimPath: hostile,
+      homeDir: "/home/x/.taskcore",
+    });
     expect(extractExecutableFromSystemdUnit(unit)).toBe(hostile);
-    const plist = renderLaunchdPlist({ instanceId: "default", shimPath: hostile, homeDir: "/home/x/.taskcore", stdoutPath: "/tmp/o.log", stderrPath: "/tmp/e.log" });
+    const plist = renderLaunchdPlist({
+      instanceId: "default",
+      shimPath: hostile,
+      homeDir: "/home/x/.taskcore",
+      stdoutPath: "/tmp/o.log",
+      stderrPath: "/tmp/e.log",
+    });
     expect(extractExecutableFromLaunchdPlist(plist)).toBe(hostile);
   });
 });

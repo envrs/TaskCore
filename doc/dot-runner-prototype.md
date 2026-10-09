@@ -283,17 +283,17 @@ the ordinary callback verification, DNS/IP pinning and webhook signing checks.
 
 Observed server evidence (UTC):
 
-| Time | Observation |
-| --- | --- |
-| 22:16:30 | Dot called `taskcore_connection` successfully. |
-| 22:17:00 | `events/subscribe` succeeded; the verified `taskcore.dot.work_available` subscription was present. |
-| 22:17:24 | The operator queued the single assignment. Its webhook was observed as `delivered` after one attempt. |
-| 22:17:48 | Dot called `taskcore_dot_inbox` after the event, without another chat prompt. |
-| 22:17:56 | Dot read the assignment using `taskcore_dot_read`. |
-| 22:18:10 | Dot accepted it; the native Runner emitted `turn.started`. |
-| 22:18:23 | Dot called `save_report` through `taskcore_dot_tool`; the lab saved exactly one report: `Dot received the Taskcore event. 17 + 25 = 42.` |
+| Time     | Observation                                                                                                                                           |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 22:16:30 | Dot called `taskcore_connection` successfully.                                                                                                        |
+| 22:17:00 | `events/subscribe` succeeded; the verified `taskcore.dot.work_available` subscription was present.                                                    |
+| 22:17:24 | The operator queued the single assignment. Its webhook was observed as `delivered` after one attempt.                                                 |
+| 22:17:48 | Dot called `taskcore_dot_inbox` after the event, without another chat prompt.                                                                         |
+| 22:17:56 | Dot read the assignment using `taskcore_dot_read`.                                                                                                    |
+| 22:18:10 | Dot accepted it; the native Runner emitted `turn.started`.                                                                                            |
+| 22:18:23 | Dot called `save_report` through `taskcore_dot_tool`; the lab saved exactly one report: `Dot received the Taskcore event. 17 + 25 = 42.`              |
 | 22:18:38 | Dot submitted a valid `taskcore.run_result.v1`; the Runner emitted `run.result.proposed`, `turn.completed` and `run.terminal` with state `succeeded`. |
-| 22:18:50 | `events/unsubscribe` succeeded; no subscription remained. |
+| 22:18:50 | `events/unsubscribe` succeeded; no subscription remained.                                                                                             |
 
 Dot's final chat message confirmed event receipt and completion. It could not
 confirm complete unsubscription from its client response, but the server

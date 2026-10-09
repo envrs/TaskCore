@@ -78,7 +78,6 @@ The live invitation controller, owner-scoped pending-invitation lookup, atomic c
 
 Before shipping cloud, connect Dot's qualified launcher hooks to managed job dispatch and qualify the dedicated tenant MCP ingress. Keep the present cloud restrictions until those paths are proven. The optional external launcher uses target-owned provider checkpoints and refuses recovery when identity or state is missing; it does not invent a replacement Dot thread. Preserve company isolation, approval rules, budget stops, assignment authority, and mutation receipts. Qualify real OAuth installation, event round trip, assignment execution, unsolicited Dot work, restart/reconnect, cancellation, and expired/revoked credentials against a real sandbox provider. No cloud-ready claim follows from this Storybook pass.
 
-
 ## Implemented invitation semantics
 
 - `POST /api/companies/:companyId/dot-invitations` finds or creates one unfinished Dot invitation for the signed-in operator. Creation holds a company row lock and commits the agent, membership, grants, approval (when required), and audit entries atomically. The fixed preset disables workspace/attachment access and periodic wakes; normal on-demand admission remains available.

@@ -63,7 +63,8 @@ function catalogSkill(overrides: Record<string, unknown> = {}) {
     category: "software-development",
     slug: "github-pr-workflow",
     name: "github-pr-workflow",
-    description: "Prepare pull requests, review responses, and verification notes.",
+    description:
+      "Prepare pull requests, review responses, and verification notes.",
     path: "catalog/bundled/software-development/github-pr-workflow",
     entrypoint: "SKILL.md",
     trustLevel: "markdown_only",
@@ -72,7 +73,9 @@ function catalogSkill(overrides: Record<string, unknown> = {}) {
     recommendedForRoles: ["engineer"],
     requires: [],
     tags: ["github", "pull-requests"],
-    files: [{ path: "SKILL.md", kind: "skill", sizeBytes: 128, sha256: "sha256:abc" }],
+    files: [
+      { path: "SKILL.md", kind: "skill", sizeBytes: 128, sha256: "sha256:abc" },
+    ],
     contentHash: "sha256:catalog",
     ...overrides,
   };
@@ -102,10 +105,17 @@ describe("skills CLI helpers", () => {
   it("resolves skill refs by id, key, or unique normalized slug", () => {
     const rows = [
       skill({ id: "skill-a", key: "taskcore/a", slug: "alpha", name: "Alpha" }),
-      skill({ id: "skill-b", key: "taskcore/b", slug: "beta-skill", name: "Beta" }),
+      skill({
+        id: "skill-b",
+        key: "taskcore/b",
+        slug: "beta-skill",
+        name: "Beta",
+      }),
     ];
 
-    expect(resolveCompanySkillReference(rows, "skill-a").key).toBe("taskcore/a");
+    expect(resolveCompanySkillReference(rows, "skill-a").key).toBe(
+      "taskcore/a",
+    );
     expect(resolveCompanySkillReference(rows, "taskcore/b").id).toBe("skill-b");
     expect(resolveCompanySkillReference(rows, "Beta Skill").id).toBe("skill-b");
   });
@@ -116,7 +126,9 @@ describe("skills CLI helpers", () => {
       skill({ id: "skill-b", key: "taskcore/b", slug: "same", name: "B" }),
     ];
 
-    expect(() => resolveCompanySkillReference(rows, "same")).toThrow(/Ambiguous skill slug/);
+    expect(() => resolveCompanySkillReference(rows, "same")).toThrow(
+      /Ambiguous skill slug/,
+    );
   });
 });
 
@@ -134,10 +146,12 @@ describe("skills CLI commands", () => {
     vi.stubGlobal("fetch", fetchMock);
     logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     writeChunks = [];
-    vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-      writeChunks.push(chunk);
-      return true;
-    });
+    vi.spyOn(process.stdout, "write").mockImplementation(
+      (chunk: string | Uint8Array) => {
+        writeChunks.push(chunk);
+        return true;
+      },
+    );
   });
 
   afterEach(() => {
@@ -200,15 +214,17 @@ describe("skills CLI commands", () => {
   it("prints skill files as raw pipeable content in human mode", async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse([skill()]))
-      .mockResolvedValueOnce(jsonResponse({
-        skillId: "11111111-1111-1111-1111-111111111111",
-        path: "SKILL.md",
-        kind: "skill",
-        content: "# Review PRs",
-        language: "markdown",
-        markdown: true,
-        editable: true,
-      }));
+      .mockResolvedValueOnce(
+        jsonResponse({
+          skillId: "11111111-1111-1111-1111-111111111111",
+          path: "SKILL.md",
+          kind: "skill",
+          content: "# Review PRs",
+          language: "markdown",
+          markdown: true,
+          editable: true,
+        }),
+      );
 
     await runCommand([
       "skills",
@@ -248,9 +264,13 @@ describe("skills CLI commands", () => {
       "http://taskcore.test/api/skills/catalog?kind=bundled&category=software-development&q=github",
       expect.objectContaining({ method: "GET" }),
     );
-    const rendered = logSpy.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
+    const rendered = logSpy.mock.calls
+      .map((call: unknown[]) => String(call[0]))
+      .join("\n");
     expect(rendered).toContain("id");
-    expect(rendered).toContain("taskcore:bundled:software-development:github-pr-workflow");
+    expect(rendered).toContain(
+      "taskcore:bundled:software-development:github-pr-workflow",
+    );
     expect(rendered).toContain("roles");
   });
 
@@ -379,12 +399,14 @@ describe("skills CLI commands", () => {
       originHash: "sha256:origin",
       verdict: "warning",
       codes: ["network_reference"],
-      findings: [{
-        code: "network_reference",
-        severity: "warning",
-        message: "Skill content references network-capable commands or URLs.",
-        path: "SKILL.md",
-      }],
+      findings: [
+        {
+          code: "network_reference",
+          severity: "warning",
+          message: "Skill content references network-capable commands or URLs.",
+          path: "SKILL.md",
+        },
+      ],
       scannedAt: "2026-05-26T00:00:00.000Z",
       scanVersion: "skills-audit-v1",
     };
@@ -500,7 +522,10 @@ describe("skills CLI commands", () => {
       "http://taskcore.test/api/agents/agent-1/skills/sync",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ desiredSkills: ["review-prs", "taskcore/qa"], mode: "add" }),
+        body: JSON.stringify({
+          desiredSkills: ["review-prs", "taskcore/qa"],
+          mode: "add",
+        }),
       }),
     );
     expect(JSON.parse(String(logSpy.mock.calls[0]?.[0]))).toEqual(snapshot);

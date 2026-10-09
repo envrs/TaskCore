@@ -14,10 +14,10 @@ tests read these fixtures. The tests never read a live secret.
 
 ## Files
 
-| File | Row | Condition | Expected parse result |
-|---|---|---|---|
-| `device-login-sample.txt` | A — normal prompt | `timeout 60 codex login --device-auth` | a URL and a code |
-| `device-login-edge.txt` | D — error / retry | offline run with an unreachable local proxy | `null` |
+| File                      | Row               | Condition                                   | Expected parse result |
+| ------------------------- | ----------------- | ------------------------------------------- | --------------------- |
+| `device-login-sample.txt` | A — normal prompt | `timeout 60 codex login --device-auth`      | a URL and a code      |
+| `device-login-edge.txt`   | D — error / retry | offline run with an unreachable local proxy | `null`                |
 
 Two more rows from the capture are not committed as fixtures. Row B (timeout
 tail) printed no extra Codex line; the external `timeout` process ended the

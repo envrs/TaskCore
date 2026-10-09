@@ -29,14 +29,14 @@ for the provider variants and complete interactive state matrix.
 
 Execution recovery reuses the existing transcript header and task status. Routine phases add no list badges, status cards, or reconciliation dialogs. Only a transient reconnection changes the header text. Automatic recovery decisions remain in the local run log. Storybook **Tasks / Execution recovery** demonstrates quiet task lists, native and legacy transcript headers, and dashboard composition.
 
-| Area | Count |
-|---|---:|
-| Shared primitives (`ui/src/components/ui/`) | 24 |
-| Feature components, flat (`ui/src/components/*.tsx`) | 178 |
-| Feature components, nested subdirs (`access/`, `artifacts/`, `environment-variables-editor/`, `interrupt-handoff/`, `issue-output/`, `issue-properties/`, `routine-sections/`, `search/`, `timeline/`, `transcript/`) | 28 |
-| **Feature components total** | **206** |
-| Pages (`ui/src/pages/`, incl. `pages/secrets/`) | 73 |
-| **Grand total** | **303** (roughly matches DESIGN.md's "24 + ~277") |
+| Area                                                                                                                                                                                                                  |                                             Count |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------: |
+| Shared primitives (`ui/src/components/ui/`)                                                                                                                                                                           |                                                24 |
+| Feature components, flat (`ui/src/components/*.tsx`)                                                                                                                                                                  |                                               178 |
+| Feature components, nested subdirs (`access/`, `artifacts/`, `environment-variables-editor/`, `interrupt-handoff/`, `issue-output/`, `issue-properties/`, `routine-sections/`, `search/`, `timeline/`, `transcript/`) |                                                28 |
+| **Feature components total**                                                                                                                                                                                          |                                           **206** |
+| Pages (`ui/src/pages/`, incl. `pages/secrets/`)                                                                                                                                                                       |                                                73 |
+| **Grand total**                                                                                                                                                                                                       | **303** (roughly matches DESIGN.md's "24 + ~277") |
 
 ---
 
@@ -44,32 +44,32 @@ Execution recovery reuses the existing transcript header and task status. Routin
 
 All 24 checked against the live shadcn registry via `npx shadcn@latest diff` (network-available in this environment). Aggregate `diff` and per-component spot checks (`button`, `dialog`) both returned **"No updates found"** — these are currently in sync with the upstream registry source.
 
-| Component | File | Registry name | Variants (props) | Purpose |
-|---|---|---|---|---|
-| Alert Dialog | `alert-dialog.tsx` | `alert-dialog` | (Radix primitive passthrough) | Confirm/destructive-action modal |
-| Avatar | `avatar.tsx` | `avatar` | `size` (sm/default), `shape` (circle/square via `data-shape`) | User/agent avatar with fallback initials |
-| Badge | `badge.tsx` | `badge` | `variant` (default/secondary/destructive/outline) | Generic pill label |
-| Breadcrumb | `breadcrumb.tsx` | `breadcrumb` | (Radix/plain nav passthrough) | Page breadcrumb trail |
-| Button | `button.tsx` | `button` | `variant` (default/destructive/outline/secondary/ghost/link), `size` (default/sm/lg/icon/icon-sm/icon-xs) | CTA / action button, all tiers |
-| Card | `card.tsx` | `card` | Header/Title/Description/Content/Footer subparts | Bordered content container |
-| Checkbox | `checkbox.tsx` | `checkbox` | (Radix passthrough) | Boolean input |
-| Collapsible | `collapsible.tsx` | `collapsible` | (Radix passthrough) | Expand/collapse section |
-| Command | `command.tsx` | `command` | Dialog/Input/List/Item/Group/Separator/Shortcut | ⌘K palette primitive (backs `CommandPalette`) |
-| Dialog | `dialog.tsx` | `dialog` | (Radix passthrough), expandable max-width transition | Modal dialog |
-| Dropdown Menu | `dropdown-menu.tsx` | `dropdown-menu` | Item/CheckboxItem/RadioItem/Sub/Separator/Shortcut | Context/action menu |
-| Input | `input.tsx` | `input` | (native input passthrough) | Text input |
-| Label | `label.tsx` | `label` | (Radix passthrough) | Form field label |
-| Popover | `popover.tsx` | `popover` | (Radix passthrough) | Floating panel |
-| Radio Card | `radio-card.tsx` | **not a standard registry name** | (custom, card-shaped radio option) | Large selectable option card (onboarding/settings pickers) |
-| Scroll Area | `scroll-area.tsx` | `scroll-area` | (Radix passthrough) | Styled scroll container |
-| Select | `select.tsx` | `select` | (Radix passthrough) | Dropdown select |
-| Separator | `separator.tsx` | `separator` | `orientation` | Divider line |
-| Sheet | `sheet.tsx` | `sheet` | `side` (top/right/bottom/left) | Slide-in drawer |
-| Skeleton | `skeleton.tsx` | `skeleton` | (plain div passthrough) | Loading placeholder |
-| Tabs | `tabs.tsx` | `tabs` | (Radix passthrough) | Tab navigation |
-| Textarea | `textarea.tsx` | `textarea` | (native passthrough) | Multi-line text input |
-| Toggle Switch | `toggle-switch.tsx` | **not a standard registry name** (registry has `switch`) | (custom on/off toggle) | Boolean toggle control |
-| Tooltip | `tooltip.tsx` | `tooltip` | (Radix passthrough) | Hover/focus hint |
+| Component     | File                | Registry name                                            | Variants (props)                                                                                          | Purpose                                                    |
+| ------------- | ------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Alert Dialog  | `alert-dialog.tsx`  | `alert-dialog`                                           | (Radix primitive passthrough)                                                                             | Confirm/destructive-action modal                           |
+| Avatar        | `avatar.tsx`        | `avatar`                                                 | `size` (sm/default), `shape` (circle/square via `data-shape`)                                             | User/agent avatar with fallback initials                   |
+| Badge         | `badge.tsx`         | `badge`                                                  | `variant` (default/secondary/destructive/outline)                                                         | Generic pill label                                         |
+| Breadcrumb    | `breadcrumb.tsx`    | `breadcrumb`                                             | (Radix/plain nav passthrough)                                                                             | Page breadcrumb trail                                      |
+| Button        | `button.tsx`        | `button`                                                 | `variant` (default/destructive/outline/secondary/ghost/link), `size` (default/sm/lg/icon/icon-sm/icon-xs) | CTA / action button, all tiers                             |
+| Card          | `card.tsx`          | `card`                                                   | Header/Title/Description/Content/Footer subparts                                                          | Bordered content container                                 |
+| Checkbox      | `checkbox.tsx`      | `checkbox`                                               | (Radix passthrough)                                                                                       | Boolean input                                              |
+| Collapsible   | `collapsible.tsx`   | `collapsible`                                            | (Radix passthrough)                                                                                       | Expand/collapse section                                    |
+| Command       | `command.tsx`       | `command`                                                | Dialog/Input/List/Item/Group/Separator/Shortcut                                                           | ⌘K palette primitive (backs `CommandPalette`)              |
+| Dialog        | `dialog.tsx`        | `dialog`                                                 | (Radix passthrough), expandable max-width transition                                                      | Modal dialog                                               |
+| Dropdown Menu | `dropdown-menu.tsx` | `dropdown-menu`                                          | Item/CheckboxItem/RadioItem/Sub/Separator/Shortcut                                                        | Context/action menu                                        |
+| Input         | `input.tsx`         | `input`                                                  | (native input passthrough)                                                                                | Text input                                                 |
+| Label         | `label.tsx`         | `label`                                                  | (Radix passthrough)                                                                                       | Form field label                                           |
+| Popover       | `popover.tsx`       | `popover`                                                | (Radix passthrough)                                                                                       | Floating panel                                             |
+| Radio Card    | `radio-card.tsx`    | **not a standard registry name**                         | (custom, card-shaped radio option)                                                                        | Large selectable option card (onboarding/settings pickers) |
+| Scroll Area   | `scroll-area.tsx`   | `scroll-area`                                            | (Radix passthrough)                                                                                       | Styled scroll container                                    |
+| Select        | `select.tsx`        | `select`                                                 | (Radix passthrough)                                                                                       | Dropdown select                                            |
+| Separator     | `separator.tsx`     | `separator`                                              | `orientation`                                                                                             | Divider line                                               |
+| Sheet         | `sheet.tsx`         | `sheet`                                                  | `side` (top/right/bottom/left)                                                                            | Slide-in drawer                                            |
+| Skeleton      | `skeleton.tsx`      | `skeleton`                                               | (plain div passthrough)                                                                                   | Loading placeholder                                        |
+| Tabs          | `tabs.tsx`          | `tabs`                                                   | (Radix passthrough)                                                                                       | Tab navigation                                             |
+| Textarea      | `textarea.tsx`      | `textarea`                                               | (native passthrough)                                                                                      | Multi-line text input                                      |
+| Toggle Switch | `toggle-switch.tsx` | **not a standard registry name** (registry has `switch`) | (custom on/off toggle)                                                                                    | Boolean toggle control                                     |
+| Tooltip       | `tooltip.tsx`       | `tooltip`                                                | (Radix passthrough)                                                                                       | Hover/focus hint                                           |
 
 **Note:** `radio-card` and `toggle-switch` are not standard shadcn registry component names (the registry ships `radio-group` and `switch` respectively) — these were custom-built or heavily renamed/adapted rather than installed from the registry, so `shadcn diff` cannot check them against an upstream source. See shadcn-candidates section 4c.
 
@@ -83,200 +83,200 @@ Grouped by rough domain area. One line each; variants column is props-based wher
 
 ### 2.1 Issue / task surfaces (largest cluster)
 
-| Component | Purpose |
-|---|---|
-| `IssueRow.tsx` | Single row in a task list (status glyph, title, chips) |
-| `IssuesList.tsx` | List/board container rendering many `IssueRow`s, sort/filter/group |
-| `IssueColumns.tsx` | Column-layout config for the issues list/board |
-| `IssueGroupHeader.tsx` | Section header when list is grouped (by status/project/assignee) |
-| `IssueProperties.tsx` | 1-line re-export barrel → `issue-properties/IssueProperties.tsx` |
-| `issue-properties/IssueProperties.tsx` | Full task detail properties panel (2,301 lines) — status, assignee, labels, project, dates |
-| `IssueChatThread.tsx` | Task comment/chat thread (agent + human messages) |
-| `IssueThreadInteractionCard.tsx` | Rich interaction card embedded in the chat thread (approvals, tool calls) |
-| `IssueRecoveryActionCard.tsx` | Recovery-action prompt card in a stalled/errored task thread |
-| `IssueScheduledRetryCard.tsx` | Scheduled-retry status card in task thread |
-| `IssueRunLedger.tsx` | Run/cost ledger table for a task |
-| `IssueMonitorActivityCard.tsx` | Monitoring/activity summary card on a task |
-| `IssueBlockedNotice.tsx` | Banner when a task is blocked |
-| `IssueAssignedBacklogNotice.tsx` | Banner when a backlog task gets assigned |
-| `IssueDocumentAnnotations.tsx` / `issue-output/` variants | Doc-annotation highlight overlay on task documents |
-| `IssueDocumentsSection.tsx` | Documents tab/section on task detail |
-| `IssueAttachmentsSection.tsx` | Attachments tab/section on task detail |
-| `IssuePlanDecompositionsSection.tsx` | Sub-task/decomposition list section |
-| `IssueRelatedWorkPanel.tsx` | Related-issues panel |
-| `IssueReferenceActivitySummary.tsx` / `IssueReferencePill.tsx` | Inline task-reference chip + activity rollup |
-| `IssueSiblingNavigation.tsx` | Prev/next sibling task nav |
-| `IssueLinkQuicklook.tsx` / `IssuesQuicklook.tsx` | Hover-preview popover for a linked task / task list |
-| `IssueFiltersPopover.tsx` | Filter builder popover for the issues list |
-| `IssueWorkspaceCard.tsx` | Card summarizing a task's execution workspace |
-| `IssueContinuationHandoff.tsx` | Handoff-to-next-run card |
-| `NewIssueDialog.tsx` | Create-task dialog |
+| Component                                                      | Purpose                                                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `IssueRow.tsx`                                                 | Single row in a task list (status glyph, title, chips)                                     |
+| `IssuesList.tsx`                                               | List/board container rendering many `IssueRow`s, sort/filter/group                         |
+| `IssueColumns.tsx`                                             | Column-layout config for the issues list/board                                             |
+| `IssueGroupHeader.tsx`                                         | Section header when list is grouped (by status/project/assignee)                           |
+| `IssueProperties.tsx`                                          | 1-line re-export barrel → `issue-properties/IssueProperties.tsx`                           |
+| `issue-properties/IssueProperties.tsx`                         | Full task detail properties panel (2,301 lines) — status, assignee, labels, project, dates |
+| `IssueChatThread.tsx`                                          | Task comment/chat thread (agent + human messages)                                          |
+| `IssueThreadInteractionCard.tsx`                               | Rich interaction card embedded in the chat thread (approvals, tool calls)                  |
+| `IssueRecoveryActionCard.tsx`                                  | Recovery-action prompt card in a stalled/errored task thread                               |
+| `IssueScheduledRetryCard.tsx`                                  | Scheduled-retry status card in task thread                                                 |
+| `IssueRunLedger.tsx`                                           | Run/cost ledger table for a task                                                           |
+| `IssueMonitorActivityCard.tsx`                                 | Monitoring/activity summary card on a task                                                 |
+| `IssueBlockedNotice.tsx`                                       | Banner when a task is blocked                                                              |
+| `IssueAssignedBacklogNotice.tsx`                               | Banner when a backlog task gets assigned                                                   |
+| `IssueDocumentAnnotations.tsx` / `issue-output/` variants      | Doc-annotation highlight overlay on task documents                                         |
+| `IssueDocumentsSection.tsx`                                    | Documents tab/section on task detail                                                       |
+| `IssueAttachmentsSection.tsx`                                  | Attachments tab/section on task detail                                                     |
+| `IssuePlanDecompositionsSection.tsx`                           | Sub-task/decomposition list section                                                        |
+| `IssueRelatedWorkPanel.tsx`                                    | Related-issues panel                                                                       |
+| `IssueReferenceActivitySummary.tsx` / `IssueReferencePill.tsx` | Inline task-reference chip + activity rollup                                               |
+| `IssueSiblingNavigation.tsx`                                   | Prev/next sibling task nav                                                                 |
+| `IssueLinkQuicklook.tsx` / `IssuesQuicklook.tsx`               | Hover-preview popover for a linked task / task list                                        |
+| `IssueFiltersPopover.tsx`                                      | Filter builder popover for the issues list                                                 |
+| `IssueWorkspaceCard.tsx`                                       | Card summarizing a task's execution workspace                                              |
+| `IssueContinuationHandoff.tsx`                                 | Handoff-to-next-run card                                                                   |
+| `NewIssueDialog.tsx`                                           | Create-task dialog                                                                         |
 
 ### 2.2 Agent / execution
 
-| Component | Purpose |
-|---|---|
-| `AgentCapsule.tsx` | The brand "capsule" motif — 3-state agent avatar (slot/configured/online) |
-| `AgentActionButtons.tsx` | Start/stop/pause agent action row |
-| `AgentBubbleActionRow.tsx` | Action row (copy/vote/timestamp/menu) under a conf-room agent chat bubble — **only one implementation found**, confirming PRIOR-ART's concern about a duplicate is resolved |
-| `AgentConfigForm.tsx` | Agent configuration form (model, instructions, etc.) |
-| `AgentIconPicker.tsx` | Icon picker for agent avatars |
-| `AgentProperties.tsx` | Agent detail properties panel |
-| `ActiveAgentsPanel.tsx` | Sidebar/dashboard panel of currently-running agents |
-| `LiveRunWidget.tsx` | Live run status widget |
-| `RunChatSurface.tsx` | Shared chat-surface shell used by both conf-room and task chat |
-| `ClaudeSubscriptionPanel.tsx` / `CodexSubscriptionPanel.tsx` | Provider-specific subscription/quota panels — parallel, provider-specific (not a duplicate; see 3.4) |
-| `ProviderQuotaCard.tsx` / `QuotaBar.tsx` | Generic quota display card / bar |
+| Component                                                    | Purpose                                                                                                                                                                     |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AgentCapsule.tsx`                                           | The brand "capsule" motif — 3-state agent avatar (slot/configured/online)                                                                                                   |
+| `AgentActionButtons.tsx`                                     | Start/stop/pause agent action row                                                                                                                                           |
+| `AgentBubbleActionRow.tsx`                                   | Action row (copy/vote/timestamp/menu) under a conf-room agent chat bubble — **only one implementation found**, confirming PRIOR-ART's concern about a duplicate is resolved |
+| `AgentConfigForm.tsx`                                        | Agent configuration form (model, instructions, etc.)                                                                                                                        |
+| `AgentIconPicker.tsx`                                        | Icon picker for agent avatars                                                                                                                                               |
+| `AgentProperties.tsx`                                        | Agent detail properties panel                                                                                                                                               |
+| `ActiveAgentsPanel.tsx`                                      | Sidebar/dashboard panel of currently-running agents                                                                                                                         |
+| `LiveRunWidget.tsx`                                          | Live run status widget                                                                                                                                                      |
+| `RunChatSurface.tsx`                                         | Shared chat-surface shell used by both conf-room and task chat                                                                                                              |
+| `ClaudeSubscriptionPanel.tsx` / `CodexSubscriptionPanel.tsx` | Provider-specific subscription/quota panels — parallel, provider-specific (not a duplicate; see 3.4)                                                                        |
+| `ProviderQuotaCard.tsx` / `QuotaBar.tsx`                     | Generic quota display card / bar                                                                                                                                            |
 
 ### 2.3 Chat / composer
 
-| Component | Purpose |
-|---|---|
-| `ChatComposer.tsx` (380 lines) | Shared lean composer (conf-room + reused where a single-line/simple composer suffices) |
-| `MarkdownEditor.tsx` (1,425 lines) | Rich MDX-based editor with mention autocomplete — task comment composer |
-| `OnboardingChat.tsx` | Onboarding-flow chat surface |
-| `CommentThread.tsx` | Generic comment-thread renderer (non-task contexts) |
-| `MarkdownBody.tsx` / `WorkspaceFileMarkdownBody.tsx` | Rendered markdown output (read-only) — general vs. workspace-file-scoped |
+| Component                                            | Purpose                                                                                |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `ChatComposer.tsx` (380 lines)                       | Shared lean composer (conf-room + reused where a single-line/simple composer suffices) |
+| `MarkdownEditor.tsx` (1,425 lines)                   | Rich MDX-based editor with mention autocomplete — task comment composer                |
+| `OnboardingChat.tsx`                                 | Onboarding-flow chat surface                                                           |
+| `CommentThread.tsx`                                  | Generic comment-thread renderer (non-task contexts)                                    |
+| `MarkdownBody.tsx` / `WorkspaceFileMarkdownBody.tsx` | Rendered markdown output (read-only) — general vs. workspace-file-scoped               |
 
 **KNOWN-DUPLICATES.md lead verified:** `ChatComposer` vs `MarkdownEditor`-based task composer — confirmed genuinely different in scope (380 vs 1,425 lines; ChatComposer has no mention-autocomplete/MDX machinery). Per KNOWN-DUPLICATES.md this was a deliberate non-unification (PAP-101) — **flagged in section 5, not recommended for merge.**
 
 ### 2.4 Status / chips / badges
 
-| Component | Purpose |
-|---|---|
-| `StatusIcon.tsx` | Interactive status glyph + popover to change status (wraps `StatusGlyph`) |
-| `StatusGlyph.tsx` | Pure SVG glyph renderer per status (sm/md/lg), no interactivity |
-| `StatusBadge.tsx` | Custom `<span>` pill components: `StatusBadge` (generic run/goal/approval), `AgentStatusBadge`, heartbeat capsule — **does not wrap the shadcn `Badge` primitive** (see shadcn candidates 4a) |
-| `PriorityIcon.tsx` | Priority-level icon |
-| `ExternalObjectStatusIcon.tsx` / `ExternalObjectStatusSummary.tsx` / `ExternalObjectPill.tsx` | External-object (linked PR/doc/etc.) status glyph, rollup summary, and inline pill — a third, deliberately separate status-presentation family |
-| `BlockedReasonChip.tsx` | Chip explaining why a task is blocked |
-| `SourceTrustBadge.tsx` / `SourceResolvedFoldBadge.tsx` / `SourceResolvedFoldCallout.tsx` | Trust/fold badges for external content sources |
+| Component                                                                                     | Purpose                                                                                                                                                                                       |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `StatusIcon.tsx`                                                                              | Interactive status glyph + popover to change status (wraps `StatusGlyph`)                                                                                                                     |
+| `StatusGlyph.tsx`                                                                             | Pure SVG glyph renderer per status (sm/md/lg), no interactivity                                                                                                                               |
+| `StatusBadge.tsx`                                                                             | Custom `<span>` pill components: `StatusBadge` (generic run/goal/approval), `AgentStatusBadge`, heartbeat capsule — **does not wrap the shadcn `Badge` primitive** (see shadcn candidates 4a) |
+| `PriorityIcon.tsx`                                                                            | Priority-level icon                                                                                                                                                                           |
+| `ExternalObjectStatusIcon.tsx` / `ExternalObjectStatusSummary.tsx` / `ExternalObjectPill.tsx` | External-object (linked PR/doc/etc.) status glyph, rollup summary, and inline pill — a third, deliberately separate status-presentation family                                                |
+| `BlockedReasonChip.tsx`                                                                       | Chip explaining why a task is blocked                                                                                                                                                         |
+| `SourceTrustBadge.tsx` / `SourceResolvedFoldBadge.tsx` / `SourceResolvedFoldCallout.tsx`      | Trust/fold badges for external content sources                                                                                                                                                |
 
 **KNOWN-DUPLICATES.md lead verified:** StatusIcon / inline-mention chips / task chips are intentionally three separate systems (StatusIcon+StatusGlyph = task status glyph family; `ExternalObjectStatusIcon`/`Pill`/`Summary` = a second, external-object-specific family; mention chips in `lib/mention-chips.ts` + markdown CSS = a third, generic "chip in prose" family). **Documented here per instruction, not merged.**
 
 ### 2.5 Sidebar / navigation
 
-| Component | Purpose |
-|---|---|
-| `Sidebar.tsx` / `SidebarShell.tsx` / `SecondarySidebar.tsx` / `InstanceSidebar.tsx` | Primary/secondary/instance-scoped sidebar shells |
-| `SidebarSection.tsx` / `SidebarNavItem.tsx` | Sidebar section grouping + nav item row |
-| `SidebarProjects.tsx` / `SidebarStarredProjects.tsx` | Project list / starred-project list in sidebar |
-| `SidebarAgents.tsx` | Agent list in sidebar |
-| `SidebarAccountMenu.tsx` / `SidebarCompanyMenu.tsx` | Account and company switcher menus |
-| `SidebarServerInfo.tsx` | Server/instance info footer |
-| `RequestCollapsedSidebar.tsx` | Collapsed-state sidebar for request/approval views |
-| `RoutineSubSidebar.tsx` | Routine-scoped sub-sidebar |
-| `MobileBottomNav.tsx` | Mobile bottom tab bar |
-| `BreadcrumbBar.tsx` (uses `ui/breadcrumb`) | Page breadcrumb bar wrapper |
-| `PageTabBar.tsx` | In-page tab bar |
-| `CommandPalette.tsx` | ⌘K command palette (wraps `ui/command`) |
+| Component                                                                           | Purpose                                            |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `Sidebar.tsx` / `SidebarShell.tsx` / `SecondarySidebar.tsx` / `InstanceSidebar.tsx` | Primary/secondary/instance-scoped sidebar shells   |
+| `SidebarSection.tsx` / `SidebarNavItem.tsx`                                         | Sidebar section grouping + nav item row            |
+| `SidebarProjects.tsx` / `SidebarStarredProjects.tsx`                                | Project list / starred-project list in sidebar     |
+| `SidebarAgents.tsx`                                                                 | Agent list in sidebar                              |
+| `SidebarAccountMenu.tsx` / `SidebarCompanyMenu.tsx`                                 | Account and company switcher menus                 |
+| `SidebarServerInfo.tsx`                                                             | Server/instance info footer                        |
+| `RequestCollapsedSidebar.tsx`                                                       | Collapsed-state sidebar for request/approval views |
+| `RoutineSubSidebar.tsx`                                                             | Routine-scoped sub-sidebar                         |
+| `MobileBottomNav.tsx`                                                               | Mobile bottom tab bar                              |
+| `BreadcrumbBar.tsx` (uses `ui/breadcrumb`)                                          | Page breadcrumb bar wrapper                        |
+| `PageTabBar.tsx`                                                                    | In-page tab bar                                    |
+| `CommandPalette.tsx`                                                                | ⌘K command palette (wraps `ui/command`)            |
 
 **Sidebar text-size cluster** (cross-ref TOKEN-AUDIT.md 3.1): `Sidebar.tsx`, `SidebarNavItem.tsx`, `SidebarAgents.tsx`, `SidebarProjects.tsx`, `SidebarStarredProjects.tsx`, `SidebarAccountMenu.tsx` all independently use `text-[13px]` — six components implementing what looks like one shared "sidebar row label" intent as six separate arbitrary values. Flagged for the human type-scale decision, not merged here.
 
 ### 2.6 Pipelines / routines / goals
 
-| Component | Purpose |
-|---|---|
-| `PipelineHealthWarnings.tsx` / `PipelineLivenessBanner.tsx` | Pipeline health/liveness banners |
-| `PipelineItemBodyDocument.tsx` / `PipelineStageHistoryPanel.tsx` / `PipelineWorkReferences.tsx` | Pipeline stage detail panels |
-| `PipelinesExperimentalGate.tsx` | Feature-flag gate wrapper for pipelines |
-| `RoutineList.tsx` / `ManagedRoutinesList.tsx` | Routine list views |
-| `RoutineActivityRow.tsx` / `RoutineHistoryTab.tsx` | Routine activity row + history tab |
-| `RoutineRunVariablesDialog.tsx` / `RoutineVariablesEditor.tsx` | Routine run-variable input dialog/editor |
-| `RoutineSaveBar.tsx` / `RoutineTriggerCard.tsx` | Routine save-bar + trigger config card |
-| `routine-sections/editable-sections.tsx` (+2 more) | Editable routine-section blocks |
-| `ScheduleEditor.tsx` | Cron/schedule editor |
-| `GoalTree.tsx` / `GoalProperties.tsx` / `NewGoalDialog.tsx` | Goal hierarchy tree, detail panel, create dialog |
+| Component                                                                                       | Purpose                                          |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `PipelineHealthWarnings.tsx` / `PipelineLivenessBanner.tsx`                                     | Pipeline health/liveness banners                 |
+| `PipelineItemBodyDocument.tsx` / `PipelineStageHistoryPanel.tsx` / `PipelineWorkReferences.tsx` | Pipeline stage detail panels                     |
+| `PipelinesExperimentalGate.tsx`                                                                 | Feature-flag gate wrapper for pipelines          |
+| `RoutineList.tsx` / `ManagedRoutinesList.tsx`                                                   | Routine list views                               |
+| `RoutineActivityRow.tsx` / `RoutineHistoryTab.tsx`                                              | Routine activity row + history tab               |
+| `RoutineRunVariablesDialog.tsx` / `RoutineVariablesEditor.tsx`                                  | Routine run-variable input dialog/editor         |
+| `RoutineSaveBar.tsx` / `RoutineTriggerCard.tsx`                                                 | Routine save-bar + trigger config card           |
+| `routine-sections/editable-sections.tsx` (+2 more)                                              | Editable routine-section blocks                  |
+| `ScheduleEditor.tsx`                                                                            | Cron/schedule editor                             |
+| `GoalTree.tsx` / `GoalProperties.tsx` / `NewGoalDialog.tsx`                                     | Goal hierarchy tree, detail panel, create dialog |
 
 ### 2.7 Finance / budget
 
-| Component | Purpose |
-|---|---|
+| Component                                                                                                                       | Purpose                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `AccountingModelCard.tsx` / `BillerSpendCard.tsx` / `FinanceBillerCard.tsx` / `FinanceKindCard.tsx` / `FinanceTimelineCard.tsx` | Various finance-dashboard cards — 5 distinct card shapes for different finance groupings (model/biller/kind/timeline); worth a human check for whether all 5 are truly distinct or 2-3 could share a base card |
-| `BudgetIncidentCard.tsx` / `BudgetPolicyCard.tsx` / `BudgetSidebarMarker.tsx` | Budget incident, policy config, sidebar marker |
-| `MetricCard.tsx` | Generic metric-display card |
+| `BudgetIncidentCard.tsx` / `BudgetPolicyCard.tsx` / `BudgetSidebarMarker.tsx`                                                   | Budget incident, policy config, sidebar marker                                                                                                                                                                 |
+| `MetricCard.tsx`                                                                                                                | Generic metric-display card                                                                                                                                                                                    |
 
 ### 2.8 Files / documents / artifacts
 
-| Component | Purpose |
-|---|---|
-| `FileTree.tsx` | General file-tree renderer + `buildFileTree`/`FileTreeNode` model |
-| `PackageFileTree.tsx` | Thin wrapper around `FileTree` (`wrapLabels` default) — reuses `FileTreeProps`, not a duplicate |
-| `WorkspaceFileBrowser.tsx` | Execution-workspace file browser — **defines its own parallel tree-node model** (`WorkspaceFileTreeNode`, `buildWorkspaceFileTree`, `compareTreeNodes`) instead of reusing `FileTree`'s `FileTreeNode`/`buildFileTree` — see suspected duplicates (3.2) |
-| `FileViewerSheet.tsx` | File content viewer sheet (wraps `ui/sheet`) |
-| `FileTree.tsx`'s `parseFrontmatter` | Shared frontmatter parser (also exported, reused elsewhere) |
-| `DocumentAnnotationLayer.tsx` / `DocumentAnnotationPanel.tsx` | Document highlight/annotation overlay + side panel |
-| `DocumentDiffModal.tsx` | Document diff viewer modal |
-| `DocumentFrameHeader.tsx` | Header chrome for an embedded document frame |
-| `ArtifactFileChip.tsx` / `artifacts/ArtifactCard.tsx` / `artifacts/ArtifactGroupCard.tsx` / `ArtifactsPanel.tsx` | Artifact chip, card, grouped-card, and panel — internally consistent `rounded-[8px]` cluster (TOKEN-AUDIT 3.5) |
-| `ImageGalleryModal.tsx` | Image gallery lightbox modal |
+| Component                                                                                                        | Purpose                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FileTree.tsx`                                                                                                   | General file-tree renderer + `buildFileTree`/`FileTreeNode` model                                                                                                                                                                                       |
+| `PackageFileTree.tsx`                                                                                            | Thin wrapper around `FileTree` (`wrapLabels` default) — reuses `FileTreeProps`, not a duplicate                                                                                                                                                         |
+| `WorkspaceFileBrowser.tsx`                                                                                       | Execution-workspace file browser — **defines its own parallel tree-node model** (`WorkspaceFileTreeNode`, `buildWorkspaceFileTree`, `compareTreeNodes`) instead of reusing `FileTree`'s `FileTreeNode`/`buildFileTree` — see suspected duplicates (3.2) |
+| `FileViewerSheet.tsx`                                                                                            | File content viewer sheet (wraps `ui/sheet`)                                                                                                                                                                                                            |
+| `FileTree.tsx`'s `parseFrontmatter`                                                                              | Shared frontmatter parser (also exported, reused elsewhere)                                                                                                                                                                                             |
+| `DocumentAnnotationLayer.tsx` / `DocumentAnnotationPanel.tsx`                                                    | Document highlight/annotation overlay + side panel                                                                                                                                                                                                      |
+| `DocumentDiffModal.tsx`                                                                                          | Document diff viewer modal                                                                                                                                                                                                                              |
+| `DocumentFrameHeader.tsx`                                                                                        | Header chrome for an embedded document frame                                                                                                                                                                                                            |
+| `ArtifactFileChip.tsx` / `artifacts/ArtifactCard.tsx` / `artifacts/ArtifactGroupCard.tsx` / `ArtifactsPanel.tsx` | Artifact chip, card, grouped-card, and panel — internally consistent `rounded-[8px]` cluster (TOKEN-AUDIT 3.5)                                                                                                                                          |
+| `ImageGalleryModal.tsx`                                                                                          | Image gallery lightbox modal                                                                                                                                                                                                                            |
 
 ### 2.9 Onboarding / access / identity
 
-| Component | Purpose |
-|---|---|
-| `OnboardingWizard.tsx` / `OnboardingWizardVariant.tsx` | Onboarding flow + an alternate variant — worth a human check on whether the variant is still live or leftover from an A/B (see 3.5) |
-| `FrontDoor.tsx` | Landing/entry gate component |
-| `CloudAccessGate.tsx` / `ConferenceRoomChatGate.tsx` / `PipelinesExperimentalGate.tsx` | Three separate feature-flag/access gate wrappers — same pattern (children-if-enabled), each hand-rolled per feature; candidate for a shared `FeatureGate` primitive (flagged, not built here) |
-| `Identity.tsx` | Avatar + name identity chip (`deriveInitials` helper) |
-| `MembershipAction.tsx` | Membership accept/decline action row |
-| `access/` (2 files) | Access-request related components |
-| `ReportsToPicker.tsx` / `ExecutionParticipantPicker.tsx` / `InlineEntitySelector.tsx` / `SearchableSelect.tsx` | Four distinct entity-picker components — overlapping purpose (pick a person/entity from a list); see suspected duplicates (3.3) |
-| `SecretBindingPicker.tsx` / `environment-variables-editor/` (5 files) | Secrets/env-var binding UI |
+| Component                                                                                                      | Purpose                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OnboardingWizard.tsx` / `OnboardingWizardVariant.tsx`                                                         | Onboarding flow + an alternate variant — worth a human check on whether the variant is still live or leftover from an A/B (see 3.5)                                                           |
+| `FrontDoor.tsx`                                                                                                | Landing/entry gate component                                                                                                                                                                  |
+| `CloudAccessGate.tsx` / `ConferenceRoomChatGate.tsx` / `PipelinesExperimentalGate.tsx`                         | Three separate feature-flag/access gate wrappers — same pattern (children-if-enabled), each hand-rolled per feature; candidate for a shared `FeatureGate` primitive (flagged, not built here) |
+| `Identity.tsx`                                                                                                 | Avatar + name identity chip (`deriveInitials` helper)                                                                                                                                         |
+| `MembershipAction.tsx`                                                                                         | Membership accept/decline action row                                                                                                                                                          |
+| `access/` (2 files)                                                                                            | Access-request related components                                                                                                                                                             |
+| `ReportsToPicker.tsx` / `ExecutionParticipantPicker.tsx` / `InlineEntitySelector.tsx` / `SearchableSelect.tsx` | Four distinct entity-picker components — overlapping purpose (pick a person/entity from a list); see suspected duplicates (3.3)                                                               |
+| `SecretBindingPicker.tsx` / `environment-variables-editor/` (5 files)                                          | Secrets/env-var binding UI                                                                                                                                                                    |
 
 ### 2.10 System / chrome / misc
 
-| Component | Purpose |
-|---|---|
-| `Layout.tsx` | App shell layout |
-| `EmptyState.tsx` | **The single canonical empty-state component** — confirmed only one exists, matching DESIGN.md principle 1 |
-| `SystemNotice.tsx` | Global system notice banner |
-| `DevRestartBanner.tsx` | Dev-mode restart-required banner |
-| `ToastViewport.tsx` + `context/ToastContext.tsx` | Fully custom toast notification system — no shadcn `sonner`/toast primitive installed (see shadcn candidates 4a) |
-| `KeyboardShortcutsCheatsheet.tsx` | ⌘K-adjacent shortcuts help modal |
-| `PageSkeleton.tsx` | Loading skeleton (wraps `ui/skeleton`) |
-| `RouteErrorBoundary.tsx` | Route-level error boundary |
-| `ThemeToggle.tsx` | Light/dark toggle |
-| `CopyText.tsx` | Copy-to-clipboard text control |
-| `EntityRow.tsx` | Generic entity list row (used across several list contexts) |
-| `SwipeToArchive.tsx` | Mobile swipe-to-archive gesture wrapper |
-| `ScrollToBottom.tsx` | Scroll-to-bottom floating button |
-| `FoldCurtain.tsx` | Collapsible "show more" curtain/fade |
-| `InlineEditor.tsx` | Generic inline-edit-in-place control |
-| `JsonSchemaForm.tsx` | JSON-schema-driven dynamic form renderer |
-| `TrustPresetSection.tsx` | Trust-level preset picker section |
-| `WorktreeBanner.tsx` | Worktree-branding banner |
-| `CompanyPatternIcon.tsx` | Canvas-rendered company pattern/avatar icon |
-| `CompanySwitcher.tsx` / `CompanySettingsSidebar.tsx` | Company switcher + settings sidebar |
-| `ProjectProperties.tsx` / `ProjectTile.tsx` / `ProjectWorkspaceSummaryCard.tsx` / `ProjectWorkspacesContent.tsx` | Project detail panel, tile, workspace summary card, workspace content |
-| `ApprovalCard.tsx` / `ApprovalPayload.tsx` | Approval request card + payload renderer |
-| `ExecutionWorkspaceCloseDialog.tsx` | Close-workspace confirm dialog |
-| `ResponsibleUserDenialNotice.tsx` | Denial-notice banner |
-| `BootstrapPendingPage.tsx` | Bootstrap-pending full-page state |
-| `MissingPluginTabPlaceholder.tsx` | Placeholder when a plugin tab isn't installed |
-| `StandaloneBrowserControls.tsx` | Standalone-mode browser chrome controls |
-| `AsciiArtAnimation.tsx` | Decorative ASCII animation (boot/loading) |
-| `OpenCodeLogoIcon.tsx` | Static logo icon |
-| `StarToggle.tsx` | Star/favorite toggle button |
-| `OutputFeedbackButtons.tsx` | Thumbs up/down feedback buttons on agent output |
-| `KanbanBoard.tsx` | Kanban board view (alternate to `IssuesList` list view) |
-| `agent-config-primitives.tsx` | Shared field primitives for agent config forms |
-| `PropertiesPanel.tsx` | Generic properties-panel shell (used by Issue/Project/Agent/Goal Properties) |
+| Component                                                                                                        | Purpose                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `Layout.tsx`                                                                                                     | App shell layout                                                                                                 |
+| `EmptyState.tsx`                                                                                                 | **The single canonical empty-state component** — confirmed only one exists, matching DESIGN.md principle 1       |
+| `SystemNotice.tsx`                                                                                               | Global system notice banner                                                                                      |
+| `DevRestartBanner.tsx`                                                                                           | Dev-mode restart-required banner                                                                                 |
+| `ToastViewport.tsx` + `context/ToastContext.tsx`                                                                 | Fully custom toast notification system — no shadcn `sonner`/toast primitive installed (see shadcn candidates 4a) |
+| `KeyboardShortcutsCheatsheet.tsx`                                                                                | ⌘K-adjacent shortcuts help modal                                                                                 |
+| `PageSkeleton.tsx`                                                                                               | Loading skeleton (wraps `ui/skeleton`)                                                                           |
+| `RouteErrorBoundary.tsx`                                                                                         | Route-level error boundary                                                                                       |
+| `ThemeToggle.tsx`                                                                                                | Light/dark toggle                                                                                                |
+| `CopyText.tsx`                                                                                                   | Copy-to-clipboard text control                                                                                   |
+| `EntityRow.tsx`                                                                                                  | Generic entity list row (used across several list contexts)                                                      |
+| `SwipeToArchive.tsx`                                                                                             | Mobile swipe-to-archive gesture wrapper                                                                          |
+| `ScrollToBottom.tsx`                                                                                             | Scroll-to-bottom floating button                                                                                 |
+| `FoldCurtain.tsx`                                                                                                | Collapsible "show more" curtain/fade                                                                             |
+| `InlineEditor.tsx`                                                                                               | Generic inline-edit-in-place control                                                                             |
+| `JsonSchemaForm.tsx`                                                                                             | JSON-schema-driven dynamic form renderer                                                                         |
+| `TrustPresetSection.tsx`                                                                                         | Trust-level preset picker section                                                                                |
+| `WorktreeBanner.tsx`                                                                                             | Worktree-branding banner                                                                                         |
+| `CompanyPatternIcon.tsx`                                                                                         | Canvas-rendered company pattern/avatar icon                                                                      |
+| `CompanySwitcher.tsx` / `CompanySettingsSidebar.tsx`                                                             | Company switcher + settings sidebar                                                                              |
+| `ProjectProperties.tsx` / `ProjectTile.tsx` / `ProjectWorkspaceSummaryCard.tsx` / `ProjectWorkspacesContent.tsx` | Project detail panel, tile, workspace summary card, workspace content                                            |
+| `ApprovalCard.tsx` / `ApprovalPayload.tsx`                                                                       | Approval request card + payload renderer                                                                         |
+| `ExecutionWorkspaceCloseDialog.tsx`                                                                              | Close-workspace confirm dialog                                                                                   |
+| `ResponsibleUserDenialNotice.tsx`                                                                                | Denial-notice banner                                                                                             |
+| `BootstrapPendingPage.tsx`                                                                                       | Bootstrap-pending full-page state                                                                                |
+| `MissingPluginTabPlaceholder.tsx`                                                                                | Placeholder when a plugin tab isn't installed                                                                    |
+| `StandaloneBrowserControls.tsx`                                                                                  | Standalone-mode browser chrome controls                                                                          |
+| `AsciiArtAnimation.tsx`                                                                                          | Decorative ASCII animation (boot/loading)                                                                        |
+| `OpenCodeLogoIcon.tsx`                                                                                           | Static logo icon                                                                                                 |
+| `StarToggle.tsx`                                                                                                 | Star/favorite toggle button                                                                                      |
+| `OutputFeedbackButtons.tsx`                                                                                      | Thumbs up/down feedback buttons on agent output                                                                  |
+| `KanbanBoard.tsx`                                                                                                | Kanban board view (alternate to `IssuesList` list view)                                                          |
+| `agent-config-primitives.tsx`                                                                                    | Shared field primitives for agent config forms                                                                   |
+| `PropertiesPanel.tsx`                                                                                            | Generic properties-panel shell (used by Issue/Project/Agent/Goal Properties)                                     |
 
 ### 2.11 Nested subdirectories
 
-| Directory | Files | Purpose |
-|---|---|---|
-| `access/` | 2 | Access-request UI |
-| `artifacts/` | 2 | `ArtifactCard`, `ArtifactGroupCard` |
-| `environment-variables-editor/` | 5 | Env-var/secret editor rows and index |
-| `interrupt-handoff/` | 1 | `InterruptHandoffViews.tsx` |
-| `issue-output/` | 5 | Task output file tiles / sections |
-| `issue-properties/` | 5 | Task properties panel (full impl, see 2.1) |
-| `routine-sections/` | 3 | Editable routine section blocks |
-| `search/` | 3 | Search result row, `HighlightedText`, `MatchSourceChip` |
-| `timeline/` | 1 | `WorkTimelineChart.tsx` |
-| `transcript/` | 1 | `RunTranscriptView.tsx` |
+| Directory                       | Files | Purpose                                                 |
+| ------------------------------- | ----- | ------------------------------------------------------- |
+| `access/`                       | 2     | Access-request UI                                       |
+| `artifacts/`                    | 2     | `ArtifactCard`, `ArtifactGroupCard`                     |
+| `environment-variables-editor/` | 5     | Env-var/secret editor rows and index                    |
+| `interrupt-handoff/`            | 1     | `InterruptHandoffViews.tsx`                             |
+| `issue-output/`                 | 5     | Task output file tiles / sections                       |
+| `issue-properties/`             | 5     | Task properties panel (full impl, see 2.1)              |
+| `routine-sections/`             | 3     | Editable routine section blocks                         |
+| `search/`                       | 3     | Search result row, `HighlightedText`, `MatchSourceChip` |
+| `timeline/`                     | 1     | `WorkTimelineChart.tsx`                                 |
+| `transcript/`                   | 1     | `RunTranscriptView.tsx`                                 |
 
 ---
 
@@ -284,41 +284,41 @@ Grouped by rough domain area. One line each; variants column is props-based wher
 
 Grouped by area; one line each.
 
-| Page | Purpose |
-|---|---|
-| `Dashboard.tsx` | Home/overview dashboard |
-| `IssueDetail.tsx` / `IssuesList` route pages | Task detail + list routes |
-| `AgentDetail.tsx` / `Agents.tsx` | Agent detail + list |
-| `ProjectDetail.tsx` / `Projects.test.tsx`-adjacent list page | Project detail + list |
-| `Pipelines.tsx` / `PipelineSettings.tsx` | Pipeline list + settings |
-| `Routines.tsx` | Routine list/detail |
-| `Org.tsx` / `OrgChart.tsx` | Org directory + org chart visualization |
-| `Costs.tsx` | Cost/budget dashboard |
-| `Timeline.tsx` | Work timeline view (wraps `timeline/WorkTimelineChart`) |
-| `Inbox.tsx` | Notifications/requests inbox |
-| `Approvals.tsx` / `ApprovalDetail.tsx` | Approval queue + detail |
-| `CompanySettings.tsx` / `CompanySkills.tsx` / `CompanyEnvironments.tsx` / `CompanyAccess.tsx` / `CompanyImport.tsx` / `CompanyExport.tsx` | Company-scoped settings sub-pages |
-| `TeamCatalog.tsx` | Team/role catalog |
-| `UserProfile.tsx` / `ProfileSettings.tsx` | User profile view + settings |
-| `Secrets.tsx` / `secrets/*` (5 files) | Secrets management + sub-tabs (import-from-vault, definitions, my-secrets, presentation helpers, missing-banner) |
-| `PluginManager.tsx` / `PluginSettings.tsx` | Plugin management + per-plugin settings |
-| `AdapterManager.tsx` | Adapter (agent runtime) management |
-| `CloudUpstream.tsx` / `CloudUpstreamUxLab.tsx` | Cloud-upstream connection page + its UxLab showcase twin |
-| `InviteLanding.tsx` / `InviteUxLab.tsx` | Invite acceptance landing page + UxLab showcase twin |
-| `BootstrapSetupUxLab.tsx` | Bootstrap-setup flow showcase |
-| `ResponsibleUserDenialUxLab.tsx` | Denial-flow showcase |
-| `SystemNoticeUxLab.tsx` | System-notice showcase |
-| `IssueChatUxLab.tsx` / `RunTranscriptUxLab.tsx` | Chat + transcript showcases |
-| `DesignGuide.tsx` | Design-system showcase/reference page |
-| `BoardChat.tsx` / `BoardClaim.tsx` | Board (concierge) chat + claim flow |
-| `NotFound.tsx` | 404 page |
-| `CliAuth.tsx` | CLI auth handoff page |
-| `JoinRequestQueue.tsx` | Join-request queue |
-| `InstanceAccess.tsx` / `InstanceGeneralSettings.tsx` / `InstanceExperimentalSettings.tsx` | Instance-level settings pages |
-| `ExecutionWorkspaceDetail.tsx` / `ProjectWorkspaceDetail.tsx` | Execution/project workspace detail pages |
-| `Companies.tsx` | Multi-company switcher/list |
-| `CompanyImport.tsx` / `CompanyExport.tsx` | Import/export company data |
-| `RoutineDetail.tsx` | Routine detail route |
+| Page                                                                                                                                      | Purpose                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `Dashboard.tsx`                                                                                                                           | Home/overview dashboard                                                                                          |
+| `IssueDetail.tsx` / `IssuesList` route pages                                                                                              | Task detail + list routes                                                                                        |
+| `AgentDetail.tsx` / `Agents.tsx`                                                                                                          | Agent detail + list                                                                                              |
+| `ProjectDetail.tsx` / `Projects.test.tsx`-adjacent list page                                                                              | Project detail + list                                                                                            |
+| `Pipelines.tsx` / `PipelineSettings.tsx`                                                                                                  | Pipeline list + settings                                                                                         |
+| `Routines.tsx`                                                                                                                            | Routine list/detail                                                                                              |
+| `Org.tsx` / `OrgChart.tsx`                                                                                                                | Org directory + org chart visualization                                                                          |
+| `Costs.tsx`                                                                                                                               | Cost/budget dashboard                                                                                            |
+| `Timeline.tsx`                                                                                                                            | Work timeline view (wraps `timeline/WorkTimelineChart`)                                                          |
+| `Inbox.tsx`                                                                                                                               | Notifications/requests inbox                                                                                     |
+| `Approvals.tsx` / `ApprovalDetail.tsx`                                                                                                    | Approval queue + detail                                                                                          |
+| `CompanySettings.tsx` / `CompanySkills.tsx` / `CompanyEnvironments.tsx` / `CompanyAccess.tsx` / `CompanyImport.tsx` / `CompanyExport.tsx` | Company-scoped settings sub-pages                                                                                |
+| `TeamCatalog.tsx`                                                                                                                         | Team/role catalog                                                                                                |
+| `UserProfile.tsx` / `ProfileSettings.tsx`                                                                                                 | User profile view + settings                                                                                     |
+| `Secrets.tsx` / `secrets/*` (5 files)                                                                                                     | Secrets management + sub-tabs (import-from-vault, definitions, my-secrets, presentation helpers, missing-banner) |
+| `PluginManager.tsx` / `PluginSettings.tsx`                                                                                                | Plugin management + per-plugin settings                                                                          |
+| `AdapterManager.tsx`                                                                                                                      | Adapter (agent runtime) management                                                                               |
+| `CloudUpstream.tsx` / `CloudUpstreamUxLab.tsx`                                                                                            | Cloud-upstream connection page + its UxLab showcase twin                                                         |
+| `InviteLanding.tsx` / `InviteUxLab.tsx`                                                                                                   | Invite acceptance landing page + UxLab showcase twin                                                             |
+| `BootstrapSetupUxLab.tsx`                                                                                                                 | Bootstrap-setup flow showcase                                                                                    |
+| `ResponsibleUserDenialUxLab.tsx`                                                                                                          | Denial-flow showcase                                                                                             |
+| `SystemNoticeUxLab.tsx`                                                                                                                   | System-notice showcase                                                                                           |
+| `IssueChatUxLab.tsx` / `RunTranscriptUxLab.tsx`                                                                                           | Chat + transcript showcases                                                                                      |
+| `DesignGuide.tsx`                                                                                                                         | Design-system showcase/reference page                                                                            |
+| `BoardChat.tsx` / `BoardClaim.tsx`                                                                                                        | Board (concierge) chat + claim flow                                                                              |
+| `NotFound.tsx`                                                                                                                            | 404 page                                                                                                         |
+| `CliAuth.tsx`                                                                                                                             | CLI auth handoff page                                                                                            |
+| `JoinRequestQueue.tsx`                                                                                                                    | Join-request queue                                                                                               |
+| `InstanceAccess.tsx` / `InstanceGeneralSettings.tsx` / `InstanceExperimentalSettings.tsx`                                                 | Instance-level settings pages                                                                                    |
+| `ExecutionWorkspaceDetail.tsx` / `ProjectWorkspaceDetail.tsx`                                                                             | Execution/project workspace detail pages                                                                         |
+| `Companies.tsx`                                                                                                                           | Multi-company switcher/list                                                                                      |
+| `CompanyImport.tsx` / `CompanyExport.tsx`                                                                                                 | Import/export company data                                                                                       |
+| `RoutineDetail.tsx`                                                                                                                       | Routine detail route                                                                                             |
 
 **UxLab pages are real routes** (confirmed via `App.tsx` — `/ux-lab/*`, `/design-guide`), not build-excluded demo code, so all hardcoded values inside them are in-scope per DESIGN.md even though they're showcase surfaces rather than product screens a typical operator visits daily.
 
@@ -330,13 +330,13 @@ Grouped by area; one line each.
 
 ### 4a. Custom components duplicating an available shadcn primitive
 
-| Custom component | Duplicates | Recommended replacement | Expected visual impact |
-|---|---|---|---|
-| `ToastViewport.tsx` + `context/ToastContext.tsx` | shadcn's `sonner`-based toast pattern (not currently installed) | Install `sonner`/toast primitive, migrate `useToastActions`/`useToastState` call sites to it | Low if the registry's toast is restyled to match current `toneClasses`/`toneDotClasses` tint system; the current implementation already has custom tone colors (`sky`/`emerald`/`amber`/`red`) that would need to carry over as variant props — a naive swap would look different unless those tones are preserved |
-| `components/StatusBadge.tsx` (`StatusBadge`, `AgentStatusBadge`) | shadcn `Badge` primitive (installed, `ui/badge.tsx`) | Keep as a distinct component (status badges need the `.status-chip` color-mix mechanic Badge's variant system doesn't support) but consider having it render `<Badge>` internally with a custom class rather than a bare `<span>`, for consistency of base styles (focus ring, disabled states, etc.) | Low — internal implementation change only if done carefully; skip if it risks the WCAG-tuned status hues |
-| Hand-rolled bordered-container `<div>`/`<ul>` patterns (`rounded-md border bg-card`-shaped) found in ~26 files (`pages/AdapterManager.tsx`, `pages/TeamCatalog.tsx`, `pages/InstanceAccess.tsx`, `pages/BootstrapSetupUxLab.tsx`, `pages/ResponsibleUserDenialUxLab.tsx`, `pages/CliAuth.tsx`, `pages/BoardClaim.tsx`, `pages/BoardChat.tsx`, `pages/InstanceGeneralSettings.tsx`, `pages/ProjectWorkspaceDetail.tsx`, `pages/Timeline.tsx`, `pages/PluginManager.tsx`, `pages/JoinRequestQueue.tsx`, `pages/InstanceExperimentalSettings.tsx`, `App.tsx`, `components/BootstrapPendingPage.tsx`, `components/IssuePlanDecompositionsSection.tsx`, `components/BlockedInboxView.tsx`, `components/ApprovalCard.tsx`, + ~7 more) vs. shadcn `Card` (installed, only imported in 21 files) | `Card`/`CardContent` | Low-to-medium — many of these are `<ul>` list wrappers, not literal card content; a swap would need per-site judgment, not a blanket codemod. Flagging the cluster, not asserting every site should change. |
-| Hand-rolled pill/badge-shaped `<span>`s (`rounded-full px-2 text-[...]`) outside `Badge` usage, ~34 files | `Badge` (installed, 35 files already use it) | `Badge` with a custom `className` for color | Low if colors are preserved as `className` overrides |
-| `plugins/launchers.tsx` generic plugin-shell overlay (`role="dialog"`, hand-rolled backdrop `bg-black/45`, manual z-index math, `rounded-xl`/`rounded-2xl`) | `Dialog` / `Sheet` / `Popover` (all installed) | Case-by-case: this component multiplexes dialog/drawer/popover shell types from one plugin-host abstraction, which none of the three installed primitives do individually — a clean swap likely means keeping the multiplexer but delegating each `shellType` branch to the matching installed primitive instead of a fully custom `<div>` tree | Medium — this is the most structurally custom overlay in the codebase; recommend closer human review before treating it as a simple swap |
+| Custom component                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Duplicates                                                      | Recommended replacement                                                                                                                                                                                                                                                                                                                         | Expected visual impact                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ToastViewport.tsx` + `context/ToastContext.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | shadcn's `sonner`-based toast pattern (not currently installed) | Install `sonner`/toast primitive, migrate `useToastActions`/`useToastState` call sites to it                                                                                                                                                                                                                                                    | Low if the registry's toast is restyled to match current `toneClasses`/`toneDotClasses` tint system; the current implementation already has custom tone colors (`sky`/`emerald`/`amber`/`red`) that would need to carry over as variant props — a naive swap would look different unless those tones are preserved |
+| `components/StatusBadge.tsx` (`StatusBadge`, `AgentStatusBadge`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | shadcn `Badge` primitive (installed, `ui/badge.tsx`)            | Keep as a distinct component (status badges need the `.status-chip` color-mix mechanic Badge's variant system doesn't support) but consider having it render `<Badge>` internally with a custom class rather than a bare `<span>`, for consistency of base styles (focus ring, disabled states, etc.)                                           | Low — internal implementation change only if done carefully; skip if it risks the WCAG-tuned status hues                                                                                                                                                                                                           |
+| Hand-rolled bordered-container `<div>`/`<ul>` patterns (`rounded-md border bg-card`-shaped) found in ~26 files (`pages/AdapterManager.tsx`, `pages/TeamCatalog.tsx`, `pages/InstanceAccess.tsx`, `pages/BootstrapSetupUxLab.tsx`, `pages/ResponsibleUserDenialUxLab.tsx`, `pages/CliAuth.tsx`, `pages/BoardClaim.tsx`, `pages/BoardChat.tsx`, `pages/InstanceGeneralSettings.tsx`, `pages/ProjectWorkspaceDetail.tsx`, `pages/Timeline.tsx`, `pages/PluginManager.tsx`, `pages/JoinRequestQueue.tsx`, `pages/InstanceExperimentalSettings.tsx`, `App.tsx`, `components/BootstrapPendingPage.tsx`, `components/IssuePlanDecompositionsSection.tsx`, `components/BlockedInboxView.tsx`, `components/ApprovalCard.tsx`, + ~7 more) vs. shadcn `Card` (installed, only imported in 21 files) | `Card`/`CardContent`                                            | Low-to-medium — many of these are `<ul>` list wrappers, not literal card content; a swap would need per-site judgment, not a blanket codemod. Flagging the cluster, not asserting every site should change.                                                                                                                                     |
+| Hand-rolled pill/badge-shaped `<span>`s (`rounded-full px-2 text-[...]`) outside `Badge` usage, ~34 files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `Badge` (installed, 35 files already use it)                    | `Badge` with a custom `className` for color                                                                                                                                                                                                                                                                                                     | Low if colors are preserved as `className` overrides                                                                                                                                                                                                                                                               |
+| `plugins/launchers.tsx` generic plugin-shell overlay (`role="dialog"`, hand-rolled backdrop `bg-black/45`, manual z-index math, `rounded-xl`/`rounded-2xl`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `Dialog` / `Sheet` / `Popover` (all installed)                  | Case-by-case: this component multiplexes dialog/drawer/popover shell types from one plugin-host abstraction, which none of the three installed primitives do individually — a clean swap likely means keeping the multiplexer but delegating each `shellType` branch to the matching installed primitive instead of a fully custom `<div>` tree | Medium — this is the most structurally custom overlay in the codebase; recommend closer human review before treating it as a simple swap                                                                                                                                                                           |
 
 ### 4b. Installed shadcn components drifted from the registry
 
@@ -356,19 +356,19 @@ All of the below are **leads for human review**, not verdicts, per KNOWN-DUPLICA
 
 ### 5.1 Seed leads from KNOWN-DUPLICATES.md — verified
 
-| Lead | Finding |
-|---|---|
-| `ChatComposer` vs `MarkdownEditor`-based task composer | **Confirmed genuinely distinct** (380 vs 1,425 lines; different prop interfaces `ChatComposerProps` vs `MarkdownEditorProps`; MarkdownEditor owns mention-autocomplete machinery — `findMentionMatch`, `computeMentionMenuPosition`, `placeCaretAfterMentionAnchor` — that ChatComposer has none of). Matches KNOWN-DUPLICATES.md's note that this was a deliberate non-unification (PAP-101). **Needs human decision: re-confirm this split should remain permanent, or revisit unification now that both have matured further.** |
-| `AgentBubbleActionRow.tsx` duplicate check | **Only one file found** (`components/AgentBubbleActionRow.tsx`). The concurrent-work duplicate PRIOR-ART/KNOWN-DUPLICATES.md warned about is not present on this branch — resolved. |
-| `StatusIcon` vs inline-mention chips vs task chips | **Confirmed three separate, intentionally distinct systems**: (1) `StatusIcon`/`StatusGlyph` — task status glyph, drives from `--status-task-icon-*` tokens; (2) `ExternalObjectStatusIcon`/`ExternalObjectPill`/`ExternalObjectStatusSummary` — a parallel system for external (PR/doc/etc.) object status, independent color/severity model (`externalObjectStatusIcon`, `externalObjectStatusToneSeverity` in `lib/status-colors.ts`); (3) mention chips (`lib/mention-chips.ts` + `.taskcore-mention-chip` CSS in `index.css`) — generic "entity reference in prose" chip unrelated to status at all. Documented per instruction, **not merged.** |
+| Lead                                                   | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ChatComposer` vs `MarkdownEditor`-based task composer | **Confirmed genuinely distinct** (380 vs 1,425 lines; different prop interfaces `ChatComposerProps` vs `MarkdownEditorProps`; MarkdownEditor owns mention-autocomplete machinery — `findMentionMatch`, `computeMentionMenuPosition`, `placeCaretAfterMentionAnchor` — that ChatComposer has none of). Matches KNOWN-DUPLICATES.md's note that this was a deliberate non-unification (PAP-101). **Needs human decision: re-confirm this split should remain permanent, or revisit unification now that both have matured further.**                                                                                                                    |
+| `AgentBubbleActionRow.tsx` duplicate check             | **Only one file found** (`components/AgentBubbleActionRow.tsx`). The concurrent-work duplicate PRIOR-ART/KNOWN-DUPLICATES.md warned about is not present on this branch — resolved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `StatusIcon` vs inline-mention chips vs task chips     | **Confirmed three separate, intentionally distinct systems**: (1) `StatusIcon`/`StatusGlyph` — task status glyph, drives from `--status-task-icon-*` tokens; (2) `ExternalObjectStatusIcon`/`ExternalObjectPill`/`ExternalObjectStatusSummary` — a parallel system for external (PR/doc/etc.) object status, independent color/severity model (`externalObjectStatusIcon`, `externalObjectStatusToneSeverity` in `lib/status-colors.ts`); (3) mention chips (`lib/mention-chips.ts` + `.taskcore-mention-chip` CSS in `index.css`) — generic "entity reference in prose" chip unrelated to status at all. Documented per instruction, **not merged.** |
 
 ### 5.2 New leads found during this audit
 
-| Lead | Evidence |
-|---|---|
-| `FileTree.tsx` vs `WorkspaceFileBrowser.tsx` tree models | `FileTree.tsx` exports `buildFileTree`, `FileTreeNode`, `countFiles`, `collectAllPaths`, `parseFrontmatter`. `WorkspaceFileBrowser.tsx` independently defines its own `WorkspaceFileTreeNode`/`WorkspaceFileTreeFolderNode`/`WorkspaceFileTreeFileNode`, `buildWorkspaceFileTree`, `compareTreeNodes`, `finalizeTreeFolder` — a parallel tree-building implementation rather than reuse of `FileTree`'s exported helpers. `PackageFileTree.tsx` by contrast correctly wraps `FileTree` (reuses `FileTreeProps`). **Needs human decision**: was `WorkspaceFileBrowser`'s separate model a deliberate choice (different node shape needs — e.g. it may need workspace-specific metadata `FileTreeNode` lacks) or copy-paste-and-diverge drift? |
-| `agentStatusBadge` vs `brandChipBadge` (`lib/status-colors.ts`) | Byte-for-byte identical maps for the 4 shared keys (gray/blue/amber/red — same hex, same dark-mode alpha suffixes); `brandChipBadge` additionally has `green`/`violet`. Cross-referenced in TOKEN-AUDIT.md section 1.1. **Recommend collapsing `agentStatusBadge` into `brandChipBadge`** (or making it an alias) since they are provably identical, not just similar. |
-| Entity-picker family: `ReportsToPicker.tsx`, `ExecutionParticipantPicker.tsx`, `InlineEntitySelector.tsx`, `SearchableSelect.tsx` | Four components with overlapping "pick one entity from a searchable list" purpose. Not verified identical (each has domain-specific filtering — reports-to org hierarchy, execution participants, generic inline selection, generic searchable select) but the prop-surface overlap (all take an options list + selected value + onChange) is a plausible consolidation candidate. **Flagged, not verified as true duplicates** — would need a closer prop-by-prop diff in a follow-up run. |
+| Lead                                                                                                                              | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FileTree.tsx` vs `WorkspaceFileBrowser.tsx` tree models                                                                          | `FileTree.tsx` exports `buildFileTree`, `FileTreeNode`, `countFiles`, `collectAllPaths`, `parseFrontmatter`. `WorkspaceFileBrowser.tsx` independently defines its own `WorkspaceFileTreeNode`/`WorkspaceFileTreeFolderNode`/`WorkspaceFileTreeFileNode`, `buildWorkspaceFileTree`, `compareTreeNodes`, `finalizeTreeFolder` — a parallel tree-building implementation rather than reuse of `FileTree`'s exported helpers. `PackageFileTree.tsx` by contrast correctly wraps `FileTree` (reuses `FileTreeProps`). **Needs human decision**: was `WorkspaceFileBrowser`'s separate model a deliberate choice (different node shape needs — e.g. it may need workspace-specific metadata `FileTreeNode` lacks) or copy-paste-and-diverge drift? |
+| `agentStatusBadge` vs `brandChipBadge` (`lib/status-colors.ts`)                                                                   | Byte-for-byte identical maps for the 4 shared keys (gray/blue/amber/red — same hex, same dark-mode alpha suffixes); `brandChipBadge` additionally has `green`/`violet`. Cross-referenced in TOKEN-AUDIT.md section 1.1. **Recommend collapsing `agentStatusBadge` into `brandChipBadge`** (or making it an alias) since they are provably identical, not just similar.                                                                                                                                                                                                                                                                                                                                                                       |
+| Entity-picker family: `ReportsToPicker.tsx`, `ExecutionParticipantPicker.tsx`, `InlineEntitySelector.tsx`, `SearchableSelect.tsx` | Four components with overlapping "pick one entity from a searchable list" purpose. Not verified identical (each has domain-specific filtering — reports-to org hierarchy, execution participants, generic inline selection, generic searchable select) but the prop-surface overlap (all take an options list + selected value + onChange) is a plausible consolidation candidate. **Flagged, not verified as true duplicates** — would need a closer prop-by-prop diff in a follow-up run.                                                                                                                                                                                                                                                  |
 
 ### 5.3 Corrections after closer inspection
 
@@ -409,6 +409,7 @@ Investigated Jul 7 2026 on `design/component-convergence` per DECISION-SHEET.md 
 **Deliberate divergence, not copy-paste drift.** No shared git ancestry: `git log --follow` shows FileTree.tsx originating in 3c73ed26b (plugin host surface, #5205) and WorkspaceFileBrowser.tsx independently in 468edd8b2 (workspace file viewer, #7681); no rename/copy relationship, and the only commit touching both is the mechanical token retune (c07e650cd).
 
 **Data shapes are distinct, not overlapping:**
+
 - `FileTreeNode` (FileTree.tsx:18-25): `kind: "dir"|"file"`, keyed on `path`, children on every node, optional `action` string. Built by `buildFileTree(files: Record<string, unknown>)` — a flat path→content map fed static blobs (CompanyExport.tsx:696/762/832, CompanyImport.tsx:783/903, AgentDetail.tsx:1902).
 - `WorkspaceFileTreeNode` (WorkspaceFileBrowser.tsx:211-227): `kind: "folder"|"file"` (different literals), composite `key` = `kind:workspaceId:relativePath`, baked-in `depth`, folder-only `lazy` flag, and file nodes embed the entire `WorkspaceFileListFileItem` server DTO (~15 fields: capabilities, previewKind, byteSize, download URLs — packages/shared/src/types/workspace-file-resource.ts:50-94). Built from an array of server DTOs with rootPath prefix-stripping.
 
@@ -419,6 +420,7 @@ Investigated Jul 7 2026 on `design/component-convergence` per DECISION-SHEET.md 
 **No copy-paste lineage:** four independent creation commits by different efforts — InlineEntitySelector (3709901db, Feb 26), ReportsToPicker (61f53b647, Mar 20), ExecutionParticipantPicker (be518529b, Apr 7, extracted from inline pill UI), SearchableSelect (50ae8fc65, Jun 24, #8597, born cmdk-based). `git log --follow` shows no cross-file rename/copy.
 
 Per-component rationale:
+
 - **ReportsToPicker**: no search, no keyboard nav, domain `Agent[]` single-select with unique manager-state UI (terminated-manager banner, stale-ID handling, ReportsToPicker.tsx:92-104). 2 call sites. A thin bespoke widget, not a drifted copy.
 - **ExecutionParticipantPicker**: the only multi-select (toggle set) and the only one with async data fetching (`useQuery` user directory); encodes selections as `agent:<id>`/`user:<id>` tagged strings coupled to execution-policy plumbing. Not behavior-preservingly mergeable into any single-select.
 - **InlineEntitySelector vs SearchableSelect** (the only real candidate pair): different engines (hand-rolled input + manual Arrow/Enter/Tab keyboard machine with tab-advance chain driving NewIssueDialog's field flow, InlineEntitySelector.tsx:154-189/90-101 — vs cmdk `Command shouldFilter={false}`, SearchableSelect.tsx:246); different option shapes (`{id,label,searchText}` flat + synthetic none-row vs `{key,value,label,title,searchText,disabled}` grouped + generic `<TValue,TOption>`); each has unique load-bearing features (recent-ordering/onConfirm vs createItem/deriveGroups/scoreOption/veto-close). ~33 call sites on InlineEntitySelector incl. the plugin bridge (plugins/bridge-init.ts:389/479). High-risk, low-reward rewrite — default keep-as-is holds.
@@ -427,16 +429,15 @@ Per-component rationale:
 
 `Card` gained an `interactive` prop — pointer cursor, quiet hover (border→foreground/20 + shadow-md lift), focus-visible ring — used when the whole card is a click target (e.g. Companies selector). Skills tiles (CompanySkills `SkillCard`) and artifact cards (`ArtifactCard`/`ArtifactGroupCard`) apply the same recipe verbatim since they cannot render through Card (button/Link semantics). Static container Cards stay affordance-free by design.
 
-
 ## In-task connections — 2026-09-07
 
-| Reusable surface | Production owner | Hosts / coverage |
-|---|---|---|
-| Connection request card | `ui/src/features/connections/ConnectionIntentInteractionBody.tsx` | Task timeline, interaction card, design guide; pending, reuse, authorizing, retry, resolved, audience and error stories |
-| Connection setup flow | `ui/src/features/connections/ConnectionSetupFlow.tsx` | Connections page and task dialog share provider forms, OAuth, validation and additive installs |
-| OAuth handoff | `OAuthConnectStateScreen` in the shared setup module | Entry, starting, open window, blocked popup, closure, callback failure, retry and new-tab fallback |
-| Identity and agent access | `AccessStep` in the shared setup module | Personal, organization, dedicated agent, unavailable identity and loading; task host fixes install reach to the requester |
-| Setup completion | `ConnectionSetupCompletionScreen` in the shared setup module | Page and dialog; identity, granted agent access and enabled actions |
+| Reusable surface          | Production owner                                                  | Hosts / coverage                                                                                                          |
+| ------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Connection request card   | `ui/src/features/connections/ConnectionIntentInteractionBody.tsx` | Task timeline, interaction card, design guide; pending, reuse, authorizing, retry, resolved, audience and error stories   |
+| Connection setup flow     | `ui/src/features/connections/ConnectionSetupFlow.tsx`             | Connections page and task dialog share provider forms, OAuth, validation and additive installs                            |
+| OAuth handoff             | `OAuthConnectStateScreen` in the shared setup module              | Entry, starting, open window, blocked popup, closure, callback failure, retry and new-tab fallback                        |
+| Identity and agent access | `AccessStep` in the shared setup module                           | Personal, organization, dedicated agent, unavailable identity and loading; task host fixes install reach to the requester |
+| Setup completion          | `ConnectionSetupCompletionScreen` in the shared setup module      | Page and dialog; identity, granted agent access and enabled actions                                                       |
 
 Independently addressable examples live under `Connections/In-task connections` in Storybook. The task composer remains available while a card is pending. These components use the existing token and primitive layers.
 
@@ -454,12 +455,12 @@ Independently addressable examples live under `Connections/In-task connections` 
 
 ## Browser Use surfaces — 2026-09-29
 
-| Component | Responsibility | Storybook |
-| --- | --- | --- |
-| `TaskBrowserPanel` | Live iframe, debounced fitting with viewer ownership, connecting/closed/error/access states | Tasks / Browser Use / Panel |
-| `TaskBrowserFooter` | Fit to pane and fixed viewport presets, ownership feedback, last-five-minute countdown, contextual stop/extend, explained session menu | Tasks / Browser Use / Footer |
-| `TaskBrowserActivity` | Compact single-session row, interleaved at browser creation time in the task feed; opens the matching panel tab | Tasks / Browser Use / Task activity, including Inline History |
-| `BrowserUseSettingsPanel` | Per-credential cost caps and saved-profile access | Connections / Browser Use / Settings |
+| Component                 | Responsibility                                                                                                                         | Storybook                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `TaskBrowserPanel`        | Live iframe, debounced fitting with viewer ownership, connecting/closed/error/access states                                            | Tasks / Browser Use / Panel                                   |
+| `TaskBrowserFooter`       | Fit to pane and fixed viewport presets, ownership feedback, last-five-minute countdown, contextual stop/extend, explained session menu | Tasks / Browser Use / Footer                                  |
+| `TaskBrowserActivity`     | Compact single-session row, interleaved at browser creation time in the task feed; opens the matching panel tab                        | Tasks / Browser Use / Task activity, including Inline History |
+| `BrowserUseSettingsPanel` | Per-credential cost caps and saved-profile access                                                                                      | Connections / Browser Use / Settings                          |
 
 The footer also appears on `/design-guide`. All stories use offline fixtures;
 they do not create provider sessions. The viewer fixture intentionally scales a

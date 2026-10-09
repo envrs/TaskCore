@@ -1,9 +1,16 @@
 import pc from "picocolors";
 import type { Command } from "commander";
-import { getStoredBoardCredential, loginBoardCli } from "../../client/board-auth.js";
+import {
+  getStoredBoardCredential,
+  loginBoardCli,
+} from "../../client/board-auth.js";
 import { buildCliCommandLabel } from "../../client/command-label.js";
 import { readConfig } from "../../config/store.js";
-import { readContext, resolveProfile, type ClientContextProfile } from "../../client/context.js";
+import {
+  readContext,
+  resolveProfile,
+  type ClientContextProfile,
+} from "../../client/context.js";
 import { ApiRequestError, TaskcoreApiClient } from "../../client/http.js";
 
 export interface BaseClientOptions {
@@ -27,19 +34,31 @@ export interface ResolvedClientContext {
   authSource: "explicit" | "env" | "profile_env" | "stored_board" | "none";
 }
 
-export function addCommonClientOptions(command: Command, opts?: { includeCompany?: boolean }): Command {
+export function addCommonClientOptions(
+  command: Command,
+  opts?: { includeCompany?: boolean },
+): Command {
   command
     .option("-c, --config <path>", "Path to Taskcore config file")
-    .option("-d, --data-dir <path>", "Taskcore data directory root (isolates state from ~/.taskcore)")
+    .option(
+      "-d, --data-dir <path>",
+      "Taskcore data directory root (isolates state from ~/.taskcore)",
+    )
     .option("--context <path>", "Path to CLI context file")
     .option("--profile <name>", "CLI context profile name")
     .option("--api-base <url>", "Base URL for the Taskcore API")
     .option("--api-key <token>", "Bearer token for agent-authenticated calls")
-    .option("--run-id <id>", "Heartbeat run id for agent-authenticated mutations (checkout/release/interactions/in-progress update); falls back to $TASKCORE_RUN_ID")
+    .option(
+      "--run-id <id>",
+      "Heartbeat run id for agent-authenticated mutations (checkout/release/interactions/in-progress update); falls back to $TASKCORE_RUN_ID",
+    )
     .option("--json", "Output raw JSON");
 
   if (opts?.includeCompany) {
-    command.option("-C, --company-id <id>", "Company ID (overrides context default)");
+    command.option(
+      "-C, --company-id <id>",
+      "Company ID (overrides context default)",
+    );
   }
 
   return command;
@@ -50,13 +69,18 @@ export function resolveCommandContext(
   opts?: { requireCompany?: boolean },
 ): ResolvedClientContext {
   const context = readContext(options.context);
-  const { name: profileName, profile } = resolveProfile(context, options.profile);
+  const { name: profileName, profile } = resolveProfile(
+    context,
+    options.profile,
+  );
 
   const apiBase = resolveApiBase(options, profile);
 
   const resolvedApiKey = resolveApiKey(options, profile);
   const explicitApiKey = resolvedApiKey.value;
-  const storedBoardCredential = explicitApiKey ? null : getStoredBoardCredential(apiBase);
+  const storedBoardCredential = explicitApiKey
+    ? null
+    : getStoredBoardCredential(apiBase);
   const apiKey = explicitApiKey || storedBoardCredential?.token;
 
   const companyId =
@@ -74,29 +98,33 @@ export function resolveCommandContext(
   // in-progress issue) require the X-Taskcore-Run-Id header (the server returns
   // "401 Agent run id required" without it). Source it from --run-id, else the
   // TASKCORE_RUN_ID env the adapter/embodiment context already exports.
-  const runId = options.runId?.trim() || process.env.TASKCORE_RUN_ID?.trim() || undefined;
+  const runId =
+    options.runId?.trim() || process.env.TASKCORE_RUN_ID?.trim() || undefined;
 
   const api = new TaskcoreApiClient({
     apiBase,
     apiKey,
     runId,
-    recoverAuth: explicitApiKey || !canAttemptInteractiveBoardAuth()
-      ? undefined
-      : async ({ error }) => {
-          const requestedAccess = error.message.includes("Instance admin required")
-            ? "instance_admin_required"
-            : "board";
-          if (!shouldRecoverBoardAuth(error)) {
-            return null;
-          }
-          const login = await loginBoardCli({
-            apiBase,
-            requestedAccess,
-            requestedCompanyId: companyId ?? null,
-            command: buildCliCommandLabel(),
-          });
-          return login.token;
-        },
+    recoverAuth:
+      explicitApiKey || !canAttemptInteractiveBoardAuth()
+        ? undefined
+        : async ({ error }) => {
+            const requestedAccess = error.message.includes(
+              "Instance admin required",
+            )
+              ? "instance_admin_required"
+              : "board";
+            if (!shouldRecoverBoardAuth(error)) {
+              return null;
+            }
+            const login = await loginBoardCli({
+              apiBase,
+              requestedAccess,
+              requestedCompanyId: companyId ?? null,
+              command: buildCliCommandLabel(),
+            });
+            return login.token;
+          },
   });
   return {
     api,
@@ -104,16 +132,23 @@ export function resolveCommandContext(
     profileName,
     profile,
     json: Boolean(options.json),
-    authSource: explicitApiKey ? resolvedApiKey.source : storedBoardCredential ? "stored_board" : "none",
+    authSource: explicitApiKey
+      ? resolvedApiKey.source
+      : storedBoardCredential
+        ? "stored_board"
+        : "none",
   };
 }
 
-export function resolveApiBase(options: Pick<BaseClientOptions, "apiBase" | "config">, profile: ClientContextProfile = {}): string {
+export function resolveApiBase(
+  options: Pick<BaseClientOptions, "apiBase" | "config">,
+  profile: ClientContextProfile = {},
+): string {
   return normalizeApiBase(
     options.apiBase?.trim() ||
-    process.env.TASKCORE_API_URL?.trim() ||
-    profile.apiBase ||
-    inferApiBaseFromConfig(options.config),
+      process.env.TASKCORE_API_URL?.trim() ||
+      profile.apiBase ||
+      inferApiBaseFromConfig(options.config),
   );
 }
 
@@ -121,7 +156,10 @@ export function normalizeApiBase(apiBase: string): string {
   return apiBase.trim().replace(/\/+$/, "");
 }
 
-export function apiPath(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined>): string {
+export function apiPath(
+  strings: TemplateStringsArray,
+  ...values: Array<string | number | boolean | null | undefined>
+): string {
   let path = strings[0] ?? "";
   values.forEach((value, index) => {
     if (value === null || value === undefined || String(value).trim() === "") {
@@ -167,7 +205,10 @@ export function inferContentTypeFromPath(filePath: string): string | undefined {
 function resolveApiKey(
   options: Pick<BaseClientOptions, "apiKey">,
   profile: ClientContextProfile,
-): { value: string | undefined; source: "explicit" | "env" | "profile_env" | "none" } {
+): {
+  value: string | undefined;
+  source: "explicit" | "env" | "profile_env" | "none";
+} {
   const optionValue = options.apiKey?.trim();
   if (optionValue) return { value: optionValue, source: "explicit" };
 
@@ -183,14 +224,20 @@ function resolveApiKey(
 function shouldRecoverBoardAuth(error: ApiRequestError): boolean {
   if (error.status === 401) return true;
   if (error.status !== 403) return false;
-  return error.message.includes("Board access required") || error.message.includes("Instance admin required");
+  return (
+    error.message.includes("Board access required") ||
+    error.message.includes("Instance admin required")
+  );
 }
 
 function canAttemptInteractiveBoardAuth(): boolean {
   return Boolean(process.stdin.isTTY && process.stdout.isTTY);
 }
 
-export function printOutput(data: unknown, opts: { json?: boolean; label?: string } = {}): void {
+export function printOutput(
+  data: unknown,
+  opts: { json?: boolean; label?: string } = {},
+): void {
   if (opts.json) {
     console.log(JSON.stringify(data, null, 2));
     return;
@@ -229,7 +276,15 @@ export function printOutput(data: unknown, opts: { json?: boolean; label?: strin
 }
 
 export function formatInlineRecord(record: Record<string, unknown>): string {
-  const keyOrder = ["identifier", "id", "name", "status", "priority", "title", "action"];
+  const keyOrder = [
+    "identifier",
+    "id",
+    "name",
+    "status",
+    "priority",
+    "title",
+    "action",
+  ];
   const seen = new Set<string>();
   const parts: string[] = [];
 
@@ -280,15 +335,22 @@ export function inferApiBaseFromConfig(configPath?: string): string {
   return `http://${envHost}:${port}`;
 }
 
-function readKeyFromProfileEnv(profile: ClientContextProfile): string | undefined {
+function readKeyFromProfileEnv(
+  profile: ClientContextProfile,
+): string | undefined {
   if (!profile.apiKeyEnvVarName) return undefined;
   return process.env[profile.apiKeyEnvVarName]?.trim() || undefined;
 }
 
 export function handleCommandError(error: unknown): never {
   if (error instanceof ApiRequestError) {
-    const detailSuffix = error.details !== undefined ? ` details=${JSON.stringify(error.details)}` : "";
-    console.error(pc.red(`API error ${error.status}: ${error.message}${detailSuffix}`));
+    const detailSuffix =
+      error.details !== undefined
+        ? ` details=${JSON.stringify(error.details)}`
+        : "";
+    console.error(
+      pc.red(`API error ${error.status}: ${error.message}${detailSuffix}`),
+    );
     process.exit(1);
   }
 

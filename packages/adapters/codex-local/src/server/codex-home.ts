@@ -3,10 +3,17 @@ import os from "node:os";
 import path from "node:path";
 import type { AdapterExecutionContext } from "@taskcore/adapter-utils";
 import { resolveTaskcoreInstanceRootForAdapter } from "@taskcore/adapter-utils/server-utils";
-import { isCodexAuthCachePath, readSubscriptionAccountId } from "./codex-auth-cache.js";
+import {
+  isCodexAuthCachePath,
+  readSubscriptionAccountId,
+} from "./codex-auth-cache.js";
 
 const TRUTHY_ENV_RE = /^(1|true|yes|on)$/i;
-const COPIED_SHARED_FILES = ["config.json", "config.toml", "instructions.md"] as const;
+const COPIED_SHARED_FILES = [
+  "config.json",
+  "config.toml",
+  "instructions.md",
+] as const;
 const SYMLINKED_SHARED_FILES = ["auth.json"] as const;
 const MANAGED_MCP_BLOCK_START = "# BEGIN TASKCORE MANAGED MCP";
 const MANAGED_MCP_BLOCK_END = "# END TASKCORE MANAGED MCP";
@@ -48,18 +55,27 @@ export function mergeManagedCodexMcpGateways(
 }
 
 function nonEmpty(value: string | undefined): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 export async function pathExists(candidate: string): Promise<boolean> {
-  return fs.access(candidate).then(() => true).catch(() => false);
+  return fs
+    .access(candidate)
+    .then(() => true)
+    .catch(() => false);
 }
 
 // Co-change notice: this function's logic is mirrored by parseAuth in
 // packages/adapter-utils/src/sandbox-managed-runtime.ts (buildCodexAuthMergeDecisionScript).
 // If the auth format changes (new shape, renamed field), update both sites together.
 function hasUsableAuthPayload(authPayload: unknown): boolean {
-  if (authPayload === null || typeof authPayload !== "object" || Array.isArray(authPayload)) {
+  if (
+    authPayload === null ||
+    typeof authPayload !== "object" ||
+    Array.isArray(authPayload)
+  ) {
     return false;
   }
 
@@ -73,11 +89,14 @@ function hasUsableAuthPayload(authPayload: unknown): boolean {
   if (tokens !== null && typeof tokens === "object" && !Array.isArray(tokens)) {
     const parsedTokens = tokens as Record<string, unknown>;
     const accountId = parsedTokens.account_id;
-    const hasAccountId = typeof accountId === "string" && accountId.trim().length > 0;
-    const hasTokenMaterial = ["id_token", "access_token", "refresh_token"].some((key) => {
-      const value = parsedTokens[key];
-      return typeof value === "string" && value.trim().length > 0;
-    });
+    const hasAccountId =
+      typeof accountId === "string" && accountId.trim().length > 0;
+    const hasTokenMaterial = ["id_token", "access_token", "refresh_token"].some(
+      (key) => {
+        const value = parsedTokens[key];
+        return typeof value === "string" && value.trim().length > 0;
+      },
+    );
     if (hasAccountId && hasTokenMaterial) return true;
   }
 
@@ -85,7 +104,11 @@ function hasUsableAuthPayload(authPayload: unknown): boolean {
 }
 
 function readApiKeyFromAuthPayload(authPayload: unknown): string | null {
-  if (authPayload === null || typeof authPayload !== "object" || Array.isArray(authPayload)) {
+  if (
+    authPayload === null ||
+    typeof authPayload !== "object" ||
+    Array.isArray(authPayload)
+  ) {
     return null;
   }
   const raw = (authPayload as Record<string, unknown>).OPENAI_API_KEY;
@@ -160,7 +183,9 @@ export function isManagedCodexHomePath(
   });
   const companyRoot = path.resolve(instanceRoot, "companies", companyId);
   const resolved = path.resolve(homePath);
-  return resolved === companyRoot || resolved.startsWith(companyRoot + path.sep);
+  return (
+    resolved === companyRoot || resolved.startsWith(companyRoot + path.sep)
+  );
 }
 
 /**
@@ -180,7 +205,10 @@ export async function codexHomeHasUsableAuth(home: string): Promise<boolean> {
   }
 }
 
-async function codexHomeHasMatchingApiKeyAuth(home: string, apiKey: string): Promise<boolean> {
+async function codexHomeHasMatchingApiKeyAuth(
+  home: string,
+  apiKey: string,
+): Promise<boolean> {
   const authPath = path.join(home, "auth.json");
   const existing = await fs.lstat(authPath).catch(() => null);
   if (!existing || existing.isSymbolicLink()) return false;
@@ -197,27 +225,38 @@ async function ensureParentDir(target: string): Promise<void> {
   await fs.mkdir(path.dirname(target), { recursive: true });
 }
 
-async function isExpectedSymlink(target: string, source: string): Promise<boolean> {
+async function isExpectedSymlink(
+  target: string,
+  source: string,
+): Promise<boolean> {
   const existing = await fs.lstat(target).catch(() => null);
   if (!existing?.isSymbolicLink()) return false;
 
   const linkedPath = await fs.readlink(target).catch(() => null);
   if (!linkedPath) return false;
 
-  return path.resolve(path.dirname(target), linkedPath) === path.resolve(source);
+  return (
+    path.resolve(path.dirname(target), linkedPath) === path.resolve(source)
+  );
 }
 
-async function createExpectedSymlink(target: string, source: string): Promise<void> {
+async function createExpectedSymlink(
+  target: string,
+  source: string,
+): Promise<void> {
   try {
     await fs.symlink(source, target);
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
-    if (code === "EEXIST" && await isExpectedSymlink(target, source)) return;
+    if (code === "EEXIST" && (await isExpectedSymlink(target, source))) return;
     throw error;
   }
 }
 
-export async function ensureSymlink(target: string, source: string): Promise<void> {
+export async function ensureSymlink(
+  target: string,
+  source: string,
+): Promise<void> {
   const existing = await fs.lstat(target).catch(() => null);
   if (!existing) {
     await ensureParentDir(target);
@@ -260,12 +299,14 @@ function tomlString(value: string): string {
 }
 
 function sanitizeMcpServerName(value: string, fallback: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || fallback;
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || fallback
+  );
 }
 
 function stripManagedMcpBlock(config: string): string {
@@ -278,7 +319,9 @@ function stripManagedMcpBlock(config: string): string {
 
 function readCodexMcpServerNames(config: string): Set<string> {
   const names = new Set<string>();
-  for (const match of config.matchAll(/^\s*\[\s*mcp_servers\s*\.\s*(?:"([^"]+)"|'([^']+)'|([^\]\s#]+))\s*\]/gm)) {
+  for (const match of config.matchAll(
+    /^\s*\[\s*mcp_servers\s*\.\s*(?:"([^"]+)"|'([^']+)'|([^\]\s#]+))\s*\]/gm,
+  )) {
     const name = match[1] ?? match[2] ?? match[3];
     if (name) names.add(name.trim());
   }
@@ -297,8 +340,13 @@ function buildManagedMcpBlock(input: {
     "# Written by Taskcore for governed MCP gateway access. Do not edit this block by hand.",
   ];
   input.gateways.forEach((gateway, index) => {
-    const baseName = sanitizeMcpServerName(gateway.name, `gateway-${index + 1}`);
-    const directOverlap = input.existingNames.has(gateway.name) || input.existingNames.has(baseName);
+    const baseName = sanitizeMcpServerName(
+      gateway.name,
+      `gateway-${index + 1}`,
+    );
+    const directOverlap =
+      input.existingNames.has(gateway.name) ||
+      input.existingNames.has(baseName);
     let managedName = directOverlap ? `taskcore-${baseName}` : baseName;
     let suffix = 2;
     while (usedNames.has(managedName) || input.existingNames.has(managedName)) {
@@ -340,9 +388,10 @@ export async function writeManagedCodexMcpConfig(input: {
     apiBaseUrl: input.apiBaseUrl,
     existingNames: readCodexMcpServerNames(unmanagedConfig),
   });
-  const next = input.gateways.length > 0
-    ? `${unmanagedConfig}${unmanagedConfig ? "\n\n" : ""}${block}\n`
-    : `${unmanagedConfig}${unmanagedConfig ? "\n" : ""}`;
+  const next =
+    input.gateways.length > 0
+      ? `${unmanagedConfig}${unmanagedConfig ? "\n\n" : ""}${block}\n`
+      : `${unmanagedConfig}${unmanagedConfig ? "\n" : ""}`;
   await fs.writeFile(configPath, next, { mode: 0o600 });
   await fs.chmod(configPath, 0o600);
   return { configPath, warnings };
@@ -354,11 +403,16 @@ export async function writeManagedCodexMcpConfig(input: {
  * path. Required because the codex CLI (>= 0.122) ignores the `OPENAI_API_KEY`
  * environment variable and only reads credentials from `$CODEX_HOME/auth.json`.
  */
-export async function writeApiKeyAuthJson(home: string, apiKey: string): Promise<void> {
+export async function writeApiKeyAuthJson(
+  home: string,
+  apiKey: string,
+): Promise<void> {
   await fs.mkdir(home, { recursive: true });
   const target = path.join(home, "auth.json");
   await fs.rm(target, { force: true });
-  await fs.writeFile(target, JSON.stringify({ OPENAI_API_KEY: apiKey }), { mode: 0o600 });
+  await fs.writeFile(target, JSON.stringify({ OPENAI_API_KEY: apiKey }), {
+    mode: 0o600,
+  });
 }
 
 export interface StageCodexHomeForSyncOptions {
@@ -435,7 +489,12 @@ async function stageContainedSubtree(
       // `back -> .`-style link) would otherwise recurse forever.
       if (activePath.has(resolved)) continue;
       activePath.add(resolved);
-      await stageContainedSubtree(resolved, entryTarget, containmentRoot, activePath);
+      await stageContainedSubtree(
+        resolved,
+        entryTarget,
+        containmentRoot,
+        activePath,
+      );
       activePath.delete(resolved);
     } else if (entryStat.isFile()) {
       const bytes = await fs.readFile(resolved);
@@ -498,7 +557,12 @@ async function stageDirectorySecure(
     if (entryStat.isDirectory()) {
       // This child skill establishes its own containment root: nested links may
       // not escape it, and the root seeds the cycle-detection active path.
-      await stageContainedSubtree(resolved, entryTarget, resolved, new Set([resolved]));
+      await stageContainedSubtree(
+        resolved,
+        entryTarget,
+        resolved,
+        new Set([resolved]),
+      );
     } else if (entryStat.isFile()) {
       const bytes = await fs.readFile(resolved);
       const mode = entryStat.mode & 0o111 ? 0o700 : 0o600;
@@ -580,7 +644,10 @@ export async function stageCodexHomeForSync(
 ): Promise<string> {
   const runIdPart = nonEmpty(options.runId ?? undefined);
   const stagedHome = await fs.mkdtemp(
-    path.join(os.tmpdir(), `taskcore-codex-home-sync-${runIdPart ? `${runIdPart}-` : ""}`),
+    path.join(
+      os.tmpdir(),
+      `taskcore-codex-home-sync-${runIdPart ? `${runIdPart}-` : ""}`,
+    ),
   );
   try {
     for (const entry of CODEX_SYNC_ALLOWLIST) {
@@ -665,7 +732,9 @@ export async function seedManagedCodexHome(
     const existing = await fs.lstat(authPath).catch(() => null);
     if (existing && !existing.isSymbolicLink()) {
       const targetBytes = await fs.readFile(authPath).catch(() => null);
-      const targetIdentity = targetBytes ? readSubscriptionAccountId(targetBytes) : null;
+      const targetIdentity = targetBytes
+        ? readSubscriptionAccountId(targetBytes)
+        : null;
       if (targetIdentity) {
         // Any source read failure — absent or unreadable — keeps the usable
         // target file. The alternative, removal plus the existence-only
@@ -689,7 +758,9 @@ export async function seedManagedCodexHome(
             }
             return null;
           });
-        const sourceIdentity = sourceBytes ? readSubscriptionAccountId(sourceBytes) : null;
+        const sourceIdentity = sourceBytes
+          ? readSubscriptionAccountId(sourceBytes)
+          : null;
         if (sourceIdentity !== targetIdentity) {
           keepPromotedAuth = true;
         } else {
@@ -730,7 +801,8 @@ export async function seedManagedCodexHome(
       // The kept promoted credential is authoritative for this home; the shared
       // symlink would silently swap the account back to the host login. A
       // credential-store entry's auth.json is authoritative unconditionally.
-      if (name === "auth.json" && (keepPromotedAuth || credentialStoreEntry)) continue;
+      if (name === "auth.json" && (keepPromotedAuth || credentialStoreEntry))
+        continue;
       const source = path.join(sourceHome, name);
       if (!(await pathExists(source))) continue;
       await ensureSymlink(path.join(targetHome, name), source);
@@ -844,11 +916,13 @@ export async function reconcileManagedCodexHome(
     return { status: "already_seeded", home: resolved };
   }
 
-  if (apiKey && await codexHomeHasMatchingApiKeyAuth(resolved, apiKey)) {
+  if (apiKey && (await codexHomeHasMatchingApiKeyAuth(resolved, apiKey))) {
     return { status: "already_seeded", home: resolved };
   }
 
-  await seedManagedCodexHome(resolved, env, input.onLog ?? noopOnLog, { apiKey });
+  await seedManagedCodexHome(resolved, env, input.onLog ?? noopOnLog, {
+    apiKey,
+  });
 
   if (!apiKey && !(await codexHomeHasUsableAuth(resolved))) {
     return { status: "source_auth_missing", home: resolved };
@@ -904,14 +978,19 @@ export async function evaluateCodexCredentialReadiness(
 ): Promise<CodexCredentialReadiness> {
   const env = input.env ?? process.env;
   const configuredRaw = nonEmpty(input.configuredCodexHome ?? undefined);
-  const configuredCodexHome = configuredRaw ? path.resolve(configuredRaw) : null;
+  const configuredCodexHome = configuredRaw
+    ? path.resolve(configuredRaw)
+    : null;
   const configuredApiKey = nonEmpty(input.configuredApiKey ?? undefined);
   const sharedSourceHome = resolveSharedCodexHomeDir(env);
 
   const configuredHomeIsManaged =
-    configuredCodexHome != null && isManagedCodexHomePath(env, input.companyId, configuredCodexHome);
-  const effectiveHomeIsManaged = configuredCodexHome == null || configuredHomeIsManaged;
-  const effectiveHome = configuredCodexHome ?? resolveManagedCodexHomeDir(env, input.companyId);
+    configuredCodexHome != null &&
+    isManagedCodexHomePath(env, input.companyId, configuredCodexHome);
+  const effectiveHomeIsManaged =
+    configuredCodexHome == null || configuredHomeIsManaged;
+  const effectiveHome =
+    configuredCodexHome ?? resolveManagedCodexHomeDir(env, input.companyId);
 
   if (!effectiveHomeIsManaged) {
     // Genuine external override: Taskcore never seeds or inspects it.
@@ -925,11 +1004,23 @@ export async function evaluateCodexCredentialReadiness(
   }
 
   if (configuredApiKey) {
-    return { managed: true, authMode: "api", ready: true, effectiveHome, sharedSourceHome };
+    return {
+      managed: true,
+      authMode: "api",
+      ready: true,
+      effectiveHome,
+      sharedSourceHome,
+    };
   }
 
   const ready =
     (await codexHomeHasUsableAuth(effectiveHome)) ||
     (await codexHomeHasUsableAuth(sharedSourceHome));
-  return { managed: true, authMode: "subscription", ready, effectiveHome, sharedSourceHome };
+  return {
+    managed: true,
+    authMode: "subscription",
+    ready,
+    effectiveHome,
+    sharedSourceHome,
+  };
 }

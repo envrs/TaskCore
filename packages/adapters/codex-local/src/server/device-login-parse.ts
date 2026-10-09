@@ -126,7 +126,10 @@ function findExactDeviceUrl(text: string): DeviceUrlMatch | null {
  * non-blank line after the preamble line is not a code line.
  */
 function findShortCode(text: string, fromIndex: number): string | null {
-  const preambleWindow = text.slice(fromIndex, fromIndex + MAX_URL_TO_PREAMBLE_GAP);
+  const preambleWindow = text.slice(
+    fromIndex,
+    fromIndex + MAX_URL_TO_PREAMBLE_GAP,
+  );
   const preambleMatch = CODE_PREAMBLE_RE.exec(preambleWindow);
   if (!preambleMatch) return null;
   // Advance to the end of the preamble line. The code sits on the next line, so
@@ -135,7 +138,10 @@ function findShortCode(text: string, fromIndex: number): string | null {
   const preambleEnd = fromIndex + preambleMatch.index + preambleMatch[0].length;
   const lineBreak = text.indexOf("\n", preambleEnd);
   if (lineBreak === -1) return null;
-  const codeWindow = text.slice(lineBreak + 1, lineBreak + 1 + MAX_PREAMBLE_TO_CODE_GAP);
+  const codeWindow = text.slice(
+    lineBreak + 1,
+    lineBreak + 1 + MAX_PREAMBLE_TO_CODE_GAP,
+  );
   // Read the first non-blank line after the preamble line. It must hold only the
   // code. So the parser binds the code to the dedicated code line, and it rejects
   // a line that mixes the code with other text.

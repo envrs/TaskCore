@@ -10,17 +10,39 @@ import {
 } from "./parse.js";
 
 describe("parseCodexJsonl", () => {
-  it.each(["turn.failed", "error", "turn.completed"])("does not invent zero usage for %s without counters", (type) => {
-    expect(parseCodexJsonl(JSON.stringify({ type }))).toMatchObject({
-      sawProtocolTerminalEvent: true, usageReported: false, usageComplete: false,
-    });
-  });
-  it.each([{}, { input_tokens: 0 }, { input_tokens: -1, output_tokens: 0 }, { input_tokens: 1, output_tokens: 0, cached_input_tokens: 2 }])("rejects missing or invalid completion counters: %j", (usage) => {
-    expect(parseCodexJsonl(JSON.stringify({ type: "turn.completed", usage })).usageComplete).toBe(false);
+  it.each(["turn.failed", "error", "turn.completed"])(
+    "does not invent zero usage for %s without counters",
+    (type) => {
+      expect(parseCodexJsonl(JSON.stringify({ type }))).toMatchObject({
+        sawProtocolTerminalEvent: true,
+        usageReported: false,
+        usageComplete: false,
+      });
+    },
+  );
+  it.each([
+    {},
+    { input_tokens: 0 },
+    { input_tokens: -1, output_tokens: 0 },
+    { input_tokens: 1, output_tokens: 0, cached_input_tokens: 2 },
+  ])("rejects missing or invalid completion counters: %j", (usage) => {
+    expect(
+      parseCodexJsonl(JSON.stringify({ type: "turn.completed", usage }))
+        .usageComplete,
+    ).toBe(false);
   });
   it("distinguishes explicit zero usage from missing usage", () => {
-    expect(parseCodexJsonl(JSON.stringify({ type: "turn.completed", usage: { input_tokens: 0, output_tokens: 0 } }))).toMatchObject({
-      usageReported: true, usageComplete: true, usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0 },
+    expect(
+      parseCodexJsonl(
+        JSON.stringify({
+          type: "turn.completed",
+          usage: { input_tokens: 0, output_tokens: 0 },
+        }),
+      ),
+    ).toMatchObject({
+      usageReported: true,
+      usageComplete: true,
+      usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0 },
     });
   });
   it("captures session id, assistant summary, usage, and error message", () => {
@@ -34,7 +56,10 @@ describe("parseCodexJsonl", () => {
         type: "turn.completed",
         usage: { input_tokens: 10, cached_input_tokens: 2, output_tokens: 4 },
       }),
-      JSON.stringify({ type: "turn.failed", error: { message: "resume failed" } }),
+      JSON.stringify({
+        type: "turn.failed",
+        error: { message: "resume failed" },
+      }),
     ].join("\n");
 
     expect(parseCodexJsonl(stdout)).toEqual({
@@ -63,11 +88,17 @@ describe("parseCodexJsonl", () => {
       }),
       JSON.stringify({
         type: "item.completed",
-        item: { type: "agent_message", text: "I’m checking out the issue and reading the docs now." },
+        item: {
+          type: "agent_message",
+          text: "I’m checking out the issue and reading the docs now.",
+        },
       }),
       JSON.stringify({
         type: "item.completed",
-        item: { type: "agent_message", text: "Fixed the issue and verified the targeted tests pass." },
+        item: {
+          type: "agent_message",
+          text: "Fixed the issue and verified the targeted tests pass.",
+        },
       }),
       JSON.stringify({
         type: "turn.completed",
@@ -100,7 +131,10 @@ describe("isCodexHarnessCrash", () => {
       type: "item.completed",
       item: { type: "agent_message", text: "Checking out the issue now." },
     }),
-    JSON.stringify({ type: "item.started", item: { type: "command_execution" } }),
+    JSON.stringify({
+      type: "item.started",
+      item: { type: "command_execution" },
+    }),
   ].join("\n");
 
   it("classifies a nonzero exit with no protocol-terminal event as a harness crash", () => {
@@ -114,10 +148,15 @@ describe("isCodexHarnessCrash", () => {
     const failedInProtocol = parseCodexJsonl(
       [
         JSON.stringify({ type: "thread.started", thread_id: "thread_123" }),
-        JSON.stringify({ type: "turn.failed", error: { message: "the model rejected the request" } }),
+        JSON.stringify({
+          type: "turn.failed",
+          error: { message: "the model rejected the request" },
+        }),
       ].join("\n"),
     );
-    expect(isCodexHarnessCrash({ exitCode: 1, ...failedInProtocol })).toBe(false);
+    expect(isCodexHarnessCrash({ exitCode: 1, ...failedInProtocol })).toBe(
+      false,
+    );
 
     const completedThenFailedExit = parseCodexJsonl(
       [
@@ -128,14 +167,28 @@ describe("isCodexHarnessCrash", () => {
         }),
       ].join("\n"),
     );
-    expect(isCodexHarnessCrash({ exitCode: 1, ...completedThenFailedExit })).toBe(false);
+    expect(
+      isCodexHarnessCrash({ exitCode: 1, ...completedThenFailedExit }),
+    ).toBe(false);
   });
 
   it("does not classify successful exits or streams that never spoke the protocol", () => {
-    expect(isCodexHarnessCrash({ exitCode: 0, ...parseCodexJsonl(crashedMidTurnStream) })).toBe(false);
-    expect(isCodexHarnessCrash({ exitCode: null, ...parseCodexJsonl(crashedMidTurnStream) })).toBe(false);
+    expect(
+      isCodexHarnessCrash({
+        exitCode: 0,
+        ...parseCodexJsonl(crashedMidTurnStream),
+      }),
+    ).toBe(false);
+    expect(
+      isCodexHarnessCrash({
+        exitCode: null,
+        ...parseCodexJsonl(crashedMidTurnStream),
+      }),
+    ).toBe(false);
 
-    const neverStarted = parseCodexJsonl("error: unexpected argument '--bogus-flag'\n");
+    const neverStarted = parseCodexJsonl(
+      "error: unexpected argument '--bogus-flag'\n",
+    );
     expect(neverStarted.sawProtocolEvent).toBe(false);
     expect(isCodexHarnessCrash({ exitCode: 2, ...neverStarted })).toBe(false);
   });
@@ -146,9 +199,15 @@ describe("isCodexHarnessCrash", () => {
         JSON.stringify({ type: "thread.started", thread_id: "thread_123" }),
         JSON.stringify({
           type: "item.completed",
-          item: { type: "agent_message", text: "The deploy failed with connection reset by peer; investigating." },
+          item: {
+            type: "agent_message",
+            text: "The deploy failed with connection reset by peer; investigating.",
+          },
         }),
-        JSON.stringify({ type: "turn.failed", error: { message: "agent gave up" } }),
+        JSON.stringify({
+          type: "turn.failed",
+          error: { message: "agent gave up" },
+        }),
       ].join("\n"),
     );
     expect(isCodexHarnessCrash({ exitCode: 1, ...parsed })).toBe(false);
@@ -163,23 +222,39 @@ describe("isCodexHarnessCrash", () => {
 
 describe("classifyCodexAuthRefreshFailure", () => {
   it("classifies explicit refresh-token failure messages", () => {
-    expect(classifyCodexAuthRefreshFailure({ errorMessage: "provider error: refresh_token_reused" })).toBe(
-      "refresh_token_reused",
-    );
-    expect(classifyCodexAuthRefreshFailure({ stderr: "OAuth failed: refresh token has expired" })).toBe(
-      "refresh_token_expired",
-    );
-    expect(classifyCodexAuthRefreshFailure({ stdout: "OAuth failed: invalid_grant" })).toBe(
-      "refresh_token_invalidated",
-    );
-    expect(classifyCodexAuthRefreshFailure({ errorMessage: "credential refresh returned 401 Unauthorized" })).toBe(
-      "refresh_token_invalidated",
-    );
+    expect(
+      classifyCodexAuthRefreshFailure({
+        errorMessage: "provider error: refresh_token_reused",
+      }),
+    ).toBe("refresh_token_reused");
+    expect(
+      classifyCodexAuthRefreshFailure({
+        stderr: "OAuth failed: refresh token has expired",
+      }),
+    ).toBe("refresh_token_expired");
+    expect(
+      classifyCodexAuthRefreshFailure({
+        stdout: "OAuth failed: invalid_grant",
+      }),
+    ).toBe("refresh_token_invalidated");
+    expect(
+      classifyCodexAuthRefreshFailure({
+        errorMessage: "credential refresh returned 401 Unauthorized",
+      }),
+    ).toBe("refresh_token_invalidated");
   });
 
   it("does not classify bare 401 or quota messages as auth-refresh failures", () => {
-    expect(classifyCodexAuthRefreshFailure({ errorMessage: "chatgpt wham api returned 401" })).toBeNull();
-    expect(classifyCodexAuthRefreshFailure({ errorMessage: "You've hit your usage limit for GPT-5." })).toBeNull();
+    expect(
+      classifyCodexAuthRefreshFailure({
+        errorMessage: "chatgpt wham api returned 401",
+      }),
+    ).toBeNull();
+    expect(
+      classifyCodexAuthRefreshFailure({
+        errorMessage: "You've hit your usage limit for GPT-5.",
+      }),
+    ).toBeNull();
   });
 });
 
@@ -195,8 +270,18 @@ describe("isCodexUnknownSessionError", () => {
 
   it("still detects existing stale-session wordings", () => {
     expect(isCodexUnknownSessionError("unknown thread id", "")).toBe(true);
-    expect(isCodexUnknownSessionError("", "state db missing rollout path for thread abc")).toBe(true);
-    expect(isCodexUnknownSessionError("", "state db returned stale rollout path for thread abc")).toBe(true);
+    expect(
+      isCodexUnknownSessionError(
+        "",
+        "state db missing rollout path for thread abc",
+      ),
+    ).toBe(true);
+    expect(
+      isCodexUnknownSessionError(
+        "",
+        "state db returned stale rollout path for thread abc",
+      ),
+    ).toBe(true);
   });
 
   it("does not classify unrelated Codex failures as stale sessions", () => {
@@ -214,13 +299,15 @@ describe("isCodexTransientUpstreamError", () => {
     ).toBe(true);
     expect(
       isCodexTransientUpstreamError({
-        stderr: "We're currently experiencing high demand, which may cause temporary errors.",
+        stderr:
+          "We're currently experiencing high demand, which may cause temporary errors.",
       }),
     ).toBe(true);
   });
 
   it("classifies usage-limit windows as provider quota and extracts the retry time", () => {
-    const errorMessage = "You've hit your usage limit for GPT-5.3-Codex-Spark. Switch to another model now, or try again at 11:31 PM.";
+    const errorMessage =
+      "You've hit your usage limit for GPT-5.3-Codex-Spark. Switch to another model now, or try again at 11:31 PM.";
     const now = new Date(2026, 3, 22, 22, 29, 2);
 
     expect(isCodexProviderQuotaError({ errorMessage })).toBe(true);
@@ -231,7 +318,8 @@ describe("isCodexTransientUpstreamError", () => {
   });
 
   it("classifies model-capacity messages as provider quota without reset metadata", () => {
-    const errorMessage = "The requested model is at capacity. Please try again later.";
+    const errorMessage =
+      "The requested model is at capacity. Please try again later.";
 
     expect(isCodexProviderQuotaError({ errorMessage })).toBe(true);
     expect(isCodexTransientUpstreamError({ errorMessage })).toBe(false);
@@ -239,12 +327,13 @@ describe("isCodexTransientUpstreamError", () => {
   });
 
   it("parses explicit timezone hints on usage-limit retry windows", () => {
-    const errorMessage = "You've hit your usage limit for GPT-5.3-Codex-Spark. Switch to another model now, or try again at 11:31 PM (America/Chicago).";
+    const errorMessage =
+      "You've hit your usage limit for GPT-5.3-Codex-Spark. Switch to another model now, or try again at 11:31 PM (America/Chicago).";
     const now = new Date("2026-04-23T03:29:02.000Z");
 
-    expect(extractCodexRetryNotBefore({ errorMessage }, now)?.toISOString()).toBe(
-      "2026-04-23T04:31:00.000Z",
-    );
+    expect(
+      extractCodexRetryNotBefore({ errorMessage }, now)?.toISOString(),
+    ).toBe("2026-04-23T04:31:00.000Z");
   });
 
   it("does not classify deterministic compaction errors as transient", () => {

@@ -16,12 +16,18 @@ const REMOTE_EXECUTION_ENV_IDENTITY_KEYS = new Set([
   "XDG_RUNTIME_DIR",
 ]);
 
-function readEnvValueCaseInsensitive(env: NodeJS.ProcessEnv, key: string): string | undefined {
+function readEnvValueCaseInsensitive(
+  env: NodeJS.ProcessEnv,
+  key: string,
+): string | undefined {
   const direct = env[key];
   if (typeof direct === "string") return direct;
   const upper = key.toUpperCase();
   for (const [candidateKey, candidateValue] of Object.entries(env)) {
-    if (candidateKey.toUpperCase() === upper && typeof candidateValue === "string") {
+    if (
+      candidateKey.toUpperCase() === upper &&
+      typeof candidateValue === "string"
+    ) {
       return candidateValue;
     }
   }

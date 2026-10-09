@@ -4,12 +4,12 @@ Taskcore ships on four channels. Pick the one that matches your appetite for
 freshness versus stability — switching is just a matter of which version you
 install.
 
-| Channel | What it is | Updates | npm | Docker |
-| --- | --- | --- | --- | --- |
-| `stable` | The recommended release | every week or two | `taskcore@latest` | `ghcr.io/khulnasoft/taskcore:latest` |
-| `beta` | Release candidates soaking before stable | when promoted | `taskcore@beta` | `ghcr.io/khulnasoft/taskcore:beta` |
-| `nightly` | Yesterday's merges, smoke-tested as a unit | once a night | `taskcore@nightly` | `ghcr.io/khulnasoft/taskcore:nightly` |
-| `canary` | Every merge to `master`, as it happens | many times a day | `taskcore@canary` | `ghcr.io/khulnasoft/taskcore:canary` |
+| Channel   | What it is                                 | Updates           | npm                | Docker                                |
+| --------- | ------------------------------------------ | ----------------- | ------------------ | ------------------------------------- |
+| `stable`  | The recommended release                    | every week or two | `taskcore@latest`  | `ghcr.io/khulnasoft/taskcore:latest`  |
+| `beta`    | Release candidates soaking before stable   | when promoted     | `taskcore@beta`    | `ghcr.io/khulnasoft/taskcore:beta`    |
+| `nightly` | Yesterday's merges, smoke-tested as a unit | once a night      | `taskcore@nightly` | `ghcr.io/khulnasoft/taskcore:nightly` |
+| `canary`  | Every merge to `master`, as it happens     | many times a day  | `taskcore@canary`  | `ghcr.io/khulnasoft/taskcore:canary`  |
 
 ## Choosing a channel
 

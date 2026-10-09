@@ -33,7 +33,7 @@ All company, run, work-mode, credential, and lifecycle checks below still apply.
 ## Discovery and requests
 
 ```json
-{"query":"create project","limit":5}
+{ "query": "create project", "limit": 5 }
 ```
 
 Search is deterministic lexical ranking over OpenAPI paths, summaries and the
@@ -44,7 +44,11 @@ metadata, work modes, examples where available, and relevant dedicated tools
 with their supported parameters. `limit` defaults to five and is capped at ten.
 
 ```json
-{"operationId":"PATCH /api/projects/{id}","pathParams":{"id":"PROJECT_UUID"},"body":{"description":"Updated project description"}}
+{
+  "operationId": "PATCH /api/projects/{id}",
+  "pathParams": { "id": "PROJECT_UUID" },
+  "body": { "description": "Updated project description" }
+}
 ```
 
 The catalog determines method and path. `companyId` is filled from the active
@@ -106,7 +110,11 @@ To inspect saved text without creating another artifact, call its authorized
 content operation with `responseText`:
 
 ```json
-{"operationId":"GET /api/assets/{assetId}/content","pathParams":{"assetId":"RETURNED_ARTIFACT_ID"},"responseText":{"offsetBytes":0,"limitBytes":8192}}
+{
+  "operationId": "GET /api/assets/{assetId}/content",
+  "pathParams": { "assetId": "RETURNED_ARTIFACT_ID" },
+  "responseText": { "offsetBytes": 0, "limitBytes": 8192 }
+}
 ```
 
 The result contains `data` as text (including JSON), plus `responseText` with

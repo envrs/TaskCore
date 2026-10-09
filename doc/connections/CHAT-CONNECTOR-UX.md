@@ -282,15 +282,15 @@ Use these as design prompts, not a current provider API specification. Verify th
 selected adapter and official provider documentation before implementing steps,
 links, credential validation, or test-message instructions.
 
-| Decision | Slack lesson | Transfer to other providers |
-| --- | --- | --- |
-| Step boundaries | App creation, credentials, verification, linking, and testing became separate steps. | Separate distinct actions, not every field. An OAuth-only provider may need fewer steps; bot creation elsewhere may need a dedicated handoff. |
-| Editable identity | App name, bot display name, command drive the same manifest. | Expose only editable properties supported by that provider. Keep creation artifacts and later instructions consistent with saved values. |
-| Credential acquisition | Bot token and Signing Secret live on different screens. | Use the provider's exact credential labels and locations. An API key, bot token, application secret, and signing secret are not interchangeable. |
-| Reachability | HTTP callbacks need provider-reachable HTTPS. | Derive the prerequisite from the actual delivery mechanism. Outbound sockets or polling do not automatically require an inbound public URL. |
-| First message | Prefer a real @mention for normal conversation. | Prefer the provider's simplest supported trigger. Never offer a mention if privacy rules or the adapter prevent receiving it. |
-| Identity link | A private connect action links a person to their Taskcore account. | Use a provider-supported private interaction or equivalent verified confirmation. Do not assume slash commands, ephemeral replies, or DMs exist everywhere. |
-| Ongoing scope | “Allowed Channels” makes the policy concrete. | Use the relevant destination noun: channels, groups, repositories, chats, or mailboxes. Show only scope controls the integration enforces. |
+| Decision               | Slack lesson                                                                         | Transfer to other providers                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Step boundaries        | App creation, credentials, verification, linking, and testing became separate steps. | Separate distinct actions, not every field. An OAuth-only provider may need fewer steps; bot creation elsewhere may need a dedicated handoff.               |
+| Editable identity      | App name, bot display name, command drive the same manifest.                         | Expose only editable properties supported by that provider. Keep creation artifacts and later instructions consistent with saved values.                    |
+| Credential acquisition | Bot token and Signing Secret live on different screens.                              | Use the provider's exact credential labels and locations. An API key, bot token, application secret, and signing secret are not interchangeable.            |
+| Reachability           | HTTP callbacks need provider-reachable HTTPS.                                        | Derive the prerequisite from the actual delivery mechanism. Outbound sockets or polling do not automatically require an inbound public URL.                 |
+| First message          | Prefer a real @mention for normal conversation.                                      | Prefer the provider's simplest supported trigger. Never offer a mention if privacy rules or the adapter prevent receiving it.                               |
+| Identity link          | A private connect action links a person to their Taskcore account.                   | Use a provider-supported private interaction or equivalent verified confirmation. Do not assume slash commands, ephemeral replies, or DMs exist everywhere. |
+| Ongoing scope          | “Allowed Channels” makes the policy concrete.                                        | Use the relevant destination noun: channels, groups, repositories, chats, or mailboxes. Show only scope controls the integration enforces.                  |
 
 ### Discord example
 

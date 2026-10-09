@@ -37,27 +37,53 @@ describe("remote managed runtime", () => {
     cleanupDirs.push(root);
     await mkdir(path.join(root, "node_modules"));
     await writeFile(path.join(root, ".gitignore"), "node_modules/\n");
-    await writeFile(path.join(root, "node_modules", "personal.bin"), Buffer.from([0, 255, 1]));
+    await writeFile(
+      path.join(root, "node_modules", "personal.bin"),
+      Buffer.from([0, 255, 1]),
+    );
     const prepared = await prepareRemoteManagedRuntime({
-      spec: { host: "127.0.0.1", port: 2222, username: "fixture", remoteWorkspacePath: "/app", remoteCwd: "/app",
-        privateKey: "PRIVATE KEY", knownHosts: "KNOWN HOSTS", strictHostKeyChecking: true },
-      runId: "plain", adapterKey: "test", workspaceLocalDir: root,
-      workspaceFileMode: "all", workspaceExclude: ["explicitly-excluded"],
+      spec: {
+        host: "127.0.0.1",
+        port: 2222,
+        username: "fixture",
+        remoteWorkspacePath: "/app",
+        remoteCwd: "/app",
+        privateKey: "PRIVATE KEY",
+        knownHosts: "KNOWN HOSTS",
+        strictHostKeyChecking: true,
+      },
+      runId: "plain",
+      adapterKey: "test",
+      workspaceLocalDir: root,
+      workspaceFileMode: "all",
+      workspaceExclude: ["explicitly-excluded"],
     });
-    expect(prepareWorkspaceForSshExecution).toHaveBeenCalledWith(expect.objectContaining({
-      localDir: root, remoteDir: prepared.workspaceRemoteDir, workspaceFileMode: "all", workspaceExclude: ["explicitly-excluded"],
-    }));
-    await prepared.restoreWorkspace();
-    expect(restoreWorkspaceFromSshExecution).toHaveBeenCalledWith(expect.objectContaining({
-      restoreGitHistory: false, baselineSnapshot: expect.objectContaining({
-        exclude: [".taskcore-runtime", "explicitly-excluded"],
-        entries: expect.any(Map),
+    expect(prepareWorkspaceForSshExecution).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localDir: root,
+        remoteDir: prepared.workspaceRemoteDir,
+        workspaceFileMode: "all",
+        workspaceExclude: ["explicitly-excluded"],
       }),
-    }));
-    const args = vi.mocked(restoreWorkspaceFromSshExecution).mock.calls[0] as unknown as [{ baselineSnapshot: { entries: Map<string, unknown> } }];
-    expect(args[0].baselineSnapshot.entries.has("node_modules/personal.bin")).toBe(true);
+    );
+    await prepared.restoreWorkspace();
+    expect(restoreWorkspaceFromSshExecution).toHaveBeenCalledWith(
+      expect.objectContaining({
+        restoreGitHistory: false,
+        baselineSnapshot: expect.objectContaining({
+          exclude: [".taskcore-runtime", "explicitly-excluded"],
+          entries: expect.any(Map),
+        }),
+      }),
+    );
+    const args = vi.mocked(restoreWorkspaceFromSshExecution).mock
+      .calls[0] as unknown as [
+      { baselineSnapshot: { entries: Map<string, unknown> } },
+    ];
+    expect(
+      args[0].baselineSnapshot.entries.has("node_modules/personal.bin"),
+    ).toBe(true);
   });
-
 
   afterEach(async () => {
     vi.clearAllMocks();
@@ -69,13 +95,19 @@ describe("remote managed runtime", () => {
   });
 
   it("restores runtime assets without restoring an in-place SSH workspace", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-remote-runtime-assets-only-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-remote-runtime-assets-only-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const homeDir = path.join(rootDir, "home");
     await mkdir(workspaceDir, { recursive: true });
     await mkdir(homeDir, { recursive: true });
-    await writeFile(path.join(homeDir, "auth.json"), '{"token":"host"}\n', "utf8");
+    await writeFile(
+      path.join(homeDir, "auth.json"),
+      '{"token":"host"}\n',
+      "utf8",
+    );
 
     let restoredAuth = "";
     const prepared = await prepareRemoteManagedRuntime({
@@ -99,17 +131,21 @@ describe("remote managed runtime", () => {
           key: "home",
           localDir: homeDir,
           restore: async ({ assetDir, readFile }) => {
-            restoredAuth = (await readFile(path.posix.join(assetDir, "auth.json"))).toString("utf8");
+            restoredAuth = (
+              await readFile(path.posix.join(assetDir, "auth.json"))
+            ).toString("utf8");
           },
         },
       ],
     });
 
     expect(prepareWorkspaceForSshExecution).not.toHaveBeenCalled();
-    expect(syncDirectoryToSsh).toHaveBeenCalledWith(expect.objectContaining({
-      localDir: homeDir,
-      remoteDir: "/app/.taskcore-runtime/codex/home",
-    }));
+    expect(syncDirectoryToSsh).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localDir: homeDir,
+        remoteDir: "/app/.taskcore-runtime/codex/home",
+      }),
+    );
 
     await prepared.restoreWorkspace();
 
@@ -123,7 +159,9 @@ describe("remote managed runtime", () => {
   });
 
   it("stages each additional project into its own isolated SSH dir, isolating one failure", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-remote-runtime-additional-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-remote-runtime-additional-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const firstDir = path.join(rootDir, "referenced-first");
@@ -132,10 +170,13 @@ describe("remote managed runtime", () => {
     await mkdir(workspaceDir, { recursive: true });
 
     // The transfer rejects only for the broken project's directory.
-    syncDirectoryToSsh.mockImplementation(async (input: { localDir: string }) => {
-      if (input.localDir === brokenDir) throw new Error("ssh transfer failed");
-      return undefined;
-    });
+    syncDirectoryToSsh.mockImplementation(
+      async (input: { localDir: string }) => {
+        if (input.localDir === brokenDir)
+          throw new Error("ssh transfer failed");
+        return undefined;
+      },
+    );
 
     const prepared = await prepareRemoteManagedRuntime({
       spec: {
@@ -154,30 +195,55 @@ describe("remote managed runtime", () => {
       workspaceRemoteDir: "/app",
       syncWorkspace: false,
       additionalSources: [
-        { localPath: firstDir, projectId: "first", ignoreResolution: { kind: "other" } },
-        { localPath: brokenDir, projectId: "broken", ignoreResolution: { kind: "other" } },
-        { localPath: secondDir, projectId: "second", ignoreResolution: { kind: "other" } },
+        {
+          localPath: firstDir,
+          projectId: "first",
+          ignoreResolution: { kind: "other" },
+        },
+        {
+          localPath: brokenDir,
+          projectId: "broken",
+          ignoreResolution: { kind: "other" },
+        },
+        {
+          localPath: secondDir,
+          projectId: "second",
+          ignoreResolution: { kind: "other" },
+        },
       ],
     });
 
     // Each healthy project staged into its OWN isolated dir under the runtime
     // root; the broken one is skipped, not fatal.
-    expect(Object.keys(prepared.additionalSourceDirs).sort()).toEqual(["first", "second"]);
-    expect(prepared.additionalSourceDirs.first).toBe("/app/.taskcore-runtime/codex/project-first");
-    expect(prepared.additionalSourceDirs.second).toBe("/app/.taskcore-runtime/codex/project-second");
+    expect(Object.keys(prepared.additionalSourceDirs).sort()).toEqual([
+      "first",
+      "second",
+    ]);
+    expect(prepared.additionalSourceDirs.first).toBe(
+      "/app/.taskcore-runtime/codex/project-first",
+    );
+    expect(prepared.additionalSourceDirs.second).toBe(
+      "/app/.taskcore-runtime/codex/project-second",
+    );
     expect(prepared.additionalSourceDirs.broken).toBeUndefined();
-    expect(syncDirectoryToSsh).toHaveBeenCalledWith(expect.objectContaining({
-      localDir: firstDir,
-      remoteDir: "/app/.taskcore-runtime/codex/project-first",
-    }));
-    expect(syncDirectoryToSsh).toHaveBeenCalledWith(expect.objectContaining({
-      localDir: secondDir,
-      remoteDir: "/app/.taskcore-runtime/codex/project-second",
-    }));
+    expect(syncDirectoryToSsh).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localDir: firstDir,
+        remoteDir: "/app/.taskcore-runtime/codex/project-first",
+      }),
+    );
+    expect(syncDirectoryToSsh).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localDir: secondDir,
+        remoteDir: "/app/.taskcore-runtime/codex/project-second",
+      }),
+    );
   });
 
   it("skips an additional project whose localPath is not absolute", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-remote-runtime-relative-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-remote-runtime-relative-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const healthyDir = path.join(rootDir, "referenced-healthy");
@@ -200,21 +266,33 @@ describe("remote managed runtime", () => {
       workspaceRemoteDir: "/app",
       syncWorkspace: false,
       additionalSources: [
-        { localPath: "relative/referenced", projectId: "relative", ignoreResolution: { kind: "other" } },
-        { localPath: healthyDir, projectId: "healthy", ignoreResolution: { kind: "other" } },
+        {
+          localPath: "relative/referenced",
+          projectId: "relative",
+          ignoreResolution: { kind: "other" },
+        },
+        {
+          localPath: healthyDir,
+          projectId: "healthy",
+          ignoreResolution: { kind: "other" },
+        },
       ],
     });
 
     // The relative-path project never reaches the transfer and is skipped; the
     // absolute-path project still stages.
     expect(Object.keys(prepared.additionalSourceDirs)).toEqual(["healthy"]);
-    expect(syncDirectoryToSsh).not.toHaveBeenCalledWith(expect.objectContaining({
-      localDir: "relative/referenced",
-    }));
+    expect(syncDirectoryToSsh).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        localDir: "relative/referenced",
+      }),
+    );
   });
 
   it("passes a project's resolved Git-ignored paths to the SSH exclude list, escaped", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-remote-runtime-ignore-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-remote-runtime-ignore-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const projectDir = path.join(rootDir, "referenced-project");
@@ -240,12 +318,17 @@ describe("remote managed runtime", () => {
         {
           localPath: projectDir,
           projectId: "proj",
-          ignoreResolution: { kind: "git", ignoredPaths: ["secret.env", "build", "weird[1].txt"] },
+          ignoreResolution: {
+            kind: "git",
+            ignoredPaths: ["secret.env", "build", "weird[1].txt"],
+          },
         },
       ],
     });
 
-    const call = syncDirectoryToSsh.mock.calls.find((entry) => entry[0].localDir === projectDir);
+    const call = syncDirectoryToSsh.mock.calls.find(
+      (entry) => entry[0].localDir === projectDir,
+    );
     expect(call).toBeDefined();
     const exclude = (call![0] as { exclude?: string[] }).exclude ?? [];
     // The resolved ignored paths ride the exclude list, glob-escaped, on top of
@@ -257,7 +340,9 @@ describe("remote managed runtime", () => {
   });
 
   it("skips a project whose ignore resolution failed without ever calling syncDirectoryToSsh for it", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-remote-runtime-failed-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-remote-runtime-failed-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const healthyDir = path.join(rootDir, "referenced-healthy");
@@ -281,19 +366,31 @@ describe("remote managed runtime", () => {
       workspaceRemoteDir: "/app",
       syncWorkspace: false,
       additionalSources: [
-        { localPath: healthyDir, projectId: "healthy", ignoreResolution: { kind: "other" } },
-        { localPath: failedDir, projectId: "failed", ignoreResolution: { kind: "failed", reason: "git status timed out" } },
+        {
+          localPath: healthyDir,
+          projectId: "healthy",
+          ignoreResolution: { kind: "other" },
+        },
+        {
+          localPath: failedDir,
+          projectId: "failed",
+          ignoreResolution: { kind: "failed", reason: "git status timed out" },
+        },
       ],
     });
 
     // Fail closed: the failed project never reaches the transfer at all — no
     // bytes are sent for it — while the healthy project still stages.
     expect(Object.keys(prepared.additionalSourceDirs)).toEqual(["healthy"]);
-    expect(syncDirectoryToSsh).not.toHaveBeenCalledWith(expect.objectContaining({ localDir: failedDir }));
+    expect(syncDirectoryToSsh).not.toHaveBeenCalledWith(
+      expect.objectContaining({ localDir: failedDir }),
+    );
   });
 
   it("never leaks a raw absolute path into the remote per-project staging warning", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-remote-runtime-redact-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-remote-runtime-redact-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const failedDir = path.join(rootDir, "referenced-failed");
@@ -320,7 +417,9 @@ describe("remote managed runtime", () => {
     }
     expect(ignoreResolution.kind).toBe("failed");
 
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
     try {
       await prepareRemoteManagedRuntime({
         spec: {
@@ -338,10 +437,14 @@ describe("remote managed runtime", () => {
         workspaceLocalDir: workspaceDir,
         workspaceRemoteDir: "/app",
         syncWorkspace: false,
-        additionalSources: [{ localPath: failedDir, projectId: "failed", ignoreResolution }],
+        additionalSources: [
+          { localPath: failedDir, projectId: "failed", ignoreResolution },
+        ],
       });
 
-      const warnedText = warnSpy.mock.calls.map((call) => call.join(" ")).join("\n");
+      const warnedText = warnSpy.mock.calls
+        .map((call) => call.join(" "))
+        .join("\n");
       expect(warnedText).toContain("failed");
       expect(warnedText).not.toContain(sensitivePath);
       expect(warnedText).not.toContain(failedDir);

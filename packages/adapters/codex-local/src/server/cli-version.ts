@@ -9,9 +9,12 @@ import {
   parseCodexCliVersionOutput,
 } from "../index.js";
 
-export const CODEX_CLI_VERSION_INCOMPATIBLE_CHECK_CODE = "codex_cli_version_incompatible";
-export const CODEX_CLI_VERSION_COMPATIBLE_CHECK_CODE = "codex_cli_version_compatible";
-export const CODEX_HELLO_PROBE_MODEL_REJECTED_CHECK_CODE = "codex_hello_probe_model_rejected";
+export const CODEX_CLI_VERSION_INCOMPATIBLE_CHECK_CODE =
+  "codex_cli_version_incompatible";
+export const CODEX_CLI_VERSION_COMPATIBLE_CHECK_CODE =
+  "codex_cli_version_compatible";
+export const CODEX_HELLO_PROBE_MODEL_REJECTED_CHECK_CODE =
+  "codex_hello_probe_model_rejected";
 
 /**
  * Run `codex --version` where the run would execute it. Never cached: an
@@ -64,11 +67,16 @@ export async function checkCodexCliVersionForModel(input: {
   target: AdapterExecutionTarget | null | undefined;
   cwd: string;
   env: Record<string, string>;
-}): Promise<{ check: AdapterEnvironmentCheck; compatible: boolean; detectedVersion: string | null } | null> {
+}): Promise<{
+  check: AdapterEnvironmentCheck;
+  compatible: boolean;
+  detectedVersion: string | null;
+} | null> {
   const minimum = minimumCodexCliVersionForModel(input.model);
   if (!minimum) return null;
   const model = normalizeCodexModel(input.model);
-  const targetIsSandbox = input.target?.kind === "remote" && input.target.transport === "sandbox";
+  const targetIsSandbox =
+    input.target?.kind === "remote" && input.target.transport === "sandbox";
   const detected = await readCodexCommandVersion(input);
   if (detected && codexCliVersionAtLeast(detected, minimum)) {
     return {

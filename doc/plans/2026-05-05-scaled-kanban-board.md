@@ -21,6 +21,7 @@
 ## Task 1: Add Kanban Board Scaling Mechanics
 
 **Files:**
+
 - Modify: `ui/src/components/KanbanBoard.tsx`
 - Create: `ui/src/components/KanbanBoard.test.tsx`
 
@@ -29,7 +30,12 @@
 Create `ui/src/components/KanbanBoard.test.tsx` with tests that render 60 todo issues and assert:
 
 ```tsx
-renderBoard({ issues: createIssues(60, "todo"), compactCards: true, initialVisibleCount: 10, revealIncrement: 10 });
+renderBoard({
+  issues: createIssues(60, "todo"),
+  compactCards: true,
+  initialVisibleCount: 10,
+  revealIncrement: 10,
+});
 expect(container.textContent).toContain("Showing 10 of 60");
 expect(container.textContent).toContain("Show 10 more");
 ```
@@ -101,6 +107,7 @@ git commit -m "Scale kanban board columns"
 ## Task 2: Wire Board Density State Into IssuesList
 
 **Files:**
+
 - Modify: `ui/src/components/IssuesList.tsx`
 - Modify: `ui/src/components/IssuesList.test.tsx`
 
@@ -118,12 +125,14 @@ revealIncrement?: number;
 Add a test that stores board mode in localStorage, renders more than 100 issues, and expects:
 
 ```ts
-expect(mockKanbanBoard).toHaveBeenLastCalledWith(expect.objectContaining({
-  compactCards: true,
-  collapsedStatuses: expect.arrayContaining(["backlog", "done", "cancelled"]),
-  initialVisibleCount: 10,
-  revealIncrement: 10,
-}));
+expect(mockKanbanBoard).toHaveBeenLastCalledWith(
+  expect.objectContaining({
+    compactCards: true,
+    collapsedStatuses: expect.arrayContaining(["backlog", "done", "cancelled"]),
+    initialVisibleCount: 10,
+    revealIncrement: 10,
+  }),
+);
 ```
 
 - [ ] **Step 2: Run test to verify failure**
@@ -149,11 +158,15 @@ boardColumnPageSize: 10 | 25 | 50;
 Default the density modes to `"auto"` and page size to `10`. Derive:
 
 ```ts
-const boardHighVolume = viewState.viewMode === "board" && filtered.length > KANBAN_BOARD_HIGH_VOLUME_THRESHOLD;
-const boardCompactCards = viewState.boardCardDensity === "compact"
-  || (viewState.boardCardDensity === "auto" && boardHighVolume);
-const boardCollapsedStatuses = viewState.boardColdLaneMode === "collapsed"
-  || (viewState.boardColdLaneMode === "auto" && boardHighVolume)
+const boardHighVolume =
+  viewState.viewMode === "board" &&
+  filtered.length > KANBAN_BOARD_HIGH_VOLUME_THRESHOLD;
+const boardCompactCards =
+  viewState.boardCardDensity === "compact" ||
+  (viewState.boardCardDensity === "auto" && boardHighVolume);
+const boardCollapsedStatuses =
+  viewState.boardColdLaneMode === "collapsed" ||
+  (viewState.boardColdLaneMode === "auto" && boardHighVolume)
     ? [...KANBAN_COLD_STATUSES]
     : [];
 ```
@@ -208,6 +221,7 @@ git commit -m "Wire issue board density controls"
 ## Task 3: Verification And PR Prep
 
 **Files:**
+
 - Verify existing changes only.
 
 - [ ] **Step 1: Run targeted UI tests**

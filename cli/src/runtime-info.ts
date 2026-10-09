@@ -15,7 +15,10 @@ export type TaskcoreRuntimeInfo = {
 };
 
 export function resolveRuntimeInfoPath(instanceId?: string): string {
-  return path.join(resolveTaskcoreInstanceRoot(instanceId), TASKCORE_RUNTIME_INFO_FILENAME);
+  return path.join(
+    resolveTaskcoreInstanceRoot(instanceId),
+    TASKCORE_RUNTIME_INFO_FILENAME,
+  );
 }
 
 function parseRuntimeInfo(value: unknown): TaskcoreRuntimeInfo | null {
@@ -38,9 +41,14 @@ function parseRuntimeInfo(value: unknown): TaskcoreRuntimeInfo | null {
   return record as TaskcoreRuntimeInfo;
 }
 
-export function readRuntimeInfo(instanceId?: string, filePath = resolveRuntimeInfoPath(instanceId)): TaskcoreRuntimeInfo | null {
+export function readRuntimeInfo(
+  instanceId?: string,
+  filePath = resolveRuntimeInfoPath(instanceId),
+): TaskcoreRuntimeInfo | null {
   try {
-    const info = parseRuntimeInfo(JSON.parse(fs.readFileSync(filePath, "utf8")));
+    const info = parseRuntimeInfo(
+      JSON.parse(fs.readFileSync(filePath, "utf8")),
+    );
     if (!info) return null;
     if (instanceId && info.instanceId !== instanceId) return null;
     return info;

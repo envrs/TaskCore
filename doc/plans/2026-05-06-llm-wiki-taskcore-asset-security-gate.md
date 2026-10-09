@@ -20,11 +20,11 @@ This keeps the secure path easier than the insecure one and avoids broadening th
 
 These source kinds may contribute body text to Taskcore-derived source bundles:
 
-| Source kind | Allowed body fields | Reason |
-| --- | --- | --- |
-| Issue | `title`, `description`, identifier/status metadata | First-party Taskcore text under company ACL |
-| Comment | `body` | First-party Taskcore text under company ACL |
-| Document | `body`, `title`, `key`, revision metadata | First-party Taskcore text under company ACL |
+| Source kind | Allowed body fields                                | Reason                                      |
+| ----------- | -------------------------------------------------- | ------------------------------------------- |
+| Issue       | `title`, `description`, identifier/status metadata | First-party Taskcore text under company ACL |
+| Comment     | `body`                                             | First-party Taskcore text under company ACL |
+| Document    | `body`, `title`, `key`, revision metadata          | First-party Taskcore text under company ACL |
 
 ## Assets And Work Products
 

@@ -16,7 +16,9 @@ async function availablePort(): Promise<number> {
     server.listen(0, "127.0.0.1", resolve);
   });
   const address = server.address() as net.AddressInfo;
-  await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+  await new Promise<void>((resolve, reject) =>
+    server.close((error) => (error ? reject(error) : resolve())),
+  );
   return address.port;
 }
 

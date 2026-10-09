@@ -74,7 +74,10 @@ interface AgentSkillSyncOptions extends SkillsOptions {
   mode: AgentSkillAssignmentMode;
 }
 
-type CompanySkillReferenceTarget = Pick<CompanySkillListItem, "id" | "key" | "slug" | "name">;
+type CompanySkillReferenceTarget = Pick<
+  CompanySkillListItem,
+  "id" | "key" | "slug" | "name"
+>;
 
 export interface CompanySkillCheckRow {
   skill: CompanySkillReferenceTarget;
@@ -90,7 +93,9 @@ export interface CompanySkillUpdateRow {
 }
 
 export function registerSkillsCommands(program: Command): void {
-  const skills = program.command("skills").description("Company and agent skill operations");
+  const skills = program
+    .command("skills")
+    .description("Company and agent skill operations");
 
   addCommonClientOptions(
     skills
@@ -159,10 +164,16 @@ export function registerSkillsCommands(program: Command): void {
   addCommonClientOptions(
     skills
       .command("install")
-      .description("Install a catalog skill into the company skill library; does not attach it to agents")
+      .description(
+        "Install a catalog skill into the company skill library; does not attach it to agents",
+      )
       .argument("<catalogRef>", "Catalog skill ID, key, or unique slug")
       .option("--as <slug>", "Company skill slug override")
-      .option("--force", "Replace a same-key catalog-managed skill when the server allows it", false)
+      .option(
+        "--force",
+        "Replace a same-key catalog-managed skill when the server allows it",
+        false,
+      )
       .action(async (catalogRef: string, opts: CatalogInstallOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -236,7 +247,9 @@ export function registerSkillsCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const skill = await resolveCompanySkill(ctx, skillRef);
-          const params = new URLSearchParams({ path: opts.path?.trim() || "SKILL.md" });
+          const params = new URLSearchParams({
+            path: opts.path?.trim() || "SKILL.md",
+          });
           const file = await ctx.api.get<CompanySkillFileDetail>(
             `/api/companies/${ctx.companyId}/skills/${encodeURIComponent(skill.id)}/files?${params.toString()}`,
           );
@@ -258,7 +271,9 @@ export function registerSkillsCommands(program: Command): void {
   addCommonClientOptions(
     skills
       .command("import")
-      .description("Import company skills from a local path, GitHub, skills.sh, or URL source")
+      .description(
+        "Import company skills from a local path, GitHub, skills.sh, or URL source",
+      )
       .argument("<source>", "Skill source")
       .action(async (source: string, opts: SkillsOptions) => {
         try {
@@ -296,7 +311,9 @@ export function registerSkillsCommands(program: Command): void {
       .action(async (opts: SkillCreateOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const markdown = opts.bodyFile ? await readBodyFile(opts.bodyFile) : undefined;
+          const markdown = opts.bodyFile
+            ? await readBodyFile(opts.bodyFile)
+            : undefined;
           const created = await ctx.api.post<CompanySkill>(
             `/api/companies/${ctx.companyId}/skills`,
             {
@@ -310,7 +327,9 @@ export function registerSkillsCommands(program: Command): void {
             printOutput(created, { json: true });
             return;
           }
-          console.log(`Created skill ${created?.name ?? opts.name} (${created?.key ?? created?.id ?? "unknown"})`);
+          console.log(
+            `Created skill ${created?.name ?? opts.name} (${created?.key ?? created?.id ?? "unknown"})`,
+          );
         } catch (err) {
           handleCommandError(err);
         }
@@ -322,8 +341,18 @@ export function registerSkillsCommands(program: Command): void {
     skills
       .command("scan-projects")
       .description("Scan project workspaces for skills")
-      .option("--project-id <id>", "Project ID to scan; may be repeated", collectOptionValue, [] as string[])
-      .option("--workspace-id <id>", "Workspace ID to scan; may be repeated", collectOptionValue, [] as string[])
+      .option(
+        "--project-id <id>",
+        "Project ID to scan; may be repeated",
+        collectOptionValue,
+        [] as string[],
+      )
+      .option(
+        "--workspace-id <id>",
+        "Workspace ID to scan; may be repeated",
+        collectOptionValue,
+        [] as string[],
+      )
       .action(async (opts: SkillScanProjectsOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -375,25 +404,41 @@ export function registerSkillsCommands(program: Command): void {
       .description("Install company skill updates")
       .argument("[skillRef]", "Company skill ID, key, or unique slug")
       .option("--all", "Check all skills and install available updates", false)
-      .option("--force", "Discard local-modification or soft-audit holds; hard-stop audit findings still fail", false)
-      .action(async (skillRef: string | undefined, opts: SkillUpdateOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts, { requireCompany: true });
-          if (opts.all && skillRef?.trim()) {
-            throw new Error("Use either a skill reference or --all, not both.");
+      .option(
+        "--force",
+        "Discard local-modification or soft-audit holds; hard-stop audit findings still fail",
+        false,
+      )
+      .action(
+        async (skillRef: string | undefined, opts: SkillUpdateOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts, { requireCompany: true });
+            if (opts.all && skillRef?.trim()) {
+              throw new Error(
+                "Use either a skill reference or --all, not both.",
+              );
+            }
+            const rows = opts.all
+              ? await updateAllCompanySkills(ctx, opts)
+              : [
+                  await updateOneCompanySkill(
+                    ctx,
+                    requireSkillRef(skillRef),
+                    opts,
+                  ),
+                ];
+            if (ctx.json) {
+              printOutput(rows.length === 1 && !opts.all ? rows[0] : rows, {
+                json: true,
+              });
+              return;
+            }
+            printCompanySkillUpdateRows(rows);
+          } catch (err) {
+            handleCommandError(err);
           }
-          const rows = opts.all
-            ? await updateAllCompanySkills(ctx, opts)
-            : [await updateOneCompanySkill(ctx, requireSkillRef(skillRef), opts)];
-          if (ctx.json) {
-            printOutput(rows.length === 1 && !opts.all ? rows[0] : rows, { json: true });
-            return;
-          }
-          printCompanySkillUpdateRows(rows);
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+        },
+      ),
     { includeCompany: true },
   );
 
@@ -407,7 +452,9 @@ export function registerSkillsCommands(program: Command): void {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const rows = await auditCompanySkills(ctx, skillRef);
           if (ctx.json) {
-            printOutput(rows.length === 1 && skillRef ? rows[0]?.audit : rows, { json: true });
+            printOutput(rows.length === 1 && skillRef ? rows[0]?.audit : rows, {
+              json: true,
+            });
             return;
           }
           printCompanySkillAuditRows(rows);
@@ -421,15 +468,24 @@ export function registerSkillsCommands(program: Command): void {
   addCommonClientOptions(
     skills
       .command("reset")
-      .description("Reset a catalog-managed company skill to its pinned installed origin")
+      .description(
+        "Reset a catalog-managed company skill to its pinned installed origin",
+      )
       .argument("<skillRef>", "Company skill ID, key, or unique slug")
       .option("--yes", "Confirm reset without prompting", false)
-      .option("--force", "Discard local modifications or accept soft audit warnings; hard-stop audit findings still fail", false)
+      .option(
+        "--force",
+        "Discard local modifications or accept soft audit warnings; hard-stop audit findings still fail",
+        false,
+      )
       .action(async (skillRef: string, opts: ConfirmedSkillOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const skill = await resolveCompanySkill(ctx, skillRef);
-          await confirmDangerousAction(opts.yes, `Reset catalog skill "${skill.name}" (${skill.key}) to its pinned origin?`);
+          await confirmDangerousAction(
+            opts.yes,
+            `Reset catalog skill "${skill.name}" (${skill.key}) to its pinned origin?`,
+          );
           const reset = await ctx.api.post<CompanySkill>(
             `/api/companies/${ctx.companyId}/skills/${encodeURIComponent(skill.id)}/reset`,
             { force: opts.force || undefined },
@@ -438,7 +494,9 @@ export function registerSkillsCommands(program: Command): void {
             printOutput(reset, { json: true });
             return;
           }
-          console.log(`Reset skill ${reset?.name ?? skill.name} (${reset?.key ?? skill.key}) to pinned origin.`);
+          console.log(
+            `Reset skill ${reset?.name ?? skill.name} (${reset?.key ?? skill.key}) to pinned origin.`,
+          );
         } catch (err) {
           handleCommandError(err);
         }
@@ -456,7 +514,10 @@ export function registerSkillsCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const skill = await resolveCompanySkill(ctx, skillRef);
-          await confirmDangerousAction(opts.yes, `Remove company skill "${skill.name}" (${skill.key})?`);
+          await confirmDangerousAction(
+            opts.yes,
+            `Remove company skill "${skill.name}" (${skill.key})?`,
+          );
           const removed = await ctx.api.delete<CompanySkill>(
             `/api/companies/${ctx.companyId}/skills/${encodeURIComponent(skill.id)}`,
           );
@@ -464,7 +525,9 @@ export function registerSkillsCommands(program: Command): void {
             printOutput(removed, { json: true });
             return;
           }
-          console.log(`Removed skill ${removed?.name ?? skill.name} (${removed?.key ?? skill.key})`);
+          console.log(
+            `Removed skill ${removed?.name ?? skill.name} (${removed?.key ?? skill.key})`,
+          );
         } catch (err) {
           handleCommandError(err);
         }
@@ -476,7 +539,9 @@ export function registerSkillsCommands(program: Command): void {
 }
 
 function registerAgentSkillCommands(skills: Command): void {
-  const agent = skills.command("agent").description("Agent desired-skill and runtime sync operations");
+  const agent = skills
+    .command("agent")
+    .description("Agent desired-skill and runtime sync operations");
 
   addCommonClientOptions(
     agent
@@ -505,9 +570,16 @@ function registerAgentSkillCommands(skills: Command): void {
   addCommonClientOptions(
     agent
       .command("sync")
-      .description("Merge an agent's desired company skills and sync runtime state")
+      .description(
+        "Merge an agent's desired company skills and sync runtime state",
+      )
       .argument("<agentRef>", "Agent ID or shortname/url-key")
-      .option("--skill <skillRef>", "Desired company skill ID, key, or slug; may be repeated", collectOptionValue, [] as string[])
+      .option(
+        "--skill <skillRef>",
+        "Desired company skill ID, key, or slug; may be repeated",
+        collectOptionValue,
+        [] as string[],
+      )
       .requiredOption(
         "--mode <mode>",
         "Merge mode: add keeps other skills; remove deletes only named skills; replace destructively overwrites the complete set",
@@ -516,7 +588,9 @@ function registerAgentSkillCommands(skills: Command): void {
         try {
           const desiredSkills = opts.skill ?? [];
           if (desiredSkills.length === 0) {
-            throw new Error("At least one --skill value is required for skills agent sync.");
+            throw new Error(
+              "At least one --skill value is required for skills agent sync.",
+            );
           }
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const agentRow = await resolveAgent(ctx, agentRef);
@@ -543,7 +617,9 @@ function registerAgentSkillCommands(skills: Command): void {
   addCommonClientOptions(
     agent
       .command("clear")
-      .description("Clear an agent's desired company skills and sync runtime state")
+      .description(
+        "Clear an agent's desired company skills and sync runtime state",
+      )
       .argument("<agentRef>", "Agent ID or shortname/url-key")
       .option("--yes", "Confirm clear without prompting", false)
       .action(async (agentRef: string, opts: ConfirmedSkillOptions) => {
@@ -574,8 +650,14 @@ function registerAgentSkillCommands(skills: Command): void {
   );
 }
 
-async function listCompanySkills(ctx: ResolvedClientContext): Promise<CompanySkillListItem[]> {
-  return (await ctx.api.get<CompanySkillListItem[]>(`/api/companies/${ctx.companyId}/skills`)) ?? [];
+async function listCompanySkills(
+  ctx: ResolvedClientContext,
+): Promise<CompanySkillListItem[]> {
+  return (
+    (await ctx.api.get<CompanySkillListItem[]>(
+      `/api/companies/${ctx.companyId}/skills`,
+    )) ?? []
+  );
 }
 
 async function listCatalogSkills(
@@ -587,15 +669,24 @@ async function listCatalogSkills(
   appendQueryParam(params, "category", opts.category);
   appendQueryParam(params, "q", opts.query);
   const query = params.toString();
-  return (await ctx.api.get<CatalogSkill[]>(`/api/skills/catalog${query ? `?${query}` : ""}`)) ?? [];
+  return (
+    (await ctx.api.get<CatalogSkill[]>(
+      `/api/skills/catalog${query ? `?${query}` : ""}`,
+    )) ?? []
+  );
 }
 
-async function getCatalogSkill(ctx: ResolvedClientContext, catalogRef: string): Promise<CatalogSkill> {
+async function getCatalogSkill(
+  ctx: ResolvedClientContext,
+  catalogRef: string,
+): Promise<CatalogSkill> {
   const ref = catalogRef.trim();
   if (!ref) {
     throw new Error("Catalog skill reference is required.");
   }
-  const detail = await ctx.api.get<CatalogSkill>(`/api/skills/catalog/ref?ref=${encodeURIComponent(ref)}`);
+  const detail = await ctx.api.get<CatalogSkill>(
+    `/api/skills/catalog/ref?ref=${encodeURIComponent(ref)}`,
+  );
   if (!detail) {
     throw new Error(`Catalog skill not found: ${catalogRef}`);
   }
@@ -621,7 +712,9 @@ export function resolveCompanySkillReference(
   const bySlug = skills.filter((skill) => skill.slug === normalizedSlug);
   if (bySlug.length === 1 && bySlug[0]) return bySlug[0];
   if (bySlug.length > 1) {
-    throw new Error(`Ambiguous skill slug "${trimmed}". Use a skill ID or key instead.`);
+    throw new Error(
+      `Ambiguous skill slug "${trimmed}". Use a skill ID or key instead.`,
+    );
   }
 
   throw new Error(`Skill not found: ${reference}`);
@@ -639,7 +732,9 @@ async function checkCompanySkills(
   skillRef: string | undefined,
 ): Promise<CompanySkillCheckRow[]> {
   const skills = await listCompanySkills(ctx);
-  const selected = skillRef ? [resolveCompanySkillReference(skills, skillRef)] : skills;
+  const selected = skillRef
+    ? [resolveCompanySkillReference(skills, skillRef)]
+    : skills;
   const rows: CompanySkillCheckRow[] = [];
   for (const skill of selected) {
     const status = await ctx.api.get<CompanySkillUpdateStatus>(
@@ -670,7 +765,10 @@ async function updateOneCompanySkill(
   };
 }
 
-async function updateAllCompanySkills(ctx: ResolvedClientContext, opts: SkillUpdateOptions = {}): Promise<CompanySkillUpdateRow[]> {
+async function updateAllCompanySkills(
+  ctx: ResolvedClientContext,
+  opts: SkillUpdateOptions = {},
+): Promise<CompanySkillUpdateRow[]> {
   const checks = await checkCompanySkills(ctx, undefined);
   const rows: CompanySkillUpdateRow[] = [];
   for (const row of checks) {
@@ -679,7 +777,9 @@ async function updateAllCompanySkills(ctx: ResolvedClientContext, opts: SkillUpd
         skillRef: row.skill.key,
         action: "skipped",
         status: row.status,
-        reason: row.status.reason ?? "Update checks are not supported for this skill.",
+        reason:
+          row.status.reason ??
+          "Update checks are not supported for this skill.",
       });
       continue;
     }
@@ -718,10 +818,17 @@ async function updateAllCompanySkills(ctx: ResolvedClientContext, opts: SkillUpd
 async function auditCompanySkills(
   ctx: ResolvedClientContext,
   skillRef: string | undefined,
-): Promise<Array<{ skill: CompanySkillReferenceTarget; audit: CompanySkillAuditResult }>> {
+): Promise<
+  Array<{ skill: CompanySkillReferenceTarget; audit: CompanySkillAuditResult }>
+> {
   const skills = await listCompanySkills(ctx);
-  const selected = skillRef ? [resolveCompanySkillReference(skills, skillRef)] : skills;
-  const rows: Array<{ skill: CompanySkillReferenceTarget; audit: CompanySkillAuditResult }> = [];
+  const selected = skillRef
+    ? [resolveCompanySkillReference(skills, skillRef)]
+    : skills;
+  const rows: Array<{
+    skill: CompanySkillReferenceTarget;
+    audit: CompanySkillAuditResult;
+  }> = [];
   for (const skill of selected) {
     const audit = await ctx.api.post<CompanySkillAuditResult>(
       `/api/companies/${ctx.companyId}/skills/${encodeURIComponent(skill.id)}/audit`,
@@ -735,16 +842,23 @@ async function auditCompanySkills(
   return rows;
 }
 
-async function resolveAgent(ctx: ResolvedClientContext, agentRef: string): Promise<Agent> {
+async function resolveAgent(
+  ctx: ResolvedClientContext,
+  agentRef: string,
+): Promise<Agent> {
   const params = new URLSearchParams({ companyId: ctx.companyId ?? "" });
-  const agent = await ctx.api.get<Agent>(`/api/agents/${encodeURIComponent(agentRef)}?${params.toString()}`);
+  const agent = await ctx.api.get<Agent>(
+    `/api/agents/${encodeURIComponent(agentRef)}?${params.toString()}`,
+  );
   if (!agent) {
     throw new Error(`Agent not found: ${agentRef}`);
   }
   return agent;
 }
 
-function printCompanySkillRows(rows: Array<CompanySkillListItem | CompanySkill>): void {
+function printCompanySkillRows(
+  rows: Array<CompanySkillListItem | CompanySkill>,
+): void {
   if (rows.length === 0) {
     printOutput([], { json: false });
     return;
@@ -759,7 +873,8 @@ function printCompanySkillRows(rows: Array<CompanySkillListItem | CompanySkill>)
         source: "sourceBadge" in row ? row.sourceBadge : row.sourceType,
         trust: row.trustLevel,
         compatibility: row.compatibility,
-        attachedAgents: "attachedAgentCount" in row ? row.attachedAgentCount : undefined,
+        attachedAgents:
+          "attachedAgentCount" in row ? row.attachedAgentCount : undefined,
       }),
     );
   }
@@ -770,16 +885,18 @@ function printCatalogSkillRows(rows: CatalogSkill[]): void {
     printOutput([], { json: false });
     return;
   }
-  printTable(rows.map((row) => ({
-    id: row.id,
-    key: row.key,
-    kind: row.kind,
-    category: row.category,
-    slug: row.slug,
-    name: row.name,
-    trust: row.trustLevel,
-    roles: row.recommendedForRoles.join(",") || "-",
-  })));
+  printTable(
+    rows.map((row) => ({
+      id: row.id,
+      key: row.key,
+      kind: row.kind,
+      category: row.category,
+      slug: row.slug,
+      name: row.name,
+      trust: row.trustLevel,
+      roles: row.recommendedForRoles.join(",") || "-",
+    })),
+  );
 }
 
 function printCatalogSkillDetail(skill: CatalogSkill): void {
@@ -797,18 +914,24 @@ function printCatalogSkillDetail(skill: CatalogSkill): void {
     }),
   );
   console.log(`description=${skill.description || "-"}`);
-  console.log(`recommendedForRoles=${skill.recommendedForRoles.join(",") || "-"}`);
+  console.log(
+    `recommendedForRoles=${skill.recommendedForRoles.join(",") || "-"}`,
+  );
   console.log(`tags=${skill.tags.join(",") || "-"}`);
   console.log("files:");
-  printTable(skill.files.map((file) => ({
-    path: file.path,
-    kind: file.kind,
-    sizeBytes: file.sizeBytes,
-    sha256: file.sha256,
-  })));
+  printTable(
+    skill.files.map((file) => ({
+      path: file.path,
+      kind: file.kind,
+      sizeBytes: file.sizeBytes,
+      sha256: file.sha256,
+    })),
+  );
 }
 
-function printCatalogInstallResult(result: CompanySkillInstallCatalogResult | null): void {
+function printCatalogInstallResult(
+  result: CompanySkillInstallCatalogResult | null,
+): void {
   if (!result) {
     console.log("Catalog install returned no result.");
     return;
@@ -850,7 +973,12 @@ function printCompanySkillCheckRows(rows: CompanySkillCheckRow[]): void {
   }
 }
 
-function printCompanySkillAuditRows(rows: Array<{ skill: CompanySkillReferenceTarget; audit: CompanySkillAuditResult }>): void {
+function printCompanySkillAuditRows(
+  rows: Array<{
+    skill: CompanySkillReferenceTarget;
+    audit: CompanySkillAuditResult;
+  }>,
+): void {
   if (rows.length === 0) {
     printOutput([], { json: false });
     return;
@@ -895,9 +1023,14 @@ function printCompanySkillUpdateRows(rows: CompanySkillUpdateRow[]): void {
   }
 }
 
-function printAgentSkillSnapshot(snapshot: AgentSkillSnapshot | null, agent: Agent): void {
+function printAgentSkillSnapshot(
+  snapshot: AgentSkillSnapshot | null,
+  agent: Agent,
+): void {
   if (!snapshot) {
-    console.log(`Agent ${agent.name} (${agent.id}) returned no skill snapshot.`);
+    console.log(
+      `Agent ${agent.name} (${agent.id}) returned no skill snapshot.`,
+    );
     return;
   }
   console.log(
@@ -927,7 +1060,9 @@ function printAgentSkillSnapshot(snapshot: AgentSkillSnapshot | null, agent: Age
   }
 }
 
-function toSkillReferenceTarget(skill: CompanySkillReferenceTarget): CompanySkillReferenceTarget {
+function toSkillReferenceTarget(
+  skill: CompanySkillReferenceTarget,
+): CompanySkillReferenceTarget {
   return {
     id: skill.id,
     key: skill.key,
@@ -937,7 +1072,11 @@ function toSkillReferenceTarget(skill: CompanySkillReferenceTarget): CompanySkil
 }
 
 function normalizeSkillSlug(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function requireSkillRef(skillRef: string | undefined): string {
@@ -955,7 +1094,11 @@ function emptyToUndefined(values: string[] | undefined): string[] | undefined {
   return values && values.length > 0 ? values : undefined;
 }
 
-function appendQueryParam(params: URLSearchParams, key: string, value: string | undefined): void {
+function appendQueryParam(
+  params: URLSearchParams,
+  key: string,
+  value: string | undefined,
+): void {
   const trimmed = value?.trim();
   if (trimmed) {
     params.set(key, trimmed);
@@ -971,15 +1114,30 @@ function printTable(rows: Array<Record<string, unknown>>): void {
   const widths = new Map(columns.map((column) => [column, column.length]));
   for (const row of rows) {
     for (const column of columns) {
-      widths.set(column, Math.max(widths.get(column) ?? 0, renderTableValue(row[column]).length));
+      widths.set(
+        column,
+        Math.max(widths.get(column) ?? 0, renderTableValue(row[column]).length),
+      );
     }
   }
-  console.log(columns.map((column) => column.padEnd(widths.get(column) ?? column.length)).join("  "));
-  console.log(columns.map((column) => "-".repeat(widths.get(column) ?? column.length)).join("  "));
+  console.log(
+    columns
+      .map((column) => column.padEnd(widths.get(column) ?? column.length))
+      .join("  "),
+  );
+  console.log(
+    columns
+      .map((column) => "-".repeat(widths.get(column) ?? column.length))
+      .join("  "),
+  );
   for (const row of rows) {
     console.log(
       columns
-        .map((column) => renderTableValue(row[column]).padEnd(widths.get(column) ?? column.length))
+        .map((column) =>
+          renderTableValue(row[column]).padEnd(
+            widths.get(column) ?? column.length,
+          ),
+        )
         .join("  "),
     );
   }
@@ -988,7 +1146,8 @@ function printTable(rows: Array<Record<string, unknown>>): void {
 function renderTableValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "-";
   if (typeof value === "string") return value.replace(/\s+/g, " ").trim();
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
   return JSON.stringify(value);
 }
 
@@ -1007,14 +1166,21 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-async function confirmDangerousAction(yes: boolean | undefined, message: string): Promise<void> {
+async function confirmDangerousAction(
+  yes: boolean | undefined,
+  message: string,
+): Promise<void> {
   if (yes) return;
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new Error("This command requires --yes when not running in an interactive terminal.");
+    throw new Error(
+      "This command requires --yes when not running in an interactive terminal.",
+    );
   }
   const rl = createInterface({ input, output });
   try {
-    const answer = (await rl.question(`${message} Type yes to continue: `)).trim().toLowerCase();
+    const answer = (await rl.question(`${message} Type yes to continue: `))
+      .trim()
+      .toLowerCase();
     if (answer !== "yes") {
       throw new Error("Aborted.");
     }

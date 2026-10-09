@@ -2,7 +2,10 @@ import { chmod, lstat, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { resolveTaskcoreInstanceRootForAdapter } from "@taskcore/adapter-utils/server-utils";
-import { readSubscriptionAccountId, writeCodexAuthCacheEntry } from "./codex-auth-cache.js";
+import {
+  readSubscriptionAccountId,
+  writeCodexAuthCacheEntry,
+} from "./codex-auth-cache.js";
 import { copyBackCodexAuth } from "./codex-auth-copyback.js";
 import {
   codexHomeHasUsableAuth,
@@ -41,7 +44,9 @@ export const MAX_AUTH_JSON_BYTES = 64 * 1024;
 export type InstallDeviceLoginOutcome = "seeded" | "updated" | "kept";
 
 function nonEmpty(value: string | undefined): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 /**
@@ -51,22 +56,32 @@ function nonEmpty(value: string | undefined): string | null {
  */
 function requireSafeSegment(value: string, label: string): string {
   const trimmed = typeof value === "string" ? value.trim() : "";
-  if (trimmed.length === 0) throw new Error(`device-login export: ${label} is empty`);
+  if (trimmed.length === 0)
+    throw new Error(`device-login export: ${label} is empty`);
   if (trimmed === "." || trimmed === "..") {
     throw new Error(`device-login export: ${label} is a relative path segment`);
   }
-  if (trimmed.includes("/") || trimmed.includes("\\") || trimmed.includes("\0")) {
+  if (
+    trimmed.includes("/") ||
+    trimmed.includes("\\") ||
+    trimmed.includes("\0")
+  ) {
     throw new Error(`device-login export: ${label} contains a path separator`);
   }
   if (path.basename(trimmed) !== trimmed) {
-    throw new Error(`device-login export: ${label} is not a single path segment`);
+    throw new Error(
+      `device-login export: ${label} is not a single path segment`,
+    );
   }
   return trimmed;
 }
 
 /** Reduces a run id to a safe, bounded path segment. Never throws. */
 function toSafeRunSegment(value: string | null): string {
-  const cleaned = (value ?? "").trim().replace(/[^A-Za-z0-9_-]+/g, "-").slice(0, 80);
+  const cleaned = (value ?? "")
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, "-")
+    .slice(0, 80);
   return cleaned.length > 0 ? cleaned : "run";
 }
 
@@ -76,14 +91,22 @@ function toSafeRunSegment(value: string | null): string {
  * can never cross a company boundary. `companyId` is required and is sanitized to
  * a single safe path segment.
  */
-export function resolveProofHomeRoot(env: NodeJS.ProcessEnv = process.env, companyId: string): string {
+export function resolveProofHomeRoot(
+  env: NodeJS.ProcessEnv = process.env,
+  companyId: string,
+): string {
   const safeCompanyId = requireSafeSegment(companyId, "companyId");
   const instanceRoot = resolveTaskcoreInstanceRootForAdapter({
     homeDir: nonEmpty(env.TASKCORE_HOME) ?? undefined,
     instanceId: nonEmpty(env.TASKCORE_INSTANCE_ID) ?? undefined,
     env,
   });
-  return path.resolve(instanceRoot, "companies", safeCompanyId, PROOF_ROOT_DIR_NAME);
+  return path.resolve(
+    instanceRoot,
+    "companies",
+    safeCompanyId,
+    PROOF_ROOT_DIR_NAME,
+  );
 }
 
 export interface DeriveProofHomeInput {
@@ -103,7 +126,9 @@ export function deriveProofHome(input: DeriveProofHomeInput = {}): string {
     input.companyId ?? nonEmpty(env.TASKCORE_COMPANY_ID) ?? "",
     "companyId",
   );
-  const runSegment = toSafeRunSegment(input.runId ?? nonEmpty(env.TASKCORE_RUN_ID));
+  const runSegment = toSafeRunSegment(
+    input.runId ?? nonEmpty(env.TASKCORE_RUN_ID),
+  );
   const root = resolveProofHomeRoot(env, companyId);
   return path.resolve(root, `${runSegment}-${randomUUID()}`);
 }
@@ -120,18 +145,24 @@ function assertProofHomeIsSafeTarget(
 ): void {
   const shared = path.resolve(resolveSharedCodexHomeDir(env));
   if (resolved === shared) {
-    throw new Error("device-login export: refused the shared or default Codex home");
+    throw new Error(
+      "device-login export: refused the shared or default Codex home",
+    );
   }
   const managed = path.resolve(resolveManagedCodexHomeDir(env, companyId));
   if (resolved === managed) {
-    throw new Error("device-login export: refused the managed company Codex home");
+    throw new Error(
+      "device-login export: refused the managed company Codex home",
+    );
   }
   if (path.basename(resolved) === MANAGED_HOME_DIR_NAME) {
     throw new Error("device-login export: refused a managed Codex home");
   }
   const root = resolveProofHomeRoot(env, companyId);
   if (!resolved.startsWith(root + path.sep)) {
-    throw new Error("device-login export: the proof home must be under the company-scoped proof root");
+    throw new Error(
+      "device-login export: the proof home must be under the company-scoped proof root",
+    );
   }
 }
 
@@ -151,7 +182,9 @@ export function assertUsableSubscriptionShape(bytes: Buffer): void {
   const accountId = readSubscriptionAccountId(bytes);
   if (!accountId) {
     // Covers an API-key payload, a malformed payload, and an unusable payload.
-    throw new Error("device-login export: refused a non-subscription auth payload");
+    throw new Error(
+      "device-login export: refused a non-subscription auth payload",
+    );
   }
 }
 
@@ -167,7 +200,9 @@ async function ensurePrivateDir(dir: string): Promise<void> {
   });
   if (existing) {
     if (existing.isSymbolicLink() || !existing.isDirectory()) {
-      throw new Error("device-login export: the proof-home path is a symlink or a non-directory");
+      throw new Error(
+        "device-login export: the proof-home path is a symlink or a non-directory",
+      );
     }
     await chmod(dir, PRIVATE_DIR_MODE);
     return;
@@ -180,13 +215,19 @@ async function ensurePrivateDir(dir: string): Promise<void> {
  * Rejects an existing `auth.json` that is a symlink or a non-regular file. An
  * absent file is the normal first-install case.
  */
-async function assertAuthPathIsRegularOrAbsent(authPath: string): Promise<void> {
-  const existing = await lstat(authPath).catch((error: NodeJS.ErrnoException) => {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  });
+async function assertAuthPathIsRegularOrAbsent(
+  authPath: string,
+): Promise<void> {
+  const existing = await lstat(authPath).catch(
+    (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    },
+  );
   if (existing && (existing.isSymbolicLink() || !existing.isFile())) {
-    throw new Error("device-login export: refused a symlink or a non-regular auth.json");
+    throw new Error(
+      "device-login export: refused a symlink or a non-regular auth.json",
+    );
   }
 }
 
@@ -286,7 +327,9 @@ export async function removeProofHome(
   const resolved = path.resolve(proofHome);
   const root = resolveProofHomeRoot(env, companyId);
   if (!resolved.startsWith(root + path.sep)) {
-    throw new Error("device-login export: refused to remove a path outside the proof root");
+    throw new Error(
+      "device-login export: refused to remove a path outside the proof root",
+    );
   }
   await rm(resolved, { recursive: true, force: true });
 }

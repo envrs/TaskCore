@@ -19,21 +19,29 @@ export function detectGitWorkspaceInfo(cwd: string): GitWorkspaceInfo | null {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
-    const commonDirRaw = execFileSync("git", ["rev-parse", "--git-common-dir"], {
-      cwd: root,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
+    const commonDirRaw = execFileSync(
+      "git",
+      ["rev-parse", "--git-common-dir"],
+      {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    ).trim();
     const gitDirRaw = execFileSync("git", ["rev-parse", "--git-dir"], {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
-    const hooksPathRaw = execFileSync("git", ["rev-parse", "--git-path", "hooks"], {
-      cwd: root,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
+    const hooksPathRaw = execFileSync(
+      "git",
+      ["rev-parse", "--git-path", "hooks"],
+      {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    ).trim();
     return {
       root: path.resolve(root),
       commonDir: path.resolve(root, commonDirRaw),

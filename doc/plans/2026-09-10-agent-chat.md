@@ -66,7 +66,6 @@ The `create_project` runtime tool uses the normal project API with durable idemp
 
 Confirmed project creation appears as a durable card in the shared task transcript, including selected repository links. Tasks are linked inline. Failed creation never produces a success card. Tool evals cover planning/handoff, project/repository selection, retries, permission and mode denials, and ordinary delegation regressions using the production chat directive.
 
-
 ### Project handoff verification (September 11)
 
 The real-server tool tests cover concurrent project retries, task/plan atomic creation, ordinary child delegation, import/reparenting rejection under conversations, mode restrictions, cancellation, repository URL normalization, and committed project cards. The ordinary task review-path guard now exempts conversations; the server owns their waiting state after a successful reply. The chat directive explicitly tells agents to reply and end their turn without inventing a reviewer or changing status.
@@ -82,7 +81,6 @@ The full UI lane passed 5,626 tests and the CLI passed 484. The shared and skill
 Both serialized server shards are now verified: all 144 suites passed across their final runs/resumed segments. An outdated project-route mock and the new MCP transport's missing OpenAPI inventory entry were corrected; embedded-Postgres startup failures passed in isolated retries. The API catalog now includes the task-run-only MCP transport and points project discovery/creation to their dedicated tools; its focused suite passed 824 tests. The catalog census has 792 operations (555 authored REST contract cases).
 
 Repository-wide typecheck and build, Storybook build, and token gates passed. The final API metadata change also passed server typecheck/build. Two follow-up Codex live cases passed with the final directive, and all 11 retained deterministic/live artifacts passed the stronger persisted-state scoring, including detection of unintended tasks created through API fallback. These results do not turn the earlier failed monolithic test command into a clean run.
-
 
 ### 2026-09-11: E2E regression coverage
 
@@ -107,7 +105,6 @@ passed (46 tests). Repository typecheck, build, Storybook build, and token gates
 passed. Paid Codex and Claude smoke attempts failed credential preflight because
 `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` were unavailable; the 24-cell matrix is
 registered but has no claimed paid passing coverage from this run.
-
 
 ### 2026-09-11: Paid runner regression fixes
 

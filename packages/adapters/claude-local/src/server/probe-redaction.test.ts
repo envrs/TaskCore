@@ -6,14 +6,16 @@ import type { AdapterExecutionTarget } from "@taskcore/adapter-utils/execution-t
 // throw, so the managed-config materialization fails with a controllable error
 // that carries a secret marker.
 const { resolveInstanceRoot } = vi.hoisted(() => {
-  const resolveInstanceRoot: { throwError: Error | null } = { throwError: null };
+  const resolveInstanceRoot: { throwError: Error | null } = {
+    throwError: null,
+  };
   return { resolveInstanceRoot };
 });
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     maybeRunSandboxInstallCommand: vi.fn(async () => null),
@@ -21,15 +23,17 @@ vi.mock("@taskcore/adapter-utils/execution-target", async () => {
 });
 
 vi.mock("@taskcore/adapter-utils/server-utils", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/server-utils")>(
-    "@taskcore/adapter-utils/server-utils",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/server-utils")
+  >("@taskcore/adapter-utils/server-utils");
   return {
     ...actual,
     resolveTaskcoreInstanceRootForAdapter: (...args: unknown[]) => {
       if (resolveInstanceRoot.throwError) throw resolveInstanceRoot.throwError;
       return (
-        actual.resolveTaskcoreInstanceRootForAdapter as (...a: unknown[]) => string
+        actual.resolveTaskcoreInstanceRootForAdapter as (
+          ...a: unknown[]
+        ) => string
       )(...args);
     },
   };
@@ -65,7 +69,9 @@ describe("prepareSandboxClaudeProbeRuntime managed-config redaction", () => {
     // A materialization failure can carry a credential. Inject a secret marker
     // through the thrown error and assert no check text repeats it.
     const secret = "sk-ant-MANAGEDMARKER0123456789abcdef";
-    resolveInstanceRoot.throwError = new Error(`materialize failed with ${secret}`);
+    resolveInstanceRoot.throwError = new Error(
+      `materialize failed with ${secret}`,
+    );
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const checks = await prepareSandboxClaudeProbeRuntime({
@@ -80,7 +86,9 @@ describe("prepareSandboxClaudeProbeRuntime managed-config redaction", () => {
       helloProbeTimeoutSec: 5,
     });
 
-    const failedCheck = checks.find((check) => check.code === "claude_managed_config_dir_failed");
+    const failedCheck = checks.find(
+      (check) => check.code === "claude_managed_config_dir_failed",
+    );
     expect(failedCheck).toBeDefined();
     expect(failedCheck?.level).toBe("error");
 
@@ -95,7 +103,9 @@ describe("prepareSandboxClaudeProbeRuntime managed-config redaction", () => {
     const loggedText = JSON.stringify(warnSpy.mock.calls);
     expect(loggedText).not.toContain(secret);
     expect(loggedText).not.toContain("MANAGEDMARKER");
-    expect(warnSpy.mock.calls[0]?.[1]).toMatchObject({ classification: "spawn_error" });
+    expect(warnSpy.mock.calls[0]?.[1]).toMatchObject({
+      classification: "spawn_error",
+    });
     warnSpy.mockRestore();
   });
 });

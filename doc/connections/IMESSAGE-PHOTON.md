@@ -181,21 +181,21 @@ UI alone does not disconnect existing channels.
 
 ## Troubleshooting
 
-| State or symptom | Action |
-| --- | --- |
-| Invalid project credentials | Replace the vaulted secret for the same project/number and reconnect. |
-| Shared allocation | Connect shared DMs, enroll the sender in Photon, and use their assigned number. Groups require a dedicated line. |
-| No eligible dedicated lines | Review the project's line allocation in Photon, then inspect again. |
-| Number already owned | Use its existing endpoint or remove that endpoint before reconnecting the number. Pause retains the reservation. |
-| Number changes/disappears | Review the Photon allocation. Restore the original identity or create a new endpoint. |
-| No task from a group message | Groups are disabled for shared channels. For a dedicated channel, enable the discovered group, link the sender, and send a fresh request. |
-| Setup remains Verifying | Complete the linked fresh-message → task → actual agent reply loop; a credential check is insufficient. |
-| Quota/network interruption | Review Activity. Transient errors retry with bounded backoff; quotas are distinct from authentication failures. |
-| Attachment preparing | Let the durable delivery retry; do not resend the message to force another task. |
-| Preview unavailable | Download the original and verify converter support/policy on this deployment platform. |
-| Delivery unknown | Reconcile the exact provider receipt or explicitly retry the same immutable publication. |
-| Missing/reset cursor or history gap | Review the affected period before operator recovery. The service does not silently skip it. |
-| Old poll no longer works | Open the task's current interaction. Completed/expired polls cannot reverse a decision. |
+| State or symptom                    | Action                                                                                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Invalid project credentials         | Replace the vaulted secret for the same project/number and reconnect.                                                                     |
+| Shared allocation                   | Connect shared DMs, enroll the sender in Photon, and use their assigned number. Groups require a dedicated line.                          |
+| No eligible dedicated lines         | Review the project's line allocation in Photon, then inspect again.                                                                       |
+| Number already owned                | Use its existing endpoint or remove that endpoint before reconnecting the number. Pause retains the reservation.                          |
+| Number changes/disappears           | Review the Photon allocation. Restore the original identity or create a new endpoint.                                                     |
+| No task from a group message        | Groups are disabled for shared channels. For a dedicated channel, enable the discovered group, link the sender, and send a fresh request. |
+| Setup remains Verifying             | Complete the linked fresh-message → task → actual agent reply loop; a credential check is insufficient.                                   |
+| Quota/network interruption          | Review Activity. Transient errors retry with bounded backoff; quotas are distinct from authentication failures.                           |
+| Attachment preparing                | Let the durable delivery retry; do not resend the message to force another task.                                                          |
+| Preview unavailable                 | Download the original and verify converter support/policy on this deployment platform.                                                    |
+| Delivery unknown                    | Reconcile the exact provider receipt or explicitly retry the same immutable publication.                                                  |
+| Missing/reset cursor or history gap | Review the affected period before operator recovery. The service does not silently skip it.                                               |
+| Old poll no longer works            | Open the task's current interaction. Completed/expired polls cannot reverse a decision.                                                   |
 
 Diagnostics use existing local activity and run records. This change adds no
 first-party Telemetry events. Persisted receipts/checkpoints are required for

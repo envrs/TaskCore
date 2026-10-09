@@ -168,7 +168,7 @@ tools; those narrow inbox reads leave its task cursor unchanged.
   not durably recorded; recovery does not execute that write again.
 - Keep the public origin stable. Subscriptions expire and must be renewed;
   reconnection drains current mailbox references rather than claiming event
-replay. Disabling new Dot work does not grant old assignments new authority.
+  replay. Disabling new Dot work does not grant old assignments new authority.
 
 Resubscribing verifies the Dot callback again and publishes a fresh mailbox
 reference for its existing outstanding assignment. It does not create another
@@ -271,17 +271,17 @@ passed. These checks do not replace the full repository CI and review gates.
 
 Local verification on 2026-10-03:
 
-| Check | Result |
-| --- | --- |
-| `pnpm -r typecheck`, `pnpm build`, UI token gates | Passed |
-| Rust workspace library tests | 312 passed |
-| PRP schema tests and CI shard selection tests | 13 and 24 passed |
-| Control-plane and Dot driver regression tests | 97 passed, including late callback retirement |
-| Real Rust / PostgreSQL Dot integration | 2 passed |
-| Agent configuration route tests | 36 passed, including unpaired create and conversion |
-| Stable shared package lane | 837 passed |
-| Adapter utilities and Codex adapter source tests | 1,883 passed, 12 skipped |
-| Root `pnpm test:run` attempt | Server group: 744 files passed, 2 failed, 4 skipped; 14,997 tests passed. Wrapper stopped at that failed group. |
+| Check                                             | Result                                                                                                          |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `pnpm -r typecheck`, `pnpm build`, UI token gates | Passed                                                                                                          |
+| Rust workspace library tests                      | 312 passed                                                                                                      |
+| PRP schema tests and CI shard selection tests     | 13 and 24 passed                                                                                                |
+| Control-plane and Dot driver regression tests     | 97 passed, including late callback retirement                                                                   |
+| Real Rust / PostgreSQL Dot integration            | 2 passed                                                                                                        |
+| Agent configuration route tests                   | 36 passed, including unpaired create and conversion                                                             |
+| Stable shared package lane                        | 837 passed                                                                                                      |
+| Adapter utilities and Codex adapter source tests  | 1,883 passed, 12 skipped                                                                                        |
+| Root `pnpm test:run` attempt                      | Server group: 744 files passed, 2 failed, 4 skipped; 14,997 tests passed. Wrapper stopped at that failed group. |
 
 The root run's failures were a Calendar socket reset and a Git scan load
 assertion (497 of 498 expected joined requests). Both failing cases passed in
@@ -325,7 +325,6 @@ responses. These screenshots show preview data, not a qualified Dot account:
 
 ![Synthetic connected preview](screenshots/openai-dot-runner/connected.jpg)
 
-
 ## Starting work from a Dot conversation
 
 Call `taskcore_dot_capabilities` to discover the bound agent, responsible person, permissions, prerequisites and active assignment. An idle Dot can call `taskcore_dot_request_turn` with a prompt and stable UUID. Taskcore creates one visible, agent-authored intake task and admits it through the ordinary heartbeat/Runner path. Retries reuse the task and wake receipt; the same UUID with a different prompt is rejected. Company and agent pause, grants, budgets, task assignment permissions and single-assignment ownership apply. The intake is work attributed to the Dot, not a fabricated operator message or an OAuth permission expansion.
@@ -339,7 +338,6 @@ The shared catalog adds `get_task`, `comment_on_task`, `list_task_documents`, `r
 Enable **Workspace files and commands** on the agent to expose `workspace_list`, `workspace_read`, `workspace_write`, and `workspace_run`. The server binds these to the admitted execution workspace. File paths reject absolute paths, traversal and symlinks. Taskcore instance state under `.taskcore` is excluded from file tools, uploads, and sandbox commands. Linux commands mask existing instance directories and the workspace root instance directory with read-only empty mounts. The command protection scan fails closed above 4,096 directories. macOS supports file tools and publishing; `workspace_run` is neither advertised nor executable there because its file sandbox cannot contain detached descendants. New writes require an absent file; overwrites require its observed SHA-256. Commands have bounded output/time and an OS sandbox, use a workspace-local home, and do not inherit credentials. Linux commands run in a private PID namespace. Command completion, timeout, or live authority loss terminates its supervisor and all descendants, including children that start a new session. Register requested files with `register_deliverable` before finishing. Workspace mutation attempts are reserved durably before effects; an interrupted attempt returns an unknown outcome instead of replaying a possible effect. Inspect state before deciding another mutation.
 
 Mailbox `follow_up` entries reference new comments on an accepted assignment. Read `get_task_history` and incorporate them at a safe boundary. This supplies new input without claiming OpenAI steering support. `taskcore_dot_tasks` pages by the last task ID. Each assignment allows up to 4,000 broker operations; lower domain-specific limits still apply. A fenced assignment's control acknowledgement remains available at that limit. `hire_agent` creates a distinct unpaired Taskcore Dot teammate; the operator still pairs a separate OpenAI Dot. No existing binding or workspace permission is inherited.
-
 
 ## Tool inventory
 
@@ -356,21 +354,21 @@ actual catalog. Availability depends on work mode, permissions, assigned apps,
 and workspace/attachment bindings. Advertising a tool does not bypass its
 server-side authorization.
 
-| Area | Runner tools |
-| --- | --- |
-| Identity and people | `get_identity`, `list_people`, `list_agents`, `get_agent` |
-| Task work | `get_task_context`, `get_task_history`, `search_tasks`, `get_task`, `report_progress`, `set_task_title`, `set_task_monitor`, `create_task`, `reassign_task`, `set_dependencies`, `comment_on_task` |
-| Human input and approvals | `request_human_input`, `list_approvals`, `get_approval`, `get_approval_context` |
-| Documents | `list_documents`, `read_document`, `list_document_revisions`, `write_document`, `list_task_documents`, `read_task_document`, `write_task_document` |
-| Agent instructions | `read_agent_instructions`, `update_agent_instructions`, `get_agent_instruction_history`, `restore_agent_instructions` |
-| Skills | `create_skill`, `update_skill`, `list_assigned_skills`, `read_assigned_skill` |
-| Projects | `create_project`, `list_projects`, `list_project_repositories` |
+| Area                        | Runner tools                                                                                                                                                                                                                                  |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity and people         | `get_identity`, `list_people`, `list_agents`, `get_agent`                                                                                                                                                                                     |
+| Task work                   | `get_task_context`, `get_task_history`, `search_tasks`, `get_task`, `report_progress`, `set_task_title`, `set_task_monitor`, `create_task`, `reassign_task`, `set_dependencies`, `comment_on_task`                                            |
+| Human input and approvals   | `request_human_input`, `list_approvals`, `get_approval`, `get_approval_context`                                                                                                                                                               |
+| Documents                   | `list_documents`, `read_document`, `list_document_revisions`, `write_document`, `list_task_documents`, `read_task_document`, `write_task_document`                                                                                            |
+| Agent instructions          | `read_agent_instructions`, `update_agent_instructions`, `get_agent_instruction_history`, `restore_agent_instructions`                                                                                                                         |
+| Skills                      | `create_skill`, `update_skill`, `list_assigned_skills`, `read_assigned_skill`                                                                                                                                                                 |
+| Projects                    | `create_project`, `list_projects`, `list_project_repositories`                                                                                                                                                                                |
 | Apps and control-plane APIs | `connections_search`, `connection_request`, `search_api`, `call_api`, `hire_agent`; assigned gateway tools are discovered from the actual catalog, or via `taskcore_search_assigned_tools` / `taskcore_call_assigned_tool` for large catalogs |
-| Workspace and output | `workspace_list`, `workspace_read`, `workspace_write`, `workspace_run`, `register_deliverable` |
-| Task attachments | `list_task_attachments`, `read_task_attachment` when **Read task attachments** is enabled |
-| Bound chat inputs | `list_chat_attachments`, `reuse_chat_attachment`; `read_chat_attachment` and `read_current_wake_comments` require verified server bindings |
-| Feedback | `submit_complaint`, `submit_suggestion` |
-| Completion | `taskcore_finish`, `taskcore_block`; a separate review run offers its limited read catalog and `resolve_review` |
+| Workspace and output        | `workspace_list`, `workspace_read`, `workspace_write`, `workspace_run`, `register_deliverable`                                                                                                                                                |
+| Task attachments            | `list_task_attachments`, `read_task_attachment` when **Read task attachments** is enabled                                                                                                                                                     |
+| Bound chat inputs           | `list_chat_attachments`, `reuse_chat_attachment`; `read_chat_attachment` and `read_current_wake_comments` require verified server bindings                                                                                                    |
+| Feedback                    | `submit_complaint`, `submit_suggestion`                                                                                                                                                                                                       |
+| Completion                  | `taskcore_finish`, `taskcore_block`; a separate review run offers its limited read catalog and `resolve_review`                                                                                                                               |
 
 Enable **Read task attachments** on the Dot agent to expose `list_task_attachments`
 and `read_task_attachment` on new assignments. This setting is off by default,
@@ -414,7 +412,6 @@ Input is `{ "imageBase64": "<raw base64 image bytes>" }`. PNG, JPEG and WebP are
 The same capability is available to agents via `PUT /api/companies/:companyId/agents/:agentId/avatar` with the same body and normal agent bearer authentication. An agent can update only itself; board users need the same `agent_config:update` permission as other agent configuration changes. Task bridge and skill test credentials cannot change avatars. Returned `appearance.customAvatarAssetId` and `avatarUrl` propagate through existing agent views. The image is a company-scoped private asset served through authenticated `/api/assets/:assetId/content`, not a public image URL for third-party embeds. Previous assets remain available for configuration history. Company exports retain the preset character and palette and warn that uploaded avatar assets must be uploaded again after import; private asset IDs are never portable. Activity records contain asset metadata, never image bytes.
 
 The setup prompt asks Dot to upload its own current image only if it can obtain it. We have not verified a supported OpenAI avatar-export API. Avatar availability must never block pairing; Dot may call the tool later. This capability does not add workspace access or change Runner assignment execution.
-
 
 ### Invite from the agent picker
 

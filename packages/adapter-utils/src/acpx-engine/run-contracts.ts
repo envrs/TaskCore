@@ -192,7 +192,9 @@ export interface ConsumedRunResources {
  * consumed`.
  */
 export interface AcquiredRunResources {
-  register<Id extends ResourceId>(registration: RunResourceRegistration<Id>): void;
+  register<Id extends ResourceId>(
+    registration: RunResourceRegistration<Id>,
+  ): void;
   seal(required: readonly ResourceId[]): ReadyRunResources;
   takeForSettlement(): ConsumedRunResources;
 }
@@ -242,7 +244,8 @@ export interface TurnTimedOutCause {
 }
 
 /** A cause that the turn itself produced. Disjoint from `PreTurnFailedCause`. */
-export type TurnCause = TurnFailedCause | TurnCancelledCause | TurnTimedOutCause;
+export type TurnCause =
+  TurnFailedCause | TurnCancelledCause | TurnTimedOutCause;
 
 /** Any cause that leads a run into settlement. */
 export type SettlementCause = PreTurnFailedCause | TurnCause;
@@ -299,7 +302,8 @@ export interface TimedOutTurn {
 }
 
 /** The four ways a turn completes. Only `FinalizedTurn` is resourceless. */
-export type TurnCompletion = FinalizedTurn | FailedTurn | CancelledTurn | TimedOutTurn;
+export type TurnCompletion =
+  FinalizedTurn | FailedTurn | CancelledTurn | TimedOutTurn;
 
 // ---------------------------------------------------------------------------
 // Run site
@@ -398,7 +402,9 @@ export interface SessionReuseStore<T> {
  * A run site. The host site and the sandbox site differ in what they place,
  * what transport they start, and what their store saves.
  */
-export interface RunSite<TReuse extends RunSiteReuseCandidate = RunSiteReuseCandidate> {
+export interface RunSite<
+  TReuse extends RunSiteReuseCandidate = RunSiteReuseCandidate,
+> {
   readonly kind: RunSiteKind;
   /** Synchronous. Runs before the fingerprint build. */
   plan(context: AcpRunContext): SitePlan;
@@ -493,7 +499,8 @@ export interface SessionScopedContribution {
   readonly env: Record<string, string>;
 }
 
-export type LaunchEnvironmentContribution = RunScopedContribution | SessionScopedContribution;
+export type LaunchEnvironmentContribution =
+  RunScopedContribution | SessionScopedContribution;
 
 /**
  * The finalized launch environment. Only `finalizeLaunchEnvironment()`

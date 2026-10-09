@@ -11,9 +11,9 @@ const { prepareAdapterExecutionTargetRuntime } = vi.hoisted(() => ({
 }));
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     adapterExecutionTargetUsesManagedHome: () => true,
@@ -22,7 +22,10 @@ vi.mock("@taskcore/adapter-utils/execution-target", async () => {
   };
 });
 
-import { prepareClaudeConfigSeed, prepareSandboxClaudeProbeRuntime } from "./claude-config.js";
+import {
+  prepareClaudeConfigSeed,
+  prepareSandboxClaudeProbeRuntime,
+} from "./claude-config.js";
 
 describe("prepareClaudeConfigSeed", () => {
   const cleanupDirs: string[] = [];
@@ -46,15 +49,25 @@ describe("prepareClaudeConfigSeed", () => {
   }
 
   it("reuses the same snapshot path when the seeded files are unchanged", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-claude-config-seed-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-claude-config-seed-"),
+    );
     cleanupDirs.push(root);
     const sourceDir = path.join(root, "claude-source");
     await fs.mkdir(sourceDir, { recursive: true });
-    await fs.writeFile(path.join(sourceDir, "settings.json"), JSON.stringify({
-      theme: "light",
-      permissions: { defaultMode: "bypassPermissions" },
-    }), "utf8");
-    await fs.writeFile(path.join(sourceDir, ".credentials.json"), JSON.stringify({ token: "local" }), "utf8");
+    await fs.writeFile(
+      path.join(sourceDir, "settings.json"),
+      JSON.stringify({
+        theme: "light",
+        permissions: { defaultMode: "bypassPermissions" },
+      }),
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(sourceDir, ".credentials.json"),
+      JSON.stringify({ token: "local" }),
+      "utf8",
+    );
 
     const onLog = vi.fn(async () => {});
     const env = createEnv(root, sourceDir);
@@ -63,70 +76,122 @@ describe("prepareClaudeConfigSeed", () => {
     const second = await prepareClaudeConfigSeed(env, onLog, "company-1");
 
     expect(first).toBe(second);
-    await expect(fs.readFile(path.join(first, "settings.json"), "utf8"))
-      .resolves.toBe(JSON.stringify({ theme: "light", permissions: { defaultMode: "default" } }));
-    await expect(fs.access(path.join(first, ".credentials.json")))
-      .rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      fs.readFile(path.join(first, "settings.json"), "utf8"),
+    ).resolves.toBe(
+      JSON.stringify({
+        theme: "light",
+        permissions: { defaultMode: "default" },
+      }),
+    );
+    await expect(
+      fs.access(path.join(first, ".credentials.json")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("keeps an existing snapshot intact when the seeded files change", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-claude-config-race-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-claude-config-race-"),
+    );
     cleanupDirs.push(root);
     const sourceDir = path.join(root, "claude-source");
     await fs.mkdir(sourceDir, { recursive: true });
-    await fs.writeFile(path.join(sourceDir, "settings.json"), JSON.stringify({ theme: "light" }), "utf8");
+    await fs.writeFile(
+      path.join(sourceDir, "settings.json"),
+      JSON.stringify({ theme: "light" }),
+      "utf8",
+    );
 
     const onLog = vi.fn(async () => {});
     const env = createEnv(root, sourceDir);
     const first = await prepareClaudeConfigSeed(env, onLog, "company-1");
 
-    await fs.writeFile(path.join(sourceDir, "settings.json"), JSON.stringify({ theme: "dark" }), "utf8");
+    await fs.writeFile(
+      path.join(sourceDir, "settings.json"),
+      JSON.stringify({ theme: "dark" }),
+      "utf8",
+    );
     const second = await prepareClaudeConfigSeed(env, onLog, "company-1");
 
     expect(second).not.toBe(first);
-    await expect(fs.readFile(path.join(first, "settings.json"), "utf8"))
-      .resolves.toBe(JSON.stringify({ theme: "light", permissions: { defaultMode: "default" } }));
-    await expect(fs.readFile(path.join(second, "settings.json"), "utf8"))
-      .resolves.toBe(JSON.stringify({ theme: "dark", permissions: { defaultMode: "default" } }));
+    await expect(
+      fs.readFile(path.join(first, "settings.json"), "utf8"),
+    ).resolves.toBe(
+      JSON.stringify({
+        theme: "light",
+        permissions: { defaultMode: "default" },
+      }),
+    );
+    await expect(
+      fs.readFile(path.join(second, "settings.json"), "utf8"),
+    ).resolves.toBe(
+      JSON.stringify({
+        theme: "dark",
+        permissions: { defaultMode: "default" },
+      }),
+    );
   });
 
   it("strips local-only settings from remote Claude config seeds", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-claude-config-boundary-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-claude-config-boundary-"),
+    );
     cleanupDirs.push(root);
     const sourceDir = path.join(root, "claude-source");
     await fs.mkdir(sourceDir, { recursive: true });
-    await fs.writeFile(path.join(sourceDir, "settings.json"), JSON.stringify({
-      permissions: {
-        defaultMode: "dontAsk",
-        allow: ["Bash(op item *)"],
-      },
-      hooks: { PreToolUse: [{ matcher: "*" }] },
-      mcpServers: { local: { command: "secret-local-server" } },
-      permissionMode: "dontAsk",
-      skipDangerousModePermissionPrompt: true,
-    }), "utf8");
-    await fs.writeFile(path.join(sourceDir, "settings.local.json"), JSON.stringify({
-      permissions: { defaultMode: "bypassPermissions" },
-    }), "utf8");
-    await fs.writeFile(path.join(sourceDir, "credentials.json"), JSON.stringify({ token: "local" }), "utf8");
-    await fs.writeFile(path.join(sourceDir, "CLAUDE.md"), "local instructions", "utf8");
+    await fs.writeFile(
+      path.join(sourceDir, "settings.json"),
+      JSON.stringify({
+        permissions: {
+          defaultMode: "dontAsk",
+          allow: ["Bash(op item *)"],
+        },
+        hooks: { PreToolUse: [{ matcher: "*" }] },
+        mcpServers: { local: { command: "secret-local-server" } },
+        permissionMode: "dontAsk",
+        skipDangerousModePermissionPrompt: true,
+      }),
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(sourceDir, "settings.local.json"),
+      JSON.stringify({
+        permissions: { defaultMode: "bypassPermissions" },
+      }),
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(sourceDir, "credentials.json"),
+      JSON.stringify({ token: "local" }),
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(sourceDir, "CLAUDE.md"),
+      "local instructions",
+      "utf8",
+    );
 
     const onLog = vi.fn(async () => {});
     const env = createEnv(root, sourceDir);
     const seedDir = await prepareClaudeConfigSeed(env, onLog, "company-1");
-    const remoteSettings = JSON.parse(await fs.readFile(path.join(seedDir, "settings.json"), "utf8"));
+    const remoteSettings = JSON.parse(
+      await fs.readFile(path.join(seedDir, "settings.json"), "utf8"),
+    );
 
     expect(remoteSettings.permissions).toEqual({ defaultMode: "default" });
     expect(remoteSettings.hooks).toBeUndefined();
     expect(remoteSettings.mcpServers).toBeUndefined();
     expect(remoteSettings.permissionMode).toBeUndefined();
     expect(remoteSettings.skipDangerousModePermissionPrompt).toBeUndefined();
-    await expect(fs.access(path.join(seedDir, "settings.local.json")))
-      .rejects.toMatchObject({ code: "ENOENT" });
-    await expect(fs.access(path.join(seedDir, "credentials.json")))
-      .rejects.toMatchObject({ code: "ENOENT" });
-    await expect(fs.readFile(path.join(seedDir, "CLAUDE.md"), "utf8"))
-      .resolves.toBe("local instructions");
+    await expect(
+      fs.access(path.join(seedDir, "settings.local.json")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      fs.access(path.join(seedDir, "credentials.json")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      fs.readFile(path.join(seedDir, "CLAUDE.md"), "utf8"),
+    ).resolves.toBe("local instructions");
   });
 });
 
@@ -174,12 +239,18 @@ describe("prepareSandboxClaudeProbeRuntime managed-config diagnostics", () => {
     const opaqueCredMarker = "OPAQUECREDMARKERconfig";
     const proxyMarker = "http://user:pass@proxy.corp.internal:3128";
 
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-claude-config-mgmt-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-claude-config-mgmt-"),
+    );
     cleanupDirs.push(root);
     const sourceDir = path.join(root, "claude-source");
     await fs.mkdir(sourceDir, { recursive: true });
 
-    for (const key of ["CLAUDE_CONFIG_DIR", "TASKCORE_HOME", "TASKCORE_INSTANCE_ID"]) {
+    for (const key of [
+      "CLAUDE_CONFIG_DIR",
+      "TASKCORE_HOME",
+      "TASKCORE_INSTANCE_ID",
+    ]) {
       savedEnv[key] = process.env[key];
     }
     process.env.CLAUDE_CONFIG_DIR = sourceDir;
@@ -187,7 +258,9 @@ describe("prepareSandboxClaudeProbeRuntime managed-config diagnostics", () => {
     process.env.TASKCORE_INSTANCE_ID = "test-instance";
 
     prepareAdapterExecutionTargetRuntime.mockRejectedValueOnce(
-      new Error(`materialize failed with ${opaqueCredMarker} via ${proxyMarker}`),
+      new Error(
+        `materialize failed with ${opaqueCredMarker} via ${proxyMarker}`,
+      ),
     );
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -205,7 +278,9 @@ describe("prepareSandboxClaudeProbeRuntime managed-config diagnostics", () => {
       helloProbeTimeoutSec: 30,
     });
 
-    const failed = checks.find((check) => check.code === "claude_managed_config_dir_failed");
+    const failed = checks.find(
+      (check) => check.code === "claude_managed_config_dir_failed",
+    );
     expect(failed).toBeTruthy();
     const checkText = JSON.stringify(checks);
     expect(checkText).not.toContain(opaqueCredMarker);

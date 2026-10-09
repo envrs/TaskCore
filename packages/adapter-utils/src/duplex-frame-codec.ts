@@ -68,7 +68,8 @@ export interface DuplexErrorFrame {
 }
 
 /** Any frame the codec reads or writes. */
-export type DuplexFrame = DuplexReadyFrame | DuplexHeartbeatFrame | DuplexCloseFrame | DuplexErrorFrame;
+export type DuplexFrame =
+  DuplexReadyFrame | DuplexHeartbeatFrame | DuplexCloseFrame | DuplexErrorFrame;
 
 /** The reason the decoder rejected one line. */
 export type DuplexProtocolErrorCode =
@@ -86,8 +87,7 @@ export interface DuplexProtocolError {
 
 /** One decode result: a valid frame, or a protocol error. */
 export type DuplexDecodeResult =
-  | { ok: true; frame: DuplexFrame }
-  | { ok: false; error: DuplexProtocolError };
+  { ok: true; frame: DuplexFrame } | { ok: false; error: DuplexProtocolError };
 
 /**
  * One size-checked encode result: one line, or a `frame_too_large` error. The
@@ -102,7 +102,10 @@ function ok(frame: DuplexFrame): DuplexDecodeResult {
   return { ok: true, frame };
 }
 
-function fail(code: DuplexProtocolErrorCode, message: string): DuplexDecodeResult {
+function fail(
+  code: DuplexProtocolErrorCode,
+  message: string,
+): DuplexDecodeResult {
   return { ok: false, error: { code, message } };
 }
 
@@ -138,7 +141,13 @@ export function encodeDuplexFrameChecked(
 ): DuplexEncodeResult {
   const json = JSON.stringify(frame);
   if (Buffer.byteLength(json, "utf8") > maxFrameBytes) {
-    return { ok: false, error: { code: "frame_too_large", message: "frame exceeds the maximum size" } };
+    return {
+      ok: false,
+      error: {
+        code: "frame_too_large",
+        message: "frame exceeds the maximum size",
+      },
+    };
   }
   return { ok: true, line: `${json}\n` };
 }
@@ -182,7 +191,10 @@ function validateFrame(frame: Record<string, unknown>): DuplexDecodeResult {
     case "error":
       return validateError(frame);
     default:
-      return fail("unknown_type", `unknown frame type ${JSON.stringify(frame.type)}`);
+      return fail(
+        "unknown_type",
+        `unknown frame type ${JSON.stringify(frame.type)}`,
+      );
   }
 }
 
@@ -192,7 +204,10 @@ function validateReady(frame: Record<string, unknown>): DuplexDecodeResult {
   // an absent nonce, a wrong-typed nonce, or any extra field, so a READY frame
   // that smuggles an `address`, a `port`, a `host`, or a URL never decodes.
   if (typeof frame.nonce !== "string") {
-    return fail("malformed_frame", "ready frame has a missing or wrong-typed nonce");
+    return fail(
+      "malformed_frame",
+      "ready frame has a missing or wrong-typed nonce",
+    );
   }
   for (const key of Object.keys(frame)) {
     if (key !== "version" && key !== "type" && key !== "nonce") {
@@ -212,7 +227,10 @@ function validateClose(frame: Record<string, unknown>): DuplexDecodeResult {
 
 function validateError(frame: Record<string, unknown>): DuplexDecodeResult {
   if (typeof frame.code !== "string") {
-    return fail("malformed_frame", "error frame has a missing or wrong-typed code");
+    return fail(
+      "malformed_frame",
+      "error frame has a missing or wrong-typed code",
+    );
   }
   if (frame.message !== undefined && typeof frame.message !== "string") {
     return fail("malformed_frame", "error frame has a wrong-typed message");

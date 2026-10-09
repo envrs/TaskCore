@@ -10,8 +10,10 @@ import type { SandboxManagedRuntimeAssetProvision } from "@taskcore/adapter-util
 // (`sandbox-managed-runtime.ts`) is intentionally free of any Codex knowledge —
 // the adapter supplies this contribution through the generic `provision` seam.
 
-export const CODEX_AUTH_MERGE_EXTRACT_SCRIPT_NAME = "codex-auth-merge-extract.sh";
-export const CODEX_AUTH_MERGE_DECISION_SCRIPT_NAME = "codex-auth-merge-decision.cjs";
+export const CODEX_AUTH_MERGE_EXTRACT_SCRIPT_NAME =
+  "codex-auth-merge-extract.sh";
+export const CODEX_AUTH_MERGE_DECISION_SCRIPT_NAME =
+  "codex-auth-merge-decision.cjs";
 
 const CODEX_AUTH_MERGE_EXTRACT_SCRIPT_BYTES = readFileSync(
   new URL(`./${CODEX_AUTH_MERGE_EXTRACT_SCRIPT_NAME}`, import.meta.url),
@@ -39,8 +41,14 @@ const CODEX_AUTH_MERGE_DECISION_SCRIPT_BYTES = readFileSync(
 export function buildCodexAuthInboundProvision(): SandboxManagedRuntimeAssetProvision {
   return {
     stageFiles: [
-      { name: CODEX_AUTH_MERGE_EXTRACT_SCRIPT_NAME, contents: CODEX_AUTH_MERGE_EXTRACT_SCRIPT_BYTES },
-      { name: CODEX_AUTH_MERGE_DECISION_SCRIPT_NAME, contents: CODEX_AUTH_MERGE_DECISION_SCRIPT_BYTES },
+      {
+        name: CODEX_AUTH_MERGE_EXTRACT_SCRIPT_NAME,
+        contents: CODEX_AUTH_MERGE_EXTRACT_SCRIPT_BYTES,
+      },
+      {
+        name: CODEX_AUTH_MERGE_DECISION_SCRIPT_NAME,
+        contents: CODEX_AUTH_MERGE_DECISION_SCRIPT_BYTES,
+      },
     ],
     postUploadCommand: ({ assetTarPath, assetDir, runtimeRootDir }) =>
       `sh ${shellQuote(path.posix.join(runtimeRootDir, CODEX_AUTH_MERGE_EXTRACT_SCRIPT_NAME))} ` +

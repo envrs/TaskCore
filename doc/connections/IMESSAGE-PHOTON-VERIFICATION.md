@@ -70,21 +70,21 @@ credential payload shape, setup completion, group enablement, light/dark themes,
 mobile navigation/layout, and pause/resume. The surrounding suite covers existing
 Slack, Discord, GitHub, Teams, and Telegram surfaces.
 
-| Check | Result |
-| --- | --- |
-| Photon targeted tests | 31 passed, including checkpoint takeover, Live Photo companion retention, and native continuation authorization. |
-| Token gates | Passed. All four gates clean. |
-| Workspace typecheck | Full `pnpm -r typecheck` passed before and after rebase. |
-| Full chat-adapters browser suite | 38 passed, including Photon light/dark/mobile coverage and existing providers. |
-| OpenAPI contract | 8 passed, including mounted-route completeness, board-only inspection, and token-free response schemas. |
-| Post-rebase channel/native checks | 96 passed across Photon, OpenAPI, explicit native continuation, and chat-control admission retry. |
-| Native session resume | 37 passed after building the required local fake-provider binary. |
-| UI Vitest project | 6,008 passed across 582 files after rebase. |
-| Shared catalog project | 727 passed, including exact catalog and branding coverage. |
-| Repository Vitest suite | The initial `pnpm test:run` overlapped edits/rebase and was stopped; it is not a final-commit pass. Fresh targeted and CI checks supersede it. The serialized route run found the missing Photon OpenAPI contract, which is fixed and passes its 8-case suite. Full gate status is recorded in the linked PR. |
-| Build | Full `pnpm build` passed before and after rebase. |
-| Generated forward migration | Generated through `pnpm db:generate`; `@taskcore/db check:migrations` passed. Disposable database migrations exercised by integration tests. |
-| Native HEIF platform packages | macOS arm64 executed; other published platforms not executed. |
+| Check                             | Result                                                                                                                                                                                                                                                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Photon targeted tests             | 31 passed, including checkpoint takeover, Live Photo companion retention, and native continuation authorization.                                                                                                                                                                                              |
+| Token gates                       | Passed. All four gates clean.                                                                                                                                                                                                                                                                                 |
+| Workspace typecheck               | Full `pnpm -r typecheck` passed before and after rebase.                                                                                                                                                                                                                                                      |
+| Full chat-adapters browser suite  | 38 passed, including Photon light/dark/mobile coverage and existing providers.                                                                                                                                                                                                                                |
+| OpenAPI contract                  | 8 passed, including mounted-route completeness, board-only inspection, and token-free response schemas.                                                                                                                                                                                                       |
+| Post-rebase channel/native checks | 96 passed across Photon, OpenAPI, explicit native continuation, and chat-control admission retry.                                                                                                                                                                                                             |
+| Native session resume             | 37 passed after building the required local fake-provider binary.                                                                                                                                                                                                                                             |
+| UI Vitest project                 | 6,008 passed across 582 files after rebase.                                                                                                                                                                                                                                                                   |
+| Shared catalog project            | 727 passed, including exact catalog and branding coverage.                                                                                                                                                                                                                                                    |
+| Repository Vitest suite           | The initial `pnpm test:run` overlapped edits/rebase and was stopped; it is not a final-commit pass. Fresh targeted and CI checks supersede it. The serialized route run found the missing Photon OpenAPI contract, which is fixed and passes its 8-case suite. Full gate status is recorded in the linked PR. |
+| Build                             | Full `pnpm build` passed before and after rebase.                                                                                                                                                                                                                                                             |
+| Generated forward migration       | Generated through `pnpm db:generate`; `@taskcore/db check:migrations` passed. Disposable database migrations exercised by integration tests.                                                                                                                                                                  |
+| Native HEIF platform packages     | macOS arm64 executed; other published platforms not executed.                                                                                                                                                                                                                                                 |
 
 ### Local test prerequisites
 
@@ -227,19 +227,19 @@ before release readiness. Live inbound receipt alone is not full qualification.
 Record the tested commit, package versions, redacted project/line/chat IDs,
 participants, timestamps, and observable results when running it.
 
-| Live case | Status |
-| --- | --- |
-| Linked DM creates task and receives actual agent response | Passed with Pro shared DMs and the native Codex runner. |
-| Enabled group with two linked people preserves attribution | Disabled for the approved Pro scope; dedicated-line live qualification remains unrun. |
-| Unlinked sender cannot start work | Passed for the live shared-DM probe; sender discovered, zero conversations/tasks created. |
-| Inbound/outbound photos and real iPhone HEIC | Passed for PNG, text file, synthetic HEIC, and an operator-supplied iPhone camera HEIC. The real photo produced a full-resolution JPEG preview and a byte-identical return of the received HEIC. |
-| Native poll and text answer resume correct interaction | Passed, including sequential drafts, incomplete submission, explicit submission, and one poll continuation. |
-| Approval rejection reason reaches canonical interaction | Passed, including missing-reason correction and native continuation. |
-| Restart preserves DM/group replies and pending questions | Shared DM recovery and pending native poll passed; dedicated groups remain unrun. |
-| Pause/resume/reconnect/removal enforce authority | Passed for Pro DMs. Removal archived the endpoint and connection, cleared secret bindings, and stopped intake. |
-| Completed turn stays idle until fresh input | Passed. September 12 correction: two successive real follow-ups reopened PHOTON-17, with no new task. |
-| Provider ambiguous-send/idempotency behavior | Real repeated key suppressed duplicates but returned no original receipt. Unknown-send recovery remains an operator action; no induced network-timeout test. |
-| HEIF conversion on Linux glibc/Windows and deployment packaging | macOS arm64 and Linux CI conversion passed. Windows execution remains unrun. Linux musl has no packaged converter. |
+| Live case                                                       | Status                                                                                                                                                                                           |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Linked DM creates task and receives actual agent response       | Passed with Pro shared DMs and the native Codex runner.                                                                                                                                          |
+| Enabled group with two linked people preserves attribution      | Disabled for the approved Pro scope; dedicated-line live qualification remains unrun.                                                                                                            |
+| Unlinked sender cannot start work                               | Passed for the live shared-DM probe; sender discovered, zero conversations/tasks created.                                                                                                        |
+| Inbound/outbound photos and real iPhone HEIC                    | Passed for PNG, text file, synthetic HEIC, and an operator-supplied iPhone camera HEIC. The real photo produced a full-resolution JPEG preview and a byte-identical return of the received HEIC. |
+| Native poll and text answer resume correct interaction          | Passed, including sequential drafts, incomplete submission, explicit submission, and one poll continuation.                                                                                      |
+| Approval rejection reason reaches canonical interaction         | Passed, including missing-reason correction and native continuation.                                                                                                                             |
+| Restart preserves DM/group replies and pending questions        | Shared DM recovery and pending native poll passed; dedicated groups remain unrun.                                                                                                                |
+| Pause/resume/reconnect/removal enforce authority                | Passed for Pro DMs. Removal archived the endpoint and connection, cleared secret bindings, and stopped intake.                                                                                   |
+| Completed turn stays idle until fresh input                     | Passed. September 12 correction: two successive real follow-ups reopened PHOTON-17, with no new task.                                                                                            |
+| Provider ambiguous-send/idempotency behavior                    | Real repeated key suppressed duplicates but returned no original receipt. Unknown-send recovery remains an operator action; no induced network-timeout test.                                     |
+| HEIF conversion on Linux glibc/Windows and deployment packaging | macOS arm64 and Linux CI conversion passed. Windows execution remains unrun. Linux musl has no packaged converter.                                                                               |
 
 Keep this channel behind the existing experimental gate. Mocked tests, synthetic
 gRPC, and a visible catalog card do not establish these live results.

@@ -43,7 +43,11 @@ const PROXY_ENV_KEYS = ["HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"] as const;
  * any input. The child-process launcher derives the interpreter from trusted
  * server state instead, so a caller value must never reach the child env.
  */
-const WINDOWS_INTERPRETER_ENV_KEYS = new Set(["SYSTEMROOT", "WINDIR", "COMSPEC"]);
+const WINDOWS_INTERPRETER_ENV_KEYS = new Set([
+  "SYSTEMROOT",
+  "WINDIR",
+  "COMSPEC",
+]);
 
 export interface LocalProbeEnvironment {
   /**
@@ -74,7 +78,10 @@ function readCaseInsensitive(
   if (typeof direct === "string") return direct;
   const upper = key.toUpperCase();
   for (const [candidateKey, candidateValue] of Object.entries(source)) {
-    if (candidateKey.toUpperCase() === upper && typeof candidateValue === "string") {
+    if (
+      candidateKey.toUpperCase() === upper &&
+      typeof candidateValue === "string"
+    ) {
       return candidateValue;
     }
   }
@@ -102,7 +109,8 @@ async function resolveTrustedExecutable(
     process.platform === "win32"
       ? (trustedEnv.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";").filter(Boolean)
       : [""];
-  const mode = process.platform === "win32" ? fsConstants.F_OK : fsConstants.X_OK;
+  const mode =
+    process.platform === "win32" ? fsConstants.F_OK : fsConstants.X_OK;
   for (const dir of dirs) {
     const candidates =
       process.platform === "win32"

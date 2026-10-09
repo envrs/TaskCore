@@ -3,11 +3,18 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 
-const workflow = readFileSync(new URL("../../workflows/release-verify.yml", import.meta.url), "utf8");
-const runner = workflow.split("  verify_taskcore_runner:")[1].split("  build:")[0];
+const workflow = readFileSync(
+  new URL("../../workflows/release-verify.yml", import.meta.url),
+  "utf8",
+);
+const runner = workflow
+  .split("  verify_taskcore_runner:")[1]
+  .split("  build:")[0];
 
 test("Runner dependency caching selects the package's pinned compiler before computing its key", () => {
-  const select = runner.indexOf("      - name: Select the pinned Runner Rust toolchain");
+  const select = runner.indexOf(
+    "      - name: Select the pinned Runner Rust toolchain",
+  );
   const cache = runner.indexOf("      - name: Cache Runner Rust dependencies");
   assert.ok(select >= 0 && cache > select);
   const setup = runner.slice(select, cache);
@@ -18,9 +25,17 @@ test("Runner dependency caching selects the package's pinned compiler before com
   // The target path feeds the entry's version hash, so it must not resolve
   // under the checkout, whose root differs between the fleet and GitHub-hosted
   // runners. The pin step publishes a $HOME-anchored path to the same directory.
-  const pin = runner.indexOf("      - name: Pin the Runner Rust workspace path");
-  assert.ok(pin >= 0 && cache > pin, "the workspace path must be pinned before the cache step");
-  assert.match(runner, /workspaces: \$\{\{ steps\.runner_rust_workspace\.outputs\.path \}\} -> target/);
+  const pin = runner.indexOf(
+    "      - name: Pin the Runner Rust workspace path",
+  );
+  assert.ok(
+    pin >= 0 && cache > pin,
+    "the workspace path must be pinned before the cache step",
+  );
+  assert.match(
+    runner,
+    /workspaces: \$\{\{ steps\.runner_rust_workspace\.outputs\.path \}\} -> target/,
+  );
   assert.match(runner, /shared-key: release-runner-v2/);
 });
 
@@ -28,40 +43,94 @@ test("the shared cache excludes workspace artifacts and only restores or saves t
   assert.match(runner, /cache-workspace-crates: false/);
   assert.match(runner, /cache-bin: false/);
   const saveIf = runner.match(/^\s*save-if: (.+)$/m)?.[1];
-  assert.equal(saveIf, "${{ matrix.lane == 'rust' && github.repository == 'taskcore/taskcore' && github.event_name == 'push' && github.ref == 'refs/heads/master' && inputs.ref == github.sha }}");
-  const cacheStep = runner.split("      - name: Cache Runner Rust dependencies")[1].split("      - name: Install dependencies")[0];
-  assert.equal(cacheStep.match(/^\s*if: (.+)$/m)?.[1], saveIf.replace("matrix.lane == 'rust' && ", ""));
+  assert.equal(
+    saveIf,
+    "${{ matrix.lane == 'rust' && github.repository == 'taskcore/taskcore' && github.event_name == 'push' && github.ref == 'refs/heads/master' && inputs.ref == github.sha }}",
+  );
+  const cacheStep = runner
+    .split("      - name: Cache Runner Rust dependencies")[1]
+    .split("      - name: Install dependencies")[0];
+  assert.equal(
+    cacheStep.match(/^\s*if: (.+)$/m)?.[1],
+    saveIf.replace("matrix.lane == 'rust' && ", ""),
+  );
   assert.doesNotMatch(runner, /cache-on-failure: true|cache-all-crates: true/);
 });
 
 test("parallel lanes cover check:all exactly once and never bypass verification", () => {
-  const scripts = JSON.parse(readFileSync(new URL("../../../packages/taskcore-runner/package.json", import.meta.url))).scripts;
-  const checks = [...runner.matchAll(/^            checks: (.+)$/gm)].flatMap(([, value]) => value.split(" "));
-  assert.deepEqual(checks, scripts["check:all"].split(" && ").map((command) => command.replace(/^pnpm run /, "")));
-  assert.deepEqual([...runner.matchAll(/^          - lane: (.+)$/gm)].map(([, value]) => value), ["protocol", "rust", "server-integration"]);
+  const scripts = JSON.parse(
+    readFileSync(
+      new URL(
+        "../../../packages/taskcore-runner/package.json",
+        import.meta.url,
+      ),
+    ),
+  ).scripts;
+  const checks = [...runner.matchAll(/^            checks: (.+)$/gm)].flatMap(
+    ([, value]) => value.split(" "),
+  );
+  assert.deepEqual(
+    checks,
+    scripts["check:all"]
+      .split(" && ")
+      .map((command) => command.replace(/^pnpm run /, "")),
+  );
+  assert.deepEqual(
+    [...runner.matchAll(/^          - lane: (.+)$/gm)].map(
+      ([, value]) => value,
+    ),
+    ["protocol", "rust", "server-integration"],
+  );
   assert.match(runner, /fail-fast: false/);
-  assert.doesNotMatch(runner, /max-parallel: 1|^    needs:|continue-on-error:/m);
-  const verify = runner.split("      - name: Verify Taskcore Runner\n")[1].split("      - name: Warm debug")[0];
+  assert.doesNotMatch(
+    runner,
+    /max-parallel: 1|^    needs:|continue-on-error:/m,
+  );
+  const verify = runner
+    .split("      - name: Verify Taskcore Runner\n")[1]
+    .split("      - name: Warm debug")[0];
   assert.match(verify, /RUNNER_CHECKS: \$\{\{ matrix.checks \}\}/);
   assert.match(verify, /set -euo pipefail/);
-  assert.match(verify, /for check in \$RUNNER_CHECKS; do\s+pnpm --filter @taskcore\/taskcore-runner "\$check"\s+done/);
+  assert.match(
+    verify,
+    /for check in \$RUNNER_CHECKS; do\s+pnpm --filter @taskcore\/taskcore-runner "\$check"\s+done/,
+  );
   const verifyIf = verify.match(/^\s*if: \$\{\{ (.+) \}\}$/m)?.[1];
   assert.equal(verifyIf, "matrix.lane != 'server-integration'");
   for (const lane of ["protocol", "rust", "server-integration"]) {
-    assert.equal(runInNewContext(verifyIf, { matrix: { lane } }), lane !== "server-integration");
+    assert.equal(
+      runInNewContext(verifyIf, { matrix: { lane } }),
+      lane !== "server-integration",
+    );
   }
   assert.doesNotMatch(verify, /cache-hit/);
-  assert.doesNotMatch(runner, /id-token: write|packages: write|secrets: inherit/);
+  assert.doesNotMatch(
+    runner,
+    /id-token: write|packages: write|secrets: inherit/,
+  );
 });
 
 test("only the trusted Rust lane writes, and warms both build profiles before saving", () => {
-  const cache = runner.split("      - name: Cache Runner Rust dependencies")[1].split("      - name: Install dependencies")[0];
-  const warm = runner.split("      - name: Warm debug dependencies for the shared Runner cache")[1];
-  const expr = (body, field) => body.match(new RegExp(`^ +${field}: \\$\\{\\{ (.+) \\}\\}$`, "m"))[1];
+  const cache = runner
+    .split("      - name: Cache Runner Rust dependencies")[1]
+    .split("      - name: Install dependencies")[0];
+  const warm = runner.split(
+    "      - name: Warm debug dependencies for the shared Runner cache",
+  )[1];
+  const expr = (body, field) =>
+    body.match(new RegExp(`^ +${field}: \\$\\{\\{ (.+) \\}\\}$`, "m"))[1];
   assert.equal(expr(cache, "save-if"), expr(warm, "if"));
-  assert.match(warm, /run: pnpm --filter @taskcore\/taskcore-runner build:rust/);
+  assert.match(
+    warm,
+    /run: pnpm --filter @taskcore\/taskcore-runner build:rust/,
+  );
   const sha = "a".repeat(40);
-  const base = { repository: "khulnasoft/taskcore", event_name: "push", ref: "refs/heads/master", sha };
+  const base = {
+    repository: "khulnasoft/taskcore",
+    event_name: "push",
+    ref: "refs/heads/master",
+    sha,
+  };
   for (const lane of ["protocol", "rust", "server-integration"]) {
     for (const [overrides, ref, trusted] of [
       [{}, sha, true],
@@ -72,9 +141,16 @@ test("only the trusted Rust lane writes, and warms both build profiles before sa
       [{ ref: "refs/heads/feature" }, sha, false],
       [{}, "b".repeat(40), false],
     ]) {
-      const context = { matrix: { lane }, github: { ...base, ...overrides }, inputs: { ref } };
+      const context = {
+        matrix: { lane },
+        github: { ...base, ...overrides },
+        inputs: { ref },
+      };
       assert.equal(runInNewContext(expr(cache, "if"), context), trusted);
-      assert.equal(runInNewContext(expr(cache, "save-if"), context), trusted && lane === "rust");
+      assert.equal(
+        runInNewContext(expr(cache, "save-if"), context),
+        trusted && lane === "rust",
+      );
     }
   }
 });

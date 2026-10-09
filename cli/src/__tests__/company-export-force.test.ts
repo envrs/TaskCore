@@ -20,7 +20,9 @@ describe("confirmOverwriteExportDirectory (non-interactive)", () => {
 
   it("resolves when the output directory does not exist", async () => {
     const missing = path.join(dir, "does-not-exist");
-    await expect(confirmOverwriteExportDirectory(missing)).resolves.toBeUndefined();
+    await expect(
+      confirmOverwriteExportDirectory(missing),
+    ).resolves.toBeUndefined();
   });
 
   it("resolves when the output directory is empty", async () => {
@@ -30,7 +32,9 @@ describe("confirmOverwriteExportDirectory (non-interactive)", () => {
   it("throws non-interactively when the output directory is non-empty and --force is not set", async () => {
     await writeFile(path.join(dir, "BACKUP-README.md"), "keep me");
     await mkdir(path.join(dir, ".git"));
-    await expect(confirmOverwriteExportDirectory(dir)).rejects.toThrow(/already contains files/);
+    await expect(confirmOverwriteExportDirectory(dir)).rejects.toThrow(
+      /already contains files/,
+    );
   });
 
   it("resolves on a non-empty output directory when --force is set", async () => {
@@ -44,8 +48,8 @@ describe("confirmOverwriteExportDirectory (non-interactive)", () => {
   it("throws when the output path exists but is a file", async () => {
     const filePath = path.join(dir, "not-a-dir");
     await writeFile(filePath, "x");
-    await expect(confirmOverwriteExportDirectory(filePath, { force: true })).rejects.toThrow(
-      /exists and is not a directory/,
-    );
+    await expect(
+      confirmOverwriteExportDirectory(filePath, { force: true }),
+    ).rejects.toThrow(/exists and is not a directory/);
   });
 });

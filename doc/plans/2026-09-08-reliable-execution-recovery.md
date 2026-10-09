@@ -24,13 +24,13 @@ The shared protocol-integrity and cleanup changes incorporate the relevant prere
 
 Five independent fresh source-CLI `test-drive` instances passed these browser journeys:
 
-| Journey | Provider | Result |
-| --- | --- | --- |
-| Safe replacement | Native Codex driver with deterministic model and MCP fixtures | A second-service request survives the injected failure and receives a tool-backed answer without another Run click. |
-| Unknown action | Native Codex driver with deterministic fixtures | No speculative replay. The operator records action outcomes before continuation. |
-| Restart during retry | Native Codex driver with deterministic fixtures | Durable retry survives server restart with one successor. |
-| CEO descendant events | Native Codex driver with deterministic fixtures | Provider-confirmed descendant notifications do not crash or complete the root. |
-| Unsupported legacy recovery | Deterministic process adapter | Unknown action outcomes create an operator-owned recovery action. |
+| Journey                     | Provider                                                      | Result                                                                                                              |
+| --------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Safe replacement            | Native Codex driver with deterministic model and MCP fixtures | A second-service request survives the injected failure and receives a tool-backed answer without another Run click. |
+| Unknown action              | Native Codex driver with deterministic fixtures               | No speculative replay. The operator records action outcomes before continuation.                                    |
+| Restart during retry        | Native Codex driver with deterministic fixtures               | Durable retry survives server restart with one successor.                                                           |
+| CEO descendant events       | Native Codex driver with deterministic fixtures               | Provider-confirmed descendant notifications do not crash or complete the root.                                      |
+| Unsupported legacy recovery | Deterministic process adapter                                 | Unknown action outcomes create an operator-owned recovery action.                                                   |
 
 These fixtures do not prove live provider authentication. A separate retained live instance completed the current Gmail request with native Codex and model `gpt-5.6-sol`: one search call and five thread reads. History, assignment, and existing connections were retained. No mail was sent. Private provider history, instance identifiers, and credentials are excluded from this repository.
 

@@ -16,20 +16,20 @@ When a heartbeat fires, Taskcore:
 
 ## Built-in Adapters
 
-| Adapter | Type Key | Description |
-|---------|----------|-------------|
-| [Claude Code](/adapters/claude-local) | `claude_local` | Runs Claude Code CLI locally, with a native ACP engine when available |
-| [Codex](/adapters/codex-local) | `codex_local` | Runs OpenAI Codex CLI locally, with a native ACP engine when available |
-| [Gemini CLI](/adapters/gemini-local) | `gemini_local` | Runs Gemini CLI locally (experimental — adapter package exists, not yet in stable type enum) |
-| [Kimi Code CLI](/adapters/kimi-local) | `kimi_local` | Runs Kimi Code CLI locally through ACP, with explicitly selectable headless `-p` mode |
-| OpenCode | `opencode_local` | Runs OpenCode CLI locally (multi-provider `provider/model`) |
-| Cursor | `cursor` | Runs Cursor in background mode |
-| Pi | `pi_local` | Runs an embedded Pi agent locally |
-| Hermes | `hermes_local` | Runs the local Hermes CLI through `@taskcore/hermes-taskcore-adapter` |
-| Hermes Gateway | `hermes_gateway` | Calls an already-running Hermes API server through `@taskcore/hermes-taskcore-adapter/gateway` |
-| OpenClaw Gateway | `openclaw_gateway` | Connects to an OpenClaw gateway endpoint |
-| [Process](/adapters/process) | `process` | Executes arbitrary shell commands |
-| [HTTP](/adapters/http) | `http` | Sends webhooks to external agents |
+| Adapter                               | Type Key           | Description                                                                                    |
+| ------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------- |
+| [Claude Code](/adapters/claude-local) | `claude_local`     | Runs Claude Code CLI locally, with a native ACP engine when available                          |
+| [Codex](/adapters/codex-local)        | `codex_local`      | Runs OpenAI Codex CLI locally, with a native ACP engine when available                         |
+| [Gemini CLI](/adapters/gemini-local)  | `gemini_local`     | Runs Gemini CLI locally (experimental — adapter package exists, not yet in stable type enum)   |
+| [Kimi Code CLI](/adapters/kimi-local) | `kimi_local`       | Runs Kimi Code CLI locally through ACP, with explicitly selectable headless `-p` mode          |
+| OpenCode                              | `opencode_local`   | Runs OpenCode CLI locally (multi-provider `provider/model`)                                    |
+| Cursor                                | `cursor`           | Runs Cursor in background mode                                                                 |
+| Pi                                    | `pi_local`         | Runs an embedded Pi agent locally                                                              |
+| Hermes                                | `hermes_local`     | Runs the local Hermes CLI through `@taskcore/hermes-taskcore-adapter`                          |
+| Hermes Gateway                        | `hermes_gateway`   | Calls an already-running Hermes API server through `@taskcore/hermes-taskcore-adapter/gateway` |
+| OpenClaw Gateway                      | `openclaw_gateway` | Connects to an OpenClaw gateway endpoint                                                       |
+| [Process](/adapters/process)          | `process`          | Executes arbitrary shell commands                                                              |
+| [HTTP](/adapters/http)                | `http`             | Sends webhooks to external agents                                                              |
 
 ## Credential ownership for sandbox targets
 
@@ -37,9 +37,9 @@ Local CLI adapters can run on the Taskcore host, SSH targets, or managed
 sandbox targets. The adapter decides which credential home is authoritative
 before the CLI starts:
 
-| Adapter | Credential topology | Which credential file wins on managed sandbox targets |
-|---------|---------------------|-------------------------------------------------------|
-| [`codex_local`](/adapters/codex-local) | Host-owns-auth for Taskcore-managed `CODEX_HOME` | A host-owned `auth.json` is symlinked into the managed `CODEX_HOME` and uploaded to the sandbox. If a per-agent `OPENAI_API_KEY` is configured, Taskcore writes an API-key `auth.json` instead and that file wins. A login baked into the sandbox image is shadowed because Codex runs with Taskcore's uploaded `CODEX_HOME`. |
+| Adapter                                  | Credential topology                                 | Which credential file wins on managed sandbox targets                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`codex_local`](/adapters/codex-local)   | Host-owns-auth for Taskcore-managed `CODEX_HOME`    | A host-owned `auth.json` is symlinked into the managed `CODEX_HOME` and uploaded to the sandbox. If a per-agent `OPENAI_API_KEY` is configured, Taskcore writes an API-key `auth.json` instead and that file wins. A login baked into the sandbox image is shadowed because Codex runs with Taskcore's uploaded `CODEX_HOME`.                                                                    |
 | [`claude_local`](/adapters/claude-local) | Snapshot-owns-auth for managed remote Claude config | A configured `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN` (agent or environment env) wins over any stored login. Otherwise Taskcore uploads only sanitized settings and skill/runtime assets, and when the remote managed config has no Claude credential files it copies `.credentials.json` or `credentials.json` from the sandbox image's own `$HOME/.claude`, so the image's login wins. |
 
 Worked examples:
@@ -70,9 +70,9 @@ set the desired type key (`hermes_local` or `hermes_gateway`).
 
 These adapters ship as standalone npm packages and are installed via the plugin system:
 
-| Adapter | Package | Type Key | Description |
-|---------|---------|----------|-------------|
-| Droid | `@henkey/droid-taskcore-adapter` | `droid_local` | Runs Factory Droid locally |
+| Adapter | Package                          | Type Key      | Description                |
+| ------- | -------------------------------- | ------------- | -------------------------- |
+| Droid   | `@henkey/droid-taskcore-adapter` | `droid_local` | Runs Factory Droid locally |
 
 ## External Adapters
 
@@ -107,11 +107,11 @@ my-adapter/
       format-event.ts   # Terminal output for `taskcore run --watch`
 ```
 
-| Registry | What it does | Source |
-|----------|-------------|--------|
-| **Server** | Executes agents, captures results | `createServerAdapter()` from package root |
-| **UI** | Renders run transcripts, provides config forms | `ui-parser.js` (dynamic) or static import (built-in) |
-| **CLI** | Formats terminal output for live watching | Static import |
+| Registry   | What it does                                   | Source                                               |
+| ---------- | ---------------------------------------------- | ---------------------------------------------------- |
+| **Server** | Executes agents, captures results              | `createServerAdapter()` from package root            |
+| **UI**     | Renders run transcripts, provides config forms | `ui-parser.js` (dynamic) or static import (built-in) |
+| **CLI**    | Formats terminal output for live watching      | Static import                                        |
 
 ## Choosing an Adapter
 
@@ -124,7 +124,7 @@ my-adapter/
 
 ## Feedback Granularity
 
-Adapter choice determines how much structured, live detail a run's transcript can show while the agent is still working. Every adapter's stdout is streamed to the run log and rendered live in the UI — including runs on sandbox execution targets, whose logs are tailed and delivered incrementally — but the *granularity* of what you see depends on the event stream the adapter emits.
+Adapter choice determines how much structured, live detail a run's transcript can show while the agent is still working. Every adapter's stdout is streamed to the run log and rendered live in the UI — including runs on sandbox execution targets, whose logs are tailed and delivered incrementally — but the _granularity_ of what you see depends on the event stream the adapter emits.
 
 Rough tiers, richest first:
 

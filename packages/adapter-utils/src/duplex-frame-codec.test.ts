@@ -50,7 +50,9 @@ describe("duplex frame codec fixture", () => {
   });
 
   it("every category has at least one vector", () => {
-    const categories = new Set(fixture.vectors.map((vector) => vector.category));
+    const categories = new Set(
+      fixture.vectors.map((vector) => vector.category),
+    );
     for (const category of ["valid", "invalid", "versionMismatch"]) {
       expect(categories).toContain(category);
     }
@@ -61,7 +63,9 @@ describe("duplex frame codec fixture", () => {
       // Every remaining vector is one complete line, so `decodeDuplexLine`
       // reads it directly. The trailing newline in the fixture bytes is not
       // part of the line the decoder reads.
-      const line = vector.bytes.endsWith("\n") ? vector.bytes.slice(0, -1) : vector.bytes;
+      const line = vector.bytes.endsWith("\n")
+        ? vector.bytes.slice(0, -1)
+        : vector.bytes;
       const result = decodeDuplexLine(line);
       const want = vector.expected[0];
       if ("frame" in want) {
@@ -113,7 +117,11 @@ describe("ready frame schema", () => {
   // exactly the frame version and the nonce.
   it("accepts a READY frame that carries exactly the version and the nonce", () => {
     const result = decodeDuplexLine(
-      JSON.stringify({ version: DUPLEX_FRAME_VERSION, type: "ready", nonce: "a1b2c3d4e5f6a7b8" }),
+      JSON.stringify({
+        version: DUPLEX_FRAME_VERSION,
+        type: "ready",
+        nonce: "a1b2c3d4e5f6a7b8",
+      }),
     );
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -126,7 +134,10 @@ describe("ready frame schema", () => {
   });
 
   it.each([
-    { name: "an absent nonce", frame: { version: DUPLEX_FRAME_VERSION, type: "ready" } },
+    {
+      name: "an absent nonce",
+      frame: { version: DUPLEX_FRAME_VERSION, type: "ready" },
+    },
     {
       name: "a wrong-typed nonce",
       frame: { version: DUPLEX_FRAME_VERSION, type: "ready", nonce: 42 },
@@ -142,7 +153,12 @@ describe("ready frame schema", () => {
     },
     {
       name: "an extra port field",
-      frame: { version: DUPLEX_FRAME_VERSION, type: "ready", nonce: "a1b2c3d4e5f6a7b8", port: 47215 },
+      frame: {
+        version: DUPLEX_FRAME_VERSION,
+        type: "ready",
+        nonce: "a1b2c3d4e5f6a7b8",
+        port: 47215,
+      },
     },
   ])("rejects a READY frame with $name", ({ frame }) => {
     const result = decodeDuplexLine(JSON.stringify(frame));
@@ -156,7 +172,10 @@ describe("size-checked encode", () => {
     // Every codec copy runs the same encode vectors. This copy proves it enforces
     // the same bound the embedded gateway copy enforces.
     for (const vector of fixture.encodeVectors) {
-      const result = encodeDuplexFrameChecked(vector.frame, vector.maxFrameBytes);
+      const result = encodeDuplexFrameChecked(
+        vector.frame,
+        vector.maxFrameBytes,
+      );
       expect(result.ok).toBe(vector.expected.ok);
       if (result.ok) {
         // An ok line ends with one newline and decodes back to the same frame, so
@@ -210,7 +229,10 @@ describe("size-checked encode", () => {
   });
 
   it("defaults the bound to the default max frame bytes", () => {
-    const frame: DuplexFrame = { version: DUPLEX_FRAME_VERSION, type: "heartbeat" };
+    const frame: DuplexFrame = {
+      version: DUPLEX_FRAME_VERSION,
+      type: "heartbeat",
+    };
     const result = encodeDuplexFrameChecked(frame);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.line).toBe(encodeDuplexFrame(frame));

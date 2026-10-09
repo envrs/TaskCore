@@ -54,14 +54,10 @@
       "providerDurationMs": 23032,
       "resultSha256": "67bcbe152852280b58fec97754601c57c416c2cb7965de55557240b8448dca63",
       "contextEvidenceSha256": "9bc59db9678a3f5cfc207d1aeeec1f868f94429a7a10d8d214621f286532a1b7",
-      "failedBehaviorChecks": [
-        "single-durable-output"
-      ],
+      "failedBehaviorChecks": ["single-durable-output"],
       "publicDocumentCount": 0,
       "savedRevisionEvidence": false,
-      "runPurposes": [
-        "assignment"
-      ],
+      "runPurposes": ["assignment"],
       "prerequisites": {
         "passed": true,
         "sourceSha": "bc83fe030234439ac51279502a28803958963e2e",
@@ -110,9 +106,7 @@
       "failedBehaviorChecks": [],
       "publicDocumentCount": 1,
       "savedRevisionEvidence": true,
-      "runPurposes": [
-        "assignment"
-      ],
+      "runPurposes": ["assignment"],
       "prerequisites": {
         "passed": true,
         "sourceSha": "bc83fe030234439ac51279502a28803958963e2e",
@@ -158,14 +152,10 @@
       "providerDurationMs": 36770,
       "resultSha256": "a322e292fd7688c714cc8e57e7f64ca70c19f0784dc242b3e809a6e4b0be224e",
       "contextEvidenceSha256": "3e295ec42b9c7208a7e4b17bf8329d9e1f01ba984c4a586539d7a703ffd59bf6",
-      "failedBehaviorChecks": [
-        "single-durable-output"
-      ],
+      "failedBehaviorChecks": ["single-durable-output"],
       "publicDocumentCount": 0,
       "savedRevisionEvidence": false,
-      "runPurposes": [
-        "assignment"
-      ],
+      "runPurposes": ["assignment"],
       "prerequisites": {
         "passed": true,
         "sourceSha": "bc83fe030234439ac51279502a28803958963e2e",
@@ -211,14 +201,10 @@
       "providerDurationMs": 206191,
       "resultSha256": "60dfb068ea80d0155d93fdace77a29fd19d64bdb0740e6e6b63f7e83ccfb5ded",
       "contextEvidenceSha256": "23eed2766b5e8db9cea0ba5c76da235cf2d4222fa5718420cc60d6e13c86fa06",
-      "failedBehaviorChecks": [
-        "saved-document-link"
-      ],
+      "failedBehaviorChecks": ["saved-document-link"],
       "publicDocumentCount": 1,
       "savedRevisionEvidence": true,
-      "runPurposes": [
-        "assignment"
-      ],
+      "runPurposes": ["assignment"],
       "prerequisites": {
         "passed": true,
         "sourceSha": "bc83fe030234439ac51279502a28803958963e2e",
@@ -270,9 +256,7 @@
       "failedBehaviorChecks": [],
       "publicDocumentCount": 1,
       "savedRevisionEvidence": true,
-      "runPurposes": [
-        "assignment"
-      ],
+      "runPurposes": ["assignment"],
       "prerequisites": {
         "passed": true,
         "sourceSha": "abd0b628ca642c09a54a4edc56a5227402f6686e",
@@ -321,9 +305,7 @@
       "failedBehaviorChecks": [],
       "publicDocumentCount": 1,
       "savedRevisionEvidence": true,
-      "runPurposes": [
-        "assignment"
-      ],
+      "runPurposes": ["assignment"],
       "prerequisites": {
         "passed": true,
         "sourceSha": "abd0b628ca642c09a54a4edc56a5227402f6686e",
@@ -369,15 +351,10 @@
       "providerDurationMs": 68032,
       "resultSha256": "f807c235250d8675d29aa34fc97d0e89be2c7ea885edfc2f3845627037552c0b",
       "contextEvidenceSha256": "0dc98ad8ef1f22d69c3a3d7344082a6d5a0effc8d9c73c5d4c1267c92800b57a",
-      "failedBehaviorChecks": [
-        "single-durable-output"
-      ],
+      "failedBehaviorChecks": ["single-durable-output"],
       "publicDocumentCount": 0,
       "savedRevisionEvidence": false,
-      "runPurposes": [
-        "assignment",
-        "issue_disposition_repair"
-      ],
+      "runPurposes": ["assignment", "issue_disposition_repair"],
       "prerequisites": {
         "passed": true,
         "sourceSha": "abd0b628ca642c09a54a4edc56a5227402f6686e",
@@ -423,14 +400,10 @@
       "providerDurationMs": 46300,
       "resultSha256": "cff6e5bf4b6b646ae6f9b5a6a2934c444c37a14f50b591f5226ccac0e4de1dda",
       "contextEvidenceSha256": "6c943d78291c1e493cb29ca3a52dcb96d186fd18ed51e4cfb17055649162f6f2",
-      "failedBehaviorChecks": [
-        "saved-document-link"
-      ],
+      "failedBehaviorChecks": ["saved-document-link"],
       "publicDocumentCount": 1,
       "savedRevisionEvidence": true,
-      "runPurposes": [
-        "assignment"
-      ],
+      "runPurposes": ["assignment"],
       "prerequisites": {
         "passed": true,
         "sourceSha": "abd0b628ca642c09a54a4edc56a5227402f6686e",

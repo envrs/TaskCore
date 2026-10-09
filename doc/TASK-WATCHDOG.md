@@ -37,11 +37,11 @@ It is **not** an output-silence monitor for active runs. That is a separate mech
 
 Three concepts share the word "watchdog" inside Taskcore. Keep them separate:
 
-| Concept                       | What it watches                                                       | When it fires                                                     |
-| ----------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| **Task watchdog** (this doc)  | A configured issue + its non-watchdog descendants                     | The whole watched subtree has stopped and the stop is new         |
-| **Silent active-run watchdog**| A single still-running process                                        | The process has produced no output for the threshold window       |
-| **Liveness recovery**         | Any agent-owned `in_progress` issue with no live path                 | Stalled work detected during the periodic recovery scan           |
+| Concept                        | What it watches                                       | When it fires                                               |
+| ------------------------------ | ----------------------------------------------------- | ----------------------------------------------------------- |
+| **Task watchdog** (this doc)   | A configured issue + its non-watchdog descendants     | The whole watched subtree has stopped and the stop is new   |
+| **Silent active-run watchdog** | A single still-running process                        | The process has produced no output for the threshold window |
+| **Liveness recovery**          | Any agent-owned `in_progress` issue with no live path | Stalled work detected during the periodic recovery scan     |
 
 The task watchdog is configured by you (or by an agent on your behalf). The other two run automatically on every project.
 
@@ -51,11 +51,11 @@ The task watchdog is configured by you (or by an agent on your behalf). The othe
 
 A watchdog has three fields:
 
-| Field            | Required | Notes                                                                                  |
-| ---------------- | -------- | -------------------------------------------------------------------------------------- |
-| Watched issue    | yes      | The issue you attach the watchdog to. Configured implicitly via the issue you edit.    |
-| Watchdog agent   | yes      | Any same-company, invokable agent. Cannot be paused, terminated, or budget-blocked.    |
-| Instructions     | no       | Free-form text (trimmed; empty becomes null). Can narrow focus; cannot expand authority.|
+| Field          | Required | Notes                                                                                    |
+| -------------- | -------- | ---------------------------------------------------------------------------------------- |
+| Watched issue  | yes      | The issue you attach the watchdog to. Configured implicitly via the issue you edit.      |
+| Watchdog agent | yes      | Any same-company, invokable agent. Cannot be paused, terminated, or budget-blocked.      |
+| Instructions   | no       | Free-form text (trimmed; empty becomes null). Can narrow focus; cannot expand authority. |
 
 A single watched issue holds **at most one active watchdog**. Re-assigning the agent or editing instructions invalidates the previously reviewed state and forces a fresh evaluation on the next scan.
 
@@ -174,18 +174,18 @@ If what you actually want is "wake me when this is done," use a routine or an is
 
 ## Reference
 
-| Topic                            | File                                                                  |
-| -------------------------------- | --------------------------------------------------------------------- |
-| Authority contract (formal)      | [`doc/SPEC-implementation.md`](SPEC-implementation.md) §9.9           |
-| Execution semantics (formal)     | [`doc/execution-semantics.md`](execution-semantics.md) §11           |
-| Silent active-run watchdog       | [`doc/execution-semantics.md`](execution-semantics.md) §12           |
-| Database schema                  | `packages/db/src/schema/issue_watchdogs.ts`                           |
-| Server service                   | `server/src/services/task-watchdogs.ts`                               |
-| Scope enforcement                | `server/src/services/task-watchdog-scope.ts`                          |
-| Wake context + default mandate   | `packages/adapter-utils/src/server-utils.ts` (`WATCHDOG_DEFAULT_MANDATE`) |
-| HTTP routes                      | `server/src/routes/issues.ts` (`GET/PUT/DELETE /issues/:id/watchdog`) |
-| Properties UI                    | `ui/src/components/IssueProperties.tsx` (Watchdog row)               |
-| New-issue dialog UI              | `ui/src/components/NewIssueDialog.tsx`                                |
+| Topic                          | File                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------- |
+| Authority contract (formal)    | [`doc/SPEC-implementation.md`](SPEC-implementation.md) §9.9               |
+| Execution semantics (formal)   | [`doc/execution-semantics.md`](execution-semantics.md) §11                |
+| Silent active-run watchdog     | [`doc/execution-semantics.md`](execution-semantics.md) §12                |
+| Database schema                | `packages/db/src/schema/issue_watchdogs.ts`                               |
+| Server service                 | `server/src/services/task-watchdogs.ts`                                   |
+| Scope enforcement              | `server/src/services/task-watchdog-scope.ts`                              |
+| Wake context + default mandate | `packages/adapter-utils/src/server-utils.ts` (`WATCHDOG_DEFAULT_MANDATE`) |
+| HTTP routes                    | `server/src/routes/issues.ts` (`GET/PUT/DELETE /issues/:id/watchdog`)     |
+| Properties UI                  | `ui/src/components/IssueProperties.tsx` (Watchdog row)                    |
+| New-issue dialog UI            | `ui/src/components/NewIssueDialog.tsx`                                    |
 
 ---
 

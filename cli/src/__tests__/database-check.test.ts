@@ -26,7 +26,8 @@ function embeddedConfig(dataDir: string): TaskcoreConfig {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  if (ORIGINAL_IN_WORKTREE === undefined) delete process.env.TASKCORE_IN_WORKTREE;
+  if (ORIGINAL_IN_WORKTREE === undefined)
+    delete process.env.TASKCORE_IN_WORKTREE;
   else process.env.TASKCORE_IN_WORKTREE = ORIGINAL_IN_WORKTREE;
   while (created.length > 0) {
     const dir = created.pop();
@@ -40,9 +41,18 @@ describe("databaseCheck — embedded postgres temp-dir guard", () => {
     // Treat a sibling dir as the OS temp root so the persistent dir is outside it.
     vi.spyOn(os, "tmpdir").mockReturnValue(path.join(base, "fake-tmp"));
     process.env.TASKCORE_IN_WORKTREE = "true";
-    const persistentDataDir = path.join(base, "persistent", "instances", "default", "db");
+    const persistentDataDir = path.join(
+      base,
+      "persistent",
+      "instances",
+      "default",
+      "db",
+    );
 
-    const result = await databaseCheck(embeddedConfig(persistentDataDir), path.join(base, "config.json"));
+    const result = await databaseCheck(
+      embeddedConfig(persistentDataDir),
+      path.join(base, "config.json"),
+    );
 
     expect(result.status).toBe("pass");
     expect(result.message).toContain("Embedded PostgreSQL configured at");
@@ -55,7 +65,10 @@ describe("databaseCheck — embedded postgres temp-dir guard", () => {
     process.env.TASKCORE_IN_WORKTREE = "true";
     const tmpDataDir = path.join(fakeTmp, "instances", "default", "db");
 
-    const result = await databaseCheck(embeddedConfig(tmpDataDir), path.join(base, "config.json"));
+    const result = await databaseCheck(
+      embeddedConfig(tmpDataDir),
+      path.join(base, "config.json"),
+    );
 
     expect(result.status).toBe("warn");
     expect(result.message).toMatch(/temp directory/i);
@@ -72,7 +85,10 @@ describe("databaseCheck — embedded postgres temp-dir guard", () => {
     delete process.env.TASKCORE_IN_WORKTREE;
     const tmpDataDir = path.join(fakeTmp, "instances", "default", "db");
 
-    const result = await databaseCheck(embeddedConfig(tmpDataDir), path.join(base, "config.json"));
+    const result = await databaseCheck(
+      embeddedConfig(tmpDataDir),
+      path.join(base, "config.json"),
+    );
 
     expect(result.status).toBe("pass");
   });

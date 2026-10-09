@@ -16,7 +16,10 @@ import path from "node:path";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AdapterExecutionContext, AdapterRuntimeMcpAccess } from "@taskcore/adapter-utils";
+import type {
+  AdapterExecutionContext,
+  AdapterRuntimeMcpAccess,
+} from "@taskcore/adapter-utils";
 import {
   startAdapterExecutionTargetTaskcoreBridge,
   startAdapterExecutionTargetProcessSessionBridge,
@@ -27,12 +30,21 @@ import {
 // exercises them end-to-end against a local runner, while a teardown test can
 // override just the bridges with stop spies. (Copied from execute.test.ts.)
 vi.mock("@taskcore/adapter-utils/execution-target", async (importActual) => {
-  const actual = await importActual<typeof import("@taskcore/adapter-utils/execution-target")>();
+  const actual =
+    await importActual<
+      typeof import("@taskcore/adapter-utils/execution-target")
+    >();
   return {
     ...actual,
-    prepareAdapterExecutionTargetRuntime: vi.fn(actual.prepareAdapterExecutionTargetRuntime),
-    startAdapterExecutionTargetTaskcoreBridge: vi.fn(actual.startAdapterExecutionTargetTaskcoreBridge),
-    startAdapterExecutionTargetProcessSessionBridge: vi.fn(actual.startAdapterExecutionTargetProcessSessionBridge),
+    prepareAdapterExecutionTargetRuntime: vi.fn(
+      actual.prepareAdapterExecutionTargetRuntime,
+    ),
+    startAdapterExecutionTargetTaskcoreBridge: vi.fn(
+      actual.startAdapterExecutionTargetTaskcoreBridge,
+    ),
+    startAdapterExecutionTargetProcessSessionBridge: vi.fn(
+      actual.startAdapterExecutionTargetProcessSessionBridge,
+    ),
   };
 });
 import {
@@ -52,16 +64,25 @@ const execFile = promisify(execFileCallback);
 const tempRoots: string[] = [];
 
 async function makeTempRoot() {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-acpx-skills-"));
+  const root = await fs.mkdtemp(
+    path.join(os.tmpdir(), "taskcore-acpx-skills-"),
+  );
   tempRoots.push(root);
   return root;
 }
 
 afterEach(async () => {
   await Promise.all(
-    tempRoots.splice(0).map((root) =>
-      fs.rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }),
-    ),
+    tempRoots
+      .splice(0)
+      .map((root) =>
+        fs.rm(root, {
+          recursive: true,
+          force: true,
+          maxRetries: 5,
+          retryDelay: 50,
+        }),
+      ),
   );
 });
 
@@ -88,17 +109,26 @@ function createLocalSandboxRunner(
       counter += 1;
       onExecute?.(input);
       const command = input.command === "bash" ? "/bin/bash" : input.command;
-      return await runChildProcess(`acpx-sandbox-run-${counter}`, command, input.args ?? [], {
-        cwd: input.cwd ?? process.cwd(),
-        env: input.env ?? {},
-        stdin: input.stdin,
-        timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-        graceSec: 5,
-        onLog: input.onLog ?? (async () => {}),
-        onSpawn: input.onSpawn
-          ? async (meta) => input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
-          : undefined,
-      });
+      return await runChildProcess(
+        `acpx-sandbox-run-${counter}`,
+        command,
+        input.args ?? [],
+        {
+          cwd: input.cwd ?? process.cwd(),
+          env: input.env ?? {},
+          stdin: input.stdin,
+          timeoutSec: Math.max(
+            1,
+            Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+          ),
+          graceSec: 5,
+          onLog: input.onLog ?? (async () => {}),
+          onSpawn: input.onSpawn
+            ? async (meta) =>
+                input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
+            : undefined,
+        },
+      );
     },
   };
 }
@@ -147,7 +177,10 @@ async function runExecutor(
   const sessionInputs: Record<string, unknown>[] = [];
   const meta: Record<string, unknown>[] = [];
   const logs: Array<{ stream: string; text: string }> = [];
-  const events: Array<{ eventType: string; payload?: Record<string, unknown> }> = [];
+  const events: Array<{
+    eventType: string;
+    payload?: Record<string, unknown>;
+  }> = [];
   const execute = createAcpxEngineExecutor({
     ...(options.prepareRemoteManagedHome
       ? { prepareRemoteManagedHome: options.prepareRemoteManagedHome }
@@ -178,13 +211,24 @@ async function runExecutor(
     onMeta: async (payload: unknown) => {
       meta.push(payload as Record<string, unknown>);
     },
-    onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
+    onEvent: async (event: {
+      eventType: string;
+      payload?: Record<string, unknown>;
+    }) => {
       events.push(event);
     },
   } as never);
 
   expect(result.exitCode).toBe(0);
-  return { logs, meta, events, runtimeOptions, configOptions, sessionInputs, result };
+  return {
+    logs,
+    meta,
+    events,
+    runtimeOptions,
+    configOptions,
+    sessionInputs,
+    result,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -220,16 +264,20 @@ async function setupRemoteSandbox() {
 function stubBridges() {
   const taskcoreStops: Array<ReturnType<typeof vi.fn>> = [];
   const processStops: Array<ReturnType<typeof vi.fn>> = [];
-  vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(async () => {
-    const stop = vi.fn(async () => {});
-    taskcoreStops.push(stop);
-    return { env: {}, stop } as never;
-  });
-  vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementation(async () => {
-    const stop = vi.fn(async () => {});
-    processStops.push(stop);
-    return { agentCommand: null, stop } as never;
-  });
+  vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(
+    async () => {
+      const stop = vi.fn(async () => {});
+      taskcoreStops.push(stop);
+      return { env: {}, stop } as never;
+    },
+  );
+  vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementation(
+    async () => {
+      const stop = vi.fn(async () => {});
+      processStops.push(stop);
+      return { agentCommand: null, stop } as never;
+    },
+  );
   const anyStopped = (stops: Array<ReturnType<typeof vi.fn>>) =>
     stops.some((stop) => stop.mock.calls.length > 0);
   return { taskcoreStops, processStops, anyStopped };
@@ -273,7 +321,12 @@ function remoteArgs(
   return {
     agent: { id: "agent-1", companyId: "company-1" },
     runtime: {},
-    config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+    config: {
+      agent: "custom",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+      cwd: localCwd,
+    },
     context: {},
     authToken: "real-run-jwt",
     executionTarget,
@@ -292,28 +345,53 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
     vi.clearAllMocks();
   });
 
-  it.each(["close_session", "stop_transport", "instruction_collection", "workspace_restore", "phase_reporting", "close_error_reporting"])(
+  it.each([
+    "close_session",
+    "stop_transport",
+    "instruction_collection",
+    "workspace_restore",
+    "phase_reporting",
+    "close_error_reporting",
+  ])(
     "keeps %s visible while its real settlement await is stalled",
     async (blockedPhase) => {
-      const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
+      const { stateDir, localCwd, executionTarget } =
+        await setupRemoteSandbox();
       stubBridges();
       let resume!: () => void;
       let entered!: () => void;
-      const gate = new Promise<void>((resolve) => { resume = resolve; });
-      const reached = new Promise<void>((resolve) => { entered = resolve; });
-      const block = () => { entered(); return gate; };
+      const gate = new Promise<void>((resolve) => {
+        resume = resolve;
+      });
+      const reached = new Promise<void>((resolve) => {
+        entered = resolve;
+      });
+      const block = () => {
+        entered();
+        return gate;
+      };
       const scopes = new Map<symbol, string>();
       if (blockedPhase === "stop_transport") {
-        vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(async () => ({ env: {}, stop: block }) as never);
+        vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(
+          async () => ({ env: {}, stop: block }) as never,
+        );
       }
       const execute = createAcpxEngineExecutor({
-        createRuntime: () => ({
-          ensureSession: async () => okHandle,
-          startTurn: () => blockedPhase === "close_error_reporting" ? throwingTurn() : completedTurn(),
-          close: blockedPhase === "close_session" ? block : async () => {
-            if (blockedPhase === "close_error_reporting") throw new Error("close fixture failed");
-          },
-        }) as never,
+        createRuntime: () =>
+          ({
+            ensureSession: async () => okHandle,
+            startTurn: () =>
+              blockedPhase === "close_error_reporting"
+                ? throwingTurn()
+                : completedTurn(),
+            close:
+              blockedPhase === "close_session"
+                ? block
+                : async () => {
+                    if (blockedPhase === "close_error_reporting")
+                      throw new Error("close fixture failed");
+                  },
+          }) as never,
         prepareRemoteManagedHome: async (input) => ({
           stagedRuntime: await input.stage([]),
           teardown: async () => {
@@ -325,25 +403,46 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
       const execution = execute({
         runId: "pending-settlement-fixture",
         ...remoteArgs(stateDir, localCwd, executionTarget),
-        onProviderStopped: blockedPhase === "instruction_collection" ? block : async () => {},
+        onProviderStopped:
+          blockedPhase === "instruction_collection" ? block : async () => {},
         onExecutionPhase: (phase: string) => {
           const token = Symbol();
           scopes.set(token, phase);
-          return () => { scopes.delete(token); };
+          return () => {
+            scopes.delete(token);
+          };
         },
-        onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
-          if (blockedPhase === "phase_reporting" && event.eventType === "run.phase.timing" && event.payload?.phase === "end_session") await block();
+        onEvent: async (event: {
+          eventType: string;
+          payload?: Record<string, unknown>;
+        }) => {
+          if (
+            blockedPhase === "phase_reporting" &&
+            event.eventType === "run.phase.timing" &&
+            event.payload?.phase === "end_session"
+          )
+            await block();
         },
         onLog: async (_stream: string, text: string) => {
-          if (blockedPhase === "close_error_reporting" && text.includes("close fixture failed")) await block();
+          if (
+            blockedPhase === "close_error_reporting" &&
+            text.includes("close fixture failed")
+          )
+            await block();
         },
       } as never);
       try {
         await reached;
-        expect([...scopes.values()].at(-1)).toBe(blockedPhase === "close_error_reporting" ? "phase_reporting" : blockedPhase);
+        expect([...scopes.values()].at(-1)).toBe(
+          blockedPhase === "close_error_reporting"
+            ? "phase_reporting"
+            : blockedPhase,
+        );
       } finally {
         resume();
-        expect((await execution).exitCode).toBe(blockedPhase === "close_error_reporting" ? 1 : 0);
+        expect((await execution).exitCode).toBe(
+          blockedPhase === "close_error_reporting" ? 1 : 0,
+        );
       }
       expect(scopes.size).toBe(0);
     },
@@ -356,23 +455,38 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
     let started!: () => void;
     let cancelled!: () => void;
     let resume!: () => void;
-    const turnStarted = new Promise<void>((resolve) => { started = resolve; });
-    const cancellationStarted = new Promise<void>((resolve) => { cancelled = resolve; });
-    const gate = new Promise<void>((resolve) => { resume = resolve; });
+    const turnStarted = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const cancellationStarted = new Promise<void>((resolve) => {
+      cancelled = resolve;
+    });
+    const gate = new Promise<void>((resolve) => {
+      resume = resolve;
+    });
     const scopes = new Map<symbol, string>();
     const execute = createAcpxEngineExecutor({
-      createRuntime: () => ({
-        ensureSession: async () => okHandle,
-        startTurn: () => {
-          started();
-          return {
-            events: (async function* () { await gate; })(),
-            result: gate.then(() => ({ status: "cancelled", stopReason: "cancelled" })),
-            cancel: async () => { cancelled(); await gate; },
-          };
-        },
-        close: async () => {},
-      }) as never,
+      createRuntime: () =>
+        ({
+          ensureSession: async () => okHandle,
+          startTurn: () => {
+            started();
+            return {
+              events: (async function* () {
+                await gate;
+              })(),
+              result: gate.then(() => ({
+                status: "cancelled",
+                stopReason: "cancelled",
+              })),
+              cancel: async () => {
+                cancelled();
+                await gate;
+              },
+            };
+          },
+          close: async () => {},
+        }) as never,
     });
     const execution = execute({
       runId: "pending-cancel-fixture",
@@ -381,7 +495,9 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
       onExecutionPhase: (phase: string) => {
         const token = Symbol();
         scopes.set(token, phase);
-        return () => { scopes.delete(token); };
+        return () => {
+          scopes.delete(token);
+        };
       },
     } as never);
     try {
@@ -404,18 +520,26 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
     // and the seam teardown, and read the still-held lease during the sync-back.
     const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
     const order: string[] = [];
-    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(async () => ({
-      env: {},
-      stop: vi.fn(async () => {
-        order.push("bridge-stop");
-      }),
-    }) as never);
-    vi.mocked(startAdapterExecutionTargetProcessSessionBridge).mockImplementation(async () => ({
-      agentCommand: null,
-      stop: vi.fn(async () => {
-        order.push("bridge-stop");
-      }),
-    }) as never);
+    vi.mocked(startAdapterExecutionTargetTaskcoreBridge).mockImplementation(
+      async () =>
+        ({
+          env: {},
+          stop: vi.fn(async () => {
+            order.push("bridge-stop");
+          }),
+        }) as never,
+    );
+    vi.mocked(
+      startAdapterExecutionTargetProcessSessionBridge,
+    ).mockImplementation(
+      async () =>
+        ({
+          agentCommand: null,
+          stop: vi.fn(async () => {
+            order.push("bridge-stop");
+          }),
+        }) as never,
+    );
 
     const stagingLocks = new Map<string, Promise<unknown>>();
     let leaseSizeDuringSyncBack = -1;
@@ -523,7 +647,11 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
       runId: "clean-close",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir: path.join(root, "state"),
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -550,7 +678,9 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
       expectClose: boolean;
       // Builds the engine `createRuntime` given the shared close spy. The
       // create_runtime scenario ignores the spy and throws before a runtime exists.
-      makeCreateRuntime: (close: () => Promise<void>) => AcpxEngineExecutorOptions["createRuntime"];
+      makeCreateRuntime: (
+        close: () => Promise<void>,
+      ) => AcpxEngineExecutorOptions["createRuntime"];
       config: Record<string, unknown>;
       context: Record<string, unknown>;
     }> = [
@@ -633,12 +763,20 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
       } as never);
 
       expect(result.exitCode, `${scenario.name} exit`).toBe(1);
-      expect(result.resultJson?.phase, `${scenario.name} phase`).toBe(scenario.phase);
+      expect(result.resultJson?.phase, `${scenario.name} phase`).toBe(
+        scenario.phase,
+      );
       if (scenario.expectClose) {
-        expect(closeSpy, `${scenario.name} closes the runtime`).toHaveBeenCalledTimes(1);
+        expect(
+          closeSpy,
+          `${scenario.name} closes the runtime`,
+        ).toHaveBeenCalledTimes(1);
       } else {
         // create_runtime failed before a runtime existed, so there is nothing to close.
-        expect(closeSpy, `${scenario.name} never constructs a runtime`).not.toHaveBeenCalled();
+        expect(
+          closeSpy,
+          `${scenario.name} never constructs a runtime`,
+        ).not.toHaveBeenCalled();
       }
     }
   });
@@ -660,7 +798,10 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
       createRuntime: (options) => {
         created += 1;
         const opts = options as {
-          onAgentSpawn?: (meta: { pid: number; startedAt: string }) => Promise<void>;
+          onAgentSpawn?: (meta: {
+            pid: number;
+            startedAt: string;
+          }) => Promise<void>;
         };
         return {
           ensureSession: async () => {
@@ -726,9 +867,24 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
       discard: boolean;
       exitCode: number;
     }> = [
-      { status: "completed", reason: "taskcore completed turn cleanup", discard: false, exitCode: 0 },
-      { status: "failed", reason: "taskcore turn failed", discard: false, exitCode: 1 },
-      { status: "cancelled", reason: "taskcore turn cancelled", discard: true, exitCode: 1 },
+      {
+        status: "completed",
+        reason: "taskcore completed turn cleanup",
+        discard: false,
+        exitCode: 0,
+      },
+      {
+        status: "failed",
+        reason: "taskcore turn failed",
+        discard: false,
+        exitCode: 1,
+      },
+      {
+        status: "cancelled",
+        reason: "taskcore turn cancelled",
+        discard: true,
+        exitCode: 1,
+      },
     ];
 
     for (const testCase of cases) {
@@ -744,10 +900,19 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
               })(),
               result:
                 testCase.status === "failed"
-                  ? Promise.resolve({ status: "failed", error: new Error("turn boom") })
+                  ? Promise.resolve({
+                      status: "failed",
+                      error: new Error("turn boom"),
+                    })
                   : testCase.status === "cancelled"
-                    ? Promise.resolve({ status: "cancelled", stopReason: "cancelled" })
-                    : Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+                    ? Promise.resolve({
+                        status: "cancelled",
+                        stopReason: "cancelled",
+                      })
+                    : Promise.resolve({
+                        status: "completed",
+                        stopReason: "end_turn",
+                      }),
               cancel: async () => {},
             }),
             close: closeSpy,
@@ -758,15 +923,26 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
         runId: `terminal-${testCase.status}`,
         agent: { id: "agent-1", companyId: "company-1" },
         runtime: {},
-        config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir: path.join(root, "state") },
+        config: {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+        },
         context: {},
         onLog: async () => {},
         onMeta: async () => {},
       } as never);
 
-      expect(result.exitCode, `${testCase.status} exit`).toBe(testCase.exitCode);
-      expect(closeSpy, `${testCase.status} closes once`).toHaveBeenCalledTimes(1);
-      expect((closeSpy.mock.calls[0]! as unknown[])[0], `${testCase.status} close args`).toMatchObject({
+      expect(result.exitCode, `${testCase.status} exit`).toBe(
+        testCase.exitCode,
+      );
+      expect(closeSpy, `${testCase.status} closes once`).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(
+        (closeSpy.mock.calls[0]! as unknown[])[0],
+        `${testCase.status} close args`,
+      ).toMatchObject({
         reason: testCase.reason,
         discardPersistentState: testCase.discard,
       });
@@ -810,7 +986,8 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
     expect(
       logs.some(
         (entry) =>
-          entry.stream === "stderr" && entry.text.includes('teardown step "runtime-close" failed'),
+          entry.stream === "stderr" &&
+          entry.text.includes('teardown step "runtime-close" failed'),
       ),
     ).toBe(true);
   });
@@ -852,7 +1029,10 @@ describe("ACP settlement — Layer A: engine teardown orchestration", () => {
 // ===========================================================================
 
 function toArrayBuffer(bytes: Buffer): ArrayBuffer {
-  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  return bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
 }
 
 // A filesystem-backed managed-runtime client with the non-native base64-tar
@@ -875,7 +1055,9 @@ function makeFsClient(options: {
     },
     readFile: async (remotePath) => await fs.readFile(remotePath),
     listFiles: async (remotePath) => {
-      const entries = await fs.readdir(remotePath, { withFileTypes: true }).catch(() => []);
+      const entries = await fs
+        .readdir(remotePath, { withFileTypes: true })
+        .catch(() => []);
       return entries
         .filter((entry) => entry.isFile())
         .map((entry) => entry.name)
@@ -889,7 +1071,9 @@ function makeFsClient(options: {
       await execFile("sh", ["-c", command], { maxBuffer: 32 * 1024 * 1024 });
     },
   };
-  client.syncIn = async (operations: SandboxSyncOperation[]): Promise<SandboxSyncResult> => {
+  client.syncIn = async (
+    operations: SandboxSyncOperation[],
+  ): Promise<SandboxSyncResult> => {
     const resultOperations: SandboxSyncResult["operations"] = [];
     for (const operation of operations) {
       let filesTransferred = 0;
@@ -902,16 +1086,24 @@ function makeFsClient(options: {
         bytesTransferred += bytes.byteLength;
       }
       for (const command of operation.postUploadCommands ?? []) {
-        await client.run(command.command, { timeoutMs: command.timeoutMs ?? 30_000 });
+        await client.run(command.command, {
+          timeoutMs: command.timeoutMs ?? 30_000,
+        });
       }
-      resultOperations.push({ operationId: operation.operationId, filesTransferred, bytesTransferred });
+      resultOperations.push({
+        operationId: operation.operationId,
+        filesTransferred,
+        bytesTransferred,
+      });
     }
     return { operations: resultOperations };
   };
   if (options.withNativeSyncOut) {
     // Native outbound: materialize the sandbox workspace tree directly into the
     // host destination (a directory file mapping), never through the tarball run.
-    client.syncOut = async (operations: SandboxSyncOperation[]): Promise<SandboxSyncResult> => {
+    client.syncOut = async (
+      operations: SandboxSyncOperation[],
+    ): Promise<SandboxSyncResult> => {
       if (options.syncOutCalls) options.syncOutCalls.count += 1;
       const resultOperations: SandboxSyncResult["operations"] = [];
       for (const operation of operations) {
@@ -919,7 +1111,11 @@ function makeFsClient(options: {
           await fs.mkdir(mapping.targetPath, { recursive: true });
           await mirrorDirectory(mapping.sourcePath, mapping.targetPath);
         }
-        resultOperations.push({ operationId: operation.operationId, filesTransferred: 1, bytesTransferred: 0 });
+        resultOperations.push({
+          operationId: operation.operationId,
+          filesTransferred: 1,
+          bytesTransferred: 0,
+        });
       }
       return { operations: resultOperations };
     };
@@ -928,7 +1124,9 @@ function makeFsClient(options: {
 }
 
 async function git(cwd: string, args: string[]): Promise<string> {
-  const { stdout } = await execFile("git", ["-C", cwd, ...args], { maxBuffer: 32 * 1024 * 1024 });
+  const { stdout } = await execFile("git", ["-C", cwd, ...args], {
+    maxBuffer: 32 * 1024 * 1024,
+  });
   return stdout.trim();
 }
 
@@ -941,9 +1139,19 @@ describe("ACP settlement — Layer B: restoreWorkspace order + native-sync selec
     const root = await makeTempRoot();
     const localWorkspaceDir = path.join(root, "local-workspace");
     const remoteWorkspaceDir = path.join(root, "remote-workspace");
-    await fs.mkdir(path.join(localWorkspaceDir, ".claude"), { recursive: true });
-    await fs.writeFile(path.join(localWorkspaceDir, "README.md"), "local workspace\n", "utf8");
-    await fs.writeFile(path.join(localWorkspaceDir, ".claude", "settings.json"), '{"local":true}\n', "utf8");
+    await fs.mkdir(path.join(localWorkspaceDir, ".claude"), {
+      recursive: true,
+    });
+    await fs.writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "local workspace\n",
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(localWorkspaceDir, ".claude", "settings.json"),
+      '{"local":true}\n',
+      "utf8",
+    );
 
     const runCommands: string[] = [];
     const client = makeFsClient({ runCommands });
@@ -972,26 +1180,42 @@ describe("ACP settlement — Layer B: restoreWorkspace order + native-sync selec
 
     // Staging excluded the host-managed `.claude` from the sandbox.
     await expect(
-      fs.readFile(path.join(remoteWorkspaceDir, ".claude", "settings.json"), "utf8"),
+      fs.readFile(
+        path.join(remoteWorkspaceDir, ".claude", "settings.json"),
+        "utf8",
+      ),
     ).rejects.toMatchObject({ code: "ENOENT" });
 
-    await fs.writeFile(path.join(remoteWorkspaceDir, "README.md"), "remote workspace\n", "utf8");
-    await fs.writeFile(path.join(remoteWorkspaceDir, "remote-only.txt"), "sync back\n", "utf8");
+    await fs.writeFile(
+      path.join(remoteWorkspaceDir, "README.md"),
+      "remote workspace\n",
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(remoteWorkspaceDir, "remote-only.txt"),
+      "sync back\n",
+      "utf8",
+    );
     await prepared.restoreWorkspace();
 
     // Sync-back applied the remote edits; the preserved-absent `.claude` stayed.
-    await expect(fs.readFile(path.join(localWorkspaceDir, "README.md"), "utf8")).resolves.toBe(
-      "remote workspace\n",
-    );
-    await expect(fs.readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8")).resolves.toBe(
-      "sync back\n",
-    );
     await expect(
-      fs.readFile(path.join(localWorkspaceDir, ".claude", "settings.json"), "utf8"),
+      fs.readFile(path.join(localWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("remote workspace\n");
+    await expect(
+      fs.readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8"),
+    ).resolves.toBe("sync back\n");
+    await expect(
+      fs.readFile(
+        path.join(localWorkspaceDir, ".claude", "settings.json"),
+        "utf8",
+      ),
     ).resolves.toBe('{"local":true}\n');
 
     // The fallback restore built the remote workspace-download tarball via `run`.
-    expect(runCommands.some((command) => command.includes("workspace-download.tar"))).toBe(true);
+    expect(
+      runCommands.some((command) => command.includes("workspace-download.tar")),
+    ).toBe(true);
     // Phase order: config_sync (staging) → restore → finalize (finalize last).
     expect(runtimeStatuses).toEqual(
       expect.arrayContaining([
@@ -1017,11 +1241,26 @@ describe("ACP settlement — Layer B: restoreWorkspace order + native-sync selec
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await fs.writeFile(path.join(sourceRepoDir, "tracked.txt"), "base\n", "utf8");
+    await fs.writeFile(
+      path.join(sourceRepoDir, "tracked.txt"),
+      "base\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "tracked.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
-    await fs.writeFile(path.join(localWorkspaceDir, "tracked.txt"), "dirty local\n", "utf8");
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
+    await fs.writeFile(
+      path.join(localWorkspaceDir, "tracked.txt"),
+      "dirty local\n",
+      "utf8",
+    );
 
     const client = makeFsClient({});
     const phases: string[] = [];
@@ -1043,22 +1282,40 @@ describe("ACP settlement — Layer B: restoreWorkspace order + native-sync selec
     });
 
     // The sandbox holds a real git worktree seeded from the host history.
-    expect((await git(remoteWorkspaceDir, ["rev-list", "--count", "HEAD"]))).toBe("1");
+    expect(await git(remoteWorkspaceDir, ["rev-list", "--count", "HEAD"])).toBe(
+      "1",
+    );
     await git(remoteWorkspaceDir, ["config", "user.name", "Taskcore Sandbox"]);
-    await git(remoteWorkspaceDir, ["config", "user.email", "sandbox@taskcore.dev"]);
+    await git(remoteWorkspaceDir, [
+      "config",
+      "user.email",
+      "sandbox@taskcore.dev",
+    ]);
     await git(remoteWorkspaceDir, ["add", "-A"]);
     await git(remoteWorkspaceDir, ["commit", "-m", "sandbox update"]);
-    await fs.writeFile(path.join(remoteWorkspaceDir, "remote-only.txt"), "from sandbox\n", "utf8");
+    await fs.writeFile(
+      path.join(remoteWorkspaceDir, "remote-only.txt"),
+      "from sandbox\n",
+      "utf8",
+    );
 
     await prepared.restoreWorkspace();
 
     // The sandbox commit imported back onto the host worktree.
-    expect(await git(localWorkspaceDir, ["log", "-1", "--pretty=%s"])).toBe("sandbox update");
-    await expect(fs.readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8")).resolves.toBe(
-      "from sandbox\n",
+    expect(await git(localWorkspaceDir, ["log", "-1", "--pretty=%s"])).toBe(
+      "sandbox update",
     );
+    await expect(
+      fs.readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8"),
+    ).resolves.toBe("from sandbox\n");
     expect(phases).toEqual(
-      expect.arrayContaining(["git_sync", "config_sync", "export", "restore", "finalize"]),
+      expect.arrayContaining([
+        "git_sync",
+        "config_sync",
+        "export",
+        "restore",
+        "finalize",
+      ]),
     );
     expect(phases.at(-1)).toBe("finalize");
   });
@@ -1071,11 +1328,19 @@ describe("ACP settlement — Layer B: restoreWorkspace order + native-sync selec
     const localWorkspaceDir = path.join(root, "local-workspace");
     const remoteWorkspaceDir = path.join(root, "remote-workspace");
     await fs.mkdir(localWorkspaceDir, { recursive: true });
-    await fs.writeFile(path.join(localWorkspaceDir, "README.md"), "local workspace\n", "utf8");
+    await fs.writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "local workspace\n",
+      "utf8",
+    );
 
     const runCommands: string[] = [];
     const syncOutCalls = { count: 0 };
-    const client = makeFsClient({ runCommands, syncOutCalls, withNativeSyncOut: true });
+    const client = makeFsClient({
+      runCommands,
+      syncOutCalls,
+      withNativeSyncOut: true,
+    });
     // With both directions the client advertises native outbound.
     expect(client.syncOut).toBeTypeOf("function");
 
@@ -1093,20 +1358,30 @@ describe("ACP settlement — Layer B: restoreWorkspace order + native-sync selec
       workspaceLocalDir: localWorkspaceDir,
     });
 
-    await fs.writeFile(path.join(remoteWorkspaceDir, "README.md"), "remote workspace\n", "utf8");
-    await fs.writeFile(path.join(remoteWorkspaceDir, "remote-only.txt"), "native sync\n", "utf8");
+    await fs.writeFile(
+      path.join(remoteWorkspaceDir, "README.md"),
+      "remote workspace\n",
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(remoteWorkspaceDir, "remote-only.txt"),
+      "native sync\n",
+      "utf8",
+    );
     await prepared.restoreWorkspace();
 
     // The native outbound transfer ran and applied the remote edits...
     expect(syncOutCalls.count).toBeGreaterThanOrEqual(1);
-    await expect(fs.readFile(path.join(localWorkspaceDir, "README.md"), "utf8")).resolves.toBe(
-      "remote workspace\n",
-    );
-    await expect(fs.readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8")).resolves.toBe(
-      "native sync\n",
-    );
+    await expect(
+      fs.readFile(path.join(localWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("remote workspace\n");
+    await expect(
+      fs.readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8"),
+    ).resolves.toBe("native sync\n");
     // ...and the tarball fallback was NOT used.
-    expect(runCommands.some((command) => command.includes("workspace-download.tar"))).toBe(false);
+    expect(
+      runCommands.some((command) => command.includes("workspace-download.tar")),
+    ).toBe(false);
   });
 });
 
@@ -1136,10 +1411,16 @@ describe("ACP settlement — Layer C: per-adapter sync-back teardown fires once 
 
   it("test_engine_fires_each_adapter_named_sync_back_teardown_exactly_once", async () => {
     for (const adapter of ["codex", "claude", "gemini"] as const) {
-      const { stateDir, localCwd, executionTarget } = await setupRemoteSandbox();
+      const { stateDir, localCwd, executionTarget } =
+        await setupRemoteSandbox();
       let teardownCalls = 0;
       await runExecutor(
-        { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd: localCwd },
+        {
+          agent: "custom",
+          agentCommand: "node ./fake-acp.js",
+          stateDir,
+          cwd: localCwd,
+        },
         {
           authToken: "real-run-jwt",
           executionTarget,
@@ -1158,7 +1439,10 @@ describe("ACP settlement — Layer C: per-adapter sync-back teardown fires once 
         },
       );
 
-      expect(teardownCalls, `${adapter} sync-back teardown fires exactly once`).toBe(1);
+      expect(
+        teardownCalls,
+        `${adapter} sync-back teardown fires exactly once`,
+      ).toBe(1);
     }
   });
 });

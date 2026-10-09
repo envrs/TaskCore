@@ -90,14 +90,14 @@ required test job.
 Measure the complete path from a master merge to a healthy target running that
 exact commit. Keep readiness and deployment as separate milestones:
 
-| Milestone | Evidence | Elapsed time starts at |
-| --- | --- | --- |
-| Merge | Merged PR timestamp and full merge commit SHA | Merge |
-| Image available | Successful full-SHA image publication and verification | Merge |
-| Source verified | Successful `Cloud source verified v1` job in the accepted push run and attempt | Merge |
-| Composed image ready | Downstream composition verification and publication succeed | Merge |
-| Canary healthy | Deployment consumer's canary health gate confirms the target commit | Merge |
-| Fleet complete | Campaign succeeds for all eligible targets at that commit | Merge |
+| Milestone            | Evidence                                                                       | Elapsed time starts at |
+| -------------------- | ------------------------------------------------------------------------------ | ---------------------- |
+| Merge                | Merged PR timestamp and full merge commit SHA                                  | Merge                  |
+| Image available      | Successful full-SHA image publication and verification                         | Merge                  |
+| Source verified      | Successful `Cloud source verified v1` job in the accepted push run and attempt | Merge                  |
+| Composed image ready | Downstream composition verification and publication succeed                    | Merge                  |
+| Canary healthy       | Deployment consumer's canary health gate confirms the target commit            | Merge                  |
+| Fleet complete       | Campaign succeeds for all eligible targets at that commit                      | Merge                  |
 
 Record the source SHA, workflow run ID and attempt, readiness job completion
 time, and deployment campaign identity together. Verify the run against the

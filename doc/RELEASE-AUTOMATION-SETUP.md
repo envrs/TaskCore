@@ -411,7 +411,6 @@ The file-duration manifest also records the native Codex Runner integration
 suite's measured import and execution cost, so the existing file balancer
 accounts for it in both ordinary PR and release verification.
 
-
 ## Cloud readiness runner placement
 
 When AWS routing is enabled, Cloud image builds use `taskcore-cloud-build-x64`

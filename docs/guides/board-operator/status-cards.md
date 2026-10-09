@@ -23,13 +23,13 @@ Incremental updates receive the previous summary and only the changed tasks. Tas
 
 The following planning estimates use the v1 Summarizer's haiku-class default model. Provider pricing and the selected model can change the actual cost.
 
-| Work | Estimated usage | Estimated cost |
-| --- | --- | --- |
-| Incremental update | 1–2k input, about 0.3k output tokens | $0.003–0.006 |
-| Busy 15-minute card over 9 hours | about 10–18 change-gated updates | $0.03–0.10/day |
-| Reactive worst case | 6 updates/hour for 9 hours | $0.15–0.35/day per card |
-| Full rebuild | 5–8k input, about 1k output tokens | $0.01–0.02 |
-| Change detection | SQL only | $0 |
+| Work                             | Estimated usage                      | Estimated cost          |
+| -------------------------------- | ------------------------------------ | ----------------------- |
+| Incremental update               | 1–2k input, about 0.3k output tokens | $0.003–0.006            |
+| Busy 15-minute card over 9 hours | about 10–18 change-gated updates     | $0.03–0.10/day          |
+| Reactive worst case              | 6 updates/hour for 9 hours           | $0.15–0.35/day per card |
+| Full rebuild                     | 5–8k input, about 1k output tokens   | $0.01–0.02              |
+| Change detection                 | SQL only                             | $0                      |
 
 Each completed generation is attributed through the normal cost ledger and copied into status-card update history. The board shows today's token and cost totals, per-update history, archived-card lifetime cost, and a create-flow estimate.
 

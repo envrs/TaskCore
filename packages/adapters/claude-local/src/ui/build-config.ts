@@ -1,4 +1,7 @@
-import { buildAdapterEnvConfig, type CreateConfigValues } from "@taskcore/adapter-utils";
+import {
+  buildAdapterEnvConfig,
+  type CreateConfigValues,
+} from "@taskcore/adapter-utils";
 
 function parseCommaArgs(value: string): string[] {
   return value
@@ -12,14 +15,17 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
   if (!trimmed) return null;
   try {
     const parsed = JSON.parse(trimmed);
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+      return null;
     return parsed as Record<string, unknown>;
   } catch {
     return null;
   }
 }
 
-export function buildClaudeLocalConfig(v: CreateConfigValues): Record<string, unknown> {
+export function buildClaudeLocalConfig(
+  v: CreateConfigValues,
+): Record<string, unknown> {
   const ac: Record<string, unknown> = {};
   if (v.claudeEngine === "cli") ac.engine = "cli";
   if (v.claudeEngine === "acp") {
@@ -49,8 +55,12 @@ export function buildClaudeLocalConfig(v: CreateConfigValues): Record<string, un
     ac.workspaceStrategy = {
       type: "git_worktree",
       ...(v.workspaceBaseRef ? { baseRef: v.workspaceBaseRef } : {}),
-      ...(v.workspaceBranchTemplate ? { branchTemplate: v.workspaceBranchTemplate } : {}),
-      ...(v.worktreeParentDir ? { worktreeParentDir: v.worktreeParentDir } : {}),
+      ...(v.workspaceBranchTemplate
+        ? { branchTemplate: v.workspaceBranchTemplate }
+        : {}),
+      ...(v.worktreeParentDir
+        ? { worktreeParentDir: v.worktreeParentDir }
+        : {}),
     };
   }
   const runtimeServices = parseJsonObject(v.runtimeServicesJson ?? "");

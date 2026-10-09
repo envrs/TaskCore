@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { runAttempt, type RunPlan, type SettlementReason } from "./run-coordinator.js";
+import {
+  runAttempt,
+  type RunPlan,
+  type SettlementReason,
+} from "./run-coordinator.js";
 import { createRunResourceLedger } from "./run-resource-ledger.js";
 import type {
   AcquiredRunResources,
@@ -17,11 +21,19 @@ import type {
 const readyResources = {} as ReadyRunResources;
 
 function readyStartup(): StartupReady {
-  return { kind: "ready", resources: readyResources, context: {} as StartupReady["context"] };
+  return {
+    kind: "ready",
+    resources: readyResources,
+    context: {} as StartupReady["context"],
+  };
 }
 
 function preTurnCause(): PreTurnFailedCause {
-  return { kind: "pre_turn_failed", phase: "handshake", error: new Error("handshake boom") };
+  return {
+    kind: "pre_turn_failed",
+    phase: "handshake",
+    error: new Error("handshake boom"),
+  };
 }
 
 function finalizedTurn(): TurnCompletion {
@@ -37,27 +49,41 @@ function makePlan(
   const ledger = overrides.ledger ?? createRunResourceLedger();
   return {
     ledger,
-    startup: overrides.startup ?? (async (): Promise<StartupResult> => {
-      order.push("startup");
-      return readyStartup();
-    }),
-    rollbackStartup: overrides.rollbackStartup ?? ((consumed) => {
-      order.push(`rollback:${consumed.entries().length}`);
-    }),
-    recordDisposition: overrides.recordDisposition ?? ((report) => {
-      order.push(`disposition:${report.records.map((r) => `${r.id}=${r.disposition}`).join(",")}`);
-    }),
-    runTurn: overrides.runTurn ?? (async (): Promise<TurnCompletion> => {
-      order.push("turn");
-      return finalizedTurn();
-    }),
-    settle: overrides.settle ?? (async (reason: SettlementReason) => {
-      order.push(`settle:${reason.kind}`);
-    }),
-    reproduceResult: overrides.reproduceResult ?? (async (outcome) => {
-      order.push(`reproduce:${outcome.kind}`);
-      return "result";
-    }),
+    startup:
+      overrides.startup ??
+      (async (): Promise<StartupResult> => {
+        order.push("startup");
+        return readyStartup();
+      }),
+    rollbackStartup:
+      overrides.rollbackStartup ??
+      ((consumed) => {
+        order.push(`rollback:${consumed.entries().length}`);
+      }),
+    recordDisposition:
+      overrides.recordDisposition ??
+      ((report) => {
+        order.push(
+          `disposition:${report.records.map((r) => `${r.id}=${r.disposition}`).join(",")}`,
+        );
+      }),
+    runTurn:
+      overrides.runTurn ??
+      (async (): Promise<TurnCompletion> => {
+        order.push("turn");
+        return finalizedTurn();
+      }),
+    settle:
+      overrides.settle ??
+      (async (reason: SettlementReason) => {
+        order.push(`settle:${reason.kind}`);
+      }),
+    reproduceResult:
+      overrides.reproduceResult ??
+      (async (outcome) => {
+        order.push(`reproduce:${outcome.kind}`);
+        return "result";
+      }),
   };
 }
 
@@ -80,7 +106,11 @@ describe("ACPX run coordinator", () => {
     });
     ledger.register({
       id: "control_bridge",
-      payload: { stop: async () => { released.push("control_bridge"); } } as never,
+      payload: {
+        stop: async () => {
+          released.push("control_bridge");
+        },
+      } as never,
       scope: "startup_rollback",
     });
 
@@ -95,7 +125,9 @@ describe("ACPX run coordinator", () => {
       rollbackStartup: async (consumed) => {
         for (const entry of [...consumed.entries()].reverse()) {
           if (entry.id === "staged_runtime") {
-            await (entry.payload as { disposeStaged: () => Promise<void> }).disposeStaged();
+            await (
+              entry.payload as { disposeStaged: () => Promise<void> }
+            ).disposeStaged();
           } else if (entry.id === "control_bridge") {
             await (entry.payload as { stop: () => Promise<void> }).stop();
           }
@@ -125,7 +157,11 @@ describe("ACPX run coordinator", () => {
     const plan = makePlan(order, {
       startup: async (): Promise<StartupResult> => {
         order.push("startup");
-        return { kind: "settle", cause, resources: createRunResourceLedger().takeForSettlement() };
+        return {
+          kind: "settle",
+          cause,
+          resources: createRunResourceLedger().takeForSettlement(),
+        };
       },
       settle: async (reason) => {
         expect(reason.kind).toBe("pre_turn");

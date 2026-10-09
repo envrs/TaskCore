@@ -117,10 +117,27 @@ main().catch(() => { process.stderr.write('Taskcore: GitHub launcher_setup_faile
 }
 
 /** Override inherited credentials even when adapters merge the host environment later. */
-export function githubBrokerEnvironment(input: Record<string, unknown>, broker: { url: string; token: string }): Record<string, string> {
+export function githubBrokerEnvironment(
+  input: Record<string, unknown>,
+  broker: { url: string; token: string },
+): Record<string, string> {
   const env: Record<string, string> = {};
-  for (const [key, value] of Object.entries(input)) if (typeof value === "string") env[key] = value;
-  for (const key of ["GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN", "TASKCORE_GIT_TOKEN", "GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL", "GIT_CONFIG_COUNT", "TASKCORE_GITHUB_OPERATION_ACTIVE"]) env[key] = "";
+  for (const [key, value] of Object.entries(input))
+    if (typeof value === "string") env[key] = value;
+  for (const key of [
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+    "GH_ENTERPRISE_TOKEN",
+    "GITHUB_ENTERPRISE_TOKEN",
+    "TASKCORE_GIT_TOKEN",
+    "GIT_AUTHOR_NAME",
+    "GIT_AUTHOR_EMAIL",
+    "GIT_COMMITTER_NAME",
+    "GIT_COMMITTER_EMAIL",
+    "GIT_CONFIG_COUNT",
+    "TASKCORE_GITHUB_OPERATION_ACTIVE",
+  ])
+    env[key] = "";
   for (const key of Object.keys(env)) {
     if (/^GIT_CONFIG_(KEY|VALUE)_\d+$/.test(key)) env[key] = "";
   }
@@ -130,7 +147,8 @@ export function githubBrokerEnvironment(input: Record<string, unknown>, broker: 
   env.GIT_TERMINAL_PROMPT = "0";
   env.GIT_ASKPASS = "";
   env.SSH_ASKPASS = "";
-  env.GIT_SSH_COMMAND = "ssh -F /dev/null -o IdentityAgent=none -o IdentitiesOnly=yes -o IdentityFile=none -o BatchMode=yes";
+  env.GIT_SSH_COMMAND =
+    "ssh -F /dev/null -o IdentityAgent=none -o IdentitiesOnly=yes -o IdentityFile=none -o BatchMode=yes";
   env.SSH_AUTH_SOCK = "";
   env.TASKCORE_GITHUB_BROKER_URL = broker.url;
   env.TASKCORE_GITHUB_BROKER_TOKEN = broker.token;

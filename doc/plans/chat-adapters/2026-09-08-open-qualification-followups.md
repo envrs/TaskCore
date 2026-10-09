@@ -1313,16 +1313,16 @@ updates. This proves the managed provider upgrade, not the native client Stop
 walkthrough. The final fresh combined regression passes after four test-harness
 failures were diagnosed and repaired.
 
-| Field                 | Verified value                                                          |
-| --------------------- | ----------------------------------------------------------------------- |
-| PID / tool handle     | `49120` / `63670`                                                       |
-| Listener              | `127.0.0.1:3137`                                                        |
-| Loaded server version | `2026.831.0+623.git.ea528f44c`                                          |
-| Process start / ready | `09:18:24` / `09:18:30.541 UTC`, September 9                            |
-| Native runner SHA256  | `6279d39ac731e4565a638b64c93673b8ca23e6dfbc0870e24d48422497f1826d`      |
+| Field                 | Verified value                                                         |
+| --------------------- | ---------------------------------------------------------------------- |
+| PID / tool handle     | `49120` / `63670`                                                      |
+| Listener              | `127.0.0.1:3137`                                                       |
+| Loaded server version | `2026.831.0+623.git.ea528f44c`                                         |
+| Process start / ready | `09:18:24` / `09:18:30.541 UTC`, September 9                           |
+| Native runner SHA256  | `6279d39ac731e4565a638b64c93673b8ca23e6dfbc0870e24d48422497f1826d`     |
 | Live DB               | `chat_adapters_live_3103` on local PostgreSQL `55439`, role `taskcore` |
-| Last checked runs     | 290 terminal: 262 succeeded, 26 failed, 2 cancelled; zero active        |
-| Last new run          | September 9, `02:15:47.812 UTC`                                         |
+| Last checked runs     | 290 terminal: 262 succeeded, 26 failed, 2 cancelled; zero active       |
+| Last new run          | September 9, `02:15:47.812 UTC`                                        |
 
 Both loopback and private Tailscale health returned 200/ready. Public Funnel's
 Board-health GET remains 404. Discord Gateway reconnected bot

@@ -62,18 +62,18 @@ All skills commands use the existing client command stack:
 
 These commands are Phase B and must work over existing APIs.
 
-| Command | Behavior | JSON output |
-|---|---|---|
-| `skills list` | Lists company skills from `GET /api/companies/:companyId/skills`. Human rows include `id`, `key`, `slug`, `name`, `source`, `trust`, `compatibility`, and `attachedAgents`. | `CompanySkillListItem[]` |
-| `skills show <skill-ref>` | Resolves `id`, `key`, or unique `slug`, then reads detail. Ambiguous slugs are conflicts. | `CompanySkillDetail` |
-| `skills file <skill-ref> [--path <path>]` | Resolves the skill, reads a file with default `SKILL.md`, and prints raw file content in human mode. This command must remain pipeable. | `CompanySkillFileDetail` |
-| `skills import <source>` | Calls existing import API. Source may be a local path, GitHub URL, skills.sh URL or command, `owner/repo`, `owner/repo/skill`, or URL-like source already accepted by the server. | `CompanySkillImportResult` |
-| `skills create --name <name> [--slug <slug>] [--description <text>] [--body-file <path|->]` | Creates a managed local company skill. If `--body-file` is omitted, the server default body is used. `-` reads markdown from stdin. | `CompanySkill` |
-| `skills scan-projects [--project-id <id>...] [--workspace-id <id>...]` | Calls project scan. Repeated flags become arrays. With neither flag, scan all accessible project workspaces. | `CompanySkillProjectScanResult` |
-| `skills check [skill-ref]` | Reads update status for one skill, or for every listed company skill when no ref is provided. Unsupported statuses are shown, not hidden. | `CompanySkillCheckRow[]` |
-| `skills update <skill-ref>` | Installs the update for one skill through the existing install-update API. | `CompanySkillUpdateRow` |
-| `skills update --all` | Checks all skills, installs only those with `hasUpdate=true`, and reports skipped unsupported or current skills. | `CompanySkillUpdateRow[]` |
-| `skills remove <skill-ref> [--yes]` | Deletes one company skill after confirmation. | `CompanySkill` |
+| Command                                                                                | Behavior                                                                                                                                                                          | JSON output                                                                                                                         |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `skills list`                                                                          | Lists company skills from `GET /api/companies/:companyId/skills`. Human rows include `id`, `key`, `slug`, `name`, `source`, `trust`, `compatibility`, and `attachedAgents`.       | `CompanySkillListItem[]`                                                                                                            |
+| `skills show <skill-ref>`                                                              | Resolves `id`, `key`, or unique `slug`, then reads detail. Ambiguous slugs are conflicts.                                                                                         | `CompanySkillDetail`                                                                                                                |
+| `skills file <skill-ref> [--path <path>]`                                              | Resolves the skill, reads a file with default `SKILL.md`, and prints raw file content in human mode. This command must remain pipeable.                                           | `CompanySkillFileDetail`                                                                                                            |
+| `skills import <source>`                                                               | Calls existing import API. Source may be a local path, GitHub URL, skills.sh URL or command, `owner/repo`, `owner/repo/skill`, or URL-like source already accepted by the server. | `CompanySkillImportResult`                                                                                                          |
+| `skills create --name <name> [--slug <slug>] [--description <text>] [--body-file <path | ->]`                                                                                                                                                                              | Creates a managed local company skill. If `--body-file` is omitted, the server default body is used. `-` reads markdown from stdin. | `CompanySkill` |
+| `skills scan-projects [--project-id <id>...] [--workspace-id <id>...]`                 | Calls project scan. Repeated flags become arrays. With neither flag, scan all accessible project workspaces.                                                                      | `CompanySkillProjectScanResult`                                                                                                     |
+| `skills check [skill-ref]`                                                             | Reads update status for one skill, or for every listed company skill when no ref is provided. Unsupported statuses are shown, not hidden.                                         | `CompanySkillCheckRow[]`                                                                                                            |
+| `skills update <skill-ref>`                                                            | Installs the update for one skill through the existing install-update API.                                                                                                        | `CompanySkillUpdateRow`                                                                                                             |
+| `skills update --all`                                                                  | Checks all skills, installs only those with `hasUpdate=true`, and reports skipped unsupported or current skills.                                                                  | `CompanySkillUpdateRow[]`                                                                                                           |
+| `skills remove <skill-ref> [--yes]`                                                    | Deletes one company skill after confirmation.                                                                                                                                     | `CompanySkill`                                                                                                                      |
 
 `CompanySkillCheckRow` is a CLI-side shape:
 
@@ -100,11 +100,11 @@ interface CompanySkillUpdateRow {
 
 These commands are Phase B and use existing agent skill APIs.
 
-| Command | Behavior | JSON output |
-|---|---|---|
-| `skills agent list <agent-ref>` | Resolves the agent using existing agent reference behavior, then prints the adapter `AgentSkillSnapshot`. Human rows include `key`, `runtimeName`, `desired`, `managed`, `required`, `state`, `origin`, and `detail`. | `AgentSkillSnapshot` |
-| `skills agent sync <agent-ref> --skill <skill-ref>...` | Replaces the agent's non-required desired skill set with the supplied refs and triggers adapter sync. Required Taskcore skills remain enforced by the server. | `AgentSkillSnapshot` |
-| `skills agent clear <agent-ref> [--yes]` | Clears non-required desired skills by sending an empty desired list, then returns the adapter snapshot. | `AgentSkillSnapshot` |
+| Command                                                | Behavior                                                                                                                                                                                                              | JSON output          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `skills agent list <agent-ref>`                        | Resolves the agent using existing agent reference behavior, then prints the adapter `AgentSkillSnapshot`. Human rows include `key`, `runtimeName`, `desired`, `managed`, `required`, `state`, `origin`, and `detail`. | `AgentSkillSnapshot` |
+| `skills agent sync <agent-ref> --skill <skill-ref>...` | Replaces the agent's non-required desired skill set with the supplied refs and triggers adapter sync. Required Taskcore skills remain enforced by the server.                                                         | `AgentSkillSnapshot` |
+| `skills agent clear <agent-ref> [--yes]`               | Clears non-required desired skills by sending an empty desired list, then returns the adapter snapshot.                                                                                                               | `AgentSkillSnapshot` |
 
 The word `sync` is deliberate: it is a desired-state replacement, not an append.
 An additive command can be added later if operators need it.
@@ -113,12 +113,12 @@ An additive command can be added later if operators need it.
 
 These commands are Phase E and depend on the catalog APIs from Phase D.
 
-| Command | Behavior | JSON output |
-|---|---|---|
-| `skills browse [--kind bundled|optional] [--category <slug>] [--query <text>]` | Lists app-shipped catalog skills. Human rows include `id`, `key`, `kind`, `category`, `slug`, `name`, `trust`, and `recommendedForRoles`. | `CatalogSkillListItem[]` |
-| `skills search <query> [--kind bundled|optional] [--category <slug>]` | Alias for catalog browse with `query`. | `CatalogSkillListItem[]` |
-| `skills inspect <catalog-ref>` | Shows app-shipped catalog detail and file inventory. Does not mutate company state. | `CatalogSkillDetail` |
-| `skills install <catalog-ref> [--as <slug>] [--force]` | Installs a catalog skill into a company library. `--as` overrides the company skill slug. `--force` may replace a same-key catalog skill but must not bypass hard validation or dangerous security findings. | `CompanySkillInstallCatalogResult` |
+| Command                                                | Behavior                                                                                                                                                                                                     | JSON output                                                                                                                               |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `skills browse [--kind bundled                         | optional] [--category <slug>] [--query <text>]`                                                                                                                                                              | Lists app-shipped catalog skills. Human rows include `id`, `key`, `kind`, `category`, `slug`, `name`, `trust`, and `recommendedForRoles`. | `CatalogSkillListItem[]` |
+| `skills search <query> [--kind bundled                 | optional] [--category <slug>]`                                                                                                                                                                               | Alias for catalog browse with `query`.                                                                                                    | `CatalogSkillListItem[]` |
+| `skills inspect <catalog-ref>`                         | Shows app-shipped catalog detail and file inventory. Does not mutate company state.                                                                                                                          | `CatalogSkillDetail`                                                                                                                      |
+| `skills install <catalog-ref> [--as <slug>] [--force]` | Installs a catalog skill into a company library. `--as` overrides the company skill slug. `--force` may replace a same-key catalog skill but must not bypass hard validation or dangerous security findings. | `CompanySkillInstallCatalogResult`                                                                                                        |
 
 Catalog commands are for the app-shipped Taskcore catalog only. External GitHub,
 skills.sh, local path, and URL installs remain under `skills import <source>` in

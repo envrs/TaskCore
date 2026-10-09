@@ -47,7 +47,6 @@ interface TargetDiagnostics {
   error?: string;
 }
 
-
 // ---------------------------------------------------------------------------
 // Option types
 // ---------------------------------------------------------------------------
@@ -144,7 +143,11 @@ function isExistingRelativePath(
  * Resolve a local path argument to an absolute path so the server can find the
  * plugin on disk regardless of where the user ran the CLI.
  */
-function resolvePackageArg(packageArg: string, isLocal: boolean, cwd = process.cwd()): string {
+function resolvePackageArg(
+  packageArg: string,
+  isLocal: boolean,
+  cwd = process.cwd(),
+): string {
   if (!isLocal) return packageArg;
   if (path.isAbsolute(packageArg)) return packageArg;
   if (packageArg.startsWith("~")) return expandHomePath(packageArg);
@@ -161,10 +164,14 @@ export function buildPluginInstallRequest(
   const isLocal =
     opts.local ||
     hasLocalPathSyntax(packageArg) ||
-    (opts.version ? false : isExistingRelativePath(packageArg, cwd, pathExists));
+    (opts.version
+      ? false
+      : isExistingRelativePath(packageArg, cwd, pathExists));
 
   if (isLocal && opts.version) {
-    throw new Error("--version is only supported for npm package installs, not local plugin paths.");
+    throw new Error(
+      "--version is only supported for npm package installs, not local plugin paths.",
+    );
   }
 
   return {
@@ -177,7 +184,9 @@ export function buildPluginInstallRequest(
 export function renderLocalPluginInstallHint(packagePath: string): string {
   return [
     pc.dim("Local plugin installs run trusted local code from your machine."),
-    pc.dim(`Keep ${pc.cyan("pnpm dev")} running in ${packagePath}; Taskcore watches rebuilt dist output and reloads the plugin worker.`),
+    pc.dim(
+      `Keep ${pc.cyan("pnpm dev")} running in ${packagePath}; Taskcore watches rebuilt dist output and reloads the plugin worker.`,
+    ),
   ].join("\n");
 }
 
@@ -189,9 +198,10 @@ export function renderLocalPluginInstallHint(packagePath: string): string {
  * the API URL plus the server version/status catches that mismatch before the
  * plugin is exercised against the wrong runtime.
  */
-export async function probeTargetDiagnostics(
-  api: { apiBase: string; get(path: string): Promise<TargetHealth | null> },
-): Promise<TargetDiagnostics> {
+export async function probeTargetDiagnostics(api: {
+  apiBase: string;
+  get(path: string): Promise<TargetHealth | null>;
+}): Promise<TargetDiagnostics> {
   try {
     const health = await api.get("/api/health");
     return {
@@ -216,7 +226,11 @@ export function formatTargetDiagnostics(diag: TargetDiagnostics): string {
   const lines = [pc.dim(`Target Taskcore: ${pc.cyan(diag.apiBase)}`)];
 
   if (!diag.reachable) {
-    lines.push(pc.yellow(`  health: unreachable${diag.error ? ` (${diag.error.split("\n")[0]})` : ""}`));
+    lines.push(
+      pc.yellow(
+        `  health: unreachable${diag.error ? ` (${diag.error.split("\n")[0]})` : ""}`,
+      ),
+    );
     lines.push(
       pc.dim(
         `  Verify the right instance is running, then pass ${pc.cyan("--api-base <url>")} or set ${pc.cyan("TASKCORE_API_URL")} if it lives elsewhere.`,
@@ -230,10 +244,13 @@ export function formatTargetDiagnostics(diag: TargetDiagnostics): string {
   if (health.status) detailParts.push(`status=${health.status}`);
   if (health.version) detailParts.push(`version=${health.version}`);
   if (health.deploymentMode) detailParts.push(`mode=${health.deploymentMode}`);
-  if (health.deploymentExposure) detailParts.push(`exposure=${health.deploymentExposure}`);
+  if (health.deploymentExposure)
+    detailParts.push(`exposure=${health.deploymentExposure}`);
 
   lines.push(
-    pc.dim(`  health: ${detailParts.length > 0 ? detailParts.join("  ") : "ok (no details exposed)"}`),
+    pc.dim(
+      `  health: ${detailParts.length > 0 ? detailParts.join("  ") : "ok (no details exposed)"}`,
+    ),
   );
   return lines.join("\n");
 }
@@ -305,7 +322,10 @@ export function renderPluginInitSuccess(result: PluginInitResult): string {
   ].join("\n");
 }
 
-export function runPluginInitCommand(packageName: string, opts: PluginInitOptions): PluginInitResult {
+export function runPluginInitCommand(
+  packageName: string,
+  opts: PluginInitOptions,
+): PluginInitResult {
   const scaffoldOptions = buildPluginInitScaffoldOptions(packageName, opts);
   const outputDir = scaffoldPluginProject(scaffoldOptions);
   return {
@@ -319,7 +339,9 @@ export function runPluginInitCommand(packageName: string, opts: PluginInitOption
 // ---------------------------------------------------------------------------
 
 export function registerPluginCommands(program: Command): void {
-  const plugin = program.command("plugin").description("Plugin lifecycle management");
+  const plugin = program
+    .command("plugin")
+    .description("Plugin lifecycle management");
 
   // -------------------------------------------------------------------------
   // plugin init <package-name>
@@ -335,8 +357,13 @@ export function registerPluginCommands(program: Command): void {
           .default("default"),
       )
       .addOption(
-        new Option("--category <category>", "Manifest category")
-          .choices(["connector", "workspace", "automation", "ui", "environment"]),
+        new Option("--category <category>", "Manifest category").choices([
+          "connector",
+          "workspace",
+          "automation",
+          "ui",
+          "environment",
+        ]),
       )
       .option("--display-name <name>", "Manifest display name")
       .option("--description <description>", "Manifest description")
@@ -365,12 +392,19 @@ export function registerPluginCommands(program: Command): void {
     plugin
       .command("list")
       .description("List installed plugins")
-      .option("--status <status>", "Filter by status (ready, error, disabled, installed, upgrade_pending)")
+      .option(
+        "--status <status>",
+        "Filter by status (ready, error, disabled, installed, upgrade_pending)",
+      )
       .action(async (opts: PluginListOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const qs = opts.status ? `?status=${encodeURIComponent(opts.status)}` : "";
-          const plugins = await ctx.api.get<PluginRecord[]>(`/api/plugins${qs}`);
+          const qs = opts.status
+            ? `?status=${encodeURIComponent(opts.status)}`
+            : "";
+          const plugins = await ctx.api.get<PluginRecord[]>(
+            `/api/plugins${qs}`,
+          );
 
           if (ctx.json) {
             printOutput(plugins, { json: true });
@@ -405,8 +439,15 @@ export function registerPluginCommands(program: Command): void {
           "    taskcore plugin install @acme/plugin-linear      # npm package\n" +
           "    taskcore plugin install @acme/plugin-linear@1.2  # pinned version",
       )
-      .option("-l, --local", "Treat <package> as a local filesystem path", false)
-      .option("--version <version>", "Specific npm version to install (npm packages only)")
+      .option(
+        "-l, --local",
+        "Treat <package> as a local filesystem path",
+        false,
+      )
+      .option(
+        "--version <version>",
+        "Specific npm version to install (npm packages only)",
+      )
       .option(
         "--no-verify-target",
         "Skip the pre-install probe that reports which Taskcore instance the plugin installs into",
@@ -439,13 +480,19 @@ export function registerPluginCommands(program: Command): void {
             );
           }
 
-          const installedPlugin = await ctx.api.post<PluginRecord>("/api/plugins/install", installRequest);
+          const installedPlugin = await ctx.api.post<PluginRecord>(
+            "/api/plugins/install",
+            installRequest,
+          );
 
           if (ctx.json) {
             // Preserve the original flat PluginRecord shape so existing
             // automation reading top-level fields (id/pluginKey/version/status)
             // keeps working; attach target diagnostics as an additive field.
-            printOutput({ ...installedPlugin, ...(target ? { target } : {}) }, { json: true });
+            printOutput(
+              { ...installedPlugin, ...(target ? { target } : {}) },
+              { json: true },
+            );
             return;
           }
 
@@ -465,7 +512,9 @@ export function registerPluginCommands(program: Command): void {
           }
 
           if (installRequest.isLocalPath) {
-            console.log(renderLocalPluginInstallHint(installRequest.packageName));
+            console.log(
+              renderLocalPluginInstallHint(installRequest.packageName),
+            );
           }
         } catch (err) {
           handleCommandError(err);
@@ -512,7 +561,11 @@ export function registerPluginCommands(program: Command): void {
         "Uninstall a plugin by its plugin key or database ID.\n" +
           "  Use --force to hard-purge all state and config.",
       )
-      .option("--force", "Purge all plugin state and config (hard delete)", false)
+      .option(
+        "--force",
+        "Purge all plugin state and config (hard delete)",
+        false,
+      )
       .action(async (pluginKey: string, opts: PluginUninstallOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -538,7 +591,11 @@ export function registerPluginCommands(program: Command): void {
             return;
           }
 
-          console.log(pc.green(`✓ Uninstalled ${pc.bold(pluginKey)}${purge ? " (purged)" : ""}`));
+          console.log(
+            pc.green(
+              `✓ Uninstalled ${pc.bold(pluginKey)}${purge ? " (purged)" : ""}`,
+            ),
+          );
         } catch (err) {
           handleCommandError(err);
         }
@@ -564,7 +621,11 @@ export function registerPluginCommands(program: Command): void {
             return;
           }
 
-          console.log(pc.green(`✓ Enabled ${pc.bold(pluginKey)} — status: ${result?.status ?? "unknown"}`));
+          console.log(
+            pc.green(
+              `✓ Enabled ${pc.bold(pluginKey)} — status: ${result?.status ?? "unknown"}`,
+            ),
+          );
         } catch (err) {
           handleCommandError(err);
         }
@@ -590,7 +651,11 @@ export function registerPluginCommands(program: Command): void {
             return;
           }
 
-          console.log(pc.dim(`Disabled ${pc.bold(pluginKey)} — status: ${result?.status ?? "unknown"}`));
+          console.log(
+            pc.dim(
+              `Disabled ${pc.bold(pluginKey)} — status: ${result?.status ?? "unknown"}`,
+            ),
+          );
         } catch (err) {
           handleCommandError(err);
         }
@@ -676,91 +741,226 @@ export function registerPluginCommands(program: Command): void {
       }),
   );
 
-  addPluginGet(plugin, "ui-contributions", "List plugin UI contributions", "/api/plugins/ui-contributions");
+  addPluginGet(
+    plugin,
+    "ui-contributions",
+    "List plugin UI contributions",
+    "/api/plugins/ui-contributions",
+  );
   addPluginGet(plugin, "tools", "List plugin tools", "/api/plugins/tools");
-  addPluginPost(plugin, "tool:execute", "Execute a plugin tool", "/api/plugins/tools/execute");
+  addPluginPost(
+    plugin,
+    "tool:execute",
+    "Execute a plugin tool",
+    "/api/plugins/tools/execute",
+  );
   addPluginSubGet(plugin, "health", "Get plugin health", "health");
   addPluginSubGet(plugin, "logs", "Get plugin logs", "logs");
   addPluginSubPost(plugin, "upgrade", "Upgrade a plugin", "upgrade");
   addPluginConfigGet(plugin, "config", "Get company-scoped plugin config");
-  addPluginConfigPost(plugin, "config:set", "Set company-scoped plugin config", "config");
-  addPluginConfigPost(plugin, "config:test", "Test company-scoped plugin config", "config/test");
+  addPluginConfigPost(
+    plugin,
+    "config:set",
+    "Set company-scoped plugin config",
+    "config",
+  );
+  addPluginConfigPost(
+    plugin,
+    "config:test",
+    "Test company-scoped plugin config",
+    "config/test",
+  );
   addPluginSubGet(plugin, "jobs", "List plugin jobs", "jobs");
   addPluginJobGet(plugin, "job:runs", "List plugin job runs", "runs");
   addPluginJobPost(plugin, "job:trigger", "Trigger a plugin job", "trigger");
   addPluginKeyPost(plugin, "webhook", "Deliver a plugin webhook", "webhooks");
-  addPluginSubGet(plugin, "dashboard", "Get plugin dashboard data", "dashboard");
-  addPluginSubPost(plugin, "bridge:data", "Send plugin bridge data", "bridge/data");
-  addPluginSubPost(plugin, "bridge:action", "Send plugin bridge action", "bridge/action");
+  addPluginSubGet(
+    plugin,
+    "dashboard",
+    "Get plugin dashboard data",
+    "dashboard",
+  );
+  addPluginSubPost(
+    plugin,
+    "bridge:data",
+    "Send plugin bridge data",
+    "bridge/data",
+  );
+  addPluginSubPost(
+    plugin,
+    "bridge:action",
+    "Send plugin bridge action",
+    "bridge/action",
+  );
   addCommonClientOptions(
     plugin
       .command("bridge:stream")
       .description("Stream a plugin bridge channel")
       .argument("<pluginId>", "Plugin ID or key")
       .argument("<channel>", "Stream channel")
-      .option("--duration-ms <ms>", "Stop streaming after this many milliseconds")
-      .action(async (pluginId: string, channel: string, opts: PluginStreamOptions) => {
+      .option(
+        "--duration-ms <ms>",
+        "Stop streaming after this many milliseconds",
+      )
+      .action(
+        async (
+          pluginId: string,
+          channel: string,
+          opts: PluginStreamOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            await streamPluginBridge(
+              ctx.api.apiBase,
+              ctx.api.apiKey,
+              pluginId,
+              channel,
+              parseOptionalInt(opts.durationMs),
+            );
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
+  );
+  addPluginKeyPost(plugin, "data", "Get plugin URL-keyed data", "data");
+  addPluginKeyPost(
+    plugin,
+    "action",
+    "Invoke plugin URL-keyed action",
+    "actions",
+  );
+  addPluginLocalFolderGet(
+    plugin,
+    "local-folders",
+    "List plugin local folder bindings",
+  );
+  addPluginLocalFolderKeyGet(
+    plugin,
+    "local-folder:status",
+    "Get plugin local folder status",
+    "status",
+  );
+  addPluginLocalFolderKeyPost(
+    plugin,
+    "local-folder:validate",
+    "Validate plugin local folder binding",
+    "validate",
+  );
+  addPluginLocalFolderKeyPut(
+    plugin,
+    "local-folder:set",
+    "Set plugin local folder binding",
+  );
+}
+
+function addPluginGet(
+  parent: Command,
+  name: string,
+  description: string,
+  path: string,
+): void {
+  addCommonClientOptions(
+    parent
+      .command(name)
+      .description(description)
+      .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          await streamPluginBridge(ctx.api.apiBase, ctx.api.apiKey, pluginId, channel, parseOptionalInt(opts.durationMs));
+          printOutput(await ctx.api.get(path), { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
         }
       }),
   );
-  addPluginKeyPost(plugin, "data", "Get plugin URL-keyed data", "data");
-  addPluginKeyPost(plugin, "action", "Invoke plugin URL-keyed action", "actions");
-  addPluginLocalFolderGet(plugin, "local-folders", "List plugin local folder bindings");
-  addPluginLocalFolderKeyGet(plugin, "local-folder:status", "Get plugin local folder status", "status");
-  addPluginLocalFolderKeyPost(plugin, "local-folder:validate", "Validate plugin local folder binding", "validate");
-  addPluginLocalFolderKeyPut(plugin, "local-folder:set", "Set plugin local folder binding");
 }
 
-function addPluginGet(parent: Command, name: string, description: string, path: string): void {
-  addCommonClientOptions(parent.command(name).description(description).action(async (opts: BaseClientOptions) => {
-    try {
-      const ctx = resolveCommandContext(opts);
-      printOutput(await ctx.api.get(path), { json: ctx.json });
-    } catch (err) {
-      handleCommandError(err);
-    }
-  }));
+function addPluginPost(
+  parent: Command,
+  name: string,
+  description: string,
+  path: string,
+): void {
+  addCommonClientOptions(
+    parent
+      .command(name)
+      .description(description)
+      .option("--payload-json <json>", "JSON payload", "{}")
+      .action(async (opts: PluginJsonOptions) => {
+        try {
+          const ctx = resolveCommandContext(opts);
+          printOutput(
+            await ctx.api.post(path, parseJson(opts.payloadJson ?? "{}")),
+            { json: ctx.json },
+          );
+        } catch (err) {
+          handleCommandError(err);
+        }
+      }),
+  );
 }
 
-function addPluginPost(parent: Command, name: string, description: string, path: string): void {
-  addCommonClientOptions(parent.command(name).description(description).option("--payload-json <json>", "JSON payload", "{}").action(async (opts: PluginJsonOptions) => {
-    try {
-      const ctx = resolveCommandContext(opts);
-      printOutput(await ctx.api.post(path, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
-    } catch (err) {
-      handleCommandError(err);
-    }
-  }));
+function addPluginSubGet(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+): void {
+  addCommonClientOptions(
+    parent
+      .command(name)
+      .description(description)
+      .argument("<pluginId>", "Plugin ID or key")
+      .action(async (pluginId: string, opts: BaseClientOptions) => {
+        try {
+          const ctx = resolveCommandContext(opts);
+          printOutput(
+            await ctx.api.get(
+              `/api/plugins/${encodeURIComponent(pluginId)}/${suffix}`,
+            ),
+            { json: ctx.json },
+          );
+        } catch (err) {
+          handleCommandError(err);
+        }
+      }),
+  );
 }
 
-function addPluginSubGet(parent: Command, name: string, description: string, suffix: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<pluginId>", "Plugin ID or key").action(async (pluginId: string, opts: BaseClientOptions) => {
-    try {
-      const ctx = resolveCommandContext(opts);
-      printOutput(await ctx.api.get(`/api/plugins/${encodeURIComponent(pluginId)}/${suffix}`), { json: ctx.json });
-    } catch (err) {
-      handleCommandError(err);
-    }
-  }));
+function addPluginSubPost(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+): void {
+  addCommonClientOptions(
+    parent
+      .command(name)
+      .description(description)
+      .argument("<pluginId>", "Plugin ID or key")
+      .option("--payload-json <json>", "JSON payload", "{}")
+      .action(async (pluginId: string, opts: PluginJsonOptions) => {
+        try {
+          const ctx = resolveCommandContext(opts);
+          printOutput(
+            await ctx.api.post(
+              `/api/plugins/${encodeURIComponent(pluginId)}/${suffix}`,
+              parseJson(opts.payloadJson ?? "{}"),
+            ),
+            { json: ctx.json },
+          );
+        } catch (err) {
+          handleCommandError(err);
+        }
+      }),
+  );
 }
 
-function addPluginSubPost(parent: Command, name: string, description: string, suffix: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<pluginId>", "Plugin ID or key").option("--payload-json <json>", "JSON payload", "{}").action(async (pluginId: string, opts: PluginJsonOptions) => {
-    try {
-      const ctx = resolveCommandContext(opts);
-      printOutput(await ctx.api.post(`/api/plugins/${encodeURIComponent(pluginId)}/${suffix}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
-    } catch (err) {
-      handleCommandError(err);
-    }
-  }));
-}
-
-function addPluginConfigGet(parent: Command, name: string, description: string): void {
+function addPluginConfigGet(
+  parent: Command,
+  name: string,
+  description: string,
+): void {
   addCommonClientOptions(
     parent
       .command(name)
@@ -772,7 +972,9 @@ function addPluginConfigGet(parent: Command, name: string, description: string):
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const companyId = requireCompanyId(ctx);
           printOutput(
-            await ctx.api.get(`/api/plugins/${encodeURIComponent(pluginId)}/config?companyId=${encodeURIComponent(companyId)}`),
+            await ctx.api.get(
+              `/api/plugins/${encodeURIComponent(pluginId)}/config?companyId=${encodeURIComponent(companyId)}`,
+            ),
             { json: ctx.json },
           );
         } catch (err) {
@@ -783,7 +985,12 @@ function addPluginConfigGet(parent: Command, name: string, description: string):
   );
 }
 
-function addPluginConfigPost(parent: Command, name: string, description: string, suffix: string): void {
+function addPluginConfigPost(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+): void {
   addCommonClientOptions(
     parent
       .command(name)
@@ -794,12 +1001,18 @@ function addPluginConfigPost(parent: Command, name: string, description: string,
       .action(async (pluginId: string, opts: PluginCompanyOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const payload = parseJson(opts.payloadJson ?? "{}") as Record<string, unknown>;
+          const payload = parseJson(opts.payloadJson ?? "{}") as Record<
+            string,
+            unknown
+          >;
           printOutput(
-            await ctx.api.post(`/api/plugins/${encodeURIComponent(pluginId)}/${suffix}`, {
-              ...payload,
-              companyId: ctx.companyId,
-            }),
+            await ctx.api.post(
+              `/api/plugins/${encodeURIComponent(pluginId)}/${suffix}`,
+              {
+                ...payload,
+                companyId: ctx.companyId,
+              },
+            ),
             { json: ctx.json },
           );
         } catch (err) {
@@ -810,40 +1023,105 @@ function addPluginConfigPost(parent: Command, name: string, description: string,
   );
 }
 
-function addPluginJobGet(parent: Command, name: string, description: string, suffix: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<pluginId>", "Plugin ID or key").argument("<jobId>", "Job ID").action(async (pluginId: string, jobId: string, opts: BaseClientOptions) => {
-    try {
-      const ctx = resolveCommandContext(opts);
-      printOutput(await ctx.api.get(`/api/plugins/${encodeURIComponent(pluginId)}/jobs/${encodeURIComponent(jobId)}/${suffix}`), { json: ctx.json });
-    } catch (err) {
-      handleCommandError(err);
-    }
-  }));
+function addPluginJobGet(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+): void {
+  addCommonClientOptions(
+    parent
+      .command(name)
+      .description(description)
+      .argument("<pluginId>", "Plugin ID or key")
+      .argument("<jobId>", "Job ID")
+      .action(
+        async (pluginId: string, jobId: string, opts: BaseClientOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            printOutput(
+              await ctx.api.get(
+                `/api/plugins/${encodeURIComponent(pluginId)}/jobs/${encodeURIComponent(jobId)}/${suffix}`,
+              ),
+              { json: ctx.json },
+            );
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
+  );
 }
 
-function addPluginJobPost(parent: Command, name: string, description: string, suffix: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<pluginId>", "Plugin ID or key").argument("<jobId>", "Job ID").option("--payload-json <json>", "JSON payload", "{}").action(async (pluginId: string, jobId: string, opts: PluginJsonOptions) => {
-    try {
-      const ctx = resolveCommandContext(opts);
-      printOutput(await ctx.api.post(`/api/plugins/${encodeURIComponent(pluginId)}/jobs/${encodeURIComponent(jobId)}/${suffix}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
-    } catch (err) {
-      handleCommandError(err);
-    }
-  }));
+function addPluginJobPost(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+): void {
+  addCommonClientOptions(
+    parent
+      .command(name)
+      .description(description)
+      .argument("<pluginId>", "Plugin ID or key")
+      .argument("<jobId>", "Job ID")
+      .option("--payload-json <json>", "JSON payload", "{}")
+      .action(
+        async (pluginId: string, jobId: string, opts: PluginJsonOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            printOutput(
+              await ctx.api.post(
+                `/api/plugins/${encodeURIComponent(pluginId)}/jobs/${encodeURIComponent(jobId)}/${suffix}`,
+                parseJson(opts.payloadJson ?? "{}"),
+              ),
+              { json: ctx.json },
+            );
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
+  );
 }
 
-function addPluginKeyPost(parent: Command, name: string, description: string, suffix: string): void {
-  addCommonClientOptions(parent.command(name).description(description).argument("<pluginId>", "Plugin ID or key").argument("<key>", "Endpoint or data/action key").option("--payload-json <json>", "JSON payload", "{}").action(async (pluginId: string, key: string, opts: PluginJsonOptions) => {
-    try {
-      const ctx = resolveCommandContext(opts);
-      printOutput(await ctx.api.post(`/api/plugins/${encodeURIComponent(pluginId)}/${suffix}/${encodeURIComponent(key)}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
-    } catch (err) {
-      handleCommandError(err);
-    }
-  }));
+function addPluginKeyPost(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+): void {
+  addCommonClientOptions(
+    parent
+      .command(name)
+      .description(description)
+      .argument("<pluginId>", "Plugin ID or key")
+      .argument("<key>", "Endpoint or data/action key")
+      .option("--payload-json <json>", "JSON payload", "{}")
+      .action(
+        async (pluginId: string, key: string, opts: PluginJsonOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            printOutput(
+              await ctx.api.post(
+                `/api/plugins/${encodeURIComponent(pluginId)}/${suffix}/${encodeURIComponent(key)}`,
+                parseJson(opts.payloadJson ?? "{}"),
+              ),
+              { json: ctx.json },
+            );
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
+  );
 }
 
-function addPluginLocalFolderGet(parent: Command, name: string, description: string): void {
+function addPluginLocalFolderGet(
+  parent: Command,
+  name: string,
+  description: string,
+): void {
   addCommonClientOptions(
     parent
       .command(name)
@@ -853,28 +1131,10 @@ function addPluginLocalFolderGet(parent: Command, name: string, description: str
       .action(async (pluginId: string, opts: PluginCompanyOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          printOutput(await ctx.api.get(`/api/plugins/${encodeURIComponent(pluginId)}/companies/${ctx.companyId}/local-folders`), { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
-    { includeCompany: false },
-  );
-}
-
-function addPluginLocalFolderKeyGet(parent: Command, name: string, description: string, suffix: string): void {
-  addCommonClientOptions(
-    parent
-      .command(name)
-      .description(description)
-      .argument("<pluginId>", "Plugin ID or key")
-      .argument("<folderKey>", "Local folder key")
-      .requiredOption("-C, --company-id <id>", "Company ID")
-      .action(async (pluginId: string, folderKey: string, opts: PluginCompanyOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts, { requireCompany: true });
           printOutput(
-            await ctx.api.get(`/api/plugins/${encodeURIComponent(pluginId)}/companies/${ctx.companyId}/local-folders/${encodeURIComponent(folderKey)}/${suffix}`),
+            await ctx.api.get(
+              `/api/plugins/${encodeURIComponent(pluginId)}/companies/${ctx.companyId}/local-folders`,
+            ),
             { json: ctx.json },
           );
         } catch (err) {
@@ -885,7 +1145,48 @@ function addPluginLocalFolderKeyGet(parent: Command, name: string, description: 
   );
 }
 
-function addPluginLocalFolderKeyPost(parent: Command, name: string, description: string, suffix: string): void {
+function addPluginLocalFolderKeyGet(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+): void {
+  addCommonClientOptions(
+    parent
+      .command(name)
+      .description(description)
+      .argument("<pluginId>", "Plugin ID or key")
+      .argument("<folderKey>", "Local folder key")
+      .requiredOption("-C, --company-id <id>", "Company ID")
+      .action(
+        async (
+          pluginId: string,
+          folderKey: string,
+          opts: PluginCompanyOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts, { requireCompany: true });
+            printOutput(
+              await ctx.api.get(
+                `/api/plugins/${encodeURIComponent(pluginId)}/companies/${ctx.companyId}/local-folders/${encodeURIComponent(folderKey)}/${suffix}`,
+              ),
+              { json: ctx.json },
+            );
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
+    { includeCompany: false },
+  );
+}
+
+function addPluginLocalFolderKeyPost(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+): void {
   addCommonClientOptions(
     parent
       .command(name)
@@ -894,25 +1195,35 @@ function addPluginLocalFolderKeyPost(parent: Command, name: string, description:
       .argument("<folderKey>", "Local folder key")
       .requiredOption("-C, --company-id <id>", "Company ID")
       .option("--payload-json <json>", "JSON payload", "{}")
-      .action(async (pluginId: string, folderKey: string, opts: PluginCompanyOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts, { requireCompany: true });
-          printOutput(
-            await ctx.api.post(
-              `/api/plugins/${encodeURIComponent(pluginId)}/companies/${ctx.companyId}/local-folders/${encodeURIComponent(folderKey)}/${suffix}`,
-              parseJson(opts.payloadJson ?? "{}"),
-            ),
-            { json: ctx.json },
-          );
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          pluginId: string,
+          folderKey: string,
+          opts: PluginCompanyOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts, { requireCompany: true });
+            printOutput(
+              await ctx.api.post(
+                `/api/plugins/${encodeURIComponent(pluginId)}/companies/${ctx.companyId}/local-folders/${encodeURIComponent(folderKey)}/${suffix}`,
+                parseJson(opts.payloadJson ?? "{}"),
+              ),
+              { json: ctx.json },
+            );
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
     { includeCompany: false },
   );
 }
 
-function addPluginLocalFolderKeyPut(parent: Command, name: string, description: string): void {
+function addPluginLocalFolderKeyPut(
+  parent: Command,
+  name: string,
+  description: string,
+): void {
   addCommonClientOptions(
     parent
       .command(name)
@@ -921,20 +1232,26 @@ function addPluginLocalFolderKeyPut(parent: Command, name: string, description: 
       .argument("<folderKey>", "Local folder key")
       .requiredOption("-C, --company-id <id>", "Company ID")
       .requiredOption("--payload-json <json>", "JSON payload")
-      .action(async (pluginId: string, folderKey: string, opts: PluginCompanyOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts, { requireCompany: true });
-          printOutput(
-            await ctx.api.put(
-              `/api/plugins/${encodeURIComponent(pluginId)}/companies/${ctx.companyId}/local-folders/${encodeURIComponent(folderKey)}`,
-              parseJson(opts.payloadJson ?? "{}"),
-            ),
-            { json: ctx.json },
-          );
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          pluginId: string,
+          folderKey: string,
+          opts: PluginCompanyOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts, { requireCompany: true });
+            printOutput(
+              await ctx.api.put(
+                `/api/plugins/${encodeURIComponent(pluginId)}/companies/${ctx.companyId}/local-folders/${encodeURIComponent(folderKey)}`,
+                parseJson(opts.payloadJson ?? "{}"),
+              ),
+              { json: ctx.json },
+            );
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
     { includeCompany: false },
   );
 }
@@ -960,18 +1277,26 @@ async function streamPluginBridge(
   durationMs: number | undefined,
 ): Promise<void> {
   const controller = new AbortController();
-  const timer = durationMs === undefined ? null : setTimeout(() => controller.abort(), durationMs);
+  const timer =
+    durationMs === undefined
+      ? null
+      : setTimeout(() => controller.abort(), durationMs);
   try {
-    const response = await fetch(buildApiUrl(
-      apiBase,
-      `/api/plugins/${encodeURIComponent(pluginId)}/bridge/stream/${encodeURIComponent(channel)}`,
-    ), {
-      headers: apiKey ? { authorization: `Bearer ${apiKey}` } : undefined,
-      signal: controller.signal,
-    });
+    const response = await fetch(
+      buildApiUrl(
+        apiBase,
+        `/api/plugins/${encodeURIComponent(pluginId)}/bridge/stream/${encodeURIComponent(channel)}`,
+      ),
+      {
+        headers: apiKey ? { authorization: `Bearer ${apiKey}` } : undefined,
+        signal: controller.signal,
+      },
+    );
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(text.trim() || `Request failed with status ${response.status}`);
+      throw new Error(
+        text.trim() || `Request failed with status ${response.status}`,
+      );
     }
     if (!response.body) return;
     const reader = response.body.getReader();

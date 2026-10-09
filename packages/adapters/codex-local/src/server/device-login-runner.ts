@@ -5,7 +5,10 @@ import {
   type LoginRunnerOutcome,
   type LoginRunnerResult,
 } from "@taskcore/adapter-utils";
-import { parseDeviceLoginPrompt, type DeviceLoginPrompt } from "./device-login-parse.js";
+import {
+  parseDeviceLoginPrompt,
+  type DeviceLoginPrompt,
+} from "./device-login-parse.js";
 
 // The device-login runner. It runs the Codex device-login command through an
 // injected {@link SandboxLoginDriver}, surfaces the login prompt one time in
@@ -57,7 +60,10 @@ export interface SandboxLoginDriver extends LoginRunnerDisposable {
    * the command exit code when the command ends. A driver must not persist the raw
    * output to any durable log.
    */
-  start(command: string, onData: (chunk: string) => void): Promise<{ exitCode: number | null }>;
+  start(
+    command: string,
+    onData: (chunk: string) => void,
+  ): Promise<{ exitCode: number | null }>;
   /**
    * Reads the credential bytes with one descriptor-bound read. The read is
    * separate from the pseudo-terminal session; the session has no file-read

@@ -76,7 +76,7 @@ environmentDrivers: [
       incrementalSessionOutput: false,
     },
   },
-]
+];
 ```
 
 Every key is optional. For a valid, identified provider each key has one of three
@@ -145,14 +145,14 @@ failure narrows the capability to off (see [Failure behavior](#failure-behavior)
 
 ## The capabilities and their worker-method prerequisites
 
-| Capability | Required worker methods | Meaning |
-| --- | --- | --- |
-| `reusableLeases` | `environmentResumeLease`, `environmentReleaseLease`, **and** `environmentDestroyLease` | The host retains a provider lease and resumes it across runs. |
-| `nativeSyncIn` | `environmentSyncIn` | The host transfers files into the sandbox through the native inbound hook. |
-| `nativeSyncOut` | `environmentSyncOut` | The host transfers files out of the sandbox through the native outbound hook. |
-| `persistentProcessSessions` | `environmentExecute` | The provider keeps a persistent process session open across commands. |
-| `independentControlCommands` | `environmentExecute` | The provider runs a one-shot control command beside a long-lived command. |
-| `incrementalSessionOutput` | `environmentExecute` | The provider streams incremental stdout and stderr from a live session. Opt-in: an omitted key resolves `false`. |
+| Capability                   | Required worker methods                                                                | Meaning                                                                                                          |
+| ---------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `reusableLeases`             | `environmentResumeLease`, `environmentReleaseLease`, **and** `environmentDestroyLease` | The host retains a provider lease and resumes it across runs.                                                    |
+| `nativeSyncIn`               | `environmentSyncIn`                                                                    | The host transfers files into the sandbox through the native inbound hook.                                       |
+| `nativeSyncOut`              | `environmentSyncOut`                                                                   | The host transfers files out of the sandbox through the native outbound hook.                                    |
+| `persistentProcessSessions`  | `environmentExecute`                                                                   | The provider keeps a persistent process session open across commands.                                            |
+| `independentControlCommands` | `environmentExecute`                                                                   | The provider runs a one-shot control command beside a long-lived command.                                        |
+| `incrementalSessionOutput`   | `environmentExecute`                                                                   | The provider streams incremental stdout and stderr from a live session. Opt-in: an omitted key resolves `false`. |
 
 Reusable leases need all three lifecycle methods. The host resumes a lease with
 `environmentResumeLease`, ends it with `environmentReleaseLease`, and tears down a

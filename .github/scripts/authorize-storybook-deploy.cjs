@@ -1,11 +1,18 @@
 // Run before building, and again inside the protected deployment job on reruns.
 module.exports = async function authorizeStorybookDeploy({ github, context }) {
-  const fail = (message) => { throw new Error(message); };
+  const fail = (message) => {
+    throw new Error(message);
+  };
   if (context.repo.owner !== "taskcore" || context.repo.repo !== "taskcore") {
     fail("Storybook publishing is restricted to taskcore/taskcore.");
   }
-  if (context.eventName !== "workflow_dispatch" || !context.ref.startsWith("refs/heads/")) {
-    fail("Storybook publishing requires a manual run from a repository branch.");
+  if (
+    context.eventName !== "workflow_dispatch" ||
+    !context.ref.startsWith("refs/heads/")
+  ) {
+    fail(
+      "Storybook publishing requires a manual run from a repository branch.",
+    );
   }
 
   // The selected branch must never be able to add itself to the allowlist.
@@ -19,7 +26,9 @@ module.exports = async function authorizeStorybookDeploy({ github, context }) {
     fail("Cannot read the default branch CODEOWNERS file.");
   }
   const owners = new Set();
-  for (const line of Buffer.from(file.content, "base64").toString("utf8").split(/\r?\n/)) {
+  for (const line of Buffer.from(file.content, "base64")
+    .toString("utf8")
+    .split(/\r?\n/)) {
     const fields = line.split("#", 1)[0].trim().split(/\s+/);
     for (const owner of fields.slice(1)) {
       // Individual GitHub accounts only. Teams/email entries do not grant access.
@@ -31,7 +40,9 @@ module.exports = async function authorizeStorybookDeploy({ github, context }) {
   if (owners.size === 0) fail("CODEOWNERS has no individual GitHub accounts.");
   for (const actor of [context.actor, process.env.GITHUB_TRIGGERING_ACTOR]) {
     if (!actor || !owners.has(actor.toLowerCase())) {
-      fail(`Only default-branch CODEOWNERS may publish Storybook (${actor || "missing actor"}).`);
+      fail(
+        `Only default-branch CODEOWNERS may publish Storybook (${actor || "missing actor"}).`,
+      );
     }
   }
 
@@ -41,10 +52,19 @@ module.exports = async function authorizeStorybookDeploy({ github, context }) {
     ...context.repo,
     environment_name: "storybook-deploy",
   });
-  const reviewers = environment.protection_rules
-    ?.find((rule) => rule.type === "required_reviewers")?.reviewers;
-  if (environment.can_admins_bypass !== false || !reviewers?.length ||
-      reviewers.some(({ type, reviewer }) => type !== "User" || !owners.has(reviewer.login.toLowerCase()))) {
-    fail("storybook-deploy must require CODEOWNER reviewers and disable administrator bypass.");
+  const reviewers = environment.protection_rules?.find(
+    (rule) => rule.type === "required_reviewers",
+  )?.reviewers;
+  if (
+    environment.can_admins_bypass !== false ||
+    !reviewers?.length ||
+    reviewers.some(
+      ({ type, reviewer }) =>
+        type !== "User" || !owners.has(reviewer.login.toLowerCase()),
+    )
+  ) {
+    fail(
+      "storybook-deploy must require CODEOWNER reviewers and disable administrator bypass.",
+    );
   }
 };

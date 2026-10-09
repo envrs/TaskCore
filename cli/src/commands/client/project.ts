@@ -58,7 +58,10 @@ export function registerProjectCommands(program: Command): void {
       .action(async (opts: ProjectListOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const rows = (await ctx.api.get<Project[]>(apiPath`/api/companies/${ctx.companyId}/projects`)) ?? [];
+          const rows =
+            (await ctx.api.get<Project[]>(
+              apiPath`/api/companies/${ctx.companyId}/projects`,
+            )) ?? [];
           if (ctx.json) {
             printOutput(rows, { json: true });
             return;
@@ -68,14 +71,16 @@ export function registerProjectCommands(program: Command): void {
             return;
           }
           for (const row of rows) {
-            console.log(formatInlineRecord({
-              id: row.id,
-              name: row.name,
-              status: row.status,
-              urlKey: row.urlKey,
-              goalIds: row.goalIds?.join(",") ?? "",
-              leadAgentId: row.leadAgentId,
-            }));
+            console.log(
+              formatInlineRecord({
+                id: row.id,
+                name: row.name,
+                status: row.status,
+                urlKey: row.urlKey,
+                goalIds: row.goalIds?.join(",") ?? "",
+                leadAgentId: row.leadAgentId,
+              }),
+            );
           }
         } catch (err) {
           handleCommandError(err);
@@ -93,8 +98,12 @@ export function registerProjectCommands(program: Command): void {
       .action(async (projectRef: string, opts: ProjectListOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const query = ctx.companyId ? `?${new URLSearchParams({ companyId: ctx.companyId }).toString()}` : "";
-          const row = await ctx.api.get<Project>(`${apiPath`/api/projects/${projectRef}`}${query}`);
+          const query = ctx.companyId
+            ? `?${new URLSearchParams({ companyId: ctx.companyId }).toString()}`
+            : "";
+          const row = await ctx.api.get<Project>(
+            `${apiPath`/api/projects/${projectRef}`}${query}`,
+          );
           printOutput(row, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -117,7 +126,10 @@ export function registerProjectCommands(program: Command): void {
       .option("--target-date <date>", "Target date")
       .option("--color <value>", "Project color")
       .option("--env-json <json>", "Project env binding JSON")
-      .option("--execution-workspace-policy-json <json>", "Execution workspace policy JSON")
+      .option(
+        "--execution-workspace-policy-json <json>",
+        "Execution workspace policy JSON",
+      )
       .action(async (opts: ProjectCreateOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
@@ -131,9 +143,14 @@ export function registerProjectCommands(program: Command): void {
             targetDate: parseNullableString(opts.targetDate),
             color: parseNullableString(opts.color),
             env: parseOptionalJson(opts.envJson),
-            executionWorkspacePolicy: parseOptionalJson(opts.executionWorkspacePolicyJson),
+            executionWorkspacePolicy: parseOptionalJson(
+              opts.executionWorkspacePolicyJson,
+            ),
           });
-          const created = await ctx.api.post<Project>(apiPath`/api/companies/${ctx.companyId}/projects`, payload);
+          const created = await ctx.api.post<Project>(
+            apiPath`/api/companies/${ctx.companyId}/projects`,
+            payload,
+          );
           printOutput(created, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -157,7 +174,10 @@ export function registerProjectCommands(program: Command): void {
       .option("--target-date <date|null>", "Target date")
       .option("--color <value|null>", "Project color")
       .option("--env-json <json|null>", "Project env binding JSON")
-      .option("--execution-workspace-policy-json <json|null>", "Execution workspace policy JSON")
+      .option(
+        "--execution-workspace-policy-json <json|null>",
+        "Execution workspace policy JSON",
+      )
       .option("--archived-at <iso8601|null>", "Archive timestamp or null")
       .action(async (projectRef: string, opts: ProjectUpdateOptions) => {
         try {
@@ -167,16 +187,24 @@ export function registerProjectCommands(program: Command): void {
             description: parseNullableString(opts.description),
             status: opts.status,
             goalId: parseNullableString(opts.goalId),
-            goalIds: opts.goalIds === undefined ? undefined : parseCsv(opts.goalIds),
+            goalIds:
+              opts.goalIds === undefined ? undefined : parseCsv(opts.goalIds),
             leadAgentId: parseNullableString(opts.leadAgentId),
             targetDate: parseNullableString(opts.targetDate),
             color: parseNullableString(opts.color),
             env: parseOptionalJson(opts.envJson),
-            executionWorkspacePolicy: parseOptionalJson(opts.executionWorkspacePolicyJson),
+            executionWorkspacePolicy: parseOptionalJson(
+              opts.executionWorkspacePolicyJson,
+            ),
             archivedAt: parseNullableString(opts.archivedAt),
           });
-          const query = ctx.companyId ? `?${new URLSearchParams({ companyId: ctx.companyId }).toString()}` : "";
-          const updated = await ctx.api.patch<Project>(`${apiPath`/api/projects/${projectRef}`}${query}`, payload);
+          const query = ctx.companyId
+            ? `?${new URLSearchParams({ companyId: ctx.companyId }).toString()}`
+            : "";
+          const updated = await ctx.api.patch<Project>(
+            `${apiPath`/api/projects/${projectRef}`}${query}`,
+            payload,
+          );
           printOutput(updated, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -196,8 +224,12 @@ export function registerProjectCommands(program: Command): void {
         try {
           if (!opts.yes) throw new Error("Deletion requires --yes.");
           const ctx = resolveCommandContext(opts);
-          const query = ctx.companyId ? `?${new URLSearchParams({ companyId: ctx.companyId }).toString()}` : "";
-          const deleted = await ctx.api.delete<Project>(`${apiPath`/api/projects/${projectRef}`}${query}`);
+          const query = ctx.companyId
+            ? `?${new URLSearchParams({ companyId: ctx.companyId }).toString()}`
+            : "";
+          const deleted = await ctx.api.delete<Project>(
+            `${apiPath`/api/projects/${projectRef}`}${query}`,
+          );
           printOutput(deleted, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -209,10 +241,15 @@ export function registerProjectCommands(program: Command): void {
 
 function parseCsv(value: string | undefined): string[] | undefined {
   if (value === undefined) return undefined;
-  return value.split(",").map((part) => part.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
 }
 
-function parseNullableString(value: string | undefined): string | null | undefined {
+function parseNullableString(
+  value: string | undefined,
+): string | null | undefined {
   if (value === undefined) return undefined;
   return value.trim().toLowerCase() === "null" ? null : value;
 }
@@ -223,6 +260,8 @@ function parseOptionalJson(value: string | undefined): unknown {
   try {
     return JSON.parse(value);
   } catch (err) {
-    throw new Error(`Invalid JSON: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(
+      `Invalid JSON: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }

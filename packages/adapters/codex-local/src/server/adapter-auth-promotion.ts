@@ -7,7 +7,10 @@ import {
   readSubscriptionAccountId,
 } from "./codex-auth-cache.js";
 import { writeCredentialSeedOrNewer } from "./codex-auth-seed-write.js";
-import { codexHomeHasUsableAuth, resolveManagedCodexHomeDir } from "./codex-home.js";
+import {
+  codexHomeHasUsableAuth,
+  resolveManagedCodexHomeDir,
+} from "./codex-home.js";
 import { assertUsableSubscriptionShape } from "./device-login-export.js";
 
 // The device-login credential promotion. It runs after a successful device
@@ -55,7 +58,9 @@ export interface CredentialReadinessResult {
 export class DeviceLoginReadinessError extends Error {
   readonly reason: string;
   constructor(reason: string) {
-    super(`device-login promotion: the readiness check did not pass (${reason})`);
+    super(
+      `device-login promotion: the readiness check did not pass (${reason})`,
+    );
     this.name = "DeviceLoginReadinessError";
     this.reason = reason;
   }
@@ -82,9 +87,14 @@ export async function checkStagedCredentialReadiness(
   if (authBytes.length === 0) {
     return { ready: false, reason: "empty_credential" };
   }
-  const scratchHome = await mkdtemp(path.join(os.tmpdir(), "taskcore-login-readiness-"));
+  const scratchHome = await mkdtemp(
+    path.join(os.tmpdir(), "taskcore-login-readiness-"),
+  );
   try {
-    await mkdir(scratchHome, { recursive: true, mode: READINESS_HOME_DIR_MODE });
+    await mkdir(scratchHome, {
+      recursive: true,
+      mode: READINESS_HOME_DIR_MODE,
+    });
     await writeFile(path.join(scratchHome, AUTH_FILE_NAME), authBytes, {
       mode: READINESS_AUTH_FILE_MODE,
     });
@@ -110,7 +120,8 @@ export async function checkStagedCredentialReadiness(
  * - `background_skipped`: Decision C rejected the write (an automatic background
  *   path never seeds a home). Nothing was written.
  */
-export type PromoteDeviceLoginCredentialOutcome = "promoted" | "kept" | "not_sole_owner" | "background_skipped";
+export type PromoteDeviceLoginCredentialOutcome =
+  "promoted" | "kept" | "not_sole_owner" | "background_skipped";
 
 /**
  * The promotion result. `accountId` and `accountHomeDir` are set once the
@@ -178,10 +189,18 @@ function requireSafeCompanyId(companyId: string): string {
     throw new Error("device-login promotion: companyId is empty");
   }
   if (trimmed === "." || trimmed === "..") {
-    throw new Error("device-login promotion: companyId is a relative path segment");
+    throw new Error(
+      "device-login promotion: companyId is a relative path segment",
+    );
   }
-  if (trimmed.includes("/") || trimmed.includes("\\") || trimmed.includes("\0")) {
-    throw new Error("device-login promotion: companyId contains a path separator");
+  if (
+    trimmed.includes("/") ||
+    trimmed.includes("\\") ||
+    trimmed.includes("\0")
+  ) {
+    throw new Error(
+      "device-login promotion: companyId contains a path separator",
+    );
   }
   return trimmed;
 }
@@ -196,7 +215,8 @@ function requireSafeCompanyId(companyId: string): string {
 export async function promoteDeviceLoginCredential(
   input: PromoteDeviceLoginCredentialInput,
 ): Promise<PromoteDeviceLoginCredentialResult> {
-  const { authBytes, userInitiated, checkReadiness, isSoleActiveOwner, log } = input;
+  const { authBytes, userInitiated, checkReadiness, isSoleActiveOwner, log } =
+    input;
   const env = input.env ?? process.env;
   const companyId = requireSafeCompanyId(input.companyId);
 
@@ -215,7 +235,9 @@ export async function promoteDeviceLoginCredential(
     // The shape gate above already guarantees a subscription identity; this guard
     // keeps the account_id non-null for the handle conversion without a non-null
     // cast.
-    throw new Error("device-login promotion: the credential has no subscription identity");
+    throw new Error(
+      "device-login promotion: the credential has no subscription identity",
+    );
   }
 
   // 2b. Convert the identity into a safe account handle. The handle names both
@@ -223,20 +245,36 @@ export async function promoteDeviceLoginCredential(
   //     whose identity cannot form one must fail before any write.
   const accountHandle = toAccountHandle(accountId);
   if (!accountHandle) {
-    throw new Error("device-login promotion: the account identifier cannot form a valid account handle");
+    throw new Error(
+      "device-login promotion: the account identifier cannot form a valid account handle",
+    );
   }
 
   // 3. Decision C: only a user-initiated login seeds a home.
   if (!userInitiated) {
-    await log("[taskcore] Codex device-login promotion: skipped (an automatic background login never seeds a home).");
-    return { outcome: "background_skipped", accountId, accountHomeDir: null, accountHomeCreated: false };
+    await log(
+      "[taskcore] Codex device-login promotion: skipped (an automatic background login never seeds a home).",
+    );
+    return {
+      outcome: "background_skipped",
+      accountId,
+      accountHomeDir: null,
+      accountHomeCreated: false,
+    };
   }
 
   // 4. Decision H: write only while the session still owns the active slot.
   const soleOwner = await isSoleActiveOwner();
   if (!soleOwner) {
-    await log("[taskcore] Codex device-login promotion: skipped (the session no longer holds the sole active claim on the slot).");
-    return { outcome: "not_sole_owner", accountId, accountHomeDir: null, accountHomeCreated: false };
+    await log(
+      "[taskcore] Codex device-login promotion: skipped (the session no longer holds the sole active claim on the slot).",
+    );
+    return {
+      outcome: "not_sole_owner",
+      accountId,
+      accountHomeDir: null,
+      accountHomeCreated: false,
+    };
   }
 
   // 5a. This account's own home is the durable result of a login: each account
@@ -258,8 +296,10 @@ export async function promoteDeviceLoginCredential(
     destinationPath: accountHomeAuthPath,
     seedIfDestAbsent: true,
     log,
-    writtenLine: "[taskcore] Codex device-login promotion: wrote this account's own home at mode 0600.",
-    keptLine: "[taskcore] Codex device-login promotion: kept this account's own home (the login is not a seed or a strictly-newer credential).",
+    writtenLine:
+      "[taskcore] Codex device-login promotion: wrote this account's own home at mode 0600.",
+    keptLine:
+      "[taskcore] Codex device-login promotion: kept this account's own home (the login is not a seed or a strictly-newer credential).",
     tempPrefix: "auth.json.promotion-account-home",
     errorLabel: "codex device-login promotion",
     env,
@@ -295,7 +335,8 @@ export async function promoteDeviceLoginCredential(
       log,
       writtenLine:
         "[taskcore] Codex device-login promotion: wrote the company default home (seed or strictly-newer refresh).",
-      keptLine: "[taskcore] Codex device-login promotion: kept the company default home.",
+      keptLine:
+        "[taskcore] Codex device-login promotion: kept the company default home.",
       tempPrefix: "auth.json.promotion-home",
       errorLabel: "codex device-login promotion",
       env,

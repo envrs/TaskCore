@@ -2,38 +2,53 @@ import { describe, expect, it } from "vitest";
 import { buildCodexExecArgs } from "./codex-args.js";
 
 describe("buildCodexExecArgs", () => {
-  it.each([null, "existing-session"])("defaults direct and resumed launches to full bypass (%s)", (resumeSessionId) => {
-    const { args } = buildCodexExecArgs({}, { resumeSessionId });
-    expect(args).toContain("--dangerously-bypass-approvals-and-sandbox");
-    expect(args).not.toContain('sandbox_mode="workspace-write"');
-    if (resumeSessionId) expect(args.slice(-3)).toEqual(["resume", resumeSessionId, "-"]);
-  });
+  it.each([null, "existing-session"])(
+    "defaults direct and resumed launches to full bypass (%s)",
+    (resumeSessionId) => {
+      const { args } = buildCodexExecArgs({}, { resumeSessionId });
+      expect(args).toContain("--dangerously-bypass-approvals-and-sandbox");
+      expect(args).not.toContain('sandbox_mode="workspace-write"');
+      if (resumeSessionId)
+        expect(args.slice(-3)).toEqual(["resume", resumeSessionId, "-"]);
+    },
+  );
 
-  it.each([["gpt-6-astra", "ultra"], ["gpt-6.1-sol", "ultra"], ["gpt-6-sol", "ultra"], ["gpt-6-luna", "max"], ["gpt-5.6-sol", "ultra"], ["gpt-5.6-terra", "ultra"], ["gpt-5.6-luna", "max"]])("forwards %s, its supported reasoning effort, and fast mode", (model, effort) => {
-    const result = buildCodexExecArgs({
-      model,
-      modelReasoningEffort: effort,
-      fastMode: true,
-    });
+  it.each([
+    ["gpt-6-astra", "ultra"],
+    ["gpt-6.1-sol", "ultra"],
+    ["gpt-6-sol", "ultra"],
+    ["gpt-6-luna", "max"],
+    ["gpt-5.6-sol", "ultra"],
+    ["gpt-5.6-terra", "ultra"],
+    ["gpt-5.6-luna", "max"],
+  ])(
+    "forwards %s, its supported reasoning effort, and fast mode",
+    (model, effort) => {
+      const result = buildCodexExecArgs({
+        model,
+        modelReasoningEffort: effort,
+        fastMode: true,
+      });
 
-    expect(result.model).toBe(model);
-    expect(result.fastModeApplied).toBe(true);
-    expect(result.fastModeIgnoredReason).toBeNull();
-    expect(result.args).toEqual([
-      "exec",
-      "--json",
-      "--dangerously-bypass-approvals-and-sandbox",
-      "--model",
-      model,
-      "-c",
-      `model_reasoning_effort="${effort}"`,
-      "-c",
-      'service_tier="fast"',
-      "-c",
-      "features.fast_mode=true",
-      "-",
-    ]);
-  });
+      expect(result.model).toBe(model);
+      expect(result.fastModeApplied).toBe(true);
+      expect(result.fastModeIgnoredReason).toBeNull();
+      expect(result.args).toEqual([
+        "exec",
+        "--json",
+        "--dangerously-bypass-approvals-and-sandbox",
+        "--model",
+        model,
+        "-c",
+        `model_reasoning_effort="${effort}"`,
+        "-c",
+        'service_tier="fast"',
+        "-c",
+        "features.fast_mode=true",
+        "-",
+      ]);
+    },
+  );
 
   it("rewrites the legacy bare gpt-5.6 alias to gpt-5.6-sol and applies fast mode", () => {
     const result = buildCodexExecArgs({
@@ -206,7 +221,9 @@ describe("buildCodexExecArgs", () => {
       { skipGitRepoCheck: true },
     );
 
-    expect(result.args.filter((arg) => arg === "--skip-git-repo-check")).toHaveLength(1);
+    expect(
+      result.args.filter((arg) => arg === "--skip-git-repo-check"),
+    ).toHaveLength(1);
     expect(result.args).toEqual([
       "exec",
       "--json",
@@ -227,7 +244,9 @@ describe("buildCodexExecArgs", () => {
       { skipGitRepoCheck: true },
     );
 
-    expect(result.args.filter((arg) => arg === "--skip-git-repo-check")).toHaveLength(1);
+    expect(
+      result.args.filter((arg) => arg === "--skip-git-repo-check"),
+    ).toHaveLength(1);
   });
 
   it("keeps the operator's --skip-git-repo-check when the sandbox injection is not requested", () => {
@@ -236,24 +255,40 @@ describe("buildCodexExecArgs", () => {
       extraArgs: ["--skip-git-repo-check"],
     });
 
-    expect(result.args.filter((arg) => arg === "--skip-git-repo-check")).toHaveLength(1);
+    expect(
+      result.args.filter((arg) => arg === "--skip-git-repo-check"),
+    ).toHaveLength(1);
   });
-  it.each([null, "existing-session"])("makes legacy settings operable for session %s", (resumeSessionId) => {
-    const { args } = buildCodexExecArgs({
-      dangerouslyBypassApprovalsAndSandbox: false,
-      extraArgs: ["-c", "sandbox_workspace_write.network_access=true"],
-    }, { resumeSessionId });
-    expect(args).toContain('sandbox_mode="workspace-write"');
-    expect(args).toContain("sandbox_workspace_write.network_access=true");
-    expect(args).not.toContain("--dangerously-bypass-approvals-and-sandbox");
-    if (resumeSessionId) expect(args.slice(-3)).toEqual(["resume", resumeSessionId, "-"]);
-  });
+  it.each([null, "existing-session"])(
+    "makes legacy settings operable for session %s",
+    (resumeSessionId) => {
+      const { args } = buildCodexExecArgs(
+        {
+          dangerouslyBypassApprovalsAndSandbox: false,
+          extraArgs: ["-c", "sandbox_workspace_write.network_access=true"],
+        },
+        { resumeSessionId },
+      );
+      expect(args).toContain('sandbox_mode="workspace-write"');
+      expect(args).toContain("sandbox_workspace_write.network_access=true");
+      expect(args).not.toContain("--dangerously-bypass-approvals-and-sandbox");
+      if (resumeSessionId)
+        expect(args.slice(-3)).toEqual(["resume", resumeSessionId, "-"]);
+    },
+  );
 
   it.each([
-    ["--sandbox", "read-only"], ["--sandbox=read-only"], ["-s", "read-only"],
-    ["-sread-only"], ["-prestricted"], ["-c=sandbox_mode=read-only"],
-    ["-c", 'sandbox_mode="read-only"'], ["--config=sandbox_mode=read-only"],
-    ["--profile", "restricted"], ["-p", "restricted"], ["--full-auto"],
+    ["--sandbox", "read-only"],
+    ["--sandbox=read-only"],
+    ["-s", "read-only"],
+    ["-sread-only"],
+    ["-prestricted"],
+    ["-c=sandbox_mode=read-only"],
+    ["-c", 'sandbox_mode="read-only"'],
+    ["--config=sandbox_mode=read-only"],
+    ["--profile", "restricted"],
+    ["-p", "restricted"],
+    ["--full-auto"],
     ["--dangerously-bypass-approvals-and-sandbox"],
   ])("preserves explicit sandbox/profile arguments %j", (...extraArgs) => {
     const { args } = buildCodexExecArgs({ extraArgs });
@@ -263,19 +298,37 @@ describe("buildCodexExecArgs", () => {
   });
 
   it("preserves an explicit network denial after defaults", () => {
-    const { args } = buildCodexExecArgs({ extraArgs: ["-c", "sandbox_workspace_write.network_access=false"] });
-    expect(args.lastIndexOf("sandbox_workspace_write.network_access=false"))
-      .toBeGreaterThan(args.indexOf("sandbox_workspace_write.network_access=true"));
+    const { args } = buildCodexExecArgs({
+      extraArgs: ["-c", "sandbox_workspace_write.network_access=false"],
+    });
+    expect(
+      args.lastIndexOf("sandbox_workspace_write.network_access=false"),
+    ).toBeGreaterThan(
+      args.indexOf("sandbox_workspace_write.network_access=true"),
+    );
   });
 
   it("honors a disabled execution-target network policy even with an agent override", () => {
-    const { args } = buildCodexExecArgs({ extraArgs: ["-c", "sandbox_workspace_write.network_access=true"] }, { networkAccess: false });
-    expect(args.slice(-3)).toEqual(["-c", "sandbox_workspace_write.network_access=false", "-"]);
+    const { args } = buildCodexExecArgs(
+      { extraArgs: ["-c", "sandbox_workspace_write.network_access=true"] },
+      { networkAccess: false },
+    );
+    expect(args.slice(-3)).toEqual([
+      "-c",
+      "sandbox_workspace_write.network_access=false",
+      "-",
+    ]);
   });
 
   it("preserves the existing explicit bypass configuration", () => {
-    const { args } = buildCodexExecArgs({ dangerouslyBypassApprovalsAndSandbox: true });
-    expect(args).toEqual(["exec", "--json", "--dangerously-bypass-approvals-and-sandbox", "-"]);
+    const { args } = buildCodexExecArgs({
+      dangerouslyBypassApprovalsAndSandbox: true,
+    });
+    expect(args).toEqual([
+      "exec",
+      "--json",
+      "--dangerously-bypass-approvals-and-sandbox",
+      "-",
+    ]);
   });
-
 });

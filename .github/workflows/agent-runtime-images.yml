@@ -17,7 +17,7 @@ on:
 permissions:
   contents: read
   packages: write
-  id-token: write   # cosign keyless OIDC
+  id-token: write # cosign keyless OIDC
 
 env:
   REGISTRY: ghcr.io/taskcore

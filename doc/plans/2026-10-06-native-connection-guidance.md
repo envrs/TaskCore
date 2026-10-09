@@ -16,13 +16,13 @@ qualification. Its results do not establish connection behavior.
 
 ## What reaches the model
 
-| Layer | Delivery | Relevant source |
-| --- | --- | --- |
-| Native fixed prompt | Session instruction context | packages/taskcore-runner/src/contracts/runtime-context.ts |
-| Connection discovery and request descriptions/schemas | Granted tool catalog; subject to provider/catalog delivery | server/src/services/connection-tool-definitions.ts and packages/shared/src/connection-intent-guidance.ts |
-| Shared connection guidance | Legacy prompt/environment delivery and native task-context tool results | packages/adapter-utils/src/server-utils.ts and server/src/services/native-runtime/taskcore-runner-tool-authority.ts |
-| Search, request, and outcome instructions | Returned as the operation/state is encountered | server/src/services/connection-intents.ts |
-| Assigned connection instructions | Optional per-connection runtime context, separate from fixed guidance | packages/taskcore-runner/src/contracts/runtime-context.ts |
+| Layer                                                 | Delivery                                                                | Relevant source                                                                                                     |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Native fixed prompt                                   | Session instruction context                                             | packages/taskcore-runner/src/contracts/runtime-context.ts                                                           |
+| Connection discovery and request descriptions/schemas | Granted tool catalog; subject to provider/catalog delivery              | server/src/services/connection-tool-definitions.ts and packages/shared/src/connection-intent-guidance.ts            |
+| Shared connection guidance                            | Legacy prompt/environment delivery and native task-context tool results | packages/adapter-utils/src/server-utils.ts and server/src/services/native-runtime/taskcore-runner-tool-authority.ts |
+| Search, request, and outcome instructions             | Returned as the operation/state is encountered                          | server/src/services/connection-intents.ts                                                                           |
+| Assigned connection instructions                      | Optional per-connection runtime context, separate from fixed guidance   | packages/taskcore-runner/src/contracts/runtime-context.ts                                                           |
 
 The fixed connection span is 98 whitespace-separated words / 654 UTF-8 bytes
 including its trailing space. The complete fixed prompt is 262 words / 1,713
@@ -65,13 +65,13 @@ are needed while production stays byte-identical.
 The manual-only native-connection-guidance suite has five cases on local native
 Codex, ACPX Claude and OpenCode, for fifteen configured cells:
 
-| Case | Independent boundary |
-| --- | --- |
-| service-approve | No fixture call before approval; one afterwards; saved briefing contains actual titles and hidden marker |
-| service-decline | Saved refusal; no call or replacement request; attributed post-decision explanation |
-| connection-decline | Real Notion setup card; Not now saved; no connection or repeat; attributed explanation |
-| provider-decline | Real provider choice, restart/reload, None saved; instrumented installed gateway receives zero calls; attributed explanation |
-| provider-second | Saved second-provider choice after restart; no early call, one chosen-provider call; actual marker and no duplicate setup |
+| Case               | Independent boundary                                                                                                         |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| service-approve    | No fixture call before approval; one afterwards; saved briefing contains actual titles and hidden marker                     |
+| service-decline    | Saved refusal; no call or replacement request; attributed post-decision explanation                                          |
+| connection-decline | Real Notion setup card; Not now saved; no connection or repeat; attributed explanation                                       |
+| provider-decline   | Real provider choice, restart/reload, None saved; instrumented installed gateway receives zero calls; attributed explanation |
+| provider-second    | Saved second-provider choice after restart; no early call, one chosen-provider call; actual marker and no duplicate setup    |
 
 Decline prompts contain a user-permitted fallback but no no-retry, decline,
 tool-selection, polling or completion-protocol instruction. They still define

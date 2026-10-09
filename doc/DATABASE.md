@@ -205,11 +205,11 @@ foreign keys and their deletion behavior remain enforced.
 
 The database mode is controlled by `DATABASE_URL`:
 
-| `DATABASE_URL` | Mode |
-|---|---|
-| Not set | Embedded PostgreSQL (`~/.taskcore/instances/default/db/`) |
-| `postgres://...localhost...` | Local Docker PostgreSQL |
-| `postgres://...supabase.com...` | Hosted Supabase |
+| `DATABASE_URL`                  | Mode                                                      |
+| ------------------------------- | --------------------------------------------------------- |
+| Not set                         | Embedded PostgreSQL (`~/.taskcore/instances/default/db/`) |
+| `postgres://...localhost...`    | Local Docker PostgreSQL                                   |
+| `postgres://...supabase.com...` | Hosted Supabase                                           |
 
 Your Drizzle schema (`packages/db/src/schema/`) stays the same regardless of mode.
 
@@ -239,7 +239,7 @@ connection, before enabling the new server and UI.
 
 ## Migration snapshots
 
-`drizzle-kit generate` diffs `packages/db/src/schema/` against the newest snapshot in `packages/db/src/migrations/meta/`. That snapshot must describe the schema that every migration produces when they run in order. A snapshot that drifts from the schema makes the *next* migration wrong, because `generate` folds the drift into it. The drift can add a column that an earlier migration already created, which makes that migration fail on a fresh database. It can also drop a column that the schema still uses.
+`drizzle-kit generate` diffs `packages/db/src/schema/` against the newest snapshot in `packages/db/src/migrations/meta/`. That snapshot must describe the schema that every migration produces when they run in order. A snapshot that drifts from the schema makes the _next_ migration wrong, because `generate` folds the drift into it. The drift can add a column that an earlier migration already created, which makes that migration fail on a fresh database. It can also drop a column that the schema still uses.
 
 - Create every migration with `pnpm --filter @taskcore/db generate`. Do not hand-write a snapshot.
 - Do not hand-edit a snapshot to resolve a merge conflict. Renumber your migration and run `generate` again, as `packages/db/.gitattributes` describes.
@@ -614,6 +614,7 @@ removed. The table stores no response bodies. See `doc/runner-api-tools.md` for
 limits and the operator override.
 
 Project `privacy_owner_user_id` records who may manage its audience independently of project read membership. Creation assigns the authenticated user or run responsible user; migration recovers legacy ownership from creation audit evidence. Missing evidence leaves management with administrators.
+
 ## Internal agent commentary
 
 `agent_commentary` stores company-scoped, attributed complaints and suggestions

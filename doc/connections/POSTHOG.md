@@ -17,7 +17,7 @@ method is saved on the connection and reused for reconnects.
 
 This curated connection is the polished route and is what most users should use:
 it provides branding and optional project/read-only/feature/tool controls,
-field validation, and tailored guidance. None of it is *required* to reach
+field validation, and tailored guidance. None of it is _required_ to reach
 PostHog's MCP server. Since [PAP-17087](/PAP/issues/PAP-17087), PostHog can also
 be connected generically from **Connect your own MCP server** by pasting
 `https://mcp.posthog.com/mcp` — with a personal API key, with explicit headers, or
@@ -54,16 +54,16 @@ sequenceDiagram
 
 The current hosted endpoints are:
 
-| Purpose | Endpoint |
-| --- | --- |
-| MCP resource | `https://mcp.posthog.com/mcp` |
-| Protected-resource metadata | `https://mcp.posthog.com/.well-known/oauth-protected-resource/mcp` |
+| Purpose                       | Endpoint                                                           |
+| ----------------------------- | ------------------------------------------------------------------ |
+| MCP resource                  | `https://mcp.posthog.com/mcp`                                      |
+| Protected-resource metadata   | `https://mcp.posthog.com/.well-known/oauth-protected-resource/mcp` |
 | Authorization-server metadata | `https://oauth.posthog.com/.well-known/oauth-authorization-server` |
-| Authorize | `https://oauth.posthog.com/oauth/authorize/` |
-| Token | `https://oauth.posthog.com/oauth/token/` |
-| Dynamic client registration | `https://oauth.posthog.com/oauth/register/` |
-| Revoke | `https://oauth.posthog.com/oauth/revoke/` |
-| Taskcore callback | `/api/tools/oauth/callback` |
+| Authorize                     | `https://oauth.posthog.com/oauth/authorize/`                       |
+| Token                         | `https://oauth.posthog.com/oauth/token/`                           |
+| Dynamic client registration   | `https://oauth.posthog.com/oauth/register/`                        |
+| Revoke                        | `https://oauth.posthog.com/oauth/revoke/`                          |
+| Taskcore callback             | `/api/tools/oauth/callback`                                        |
 
 Redirect-URI constraints and token lifetimes remain provider-controlled and
 must be rechecked during credentialed QA; Taskcore does not encode guessed

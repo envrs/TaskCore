@@ -1,11 +1,22 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { lstat, mkdir, open, readFile, realpath, rename, rm } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  open,
+  readFile,
+  realpath,
+  rename,
+  rm,
+} from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { resolveTaskcoreInstanceRootForAdapter } from "@taskcore/adapter-utils/server-utils";
 import { withDirectoryMergeLock } from "@taskcore/adapter-utils/workspace-restore-merge";
 import { toAccountHandle } from "@taskcore/shared";
-import { USE_SOURCE_EXIT, decideCodexAuthMerge } from "./codex-auth-merge-decision.js";
+import {
+  USE_SOURCE_EXIT,
+  decideCodexAuthMerge,
+} from "./codex-auth-merge-decision.js";
 import { writeCredentialSeedOrNewer } from "./codex-auth-seed-write.js";
 
 // The identity-keyed host credential store keeps one usable subscription
@@ -39,7 +50,9 @@ const FALSY_ENV_RE = /^(0|false|no|off)$/i;
 // mode fills an ABSENT destination slot from a usable subscription source.
 
 function nonEmpty(value: string | undefined): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 /**
@@ -47,7 +60,9 @@ function nonEmpty(value: string | undefined): string | null {
  * when {@link CODEX_AUTH_CACHE_OFF_SWITCH_ENV} is an explicit falsy value
  * (`0`, `false`, `no`, or `off`).
  */
-export function isCodexAuthCacheEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+export function isCodexAuthCacheEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
   const raw = env[CODEX_AUTH_CACHE_OFF_SWITCH_ENV];
   if (typeof raw !== "string") return true;
   return !FALSY_ENV_RE.test(raw.trim());
@@ -68,7 +83,11 @@ function toSafePathSegment(value: string, label: string): string {
   if (trimmed === "." || trimmed === "..") {
     throw new Error(`codex auth cache: ${label} is a relative path segment`);
   }
-  if (trimmed.includes("/") || trimmed.includes("\\") || trimmed.includes("\0")) {
+  if (
+    trimmed.includes("/") ||
+    trimmed.includes("\\") ||
+    trimmed.includes("\0")
+  ) {
     throw new Error(`codex auth cache: ${label} contains a path separator`);
   }
   // Defense in depth: a safe segment is exactly its own basename. Anything else
@@ -157,7 +176,9 @@ export function resolveCodexAuthCacheEntryPath(
 ): string {
   const handle = toAccountHandle(accountId);
   if (!handle) {
-    throw new Error("codex auth cache: account_id is not a valid account handle");
+    throw new Error(
+      "codex auth cache: account_id is not a valid account handle",
+    );
   }
   const resolvedRoot = resolveCodexAuthCacheDir(env, companyId);
   const safeKey = toCacheKey(handle);
@@ -169,7 +190,9 @@ export function resolveCodexAuthCacheEntryPath(
     path.dirname(entryDir) !== resolvedRoot ||
     entryPath !== expectedEntryPath
   ) {
-    throw new Error("codex auth cache: resolved entry path escapes the cache root");
+    throw new Error(
+      "codex auth cache: resolved entry path escapes the cache root",
+    );
   }
   return entryPath;
 }
@@ -186,7 +209,9 @@ async function ensurePrivateDir(dir: string): Promise<void> {
   });
   if (existing) {
     if (existing.isSymbolicLink() || !existing.isDirectory()) {
-      throw new Error("codex auth cache: cache path is a symlink or a non-directory");
+      throw new Error(
+        "codex auth cache: cache path is a symlink or a non-directory",
+      );
     }
     return;
   }
@@ -239,7 +264,11 @@ export async function ensureCodexAuthCacheEntryDirExclusive(
   return withDirectoryMergeLock(
     cacheRoot,
     async () => {
-      const entryPath = resolveCodexAuthCacheEntryPath(env, accountId, companyId);
+      const entryPath = resolveCodexAuthCacheEntryPath(
+        env,
+        accountId,
+        companyId,
+      );
       const entryDir = path.dirname(entryPath);
       const created = await lstat(entryDir)
         .then(() => false)
@@ -303,7 +332,11 @@ export async function withCodexAccountHomePromotionLock<T>(
   companyId: string,
   fn: () => Promise<T>,
 ): Promise<T> {
-  const lockDir = resolveCodexAuthCacheNamedLockDir(env, companyId, "codex-auth-cache-promotion-lock");
+  const lockDir = resolveCodexAuthCacheNamedLockDir(
+    env,
+    companyId,
+    "codex-auth-cache-promotion-lock",
+  );
   await ensurePrivateDir(lockDir);
   return withDirectoryMergeLock(lockDir, fn, env);
 }
@@ -338,25 +371,38 @@ export async function withCodexAccountHomePromotionLock<T>(
 // An outer credential transaction acquires this lock before database row locks.
 // Nested secret-service writes must share that ownership, not acquire it again.
 // Expire ownership on return so detached work cannot inherit a released lock.
-const secretMutationOwnership = new AsyncLocalStorage<Map<string, { active: boolean }>>();
+const secretMutationOwnership = new AsyncLocalStorage<
+  Map<string, { active: boolean }>
+>();
 
 export async function withAccountHomeSecretMutationLock<T>(
   env: NodeJS.ProcessEnv = process.env,
   companyId: string,
   fn: () => Promise<T>,
 ): Promise<T> {
-  const lockDir = resolveCodexAuthCacheNamedLockDir(env, companyId, "codex-account-home-secret-mutation-lock");
+  const lockDir = resolveCodexAuthCacheNamedLockDir(
+    env,
+    companyId,
+    "codex-account-home-secret-mutation-lock",
+  );
   await ensurePrivateDir(lockDir);
   const key = await realpath(lockDir);
   const inherited = secretMutationOwnership.getStore();
   if (inherited?.get(key)?.active) return fn();
-  return withDirectoryMergeLock(lockDir, async () => {
-    const ownership = { active: true };
-    const scope = new Map(inherited);
-    scope.set(key, ownership);
-    try { return await secretMutationOwnership.run(scope, fn); }
-    finally { ownership.active = false; }
-  }, env);
+  return withDirectoryMergeLock(
+    lockDir,
+    async () => {
+      const ownership = { active: true };
+      const scope = new Map(inherited);
+      scope.set(key, ownership);
+      try {
+        return await secretMutationOwnership.run(scope, fn);
+      } finally {
+        ownership.active = false;
+      }
+    },
+    env,
+  );
 }
 
 /**
@@ -433,14 +479,17 @@ export function readSubscriptionAccountId(bytes: Buffer): string | null {
     return null;
   }
   const tokenRecord = tokens as Record<string, unknown>;
-  const rawAccountId = typeof tokenRecord.account_id === "string" ? tokenRecord.account_id : "";
+  const rawAccountId =
+    typeof tokenRecord.account_id === "string" ? tokenRecord.account_id : "";
   // A blank-or-whitespace-only value is absent; a value with real content
   // keeps its exact, untrimmed form.
   const accountId = rawAccountId.trim().length > 0 ? rawAccountId : "";
-  const hasTokenMaterial = ["id_token", "access_token", "refresh_token"].some((key) => {
-    const value = tokenRecord[key];
-    return typeof value === "string" && value.trim().length > 0;
-  });
+  const hasTokenMaterial = ["id_token", "access_token", "refresh_token"].some(
+    (key) => {
+      const value = tokenRecord[key];
+      return typeof value === "string" && value.trim().length > 0;
+    },
+  );
   if (!accountId || !hasTokenMaterial) {
     return null;
   }
@@ -468,7 +517,8 @@ export async function writeCodexAuthCacheEntry(input: {
     destinationPath: input.cacheEntryPath,
     seedIfDestAbsent: true,
     log: input.log,
-    writtenLine: "[taskcore] Codex auth cache: wrote the per-identity cache slot at mode 0600.",
+    writtenLine:
+      "[taskcore] Codex auth cache: wrote the per-identity cache slot at mode 0600.",
     keptLine:
       "[taskcore] Codex auth cache: kept the cache slot (source is not a strictly-newer same-identity subscription credential).",
     tempPrefix: "auth.json.cache-source",
@@ -503,10 +553,12 @@ export async function selectVendCredential(
   log: (line: string) => void | Promise<void>,
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<VendCodexAuthOutcome> {
-  const hostBytes = await readFile(sharedHomeAuthPath).catch((error: NodeJS.ErrnoException) => {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  });
+  const hostBytes = await readFile(sharedHomeAuthPath).catch(
+    (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    },
+  );
   const hostAccountId = hostBytes ? readSubscriptionAccountId(hostBytes) : null;
   if (!hostAccountId) {
     // No host identity: the vend does nothing (identity-anchor rule).
@@ -522,51 +574,63 @@ export async function selectVendCredential(
   }
 
   const hostDir = path.dirname(sharedHomeAuthPath);
-  return withDirectoryMergeLock(hostDir, async () => {
-    // Read the cached bytes under the lock, then stage exactly those bytes into a
-    // private (0600) temp next to the host target. The predicate reads the temp,
-    // so the vend installs exactly the bytes the predicate approved. This closes
-    // the read-after-validate skew: a separate reader of `cacheEntryPath` could
-    // otherwise see different bytes than the ones installed. The rename over the
-    // host target stays device-local and atomic.
-    const cacheBytes = await readFile(cacheEntryPath).catch((error: NodeJS.ErrnoException) => {
-      if (error.code === "ENOENT") return null;
-      throw error;
-    });
-    if (!cacheBytes) {
-      await log("[taskcore] Codex auth cache: no cached credential for the host identity; host credential kept.");
-      return "kept-host";
-    }
-    const stagedTempPath = path.join(
-      hostDir,
-      `.auth.json.vend-${process.pid}-${randomUUID()}.tmp`,
-    );
-    const handle = await open(stagedTempPath, "wx", 0o600);
-    try {
-      await handle.writeFile(cacheBytes);
-      await handle.close();
-      // Default-mode predicate: install the cache copy only when it is strictly
-      // newer for the SAME identity. Same-identity + strictly-newer keeps the
-      // change additive and semantics-preserving.
-      const decision = await decideCodexAuthMerge(stagedTempPath, sharedHomeAuthPath, {
-        errorLabel: "codex auth cache",
-      });
-      if (decision === USE_SOURCE_EXIT) {
-        await rename(stagedTempPath, sharedHomeAuthPath);
-        await log(
-          "[taskcore] Codex auth cache: refreshed the host credential with a strictly-newer cached copy of the same identity at mode 0600.",
-        );
-        return "vended";
-      }
-      await log(
-        "[taskcore] Codex auth cache: host credential kept (the cached copy is not strictly newer for the same identity).",
+  return withDirectoryMergeLock(
+    hostDir,
+    async () => {
+      // Read the cached bytes under the lock, then stage exactly those bytes into a
+      // private (0600) temp next to the host target. The predicate reads the temp,
+      // so the vend installs exactly the bytes the predicate approved. This closes
+      // the read-after-validate skew: a separate reader of `cacheEntryPath` could
+      // otherwise see different bytes than the ones installed. The rename over the
+      // host target stays device-local and atomic.
+      const cacheBytes = await readFile(cacheEntryPath).catch(
+        (error: NodeJS.ErrnoException) => {
+          if (error.code === "ENOENT") return null;
+          throw error;
+        },
       );
-      return "kept-host";
-    } finally {
-      await handle.close().catch(() => undefined);
-      await rm(stagedTempPath, { force: true }).catch(() => undefined);
-    }
-  }, env);
+      if (!cacheBytes) {
+        await log(
+          "[taskcore] Codex auth cache: no cached credential for the host identity; host credential kept.",
+        );
+        return "kept-host";
+      }
+      const stagedTempPath = path.join(
+        hostDir,
+        `.auth.json.vend-${process.pid}-${randomUUID()}.tmp`,
+      );
+      const handle = await open(stagedTempPath, "wx", 0o600);
+      try {
+        await handle.writeFile(cacheBytes);
+        await handle.close();
+        // Default-mode predicate: install the cache copy only when it is strictly
+        // newer for the SAME identity. Same-identity + strictly-newer keeps the
+        // change additive and semantics-preserving.
+        const decision = await decideCodexAuthMerge(
+          stagedTempPath,
+          sharedHomeAuthPath,
+          {
+            errorLabel: "codex auth cache",
+          },
+        );
+        if (decision === USE_SOURCE_EXIT) {
+          await rename(stagedTempPath, sharedHomeAuthPath);
+          await log(
+            "[taskcore] Codex auth cache: refreshed the host credential with a strictly-newer cached copy of the same identity at mode 0600.",
+          );
+          return "vended";
+        }
+        await log(
+          "[taskcore] Codex auth cache: host credential kept (the cached copy is not strictly newer for the same identity).",
+        );
+        return "kept-host";
+      } finally {
+        await handle.close().catch(() => undefined);
+        await rm(stagedTempPath, { force: true }).catch(() => undefined);
+      }
+    },
+    env,
+  );
 }
 
 /**
@@ -584,10 +648,12 @@ export async function clearCodexAuthCacheEntry(
   // A missing slot is a benign no-op. Pre-check before the lock: the merge lock
   // sits next to the slot under the cache root, so locking a slot whose cache
   // root does not exist would fail on the lock directory itself.
-  const existing = await lstat(entryDir).catch((error: NodeJS.ErrnoException) => {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  });
+  const existing = await lstat(entryDir).catch(
+    (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    },
+  );
   if (!existing) return;
   await withDirectoryMergeLock(
     entryDir,

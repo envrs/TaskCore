@@ -52,7 +52,10 @@ describe("acpx identity split and launch environment", () => {
     function _assertOnlyIdentity(): void {
       // An outer-key field is not a fingerprint field, so the builder rejects it.
       // @ts-expect-error companyId is not a SessionFingerprintIdentity field.
-      buildSessionFingerprint({ ...SAMPLE_FINGERPRINT_IDENTITY, companyId: "c" });
+      buildSessionFingerprint({
+        ...SAMPLE_FINGERPRINT_IDENTITY,
+        companyId: "c",
+      });
       // @ts-expect-error taskKey is not a SessionFingerprintIdentity field.
       buildSessionFingerprint({ ...SAMPLE_FINGERPRINT_IDENTITY, taskKey: "t" });
     }
@@ -132,13 +135,17 @@ describe("acpx identity split and launch environment", () => {
       NODE_OPTIONS: "--require /tmp/host-hook.cjs",
     };
 
-    expect(projectAcpxInheritedHostEnvironment(inherited, "codex", true)).toEqual({
+    expect(
+      projectAcpxInheritedHostEnvironment(inherited, "codex", true),
+    ).toEqual({
       PATH: "/usr/bin",
       LC_ALL: "C.UTF-8",
       HTTPS_PROXY: "https://proxy.example",
       OPENAI_API_KEY: "openai-host-secret",
     });
-    expect(projectAcpxInheritedHostEnvironment(inherited, "claude", true)).toEqual({
+    expect(
+      projectAcpxInheritedHostEnvironment(inherited, "claude", true),
+    ).toEqual({
       PATH: "/usr/bin",
       LC_ALL: "C.UTF-8",
       HTTPS_PROXY: "https://proxy.example",
@@ -159,13 +166,17 @@ describe("acpx identity split and launch environment", () => {
       HTTPS_PROXY: "https://proxy.example",
       OPENROUTER_API_KEY: "openrouter-host-secret",
     });
-    expect(projectAcpxInheritedHostEnvironment(inherited, "gemini", true)).toEqual({
+    expect(
+      projectAcpxInheritedHostEnvironment(inherited, "gemini", true),
+    ).toEqual({
       PATH: "/usr/bin",
       LC_ALL: "C.UTF-8",
       HTTPS_PROXY: "https://proxy.example",
       GOOGLE_GENAI_USE_GCA: "true",
     });
-    expect(projectAcpxInheritedHostEnvironment(inherited, "kimi", true)).toEqual({
+    expect(
+      projectAcpxInheritedHostEnvironment(inherited, "kimi", true),
+    ).toEqual({
       PATH: "/usr/bin",
       LC_ALL: "C.UTF-8",
       HTTPS_PROXY: "https://proxy.example",
@@ -185,7 +196,9 @@ describe("acpx identity split and launch environment", () => {
       TASKCORE_RUNNER_BOOTSTRAP_TICKET: "ambient-bootstrap-secret",
     };
 
-    expect(projectAcpxInheritedHostEnvironment(inherited, "codex", false)).toEqual({});
+    expect(
+      projectAcpxInheritedHostEnvironment(inherited, "codex", false),
+    ).toEqual({});
   });
 
   it("keeps explicit remote adapter and run contributions while rejecting ambient authority", () => {
@@ -220,7 +233,9 @@ describe("acpx identity split and launch environment", () => {
       TASKCORE_NATIVE_MCP_TOKEN: "explicit-run-contribution",
     });
     expect(launchEnvironment.env).not.toHaveProperty("PATH");
-    expect(launchEnvironment.env).not.toHaveProperty("TASKCORE_RUNNER_BOOTSTRAP_TICKET");
+    expect(launchEnvironment.env).not.toHaveProperty(
+      "TASKCORE_RUNNER_BOOTSTRAP_TICKET",
+    );
   });
 
   it("preserves an explicit remote PATH instead of synthesizing a host fallback", () => {

@@ -15,7 +15,7 @@ const ENSURE_NPM_PREAMBLE =
   "TASKCORE_NPM_BOOTSTRAPPED=; " +
   "if ! command -v npm >/dev/null 2>&1 || " +
   "! command -v node >/dev/null 2>&1 || " +
-  "! node -e 'const v=process.versions.node.split(\".\").map(Number);" +
+  '! node -e \'const v=process.versions.node.split(".").map(Number);' +
   "process.exit(v[0]>24||(v[0]===24&&v[1]>=11)?0:1)' >/dev/null 2>&1; then " +
   'NODE_ARCH="$(uname -m)"; ' +
   'case "$NODE_ARCH" in ' +
@@ -40,7 +40,7 @@ export function buildSandboxNpmInstallCommand(packageName: string): string {
     `npm install -g ${quotedPackageName};`,
     'elif [ "$(id -u)" -eq 0 ]; then',
     `npm install -g ${quotedPackageName};`,
-    'elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then',
+    "elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then",
     `sudo -E npm install -g ${quotedPackageName};`,
     "else",
     `mkdir -p "$HOME/.local" && npm install -g --prefix "$HOME/.local" ${quotedPackageName};`,

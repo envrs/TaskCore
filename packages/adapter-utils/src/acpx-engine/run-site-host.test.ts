@@ -88,8 +88,13 @@ describe("host run site", () => {
 
     // The host runs in place, so it places nothing, starts no transport, and
     // syncs nothing back.
-    expect(await site.placeWorkspace(context)).toEqual({ referencedProjectStagingFailures: [] });
-    expect(await site.startTransport(context)).toEqual({ controlBridge: null, agentBridge: null });
+    expect(await site.placeWorkspace(context)).toEqual({
+      referencedProjectStagingFailures: [],
+    });
+    expect(await site.startTransport(context)).toEqual({
+      controlBridge: null,
+      agentBridge: null,
+    });
     await expect(site.syncBack(context)).resolves.toBeUndefined();
   });
 
@@ -105,7 +110,9 @@ describe("host run site", () => {
     const sessionHandle = { id: "handle" };
     const resources = {
       get: (id: string) =>
-        id === "acp_runtime" ? { runtime, sessionHandle, childProcessPid: 42 } : undefined,
+        id === "acp_runtime"
+          ? { runtime, sessionHandle, childProcessPid: 42 }
+          : undefined,
     } as unknown as ReadyRunResources;
 
     expect(site.reuseCandidate(resources)).toEqual({ runtime, sessionHandle });

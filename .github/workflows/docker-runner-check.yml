@@ -64,7 +64,6 @@ jobs:
       - name: Verify native build and dependency cache reuse
         run: bash scripts/check-docker-runner-cache.sh
 
-
   authorize_manual:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest

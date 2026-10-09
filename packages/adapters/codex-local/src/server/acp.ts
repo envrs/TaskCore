@@ -13,7 +13,10 @@ import {
   parseLocalProcessFilesystemScope,
   parseLocalProcessNetworkScope,
 } from "@taskcore/adapter-utils/local-process-sandbox";
-import { inferOpenAiCompatibleBiller, resolveManagedOpenAiBilling } from "@taskcore/adapter-utils";
+import {
+  inferOpenAiCompatibleBiller,
+  resolveManagedOpenAiBilling,
+} from "@taskcore/adapter-utils";
 import {
   ensureAdapterExecutionTargetCommandResolvable,
   readAdapterExecutionTarget,
@@ -40,7 +43,10 @@ import {
 } from "@taskcore/adapter-utils/server-utils";
 import { createWorkspaceRestoreTeardown } from "@taskcore/adapter-utils/workspace-restore-teardown";
 import { normalizeCodexModel } from "../index.js";
-import { classifyCodexAuthRefreshFailure, extractCodexRetryNotBefore } from "./parse.js";
+import {
+  classifyCodexAuthRefreshFailure,
+  extractCodexRetryNotBefore,
+} from "./parse.js";
 import { copyBackCodexAuth } from "./codex-auth-copyback.js";
 import { buildCodexAuthInboundProvision } from "./codex-auth-merge-scripts.js";
 import {
@@ -63,16 +69,19 @@ export interface CodexEngineSelection {
   unavailableReason?: string;
 }
 
-type CodexEngineResolutionInput =
-  Pick<AdapterExecutionContext, "config"> &
-  Partial<Pick<AdapterExecutionContext, "executionTarget" | "executionTransport">>;
+type CodexEngineResolutionInput = Pick<AdapterExecutionContext, "config"> &
+  Partial<
+    Pick<AdapterExecutionContext, "executionTarget" | "executionTransport">
+  >;
 
 type CodexAcpExecutorOptions = Omit<
   AcpxEngineExecutorOptions,
   "adapterType" | "moduleDir" | "packageRootDir"
 >;
 
-type CodexAcpExecutor = (ctx: AdapterExecutionContext) => Promise<AdapterExecutionResult>;
+type CodexAcpExecutor = (
+  ctx: AdapterExecutionContext,
+) => Promise<AdapterExecutionResult>;
 
 function normalizeEngine(value: unknown): CodexEngineSelection {
   const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -81,7 +90,9 @@ function normalizeEngine(value: unknown): CodexEngineSelection {
   return { engine: "acp", explicit: false };
 }
 
-export function resolveCodexExecutionEngine(config: Record<string, unknown>): CodexEngineSelection {
+export function resolveCodexExecutionEngine(
+  config: Record<string, unknown>,
+): CodexEngineSelection {
   return normalizeEngine(config.engine);
 }
 
@@ -100,12 +111,18 @@ export async function resolveCodexExecutionEngineForRun(
     legacyRemoteExecution: input.executionTransport?.remoteExecution,
   });
   if (target?.workspaceRealization?.mode === "in_place") {
-    return unavailable("In-place workspace realization requires the Codex CLI engine; ACP archive staging is not supported.");
+    return unavailable(
+      "In-place workspace realization requires the Codex CLI engine; ACP archive staging is not supported.",
+    );
   }
-  const filesystemScope = parseLocalProcessFilesystemScope(input.config.filesystemScope);
+  const filesystemScope = parseLocalProcessFilesystemScope(
+    input.config.filesystemScope,
+  );
   const networkScope = parseLocalProcessNetworkScope(input.config.networkScope);
   if (filesystemScope || networkScope) {
-    return unavailable("Local filesystem/network confinement requires the Codex CLI engine; ACP confinement is not supported.");
+    return unavailable(
+      "Local filesystem/network confinement requires the Codex CLI engine; ACP confinement is not supported.",
+    );
   }
 
   const reason = await codexAcpUnavailableReason(input);
@@ -121,16 +138,24 @@ function firstNonEmptyString(...values: unknown[]): string | undefined {
   return undefined;
 }
 
-export function buildCodexAcpConfig(config: Record<string, unknown>): Record<string, unknown> {
-  const agentCommand = firstNonEmptyString(config.agentCommand, config.acpAgentCommand);
+export function buildCodexAcpConfig(
+  config: Record<string, unknown>,
+): Record<string, unknown> {
+  const agentCommand = firstNonEmptyString(
+    config.agentCommand,
+    config.acpAgentCommand,
+  );
   const stateDir = firstNonEmptyString(config.stateDir, config.acpStateDir);
-  const mode = firstNonEmptyString(config.mode, config.acpMode) ?? DEFAULT_ACP_ENGINE_MODE;
+  const mode =
+    firstNonEmptyString(config.mode, config.acpMode) ?? DEFAULT_ACP_ENGINE_MODE;
   const permissionMode =
     firstNonEmptyString(config.permissionMode, config.acpPermissionMode) ??
     DEFAULT_ACP_ENGINE_PERMISSION_MODE;
   const nonInteractivePermissions =
-    firstNonEmptyString(config.nonInteractivePermissions, config.acpNonInteractivePermissions) ??
-    DEFAULT_ACP_ENGINE_NON_INTERACTIVE_PERMISSIONS;
+    firstNonEmptyString(
+      config.nonInteractivePermissions,
+      config.acpNonInteractivePermissions,
+    ) ?? DEFAULT_ACP_ENGINE_NON_INTERACTIVE_PERMISSIONS;
   const warmHandleIdleMs =
     config.warmHandleIdleMs ??
     config.acpWarmHandleIdleMs ??
@@ -144,8 +169,13 @@ export function buildCodexAcpConfig(config: Record<string, unknown>): Record<str
   const env = parseObject(config.env);
   let networkAccess = env.TASKCORE_CODEX_ACP_NETWORK_ACCESS !== "false";
   const extraArgs = asStringArray(config.extraArgs);
-  for (const arg of extraArgs.length > 0 ? extraArgs : asStringArray(config.args)) {
-    const match = /^(?:(?:--config=|-c=?)\s*)?sandbox_workspace_write\.network_access\s*=\s*(true|false)\s*$/.exec(arg);
+  for (const arg of extraArgs.length > 0
+    ? extraArgs
+    : asStringArray(config.args)) {
+    const match =
+      /^(?:(?:--config=|-c=?)\s*)?sandbox_workspace_write\.network_access\s*=\s*(true|false)\s*$/.exec(
+        arg,
+      );
     if (match) networkAccess = match[1] === "true";
   }
 
@@ -192,11 +222,15 @@ async function prepareCodexRemoteManagedHome(
   // API-key runs do not rotate a subscription refresh token. Keep their
   // sandbox auth out of the shared subscription copy-back path altogether.
   const apiKeyAuth = Boolean(
-    env.OPENAI_API_KEY?.trim() || env.CODEX_API_KEY?.trim()
-    || process.env.OPENAI_API_KEY?.trim() || process.env.CODEX_API_KEY?.trim(),
+    env.OPENAI_API_KEY?.trim() ||
+    env.CODEX_API_KEY?.trim() ||
+    process.env.OPENAI_API_KEY?.trim() ||
+    process.env.CODEX_API_KEY?.trim(),
   );
   // Curated allowlist temp dir (auth/config/skills only); caller owns cleanup.
-  const stagedCodexHomeDir = await stageCodexHomeForSync(effectiveCodexHome, { runId });
+  const stagedCodexHomeDir = await stageCodexHomeForSync(effectiveCodexHome, {
+    runId,
+  });
   let stagedRuntime;
   try {
     stagedRuntime = await input.stage([
@@ -210,16 +244,26 @@ async function prepareCodexRemoteManagedHome(
         // direction-agnostic decision predicate + directory merge-lock +
         // atomic-rename + 0600 guard. Target is the SHARED host auth.json
         // (the symlink source managed homes point at), never an in-sandbox copy.
-        restore: apiKeyAuth ? undefined : async ({ assetDir, readFile }) =>
-          void (await copyBackCodexAuth({
-            readSandboxAuth: () => readFile(path.posix.join(assetDir, "auth.json")),
-            hostAuthPath: path.join(input.config.managedAiConnection ? effectiveCodexHome : resolveSharedCodexHomeDir(process.env), "auth.json"),
-            log: (line) => onLog("stdout", `${line}\n`),
-          })),
+        restore: apiKeyAuth
+          ? undefined
+          : async ({ assetDir, readFile }) =>
+              void (await copyBackCodexAuth({
+                readSandboxAuth: () =>
+                  readFile(path.posix.join(assetDir, "auth.json")),
+                hostAuthPath: path.join(
+                  input.config.managedAiConnection
+                    ? effectiveCodexHome
+                    : resolveSharedCodexHomeDir(process.env),
+                  "auth.json",
+                ),
+                log: (line) => onLog("stdout", `${line}\n`),
+              })),
       },
     ]);
   } catch (err) {
-    await fs.rm(stagedCodexHomeDir, { recursive: true, force: true }).catch(() => {});
+    await fs
+      .rm(stagedCodexHomeDir, { recursive: true, force: true })
+      .catch(() => {});
     throw err;
   }
   // Repoint CODEX_HOME from the HOST path onto the seeded in-sandbox home.
@@ -254,14 +298,16 @@ async function prepareCodexRemoteManagedHome(
     // warm — so it can't remove the staged home while a reuse still depends on
     // it. Idempotent: `force: true` no-ops if it was already removed.
     disposeStaged: async () => {
-      await fs.rm(stagedCodexHomeDir, { recursive: true, force: true }).catch(async (error) => {
-        await onLog(
-          "stderr",
-          `[taskcore] Failed to remove staged Codex home "${stagedCodexHomeDir}": ${
-            error instanceof Error ? error.message : String(error)
-          }\n`,
-        );
-      });
+      await fs
+        .rm(stagedCodexHomeDir, { recursive: true, force: true })
+        .catch(async (error) => {
+          await onLog(
+            "stderr",
+            `[taskcore] Failed to remove staged Codex home "${stagedCodexHomeDir}": ${
+              error instanceof Error ? error.message : String(error)
+            }\n`,
+          );
+        });
     },
   };
 }
@@ -274,11 +320,20 @@ export function classifyCodexTerminalSessionFailure(
   // Require explicit usage exhaustion; the CLI's broader capacity matcher would
   // also match a context/storage capacity limit and defer the wrong failure.
   if (failure.category !== "limit") return null;
-  const surface = { errorMessage: [failure.title, failure.details].filter(Boolean).join("\n") };
-  if (!/\b(?:you(?:'|’)ve hit your usage limit|usage limit (?:reached|exceeded))\b/i.test(surface.errorMessage)) {
+  const surface = {
+    errorMessage: [failure.title, failure.details].filter(Boolean).join("\n"),
+  };
+  if (
+    !/\b(?:you(?:'|’)ve hit your usage limit|usage limit (?:reached|exceeded))\b/i.test(
+      surface.errorMessage,
+    )
+  ) {
     return null;
   }
-  const retryNotBefore = extractCodexRetryNotBefore(surface, now)?.toISOString();
+  const retryNotBefore = extractCodexRetryNotBefore(
+    surface,
+    now,
+  )?.toISOString();
   return {
     errorCode: "provider_quota",
     errorFamily: "provider_quota",
@@ -286,7 +341,9 @@ export function classifyCodexTerminalSessionFailure(
   };
 }
 
-function withCodexAcpDefaults(options: CodexAcpExecutorOptions): AcpxEngineExecutorOptions {
+function withCodexAcpDefaults(
+  options: CodexAcpExecutorOptions,
+): AcpxEngineExecutorOptions {
   return {
     resolveBillingIdentity: resolveCodexAcpBillingIdentity,
     prepareRemoteManagedHome: prepareCodexRemoteManagedHome,
@@ -298,7 +355,9 @@ function withCodexAcpDefaults(options: CodexAcpExecutorOptions): AcpxEngineExecu
   };
 }
 
-function withCodexAuthRefreshFailureClassification(result: AdapterExecutionResult): AdapterExecutionResult {
+function withCodexAuthRefreshFailureClassification(
+  result: AdapterExecutionResult,
+): AdapterExecutionResult {
   if ((result.exitCode ?? 0) === 0) return result;
   const resultJson = parseObject(result.resultJson);
   const stopReason = asString(resultJson.stopReason, "");
@@ -329,9 +388,13 @@ function withCodexAuthRefreshFailureClassification(result: AdapterExecutionResul
  */
 export function resolveCodexAcpBillingIdentity(
   ctx: Pick<AdapterExecutionContext, "config"> &
-    Partial<Pick<AdapterExecutionContext, "executionTarget" | "executionTransport">>,
+    Partial<
+      Pick<AdapterExecutionContext, "executionTarget" | "executionTransport">
+    >,
 ): { provider: string; biller: string; billingType: AdapterBillingType } {
-  const managedBilling = resolveManagedOpenAiBilling(ctx.config.managedAiRouting);
+  const managedBilling = resolveManagedOpenAiBilling(
+    ctx.config.managedAiRouting,
+  );
   if (managedBilling) return managedBilling;
   const envConfig = parseObject(parseObject(ctx.config).env);
   const target = readAdapterExecutionTarget({
@@ -342,27 +405,37 @@ export function resolveCodexAcpBillingIdentity(
   const mergedEnv: NodeJS.ProcessEnv = {
     ...(considerHostEnv ? process.env : {}),
     ...Object.fromEntries(
-      Object.entries(envConfig).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+      Object.entries(envConfig).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string",
+      ),
     ),
   };
-  const apiKey = typeof mergedEnv.OPENAI_API_KEY === "string" && mergedEnv.OPENAI_API_KEY.trim().length > 0;
+  const apiKey =
+    typeof mergedEnv.OPENAI_API_KEY === "string" &&
+    mergedEnv.OPENAI_API_KEY.trim().length > 0;
   const billingType: AdapterBillingType = apiKey ? "api" : "subscription";
-  const openAiCompatibleBiller = inferOpenAiCompatibleBiller(mergedEnv, "openai");
+  const openAiCompatibleBiller = inferOpenAiCompatibleBiller(
+    mergedEnv,
+    "openai",
+  );
   const biller =
     openAiCompatibleBiller === "openrouter"
       ? "openrouter"
       : billingType === "subscription"
-      ? "chatgpt"
-      : openAiCompatibleBiller ?? "openai";
+        ? "chatgpt"
+        : (openAiCompatibleBiller ?? "openai");
   return { provider: "openai", biller, billingType };
 }
 
-export function createCodexAcpExecutor(options: CodexAcpExecutorOptions = {}): CodexAcpExecutor {
+export function createCodexAcpExecutor(
+  options: CodexAcpExecutorOptions = {},
+): CodexAcpExecutor {
   let executor: CodexAcpExecutor | null = null;
   return async (ctx) => {
     let currentExecutor = executor;
     if (!currentExecutor) {
-      const { createAcpxEngineExecutor } = await import("@taskcore/adapter-utils/acpx-engine/execute");
+      const { createAcpxEngineExecutor } =
+        await import("@taskcore/adapter-utils/acpx-engine/execute");
       currentExecutor = createAcpxEngineExecutor(withCodexAcpDefaults(options));
       executor = currentExecutor;
     }
@@ -380,7 +453,9 @@ function parseVersion(version: string): [number, number, number] {
   return [Number(match[1]), Number(match[2]), Number(match[3])];
 }
 
-export function nodeVersionMeetsCodexAcpMinimum(version = process.version): boolean {
+export function nodeVersionMeetsCodexAcpMinimum(
+  version = process.version,
+): boolean {
   const [major, minor, patch] = parseVersion(version);
   const [minMajor, minMinor, minPatch] = parseVersion(MIN_ACP_NODE_VERSION);
   if (major !== minMajor) return major > minMajor;
@@ -389,7 +464,10 @@ export function nodeVersionMeetsCodexAcpMinimum(version = process.version): bool
 }
 
 async function pathExists(candidate: string): Promise<boolean> {
-  return fs.access(candidate).then(() => true).catch(() => false);
+  return fs
+    .access(candidate)
+    .then(() => true)
+    .catch(() => false);
 }
 
 function hasPathSeparator(command: string): boolean {
@@ -410,7 +488,10 @@ async function findCommandOnPath(binName: string): Promise<string | null> {
   return null;
 }
 
-async function findAncestorBin(startDir: string, binName: string): Promise<string | null> {
+async function findAncestorBin(
+  startDir: string,
+  binName: string,
+): Promise<string | null> {
   let current = path.resolve(startDir);
   while (true) {
     const candidate = path.join(current, "node_modules", ".bin", binName);
@@ -437,7 +518,11 @@ async function commandIsResolvable(
       await ensureAdapterExecutionTargetCommandResolvable(
         trimmed,
         target,
-        resolveAdapterExecutionTargetCwd(target, asString(input?.config.cwd, ""), process.cwd()),
+        resolveAdapterExecutionTargetCwd(
+          target,
+          asString(input?.config.cwd, ""),
+          process.cwd(),
+        ),
         process.env,
       );
       return true;
@@ -445,12 +530,18 @@ async function commandIsResolvable(
       return false;
     }
   }
-  if (path.isAbsolute(trimmed) || hasPathSeparator(trimmed)) return pathExists(trimmed);
+  if (path.isAbsolute(trimmed) || hasPathSeparator(trimmed))
+    return pathExists(trimmed);
   return (await findCommandOnPath(trimmed)) !== null;
 }
 
-async function resolveCodexAcpCommand(config: Record<string, unknown>): Promise<string> {
-  const configured = firstNonEmptyString(config.agentCommand, config.acpAgentCommand);
+async function resolveCodexAcpCommand(
+  config: Record<string, unknown>,
+): Promise<string> {
+  const configured = firstNonEmptyString(
+    config.agentCommand,
+    config.acpAgentCommand,
+  );
   if (configured) return configured;
   return (
     (await findAncestorBin(packageRootDir, "codex-acp")) ??
@@ -462,14 +553,21 @@ async function resolveCodexAcpCommand(config: Record<string, unknown>): Promise<
 function sandboxTargetHasProcessSessionBridge(
   target: ReturnType<typeof readAdapterExecutionTarget>,
 ): boolean {
-  return target?.kind === "remote" && target.transport === "sandbox" && Boolean(target.runner);
+  return (
+    target?.kind === "remote" &&
+    target.transport === "sandbox" &&
+    Boolean(target.runner)
+  );
 }
 
 async function resolveCodexAcpCommandForTarget(
   config: Record<string, unknown>,
   target: ReturnType<typeof readAdapterExecutionTarget>,
 ): Promise<string> {
-  const configured = firstNonEmptyString(config.agentCommand, config.acpAgentCommand);
+  const configured = firstNonEmptyString(
+    config.agentCommand,
+    config.acpAgentCommand,
+  );
   if (configured) return configured;
   if (target?.kind === "remote") return "codex-acp";
   return resolveCodexAcpCommand(config);
@@ -482,7 +580,10 @@ async function codexAcpUnavailableReason(
     executionTarget: input.executionTarget,
     legacyRemoteExecution: input.executionTransport?.remoteExecution,
   });
-  if (target?.kind === "remote" && !sandboxTargetHasProcessSessionBridge(target)) {
+  if (
+    target?.kind === "remote" &&
+    !sandboxTargetHasProcessSessionBridge(target)
+  ) {
     if (target.transport === "sandbox") {
       return "Codex ACP requires a bidirectional remote process target; this sandbox exposes only one-shot command execution.";
     }
@@ -498,7 +599,9 @@ async function codexAcpUnavailableReason(
   return null;
 }
 
-function summarizeStatus(checks: AdapterEnvironmentCheck[]): AdapterEnvironmentTestResult["status"] {
+function summarizeStatus(
+  checks: AdapterEnvironmentCheck[],
+): AdapterEnvironmentTestResult["status"] {
   if (checks.some((check) => check.level === "error")) return "fail";
   if (checks.some((check) => check.level === "warn")) return "warn";
   return "pass";
@@ -515,7 +618,8 @@ export async function testCodexAcpEnvironment(
   const config = parseObject(ctx.config);
   const target = ctx.executionTarget ?? null;
   const targetIsRemote = target?.kind === "remote";
-  const targetIsSandbox = target?.kind === "remote" && target.transport === "sandbox";
+  const targetIsSandbox =
+    target?.kind === "remote" && target.transport === "sandbox";
 
   checks.push({
     code: "codex_engine_selected",
@@ -551,7 +655,9 @@ export async function testCodexAcpEnvironment(
   }
 
   checks.push({
-    code: nodeVersionMeetsCodexAcpMinimum() ? "codex_acp_node_supported" : "codex_acp_node_unsupported",
+    code: nodeVersionMeetsCodexAcpMinimum()
+      ? "codex_acp_node_supported"
+      : "codex_acp_node_unsupported",
     level: nodeVersionMeetsCodexAcpMinimum() ? "info" : "error",
     message: nodeVersionMeetsCodexAcpMinimum()
       ? `Node ${process.version} satisfies ACP runtime requirements.`
@@ -567,7 +673,9 @@ export async function testCodexAcpEnvironment(
     executionTarget: ctx.executionTarget,
   });
   checks.push({
-    code: commandResolvable ? "codex_acp_command_resolvable" : "codex_acp_command_missing",
+    code: commandResolvable
+      ? "codex_acp_command_resolvable"
+      : "codex_acp_command_missing",
     level: commandResolvable ? "info" : "error",
     message: commandResolvable
       ? `Codex ACP server command is executable: ${command}`
@@ -579,15 +687,21 @@ export async function testCodexAcpEnvironment(
 
   const envConfig = parseObject(config.env);
   if (!targetIsRemote) {
-    const configApiKey = isNonEmpty(envConfig.OPENAI_API_KEY) ? envConfig.OPENAI_API_KEY : null;
-    const hostApiKey =
-      Object.prototype.hasOwnProperty.call(envConfig, "OPENAI_API_KEY")
-        ? null
-        : isNonEmpty(process.env.OPENAI_API_KEY)
+    const configApiKey = isNonEmpty(envConfig.OPENAI_API_KEY)
+      ? envConfig.OPENAI_API_KEY
+      : null;
+    const hostApiKey = Object.prototype.hasOwnProperty.call(
+      envConfig,
+      "OPENAI_API_KEY",
+    )
+      ? null
+      : isNonEmpty(process.env.OPENAI_API_KEY)
         ? process.env.OPENAI_API_KEY
         : null;
     const configuredApiKey = configApiKey ?? hostApiKey;
-    const configuredCodexHome = isNonEmpty(envConfig.CODEX_HOME) ? envConfig.CODEX_HOME : null;
+    const configuredCodexHome = isNonEmpty(envConfig.CODEX_HOME)
+      ? envConfig.CODEX_HOME
+      : null;
     const credentialReadiness = await evaluateCodexCredentialReadiness({
       env: process.env,
       companyId: ctx.companyId,
@@ -620,7 +734,8 @@ export async function testCodexAcpEnvironment(
       checks.push({
         code: "codex_acp_credentials_missing",
         level: "warn",
-        message: "No Codex ACP credentials visible to the Taskcore server were detected.",
+        message:
+          "No Codex ACP credentials visible to the Taskcore server were detected.",
         hint: "Set OPENAI_API_KEY in the agent adapter env, set it in the Taskcore server environment, or run `codex login` for the same OS user that runs the Taskcore server before starting a Codex ACP agent. A `/login` in a separate Codex/chat session does not authenticate the server.",
       });
     }
@@ -628,8 +743,12 @@ export async function testCodexAcpEnvironment(
     // The ACP Test does not probe the sandbox, so it predicts readiness from the
     // credentials the Taskcore server can seed into the sandbox. The host
     // environment is not seeded, so only the adapter config key counts here.
-    const configApiKey = isNonEmpty(envConfig.OPENAI_API_KEY) ? envConfig.OPENAI_API_KEY : null;
-    const configuredCodexHome = isNonEmpty(envConfig.CODEX_HOME) ? envConfig.CODEX_HOME : null;
+    const configApiKey = isNonEmpty(envConfig.OPENAI_API_KEY)
+      ? envConfig.OPENAI_API_KEY
+      : null;
+    const configuredCodexHome = isNonEmpty(envConfig.CODEX_HOME)
+      ? envConfig.CODEX_HOME
+      : null;
     const credentialReadiness = await evaluateCodexCredentialReadiness({
       env: process.env,
       companyId: ctx.companyId,
@@ -643,7 +762,8 @@ export async function testCodexAcpEnvironment(
       checks.push({
         code: ADAPTER_AUTH_MISSING_CHECK_CODE,
         level: "warn",
-        message: "This environment has no ready authentication for this adapter.",
+        message:
+          "This environment has no ready authentication for this adapter.",
         hint: "Provide credentials for this adapter, or start login in the environment.",
       });
     }
@@ -669,13 +789,18 @@ export async function testCodexAcpEnvironment(
       model: asString(config.model, ""),
       command: "codex",
       target,
-      cwd: resolveAdapterExecutionTargetCwd(target, asString(config.cwd, ""), process.cwd()),
+      cwd: resolveAdapterExecutionTargetCwd(
+        target,
+        asString(config.cwd, ""),
+        process.cwd(),
+      ),
       env: probeEnv,
     });
     if (versionCheck) checks.push(versionCheck.check);
   }
 
-  const mode = firstNonEmptyString(config.mode, config.acpMode) ?? DEFAULT_ACP_ENGINE_MODE;
+  const mode =
+    firstNonEmptyString(config.mode, config.acpMode) ?? DEFAULT_ACP_ENGINE_MODE;
   const warmHandleIdleMs = asNumber(
     config.warmHandleIdleMs ?? config.acpWarmHandleIdleMs,
     DEFAULT_ACP_ENGINE_WARM_HANDLE_IDLE_MS,
@@ -683,7 +808,8 @@ export async function testCodexAcpEnvironment(
   checks.push({
     code: "codex_acp_runtime_scaffold",
     level: "info",
-    message: "Codex ACP runtime execution is available through the shared ACP engine.",
+    message:
+      "Codex ACP runtime execution is available through the shared ACP engine.",
     detail: `mode=${mode}; warmHandleIdleMs=${warmHandleIdleMs}`,
   });
 

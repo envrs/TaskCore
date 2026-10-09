@@ -179,13 +179,17 @@ export function registerIssueCommands(program: Command): void {
       .option("--status <csv>", "Comma-separated statuses")
       .option("--assignee-agent-id <id>", "Filter by assignee agent ID")
       .option("--project-id <id>", "Filter by project ID")
-      .option("--match <text>", "Local text match on identifier/title/description")
+      .option(
+        "--match <text>",
+        "Local text match on identifier/title/description",
+      )
       .action(async (opts: IssueBaseOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const params = new URLSearchParams();
           if (opts.status) params.set("status", opts.status);
-          if (opts.assigneeAgentId) params.set("assigneeAgentId", opts.assigneeAgentId);
+          if (opts.assigneeAgentId)
+            params.set("assigneeAgentId", opts.assigneeAgentId);
           if (opts.projectId) params.set("projectId", opts.projectId);
 
           const query = params.toString();
@@ -231,7 +235,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (idOrIdentifier: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const row = await ctx.api.get<Issue>(apiPath`/api/issues/${idOrIdentifier}`);
+          const row = await ctx.api.get<Issue>(
+            apiPath`/api/issues/${idOrIdentifier}`,
+          );
           printOutput(row, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -249,7 +255,9 @@ export function registerIssueCommands(program: Command): void {
         try {
           if (!opts.yes) throw new Error("Refusing to delete without --yes");
           const ctx = resolveCommandContext(opts);
-          const deleted = await ctx.api.delete<Issue>(apiPath`/api/issues/${issueId}`);
+          const deleted = await ctx.api.delete<Issue>(
+            apiPath`/api/issues/${issueId}`,
+          );
           printOutput(deleted, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -265,7 +273,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const context = await ctx.api.get(apiPath`/api/issues/${issueId}/heartbeat-context`);
+          const context = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/heartbeat-context`,
+          );
           printOutput(context, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -304,7 +314,10 @@ export function registerIssueCommands(program: Command): void {
             billingCode: opts.billingCode,
           });
 
-          const created = await ctx.api.post<Issue>(apiPath`/api/companies/${ctx.companyId}/issues`, payload);
+          const created = await ctx.api.post<Issue>(
+            apiPath`/api/companies/${ctx.companyId}/issues`,
+            payload,
+          );
           printOutput(created, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -329,7 +342,10 @@ export function registerIssueCommands(program: Command): void {
       .option("--request-depth <n>", "Request depth integer")
       .option("--billing-code <code>", "Billing code")
       .option("--comment <text>", "Optional comment to add with update")
-      .option("--hidden-at <iso8601|null>", "Set hiddenAt timestamp or literal 'null'")
+      .option(
+        "--hidden-at <iso8601|null>",
+        "Set hiddenAt timestamp or literal 'null'",
+      )
       .action(async (issueId: string, opts: IssueUpdateOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -348,7 +364,9 @@ export function registerIssueCommands(program: Command): void {
             hiddenAt: parseHiddenAt(opts.hiddenAt),
           });
 
-          const updated = await ctx.api.patch<Issue & { comment?: IssueComment | null }>(apiPath`/api/issues/${issueId}`, payload);
+          const updated = await ctx.api.patch<
+            Issue & { comment?: IssueComment | null }
+          >(apiPath`/api/issues/${issueId}`, payload);
           printOutput(updated, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -367,7 +385,10 @@ export function registerIssueCommands(program: Command): void {
         "Bind uploaded issue attachments to this comment",
       )
       .option("--reopen", "Reopen if issue is done/cancelled")
-      .option("--resume", "Request explicit follow-up and wake the assignee when resumable")
+      .option(
+        "--resume",
+        "Request explicit follow-up and wake the assignee when resumable",
+      )
       .action(async (issueId: string, opts: IssueCommentOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
@@ -377,7 +398,10 @@ export function registerIssueCommands(program: Command): void {
             reopen: opts.reopen,
             resume: opts.resume,
           });
-          const comment = await ctx.api.post<IssueComment>(apiPath`/api/issues/${issueId}/comments`, payload);
+          const comment = await ctx.api.post<IssueComment>(
+            apiPath`/api/issues/${issueId}/comments`,
+            payload,
+          );
           printOutput(comment, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -390,20 +414,25 @@ export function registerIssueCommands(program: Command): void {
       .command("comments")
       .description("List issue comments")
       .argument("<issueId>", "Issue ID")
-      .option("--after-comment-id <id>", "Only return comments after this comment ID")
+      .option(
+        "--after-comment-id <id>",
+        "Only return comments after this comment ID",
+      )
       .option("--order <order>", "asc or desc")
       .option("--limit <n>", "Maximum comments to return")
       .action(async (issueId: string, opts: IssueCommentListOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
           const params = new URLSearchParams();
-          if (opts.afterCommentId) params.set("afterCommentId", opts.afterCommentId);
+          if (opts.afterCommentId)
+            params.set("afterCommentId", opts.afterCommentId);
           if (opts.order) params.set("order", opts.order);
           if (opts.limit) params.set("limit", opts.limit);
           const query = params.toString();
-          const comments = (await ctx.api.get<IssueComment[]>(
-            `${apiPath`/api/issues/${issueId}/comments`}${query ? `?${query}` : ""}`,
-          )) ?? [];
+          const comments =
+            (await ctx.api.get<IssueComment[]>(
+              `${apiPath`/api/issues/${issueId}/comments`}${query ? `?${query}` : ""}`,
+            )) ?? [];
           printOutput(comments, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -417,15 +446,19 @@ export function registerIssueCommands(program: Command): void {
       .description("Get one issue comment")
       .argument("<issueId>", "Issue ID")
       .argument("<commentId>", "Comment ID")
-      .action(async (issueId: string, commentId: string, opts: BaseClientOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const comment = await ctx.api.get<IssueComment>(apiPath`/api/issues/${issueId}/comments/${commentId}`);
-          printOutput(comment, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (issueId: string, commentId: string, opts: BaseClientOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const comment = await ctx.api.get<IssueComment>(
+              apiPath`/api/issues/${issueId}/comments/${commentId}`,
+            );
+            printOutput(comment, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -434,15 +467,19 @@ export function registerIssueCommands(program: Command): void {
       .description("Delete or cancel one issue comment")
       .argument("<issueId>", "Issue ID")
       .argument("<commentId>", "Comment ID")
-      .action(async (issueId: string, commentId: string, opts: BaseClientOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const deleted = await ctx.api.delete<IssueComment>(apiPath`/api/issues/${issueId}/comments/${commentId}`);
-          printOutput(deleted, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (issueId: string, commentId: string, opts: BaseClientOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const deleted = await ctx.api.delete<IssueComment>(
+              apiPath`/api/issues/${issueId}/comments/${commentId}`,
+            );
+            printOutput(deleted, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -453,7 +490,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const approvals = await ctx.api.get(apiPath`/api/issues/${issueId}/approvals`);
+          const approvals = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/approvals`,
+          );
           printOutput(approvals, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -467,16 +506,25 @@ export function registerIssueCommands(program: Command): void {
       .description("Link an approval to an issue")
       .argument("<issueId>", "Issue ID")
       .argument("<approvalId>", "Approval ID")
-      .action(async (issueId: string, approvalId: string, opts: BaseClientOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const payload = linkIssueApprovalSchema.parse({ approvalId });
-          const approvals = await ctx.api.post(apiPath`/api/issues/${issueId}/approvals`, payload);
-          printOutput(approvals, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          issueId: string,
+          approvalId: string,
+          opts: BaseClientOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const payload = linkIssueApprovalSchema.parse({ approvalId });
+            const approvals = await ctx.api.post(
+              apiPath`/api/issues/${issueId}/approvals`,
+              payload,
+            );
+            printOutput(approvals, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -485,21 +533,53 @@ export function registerIssueCommands(program: Command): void {
       .description("Unlink an approval from an issue")
       .argument("<issueId>", "Issue ID")
       .argument("<approvalId>", "Approval ID")
-      .action(async (issueId: string, approvalId: string, opts: BaseClientOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.delete(apiPath`/api/issues/${issueId}/approvals/${approvalId}`);
-          printOutput(result, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          issueId: string,
+          approvalId: string,
+          opts: BaseClientOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const result = await ctx.api.delete(
+              apiPath`/api/issues/${issueId}/approvals/${approvalId}`,
+            );
+            printOutput(result, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
-  addIssuePostDeleteMarkerCommand(issue, "read", "Mark an issue as read", "post", "/read");
-  addIssuePostDeleteMarkerCommand(issue, "unread", "Mark an issue as unread", "delete", "/read");
-  addIssuePostDeleteMarkerCommand(issue, "archive", "Archive an issue from the inbox", "post", "/inbox-archive");
-  addIssuePostDeleteMarkerCommand(issue, "unarchive", "Unarchive an issue from the inbox", "delete", "/inbox-archive");
+  addIssuePostDeleteMarkerCommand(
+    issue,
+    "read",
+    "Mark an issue as read",
+    "post",
+    "/read",
+  );
+  addIssuePostDeleteMarkerCommand(
+    issue,
+    "unread",
+    "Mark an issue as unread",
+    "delete",
+    "/read",
+  );
+  addIssuePostDeleteMarkerCommand(
+    issue,
+    "archive",
+    "Archive an issue from the inbox",
+    "post",
+    "/inbox-archive",
+  );
+  addIssuePostDeleteMarkerCommand(
+    issue,
+    "unarchive",
+    "Unarchive an issue from the inbox",
+    "delete",
+    "/inbox-archive",
+  );
 
   addCommonClientOptions(
     issue
@@ -509,7 +589,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.get(apiPath`/api/issues/${issueId}/recovery-actions`);
+          const result = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/recovery-actions`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -522,8 +604,14 @@ export function registerIssueCommands(program: Command): void {
       .command("recovery:resolve")
       .description("Resolve an issue recovery action")
       .argument("<issueId>", "Issue ID")
-      .requiredOption("--outcome <outcome>", "restored, false_positive, blocked, or cancelled")
-      .requiredOption("--source-issue-status <status>", "todo, done, or in_review for restored outcomes; blocked is only valid for blocked outcomes")
+      .requiredOption(
+        "--outcome <outcome>",
+        "restored, false_positive, blocked, or cancelled",
+      )
+      .requiredOption(
+        "--source-issue-status <status>",
+        "todo, done, or in_review for restored outcomes; blocked is only valid for blocked outcomes",
+      )
       .option("--action-id <id>", "Specific recovery action ID")
       .option("--resolution-note <text>", "Resolution note")
       .action(async (issueId: string, opts: IssueRecoveryResolveOptions) => {
@@ -535,7 +623,10 @@ export function registerIssueCommands(program: Command): void {
             sourceIssueStatus: opts.sourceIssueStatus,
             resolutionNote: opts.resolutionNote,
           });
-          const result = await ctx.api.post(apiPath`/api/issues/${issueId}/recovery-actions/resolve`, payload);
+          const result = await ctx.api.post(
+            apiPath`/api/issues/${issueId}/recovery-actions/resolve`,
+            payload,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -552,8 +643,13 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = createChildIssueSchema.parse(parseJson(opts.payloadJson));
-          const child = await ctx.api.post<Issue>(apiPath`/api/issues/${issueId}/children`, payload);
+          const payload = createChildIssueSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const child = await ctx.api.post<Issue>(
+            apiPath`/api/issues/${issueId}/children`,
+            payload,
+          );
           printOutput(child, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -569,7 +665,10 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.post(apiPath`/api/issues/${issueId}/admin/force-release`, {});
+          const result = await ctx.api.post(
+            apiPath`/api/issues/${issueId}/admin/force-release`,
+            {},
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -585,7 +684,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const rows = await ctx.api.get(apiPath`/api/issues/${issueId}/work-products`);
+          const rows = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/work-products`,
+          );
           printOutput(rows, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -598,12 +699,20 @@ export function registerIssueCommands(program: Command): void {
       .command("work-product:create")
       .description("Create an issue work product from JSON")
       .argument("<issueId>", "Issue ID")
-      .requiredOption("--payload-json <json>", "CreateIssueWorkProduct JSON payload")
+      .requiredOption(
+        "--payload-json <json>",
+        "CreateIssueWorkProduct JSON payload",
+      )
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = createIssueWorkProductSchema.parse(parseJson(opts.payloadJson));
-          const product = await ctx.api.post(apiPath`/api/issues/${issueId}/work-products`, payload);
+          const payload = createIssueWorkProductSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const product = await ctx.api.post(
+            apiPath`/api/issues/${issueId}/work-products`,
+            payload,
+          );
           printOutput(product, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -616,12 +725,20 @@ export function registerIssueCommands(program: Command): void {
       .command("work-product:update")
       .description("Update a work product from JSON")
       .argument("<workProductId>", "Work product ID")
-      .requiredOption("--payload-json <json>", "UpdateIssueWorkProduct JSON payload")
+      .requiredOption(
+        "--payload-json <json>",
+        "UpdateIssueWorkProduct JSON payload",
+      )
       .action(async (workProductId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = updateIssueWorkProductSchema.parse(parseJson(opts.payloadJson));
-          const product = await ctx.api.patch(apiPath`/api/work-products/${workProductId}`, payload);
+          const payload = updateIssueWorkProductSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const product = await ctx.api.patch(
+            apiPath`/api/work-products/${workProductId}`,
+            payload,
+          );
           printOutput(product, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -637,7 +754,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (workProductId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const product = await ctx.api.delete(apiPath`/api/work-products/${workProductId}`);
+          const product = await ctx.api.delete(
+            apiPath`/api/work-products/${workProductId}`,
+          );
           printOutput(product, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -651,16 +770,23 @@ export function registerIssueCommands(program: Command): void {
       .description("List issue documents")
       .argument("<issueId>", "Issue ID")
       .option("--include-system", "Include system documents")
-      .action(async (issueId: string, opts: BaseClientOptions & { includeSystem?: boolean }) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const query = opts.includeSystem ? "?includeSystem=true" : "";
-          const docs = await ctx.api.get(`${apiPath`/api/issues/${issueId}/documents`}${query}`);
-          printOutput(docs, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          issueId: string,
+          opts: BaseClientOptions & { includeSystem?: boolean },
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const query = opts.includeSystem ? "?includeSystem=true" : "";
+            const docs = await ctx.api.get(
+              `${apiPath`/api/issues/${issueId}/documents`}${query}`,
+            );
+            printOutput(docs, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -672,7 +798,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, key: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const doc = await ctx.api.get(apiPath`/api/issues/${issueId}/documents/${key}`);
+          const doc = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/documents/${key}`,
+          );
           printOutput(doc, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -692,23 +820,30 @@ export function registerIssueCommands(program: Command): void {
       .option("--body-file <path>", "Read document body from a file")
       .option("--change-summary <text>", "Change summary")
       .option("--base-revision-id <id>", "Expected base revision ID")
-      .action(async (issueId: string, key: string, opts: IssueDocumentPutOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const body = opts.bodyFile ? await readFile(opts.bodyFile, "utf8") : opts.body;
-          const payload = upsertIssueDocumentSchema.parse({
-            title: opts.title,
-            format: opts.format,
-            body,
-            changeSummary: opts.changeSummary,
-            baseRevisionId: opts.baseRevisionId,
-          });
-          const doc = await ctx.api.put(apiPath`/api/issues/${issueId}/documents/${key}`, payload);
-          printOutput(doc, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (issueId: string, key: string, opts: IssueDocumentPutOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const body = opts.bodyFile
+              ? await readFile(opts.bodyFile, "utf8")
+              : opts.body;
+            const payload = upsertIssueDocumentSchema.parse({
+              title: opts.title,
+              format: opts.format,
+              body,
+              changeSummary: opts.changeSummary,
+              baseRevisionId: opts.baseRevisionId,
+            });
+            const doc = await ctx.api.put(
+              apiPath`/api/issues/${issueId}/documents/${key}`,
+              payload,
+            );
+            printOutput(doc, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -719,7 +854,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const interactions = await ctx.api.get(apiPath`/api/issues/${issueId}/interactions`);
+          const interactions = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/interactions`,
+          );
           printOutput(interactions, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -732,12 +869,20 @@ export function registerIssueCommands(program: Command): void {
       .command("interaction:create")
       .description("Create an issue thread interaction from JSON")
       .argument("<issueId>", "Issue ID")
-      .requiredOption("--payload-json <json>", "CreateIssueThreadInteraction JSON payload")
+      .requiredOption(
+        "--payload-json <json>",
+        "CreateIssueThreadInteraction JSON payload",
+      )
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = createIssueThreadInteractionSchema.parse(parseJson(opts.payloadJson));
-          const interaction = await ctx.api.post(apiPath`/api/issues/${issueId}/interactions`, payload);
+          const payload = createIssueThreadInteractionSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const interaction = await ctx.api.post(
+            apiPath`/api/issues/${issueId}/interactions`,
+            payload,
+          );
           printOutput(interaction, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -753,24 +898,49 @@ export function registerIssueCommands(program: Command): void {
       .argument("<interactionId>", "Interaction ID")
       .option("--selected-client-keys <csv>", "Client keys to accept")
       .option("--selected-option-ids <csv>", "Checkbox option IDs to accept")
-      .action(async (issueId: string, interactionId: string, opts: InteractionAcceptOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const payload = acceptIssueThreadInteractionSchema.parse({
-            selectedClientKeys: opts.selectedClientKeys === undefined ? undefined : parseCsv(opts.selectedClientKeys),
-            selectedOptionIds: opts.selectedOptionIds === undefined ? undefined : parseCsv(opts.selectedOptionIds),
-          });
-          const interaction = await ctx.api.post(apiPath`/api/issues/${issueId}/interactions/${interactionId}/accept`, payload);
-          printOutput(interaction, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          issueId: string,
+          interactionId: string,
+          opts: InteractionAcceptOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const payload = acceptIssueThreadInteractionSchema.parse({
+              selectedClientKeys:
+                opts.selectedClientKeys === undefined
+                  ? undefined
+                  : parseCsv(opts.selectedClientKeys),
+              selectedOptionIds:
+                opts.selectedOptionIds === undefined
+                  ? undefined
+                  : parseCsv(opts.selectedOptionIds),
+            });
+            const interaction = await ctx.api.post(
+              apiPath`/api/issues/${issueId}/interactions/${interactionId}/accept`,
+              payload,
+            );
+            printOutput(interaction, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   for (const [name, action, schema, description] of [
-    ["interaction:reject", "reject", rejectIssueThreadInteractionSchema, "Reject an issue thread interaction"],
-    ["interaction:cancel", "cancel", cancelIssueThreadInteractionSchema, "Cancel an issue thread interaction"],
+    [
+      "interaction:reject",
+      "reject",
+      rejectIssueThreadInteractionSchema,
+      "Reject an issue thread interaction",
+    ],
+    [
+      "interaction:cancel",
+      "cancel",
+      cancelIssueThreadInteractionSchema,
+      "Cancel an issue thread interaction",
+    ],
   ] as const) {
     addCommonClientOptions(
       issue
@@ -779,16 +949,25 @@ export function registerIssueCommands(program: Command): void {
         .argument("<issueId>", "Issue ID")
         .argument("<interactionId>", "Interaction ID")
         .option("--reason <text>", "Reason")
-        .action(async (issueId: string, interactionId: string, opts: InteractionReasonOptions) => {
-          try {
-            const ctx = resolveCommandContext(opts);
-            const payload = schema.parse({ reason: opts.reason });
-            const interaction = await ctx.api.post(`${apiPath`/api/issues/${issueId}/interactions/${interactionId}`}/${action}`, payload);
-            printOutput(interaction, { json: ctx.json });
-          } catch (err) {
-            handleCommandError(err);
-          }
-        }),
+        .action(
+          async (
+            issueId: string,
+            interactionId: string,
+            opts: InteractionReasonOptions,
+          ) => {
+            try {
+              const ctx = resolveCommandContext(opts);
+              const payload = schema.parse({ reason: opts.reason });
+              const interaction = await ctx.api.post(
+                `${apiPath`/api/issues/${issueId}/interactions/${interactionId}`}/${action}`,
+                payload,
+              );
+              printOutput(interaction, { json: ctx.json });
+            } catch (err) {
+              handleCommandError(err);
+            }
+          },
+        ),
     );
   }
 
@@ -800,19 +979,28 @@ export function registerIssueCommands(program: Command): void {
       .argument("<interactionId>", "Interaction ID")
       .requiredOption("--answers-json <json>", "Answers array JSON")
       .option("--summary-markdown <markdown>", "Optional response summary")
-      .action(async (issueId: string, interactionId: string, opts: InteractionRespondOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const payload = respondIssueThreadInteractionSchema.parse({
-            answers: parseJson(opts.answersJson),
-            summaryMarkdown: opts.summaryMarkdown,
-          });
-          const interaction = await ctx.api.post(apiPath`/api/issues/${issueId}/interactions/${interactionId}/respond`, payload);
-          printOutput(interaction, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          issueId: string,
+          interactionId: string,
+          opts: InteractionRespondOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const payload = respondIssueThreadInteractionSchema.parse({
+              answers: parseJson(opts.answersJson),
+              summaryMarkdown: opts.summaryMarkdown,
+            });
+            const interaction = await ctx.api.post(
+              apiPath`/api/issues/${issueId}/interactions/${interactionId}/respond`,
+              payload,
+            );
+            printOutput(interaction, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -823,7 +1011,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const state = await ctx.api.get(apiPath`/api/issues/${issueId}/tree-control/state`);
+          const state = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/tree-control/state`,
+          );
           printOutput(state, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -836,12 +1026,20 @@ export function registerIssueCommands(program: Command): void {
       .command("tree-preview")
       .description("Preview issue tree control changes")
       .argument("<issueId>", "Root issue ID")
-      .requiredOption("--payload-json <json>", "PreviewIssueTreeControl JSON payload")
+      .requiredOption(
+        "--payload-json <json>",
+        "PreviewIssueTreeControl JSON payload",
+      )
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = previewIssueTreeControlSchema.parse(parseJson(opts.payloadJson));
-          const preview = await ctx.api.post(apiPath`/api/issues/${issueId}/tree-control/preview`, payload);
+          const payload = previewIssueTreeControlSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const preview = await ctx.api.post(
+            apiPath`/api/issues/${issueId}/tree-control/preview`,
+            payload,
+          );
           printOutput(preview, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -865,7 +1063,9 @@ export function registerIssueCommands(program: Command): void {
           if (opts.mode) params.set("mode", opts.mode);
           if (opts.includeMembers) params.set("includeMembers", "true");
           const query = params.toString();
-          const holds = await ctx.api.get(`${apiPath`/api/issues/${issueId}/tree-holds`}${query ? `?${query}` : ""}`);
+          const holds = await ctx.api.get(
+            `${apiPath`/api/issues/${issueId}/tree-holds`}${query ? `?${query}` : ""}`,
+          );
           printOutput(holds, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -878,12 +1078,20 @@ export function registerIssueCommands(program: Command): void {
       .command("tree-hold:create")
       .description("Create an issue tree hold from JSON")
       .argument("<issueId>", "Root issue ID")
-      .requiredOption("--payload-json <json>", "CreateIssueTreeHold JSON payload")
+      .requiredOption(
+        "--payload-json <json>",
+        "CreateIssueTreeHold JSON payload",
+      )
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = createIssueTreeHoldSchema.parse(parseJson(opts.payloadJson));
-          const hold = await ctx.api.post(apiPath`/api/issues/${issueId}/tree-holds`, payload);
+          const payload = createIssueTreeHoldSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const hold = await ctx.api.post(
+            apiPath`/api/issues/${issueId}/tree-holds`,
+            payload,
+          );
           printOutput(hold, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -897,15 +1105,19 @@ export function registerIssueCommands(program: Command): void {
       .description("Get an issue tree hold")
       .argument("<issueId>", "Root issue ID")
       .argument("<holdId>", "Hold ID")
-      .action(async (issueId: string, holdId: string, opts: BaseClientOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const hold = await ctx.api.get(apiPath`/api/issues/${issueId}/tree-holds/${holdId}`);
-          printOutput(hold, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (issueId: string, holdId: string, opts: BaseClientOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const hold = await ctx.api.get(
+              apiPath`/api/issues/${issueId}/tree-holds/${holdId}`,
+            );
+            printOutput(hold, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -914,17 +1126,28 @@ export function registerIssueCommands(program: Command): void {
       .description("Release an issue tree hold")
       .argument("<issueId>", "Root issue ID")
       .argument("<holdId>", "Hold ID")
-      .option("--payload-json <json>", "ReleaseIssueTreeHold JSON payload", "{}")
-      .action(async (issueId: string, holdId: string, opts: JsonPayloadOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const payload = releaseIssueTreeHoldSchema.parse(parseJson(opts.payloadJson));
-          const hold = await ctx.api.post(apiPath`/api/issues/${issueId}/tree-holds/${holdId}/release`, payload);
-          printOutput(hold, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .option(
+        "--payload-json <json>",
+        "ReleaseIssueTreeHold JSON payload",
+        "{}",
+      )
+      .action(
+        async (issueId: string, holdId: string, opts: JsonPayloadOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const payload = releaseIssueTreeHoldSchema.parse(
+              parseJson(opts.payloadJson),
+            );
+            const hold = await ctx.api.post(
+              apiPath`/api/issues/${issueId}/tree-holds/${holdId}/release`,
+              payload,
+            );
+            printOutput(hold, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -935,7 +1158,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const attachments = await ctx.api.get(apiPath`/api/issues/${issueId}/attachments`);
+          const attachments = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/attachments`,
+          );
           printOutput(attachments, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -954,13 +1179,17 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: IssueAttachmentUploadOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const attachment = await uploadAttachment(ctx.api.apiBase, ctx.api.apiKey, {
-            companyId: ctx.companyId ?? "",
-            issueId,
-            filePath: opts.file,
-            commentId: opts.commentId,
-            runId: ctx.api.runId,
-          });
+          const attachment = await uploadAttachment(
+            ctx.api.apiBase,
+            ctx.api.apiKey,
+            {
+              companyId: ctx.companyId ?? "",
+              issueId,
+              filePath: opts.file,
+              commentId: opts.commentId,
+              runId: ctx.api.runId,
+            },
+          );
           printOutput(attachment, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -975,21 +1204,32 @@ export function registerIssueCommands(program: Command): void {
       .description("Download an attachment")
       .argument("<attachmentId>", "Attachment ID")
       .option("--out <path>", "Output file path; prints to stdout when omitted")
-      .action(async (attachmentId: string, opts: IssueAttachmentDownloadOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const bytes = await downloadAttachment(ctx.api.apiBase, ctx.api.apiKey, attachmentId);
-          if (opts.out) {
-            await writeFile(opts.out, bytes);
-            if (ctx.json) printOutput({ out: opts.out, bytes: bytes.byteLength }, { json: true });
-            else console.log(`Wrote ${bytes.byteLength} byte(s) to ${opts.out}`);
-            return;
+      .action(
+        async (attachmentId: string, opts: IssueAttachmentDownloadOptions) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const bytes = await downloadAttachment(
+              ctx.api.apiBase,
+              ctx.api.apiKey,
+              attachmentId,
+            );
+            if (opts.out) {
+              await writeFile(opts.out, bytes);
+              if (ctx.json)
+                printOutput(
+                  { out: opts.out, bytes: bytes.byteLength },
+                  { json: true },
+                );
+              else
+                console.log(`Wrote ${bytes.byteLength} byte(s) to ${opts.out}`);
+              return;
+            }
+            process.stdout.write(bytes);
+          } catch (err) {
+            handleCommandError(err);
           }
-          process.stdout.write(bytes);
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -1000,7 +1240,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (attachmentId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = await ctx.api.delete(apiPath`/api/attachments/${attachmentId}`);
+          const result = await ctx.api.delete(
+            apiPath`/api/attachments/${attachmentId}`,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1016,7 +1258,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const labels = await ctx.api.get(apiPath`/api/companies/${ctx.companyId}/labels`);
+          const labels = await ctx.api.get(
+            apiPath`/api/companies/${ctx.companyId}/labels`,
+          );
           printOutput(labels, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1035,8 +1279,14 @@ export function registerIssueCommands(program: Command): void {
       .action(async (opts: IssueLabelCreateOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const payload = createIssueLabelSchema.parse({ name: opts.name, color: opts.color });
-          const label = await ctx.api.post(apiPath`/api/companies/${ctx.companyId}/labels`, payload);
+          const payload = createIssueLabelSchema.parse({
+            name: opts.name,
+            color: opts.color,
+          });
+          const label = await ctx.api.post(
+            apiPath`/api/companies/${ctx.companyId}/labels`,
+            payload,
+          );
           printOutput(label, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1069,7 +1319,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const votes = await ctx.api.get(apiPath`/api/issues/${issueId}/feedback-votes`);
+          const votes = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/feedback-votes`,
+          );
           printOutput(votes, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1082,12 +1334,20 @@ export function registerIssueCommands(program: Command): void {
       .command("feedback:vote")
       .description("Create or update a feedback vote")
       .argument("<issueId>", "Issue ID")
-      .requiredOption("--payload-json <json>", "UpsertIssueFeedbackVote JSON payload")
+      .requiredOption(
+        "--payload-json <json>",
+        "UpsertIssueFeedbackVote JSON payload",
+      )
       .action(async (issueId: string, opts: JsonPayloadOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const payload = upsertIssueFeedbackVoteSchema.parse(parseJson(opts.payloadJson));
-          const vote = await ctx.api.post(apiPath`/api/issues/${issueId}/feedback-votes`, payload);
+          const payload = upsertIssueFeedbackVoteSchema.parse(
+            parseJson(opts.payloadJson),
+          );
+          const vote = await ctx.api.post(
+            apiPath`/api/issues/${issueId}/feedback-votes`,
+            payload,
+          );
           printOutput(vote, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1106,16 +1366,21 @@ export function registerIssueCommands(program: Command): void {
         .description(description)
         .argument("<issueId>", "Issue ID")
         .argument("<key>", "Document key")
-        .action(async (issueId: string, key: string, opts: BaseClientOptions) => {
-          try {
-            const ctx = resolveCommandContext(opts);
-            const path = `${apiPath`/api/issues/${issueId}/documents/${key}`}${pathSuffix}`;
-            const result = name === "document:delete" ? await ctx.api.delete(path) : await ctx.api.post(path, {});
-            printOutput(result, { json: ctx.json });
-          } catch (err) {
-            handleCommandError(err);
-          }
-        }),
+        .action(
+          async (issueId: string, key: string, opts: BaseClientOptions) => {
+            try {
+              const ctx = resolveCommandContext(opts);
+              const path = `${apiPath`/api/issues/${issueId}/documents/${key}`}${pathSuffix}`;
+              const result =
+                name === "document:delete"
+                  ? await ctx.api.delete(path)
+                  : await ctx.api.post(path, {});
+              printOutput(result, { json: ctx.json });
+            } catch (err) {
+              handleCommandError(err);
+            }
+          },
+        ),
     );
   }
 
@@ -1128,7 +1393,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, key: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const revisions = await ctx.api.get(apiPath`/api/issues/${issueId}/documents/${key}/revisions`);
+          const revisions = await ctx.api.get(
+            apiPath`/api/issues/${issueId}/documents/${key}/revisions`,
+          );
           printOutput(revisions, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1143,19 +1410,26 @@ export function registerIssueCommands(program: Command): void {
       .argument("<issueId>", "Issue ID")
       .argument("<key>", "Document key")
       .argument("<revisionId>", "Revision ID")
-      .action(async (issueId: string, key: string, revisionId: string, opts: BaseClientOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts);
-          const payload = restoreIssueDocumentRevisionSchema.parse({});
-          const doc = await ctx.api.post(
-            apiPath`/api/issues/${issueId}/documents/${key}/revisions/${revisionId}/restore`,
-            payload,
-          );
-          printOutput(doc, { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          issueId: string,
+          key: string,
+          revisionId: string,
+          opts: BaseClientOptions,
+        ) => {
+          try {
+            const ctx = resolveCommandContext(opts);
+            const payload = restoreIssueDocumentRevisionSchema.parse({});
+            const doc = await ctx.api.post(
+              apiPath`/api/issues/${issueId}/documents/${key}/revisions/${revisionId}/restore`,
+              payload,
+            );
+            printOutput(doc, { json: ctx.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
   addCommonClientOptions(
@@ -1166,16 +1440,29 @@ export function registerIssueCommands(program: Command): void {
       .option("--target-type <type>", "Filter by target type")
       .option("--vote <vote>", "Filter by vote value")
       .option("--status <status>", "Filter by trace status")
-      .option("--from <iso8601>", "Only include traces created at or after this timestamp")
-      .option("--to <iso8601>", "Only include traces created at or before this timestamp")
-      .option("--shared-only", "Only include traces eligible for sharing/export")
-      .option("--include-payload", "Include stored payload snapshots in the response")
+      .option(
+        "--from <iso8601>",
+        "Only include traces created at or after this timestamp",
+      )
+      .option(
+        "--to <iso8601>",
+        "Only include traces created at or before this timestamp",
+      )
+      .option(
+        "--shared-only",
+        "Only include traces eligible for sharing/export",
+      )
+      .option(
+        "--include-payload",
+        "Include stored payload snapshots in the response",
+      )
       .action(async (issueId: string, opts: IssueFeedbackOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const traces = (await ctx.api.get<FeedbackTrace[]>(
-            `${apiPath`/api/issues/${issueId}/feedback-traces`}${buildFeedbackTraceQuery(opts)}`,
-          )) ?? [];
+          const traces =
+            (await ctx.api.get<FeedbackTrace[]>(
+              `${apiPath`/api/issues/${issueId}/feedback-traces`}${buildFeedbackTraceQuery(opts)}`,
+            )) ?? [];
           if (ctx.json) {
             printOutput(traces, { json: true });
             return;
@@ -1205,7 +1492,10 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const rows = (await ctx.api.get<unknown[]>(apiPath`/api/issues/${issueId}/runs`)) ?? [];
+          const rows =
+            (await ctx.api.get<unknown[]>(
+              apiPath`/api/issues/${issueId}/runs`,
+            )) ?? [];
           printOutput(rows, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1216,12 +1506,17 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("live-runs")
-      .description("List queued and running heartbeat runs associated with an issue")
+      .description(
+        "List queued and running heartbeat runs associated with an issue",
+      )
       .argument("<issueId>", "Issue ID or identifier")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const rows = (await ctx.api.get<HeartbeatRun[]>(apiPath`/api/issues/${issueId}/live-runs`)) ?? [];
+          const rows =
+            (await ctx.api.get<HeartbeatRun[]>(
+              apiPath`/api/issues/${issueId}/live-runs`,
+            )) ?? [];
           printOutput(rows, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1237,7 +1532,9 @@ export function registerIssueCommands(program: Command): void {
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const run = await ctx.api.get<HeartbeatRun | null>(apiPath`/api/issues/${issueId}/active-run`);
+          const run = await ctx.api.get<HeartbeatRun | null>(
+            apiPath`/api/issues/${issueId}/active-run`,
+          );
           printOutput(run, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1253,32 +1550,53 @@ export function registerIssueCommands(program: Command): void {
       .option("--target-type <type>", "Filter by target type")
       .option("--vote <vote>", "Filter by vote value")
       .option("--status <status>", "Filter by trace status")
-      .option("--from <iso8601>", "Only include traces created at or after this timestamp")
-      .option("--to <iso8601>", "Only include traces created at or before this timestamp")
-      .option("--shared-only", "Only include traces eligible for sharing/export")
-      .option("--include-payload", "Include stored payload snapshots in the export")
+      .option(
+        "--from <iso8601>",
+        "Only include traces created at or after this timestamp",
+      )
+      .option(
+        "--to <iso8601>",
+        "Only include traces created at or before this timestamp",
+      )
+      .option(
+        "--shared-only",
+        "Only include traces eligible for sharing/export",
+      )
+      .option(
+        "--include-payload",
+        "Include stored payload snapshots in the export",
+      )
       .option("--out <path>", "Write export to a file path instead of stdout")
       .option("--format <format>", "Export format: json or ndjson", "ndjson")
       .action(async (issueId: string, opts: IssueFeedbackOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const traces = (await ctx.api.get<FeedbackTrace[]>(
-            `${apiPath`/api/issues/${issueId}/feedback-traces`}${buildFeedbackTraceQuery(opts, opts.includePayload ?? true)}`,
-          )) ?? [];
-            const serialized = serializeFeedbackTraces(traces, opts.format);
-            if (opts.out?.trim()) {
-              await writeFile(opts.out, serialized, "utf8");
-              if (ctx.json) {
-                printOutput(
-                  { out: opts.out, count: traces.length, format: normalizeFeedbackTraceExportFormat(opts.format) },
-                  { json: true },
-                );
-                return;
-              }
-              console.log(`Wrote ${traces.length} feedback trace(s) to ${opts.out}`);
+          const traces =
+            (await ctx.api.get<FeedbackTrace[]>(
+              `${apiPath`/api/issues/${issueId}/feedback-traces`}${buildFeedbackTraceQuery(opts, opts.includePayload ?? true)}`,
+            )) ?? [];
+          const serialized = serializeFeedbackTraces(traces, opts.format);
+          if (opts.out?.trim()) {
+            await writeFile(opts.out, serialized, "utf8");
+            if (ctx.json) {
+              printOutput(
+                {
+                  out: opts.out,
+                  count: traces.length,
+                  format: normalizeFeedbackTraceExportFormat(opts.format),
+                },
+                { json: true },
+              );
+              return;
+            }
+            console.log(
+              `Wrote ${traces.length} feedback trace(s) to ${opts.out}`,
+            );
             return;
           }
-          process.stdout.write(`${serialized}${serialized.endsWith("\n") ? "" : "\n"}`);
+          process.stdout.write(
+            `${serialized}${serialized.endsWith("\n") ? "" : "\n"}`,
+          );
         } catch (err) {
           handleCommandError(err);
         }
@@ -1303,7 +1621,10 @@ export function registerIssueCommands(program: Command): void {
             agentId: opts.agentId,
             expectedStatuses: parseCsv(opts.expectedStatuses),
           });
-          const updated = await ctx.api.post<Issue>(apiPath`/api/issues/${issueId}/checkout`, payload);
+          const updated = await ctx.api.post<Issue>(
+            apiPath`/api/issues/${issueId}/checkout`,
+            payload,
+          );
           printOutput(updated, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1314,12 +1635,17 @@ export function registerIssueCommands(program: Command): void {
   addCommonClientOptions(
     issue
       .command("release")
-      .description("Release issue execution locks; clear the assignee only for unfinished issues")
+      .description(
+        "Release issue execution locks; clear the assignee only for unfinished issues",
+      )
       .argument("<issueId>", "Issue ID")
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const updated = await ctx.api.post<Issue>(apiPath`/api/issues/${issueId}/release`, {});
+          const updated = await ctx.api.post<Issue>(
+            apiPath`/api/issues/${issueId}/release`,
+            {},
+          );
           printOutput(updated, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1330,7 +1656,10 @@ export function registerIssueCommands(program: Command): void {
 
 function parseCsv(value: string | undefined): string[] {
   if (!value) return [];
-  return value.split(",").map((v) => v.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
 }
 
 function addIssuePostDeleteMarkerCommand(
@@ -1348,9 +1677,15 @@ function addIssuePostDeleteMarkerCommand(
       .action(async (issueId: string, opts: BaseClientOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const result = method === "post"
-            ? await ctx.api.post(`${apiPath`/api/issues/${issueId}`}${pathSuffix}`, {})
-            : await ctx.api.delete(`${apiPath`/api/issues/${issueId}`}${pathSuffix}`);
+          const result =
+            method === "post"
+              ? await ctx.api.post(
+                  `${apiPath`/api/issues/${issueId}`}${pathSuffix}`,
+                  {},
+                )
+              : await ctx.api.delete(
+                  `${apiPath`/api/issues/${issueId}`}${pathSuffix}`,
+                );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1399,11 +1734,21 @@ function buildApiUrl(apiBase: string, path: string): string {
 async function uploadAttachment(
   apiBase: string,
   apiKey: string | undefined,
-  input: { companyId: string; issueId: string; filePath: string; commentId?: string; runId?: string },
+  input: {
+    companyId: string;
+    issueId: string;
+    filePath: string;
+    commentId?: string;
+    runId?: string;
+  },
 ): Promise<unknown> {
   const bytes = await readFile(input.filePath);
   const form = new FormData();
-  form.set("file", new Blob([bytes], { type: inferContentTypeFromPath(input.filePath) }), input.filePath.split(/[\\/]/).pop() ?? "attachment");
+  form.set(
+    "file",
+    new Blob([bytes], { type: inferContentTypeFromPath(input.filePath) }),
+    input.filePath.split(/[\\/]/).pop() ?? "attachment",
+  );
   if (input.commentId) form.set("issueCommentId", input.commentId);
   // This multipart upload uses a hand-rolled fetch rather than TaskcoreApiClient,
   // so it must forward the agent run-id header itself — otherwise an
@@ -1412,11 +1757,17 @@ async function uploadAttachment(
   const headers: Record<string, string> = {};
   if (apiKey) headers.authorization = `Bearer ${apiKey}`;
   if (input.runId) headers["x-taskcore-run-id"] = input.runId;
-  const response = await fetch(buildApiUrl(apiBase, apiPath`/api/companies/${input.companyId}/issues/${input.issueId}/attachments`), {
-    method: "POST",
-    headers,
-    body: form,
-  });
+  const response = await fetch(
+    buildApiUrl(
+      apiBase,
+      apiPath`/api/companies/${input.companyId}/issues/${input.issueId}/attachments`,
+    ),
+    {
+      method: "POST",
+      headers,
+      body: form,
+    },
+  );
   return parseFetchResponse(response);
 }
 
@@ -1425,9 +1776,12 @@ async function downloadAttachment(
   apiKey: string | undefined,
   attachmentId: string,
 ): Promise<Buffer> {
-  const response = await fetch(buildApiUrl(apiBase, apiPath`/api/attachments/${attachmentId}/content`), {
-    headers: apiKey ? { authorization: `Bearer ${apiKey}` } : undefined,
-  });
+  const response = await fetch(
+    buildApiUrl(apiBase, apiPath`/api/attachments/${attachmentId}/content`),
+    {
+      headers: apiKey ? { authorization: `Bearer ${apiKey}` } : undefined,
+    },
+  );
   if (!response.ok) {
     await parseFetchResponse(response);
   }
@@ -1439,7 +1793,10 @@ async function parseFetchResponse(response: Response): Promise<unknown> {
   const parsed = text.trim() ? safeJson(text) : null;
   if (!response.ok) {
     const message =
-      typeof parsed === "object" && parsed !== null && "error" in parsed && typeof parsed.error === "string"
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "error" in parsed &&
+      typeof parsed.error === "string"
         ? parsed.error
         : `Request failed with status ${response.status}`;
     throw new Error(`API error ${response.status}: ${message}`);

@@ -82,19 +82,25 @@ Hypothetical registry diff:
 Add focused test coverage:
 
 ```ts
-expect(listBuiltInAgentDefinitions().map((definition) => definition.key).sort()).toEqual([
-  "briefs",
-  "digest",
-  "learning",
-]);
+expect(
+  listBuiltInAgentDefinitions()
+    .map((definition) => definition.key)
+    .sort(),
+).toEqual(["briefs", "digest", "learning"]);
 ```
 
 If a background job needs the agent:
 
 ```ts
-const { agent, warning } = await builtInAgentService(db).requireBuiltInAgent(companyId, "digest");
+const { agent, warning } = await builtInAgentService(db).requireBuiltInAgent(
+  companyId,
+  "digest",
+);
 if (warning) {
-  logger.info({ warning }, "Skipping digest work because built-in agent is paused");
+  logger.info(
+    { warning },
+    "Skipping digest work because built-in agent is paused",
+  );
   return;
 }
 

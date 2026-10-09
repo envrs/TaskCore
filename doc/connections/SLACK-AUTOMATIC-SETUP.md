@@ -116,7 +116,6 @@ onto white, so this export has an opaque background before upload. Normal
 Taskcore avatars retain transparency. Existing Slack apps need an icon re-upload
 to adopt the new background; changing Taskcore does not replace their saved icon.
 
-
 ## Deployment
 
 Automatic setup requires a canonical public HTTPS board origin and a public HTTPS
@@ -145,20 +144,20 @@ the browser cannot supply a manifest, scopes, or callback destination.
 
 ## Recovery and invariants
 
-| Saved state | Operator action |
-| --- | --- |
-| Invalid/expired configuration token | Generate a new configuration token and retry. Draft details are preserved. |
-| Creation uncertain after timeout/restart | Inspect Slack app settings. Recover an existing app manually on this draft. Start another creation only after explicitly confirming that no app exists. |
-| App saved; event configuration pending after failure/restart | Enter an app configuration access token and select Retry app configuration. The same saved app and canonical manifest are reused; installation is blocked until this update succeeds. |
-| App created; installation declined/pending | Install the saved app again. No configuration token is needed. |
-| Revoked bot token or uninstalled app | Start fresh installation authorization for the same saved app. Existing workspace, bot, and account bindings are preserved; consent started before revocation cannot restore the connection. |
-| Authorization expired or code exchange uncertain | Start fresh installation authorization. Used codes are never replayed. |
-| Credentials saved; connection check failed | Use Retry connecting. Taskcore reuses vaulted credentials. If Slack access changed or the token was revoked, use Authorize in Slack again for the same app. |
-| Wrong app/workspace/bot or missing scopes | Correct the installation of this app. Activation remains blocked. |
-| Avatar upload failed or interrupted | Continue setup with the saved app. Optionally upload the avatar from Settings later. The configuration token is not retained for retries. |
-| Existing or revoked personal account link conflicts | Manage account links in Access settings. Installation never overwrites someone else’s link or restores a revoked link. |
-| Welcome DM failed or interrupted | Continue setup and open Slack directly. A saved dispatch is never replayed after refresh, restart, or reauthorization. |
-| Removed connection | Pending state and app-registration secrets are invalidated. Remove the customer's app separately through its Slack management link if desired. |
+| Saved state                                                  | Operator action                                                                                                                                                                              |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invalid/expired configuration token                          | Generate a new configuration token and retry. Draft details are preserved.                                                                                                                   |
+| Creation uncertain after timeout/restart                     | Inspect Slack app settings. Recover an existing app manually on this draft. Start another creation only after explicitly confirming that no app exists.                                      |
+| App saved; event configuration pending after failure/restart | Enter an app configuration access token and select Retry app configuration. The same saved app and canonical manifest are reused; installation is blocked until this update succeeds.        |
+| App created; installation declined/pending                   | Install the saved app again. No configuration token is needed.                                                                                                                               |
+| Revoked bot token or uninstalled app                         | Start fresh installation authorization for the same saved app. Existing workspace, bot, and account bindings are preserved; consent started before revocation cannot restore the connection. |
+| Authorization expired or code exchange uncertain             | Start fresh installation authorization. Used codes are never replayed.                                                                                                                       |
+| Credentials saved; connection check failed                   | Use Retry connecting. Taskcore reuses vaulted credentials. If Slack access changed or the token was revoked, use Authorize in Slack again for the same app.                                  |
+| Wrong app/workspace/bot or missing scopes                    | Correct the installation of this app. Activation remains blocked.                                                                                                                            |
+| Avatar upload failed or interrupted                          | Continue setup with the saved app. Optionally upload the avatar from Settings later. The configuration token is not retained for retries.                                                    |
+| Existing or revoked personal account link conflicts          | Manage account links in Access settings. Installation never overwrites someone else’s link or restores a revoked link.                                                                       |
+| Welcome DM failed or interrupted                             | Continue setup and open Slack directly. A saved dispatch is never replayed after refresh, restart, or reauthorization.                                                                       |
+| Removed connection                                           | Pending state and app-registration secrets are invalidated. Remove the customer's app separately through its Slack management link if desired.                                               |
 
 App details are immutable after creation dispatch, including when the outcome is
 uncertain. The endpoint's existing credential lease serializes creation,

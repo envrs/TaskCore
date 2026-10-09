@@ -13,11 +13,11 @@
  * JSON and diff text fetched from the GitHub API and queries the npm registry
  * with scope-validated names. It never executes PR code.
  */
-import { fileURLToPath } from 'node:url';
-import { ghFetch } from './get-bot-token.mjs';
-import { resolveBaseRef } from './check-pr-dependencies.mjs';
+import { fileURLToPath } from "node:url";
+import { ghFetch } from "./get-bot-token.mjs";
+import { resolveBaseRef } from "./check-pr-dependencies.mjs";
 
-const MANIFEST_PATH = 'scripts/release-package-manifest.json';
+const MANIFEST_PATH = "scripts/release-package-manifest.json";
 
 // Manifest content comes from the PR head (fork-controlled), so only names
 // matching our scope are ever looked up on the registry.
@@ -31,8 +31,11 @@ function buildContentsPath(repo, filename, ref) {
 
 async function fetchManifestEntries(fetchFromGitHub, token, repo, ref) {
   try {
-    const res = await fetchFromGitHub(buildContentsPath(repo, MANIFEST_PATH, ref), token);
-    const parsed = JSON.parse(Buffer.from(res.content, 'base64').toString());
+    const res = await fetchFromGitHub(
+      buildContentsPath(repo, MANIFEST_PATH, ref),
+      token,
+    );
+    const parsed = JSON.parse(Buffer.from(res.content, "base64").toString());
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return []; // manifest missing or unreadable on this ref
@@ -40,9 +43,12 @@ async function fetchManifestEntries(fetchFromGitHub, token, repo, ref) {
 }
 
 export async function fetchRegistryPackageExists(packageName) {
-  const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(packageName)}`, {
-    method: 'HEAD',
-  });
+  const res = await fetch(
+    `https://registry.npmjs.org/${encodeURIComponent(packageName)}`,
+    {
+      method: "HEAD",
+    },
+  );
   if (res.status === 404) return false;
   if (res.ok) return true;
   throw new Error(`npm registry returned ${res.status} for ${packageName}`);
@@ -54,11 +60,13 @@ export async function fetchRegistryPackageExists(packageName) {
 export function addedWorkspaceDependencyNames(files) {
   const names = new Set();
   for (const file of files) {
-    if (!file.filename.endsWith('package.json')) continue;
-    if (file.filename.includes('node_modules')) continue;
-    for (const line of (file.patch ?? '').split('\n')) {
-      if (!line.startsWith('+')) continue;
-      const match = line.match(/"(@taskcore\/[a-z0-9][a-z0-9._-]*)"\s*:\s*"workspace:/);
+    if (!file.filename.endsWith("package.json")) continue;
+    if (file.filename.includes("node_modules")) continue;
+    for (const line of (file.patch ?? "").split("\n")) {
+      if (!line.startsWith("+")) continue;
+      const match = line.match(
+        /"(@taskcore\/[a-z0-9][a-z0-9._-]*)"\s*:\s*"workspace:/,
+      );
       if (match) names.add(match[1]);
     }
   }
@@ -68,14 +76,14 @@ export function addedWorkspaceDependencyNames(files) {
 function buildNotice({ name, reason }) {
   const bootstrap =
     `a **maintainer** must run \`pnpm run release:bootstrap-package -- ${name} --publish\` ` +
-    'and configure npm trusted publishing (see `doc/PUBLISHING.md`)';
+    "and configure npm trusted publishing (see `doc/PUBLISHING.md`)";
 
-  if (reason === 'depended') {
+  if (reason === "depended") {
     return (
       `🚀 New release package \`${name}\` is not on npm yet, and published packages in this PR ` +
       `depend on it, so the \`policy\` check will stay red: ${bootstrap}, then set its manifest ` +
       `entry to \`"publishFromCi": true\` — or drop the workspace dependency. ` +
-      'No contributor action is needed for the bootstrap itself.'
+      "No contributor action is needed for the bootstrap itself."
     );
   }
 
@@ -85,11 +93,21 @@ function buildNotice({ name, reason }) {
   );
 }
 
-export async function checkReleaseBootstrap(files, token, repo, prNumber, baseRef, deps = {}) {
-  const { fetchFromGitHub = ghFetch, registryPackageExists = fetchRegistryPackageExists } = deps;
+export async function checkReleaseBootstrap(
+  files,
+  token,
+  repo,
+  prNumber,
+  baseRef,
+  deps = {},
+) {
+  const {
+    fetchFromGitHub = ghFetch,
+    registryPackageExists = fetchRegistryPackageExists,
+  } = deps;
 
   const manifestChanged = files.some(
-    f => f.filename === MANIFEST_PATH && f.status !== 'removed'
+    (f) => f.filename === MANIFEST_PATH && f.status !== "removed",
   );
   // A PR can hit the manifest edge validator without touching the manifest:
   // adding a workspace:* dependency on an existing unpublished
@@ -97,23 +115,35 @@ export async function checkReleaseBootstrap(files, token, repo, prNumber, baseRe
   // dependencies first and keep the zero-API fast path only for PRs that
   // neither touch the manifest nor add a workspace dependency.
   const dependedOn = addedWorkspaceDependencyNames(files);
-  if (!manifestChanged && dependedOn.size === 0) return { passed: true, informational: [] };
+  if (!manifestChanged && dependedOn.size === 0)
+    return { passed: true, informational: [] };
 
-  const resolvedBaseRef = await resolveBaseRef(fetchFromGitHub, token, repo, prNumber, baseRef);
+  const resolvedBaseRef = await resolveBaseRef(
+    fetchFromGitHub,
+    token,
+    repo,
+    prNumber,
+    baseRef,
+  );
   const [baseEntries, headEntries] = await Promise.all([
     fetchManifestEntries(fetchFromGitHub, token, repo, resolvedBaseRef),
-    fetchManifestEntries(fetchFromGitHub, token, repo, `refs/pull/${prNumber}/head`),
+    fetchManifestEntries(
+      fetchFromGitHub,
+      token,
+      repo,
+      `refs/pull/${prNumber}/head`,
+    ),
   ]);
 
   const basePublishFromCiByName = new Map(
     baseEntries
-      .filter(e => e && typeof e.name === 'string')
-      .map(e => [e.name, e.publishFromCi === true])
+      .filter((e) => e && typeof e.name === "string")
+      .map((e) => [e.name, e.publishFromCi === true]),
   );
 
   const candidates = [];
   for (const entry of headEntries) {
-    if (!entry || typeof entry.name !== 'string') continue;
+    if (!entry || typeof entry.name !== "string") continue;
     const name = entry.name;
     if (!SCOPE_RE.test(name)) continue;
 
@@ -123,11 +153,11 @@ export async function checkReleaseBootstrap(files, token, repo, prNumber, baseRe
     if (enabled && baseEnabled !== true) {
       // Newly release-enabled (added as true, or flipped false -> true): the
       // bootstrap gate itself will fail if the name is missing from npm.
-      candidates.push({ name, reason: 'enabled' });
+      candidates.push({ name, reason: "enabled" });
     } else if (!enabled && dependedOn.has(name)) {
       // Not release-enabled but this PR makes published packages depend on
       // it: the manifest edge validator will fail if it stays unpublished.
-      candidates.push({ name, reason: 'depended' });
+      candidates.push({ name, reason: "depended" });
     }
   }
 
@@ -146,6 +176,8 @@ export async function checkReleaseBootstrap(files, token, repo, prNumber, baseRe
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  console.error('check-pr-release-bootstrap.mjs is a library used by run-quality-gates.mjs');
+  console.error(
+    "check-pr-release-bootstrap.mjs is a library used by run-quality-gates.mjs",
+  );
   process.exit(1);
 }

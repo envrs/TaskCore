@@ -3,7 +3,10 @@ import { createUsageCheckpointLog } from "@taskcore/adapter-utils/usage-checkpoi
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { AdapterExecutionContext, AdapterExecutionResult } from "@taskcore/adapter-utils";
+import type {
+  AdapterExecutionContext,
+  AdapterExecutionResult,
+} from "@taskcore/adapter-utils";
 import type { RunProcessResult } from "@taskcore/adapter-utils/server-utils";
 import {
   adapterExecutionTargetIsRemote,
@@ -65,7 +68,8 @@ import {
 import {
   claudeModelUsageTotals,
   claudeModelReceipts,
-  parseClaudeStreamJson, createClaudeStreamParser,
+  parseClaudeStreamJson,
+  createClaudeStreamParser,
   describeClaudeFailure,
   detectClaudeLoginRequired,
   extractClaudeRetryNotBefore,
@@ -95,7 +99,10 @@ import {
 import { resolveClaudeDesiredSkillNames } from "./skills.js";
 import { isBedrockModelId } from "./models.js";
 import { prepareClaudePromptBundle } from "./prompt-cache.js";
-import { buildClaudeExecutionPermissionArgs, claudeSandboxPermissionEnv } from "./permissions.js";
+import {
+  buildClaudeExecutionPermissionArgs,
+  claudeSandboxPermissionEnv,
+} from "./permissions.js";
 import { resolveClaudeModel, SANDBOX_INSTALL_COMMAND } from "../index.js";
 import {
   createClaudeAcpExecutor,
@@ -136,8 +143,12 @@ export function claudeSessionCwdMatchesExecutionTarget(input: {
   effectiveExecutionCwd: string;
   executionTargetIsRemote: boolean;
 }): boolean {
-  if (input.executionTargetIsRemote || input.runtimeSessionCwd.length === 0) return true;
-  return path.resolve(input.runtimeSessionCwd) === path.resolve(input.effectiveExecutionCwd);
+  if (input.executionTargetIsRemote || input.runtimeSessionCwd.length === 0)
+    return true;
+  return (
+    path.resolve(input.runtimeSessionCwd) ===
+    path.resolve(input.effectiveExecutionCwd)
+  );
 }
 
 function buildLoginResult(input: {
@@ -154,7 +165,10 @@ function buildLoginResult(input: {
   };
 }
 
-function hasNonEmptyEnvValue(env: Record<string, string>, key: string): boolean {
+function hasNonEmptyEnvValue(
+  env: Record<string, string>,
+  key: string,
+): boolean {
   const raw = env[key];
   return typeof raw === "string" && raw.trim().length > 0;
 }
@@ -167,13 +181,25 @@ function isBedrockAuth(env: Record<string, string>): boolean {
   );
 }
 
-function resolveClaudeBillingType(env: Record<string, string>): "api" | "subscription" | "metered_api" {
+function resolveClaudeBillingType(
+  env: Record<string, string>,
+): "api" | "subscription" | "metered_api" {
   if (isBedrockAuth(env)) return "metered_api";
   return hasNonEmptyEnvValue(env, "ANTHROPIC_API_KEY") ? "api" : "subscription";
 }
 
-async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<ClaudeRuntimeConfig> {
-  const { runId, agent, config, context, runtimeCommandSpec, executionTarget, authToken } = input;
+async function buildClaudeRuntimeConfig(
+  input: ClaudeExecutionInput,
+): Promise<ClaudeRuntimeConfig> {
+  const {
+    runId,
+    agent,
+    config,
+    context,
+    runtimeCommandSpec,
+    executionTarget,
+    authToken,
+  } = input;
   const onLog = input.onLog ?? (async () => {});
 
   const command = asString(config.command, "claude");
@@ -185,30 +211,43 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
   const workspaceRepoUrl = asString(workspaceContext.repoUrl, "") || null;
   const workspaceRepoRef = asString(workspaceContext.repoRef, "") || null;
   const workspaceBranch = asString(workspaceContext.branchName, "") || null;
-  const workspaceWorktreePath = asString(workspaceContext.worktreePath, "") || null;
+  const workspaceWorktreePath =
+    asString(workspaceContext.worktreePath, "") || null;
   const agentHome = asString(workspaceContext.agentHome, "") || null;
   const workspaceHints = Array.isArray(context.taskcoreWorkspaces)
     ? context.taskcoreWorkspaces.filter(
-        (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
+        (value): value is Record<string, unknown> =>
+          typeof value === "object" && value !== null,
       )
     : [];
-  const runtimeServiceIntents = Array.isArray(context.taskcoreRuntimeServiceIntents)
+  const runtimeServiceIntents = Array.isArray(
+    context.taskcoreRuntimeServiceIntents,
+  )
     ? context.taskcoreRuntimeServiceIntents.filter(
-        (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
+        (value): value is Record<string, unknown> =>
+          typeof value === "object" && value !== null,
       )
     : [];
   const runtimeServices = Array.isArray(context.taskcoreRuntimeServices)
     ? context.taskcoreRuntimeServices.filter(
-        (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
+        (value): value is Record<string, unknown> =>
+          typeof value === "object" && value !== null,
       )
     : [];
   const runtimePrimaryUrl = asString(context.taskcoreRuntimePrimaryUrl, "");
   const configuredCwd = asString(config.cwd, "");
-  const useConfiguredInsteadOfAgentHome = workspaceSource === "agent_home" && configuredCwd.length > 0;
-  const effectiveWorkspaceCwd = useConfiguredInsteadOfAgentHome ? "" : workspaceCwd;
+  const useConfiguredInsteadOfAgentHome =
+    workspaceSource === "agent_home" && configuredCwd.length > 0;
+  const effectiveWorkspaceCwd = useConfiguredInsteadOfAgentHome
+    ? ""
+    : workspaceCwd;
   const cwd = effectiveWorkspaceCwd || configuredCwd || process.cwd();
-  const executionTargetIsRemote = adapterExecutionTargetIsRemote(executionTarget);
-  let effectiveExecutionCwd = adapterExecutionTargetRemoteCwd(executionTarget, cwd);
+  const executionTargetIsRemote =
+    adapterExecutionTargetIsRemote(executionTarget);
+  let effectiveExecutionCwd = adapterExecutionTargetRemoteCwd(
+    executionTarget,
+    cwd,
+  );
   const shapedWorkspaceEnv = shapeTaskcoreWorkspaceEnvForExecution({
     workspaceCwd: effectiveWorkspaceCwd,
     workspaceWorktreePath,
@@ -219,31 +258,47 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
   await ensureAbsoluteDirectory(cwd, { createIfMissing: true });
 
   const envConfig = parseObject(config.env);
-  const env: Record<string, string> = { ...buildTaskcoreEnv(agent, input.agentIdentity) };
+  const env: Record<string, string> = {
+    ...buildTaskcoreEnv(agent, input.agentIdentity),
+  };
   env.TASKCORE_RUN_ID = runId;
 
   const wakeTaskId =
-    (typeof context.taskId === "string" && context.taskId.trim().length > 0 && context.taskId.trim()) ||
-    (typeof context.issueId === "string" && context.issueId.trim().length > 0 && context.issueId.trim()) ||
+    (typeof context.taskId === "string" &&
+      context.taskId.trim().length > 0 &&
+      context.taskId.trim()) ||
+    (typeof context.issueId === "string" &&
+      context.issueId.trim().length > 0 &&
+      context.issueId.trim()) ||
     null;
   const wakeReason =
-    typeof context.wakeReason === "string" && context.wakeReason.trim().length > 0
+    typeof context.wakeReason === "string" &&
+    context.wakeReason.trim().length > 0
       ? context.wakeReason.trim()
       : null;
   const wakeCommentId =
-    (typeof context.wakeCommentId === "string" && context.wakeCommentId.trim().length > 0 && context.wakeCommentId.trim()) ||
-    (typeof context.commentId === "string" && context.commentId.trim().length > 0 && context.commentId.trim()) ||
+    (typeof context.wakeCommentId === "string" &&
+      context.wakeCommentId.trim().length > 0 &&
+      context.wakeCommentId.trim()) ||
+    (typeof context.commentId === "string" &&
+      context.commentId.trim().length > 0 &&
+      context.commentId.trim()) ||
     null;
   const approvalId =
-    typeof context.approvalId === "string" && context.approvalId.trim().length > 0
+    typeof context.approvalId === "string" &&
+    context.approvalId.trim().length > 0
       ? context.approvalId.trim()
       : null;
   const approvalStatus =
-    typeof context.approvalStatus === "string" && context.approvalStatus.trim().length > 0
+    typeof context.approvalStatus === "string" &&
+    context.approvalStatus.trim().length > 0
       ? context.approvalStatus.trim()
       : null;
   const linkedIssueIds = Array.isArray(context.issueIds)
-    ? context.issueIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    ? context.issueIds.filter(
+        (value): value is string =>
+          typeof value === "string" && value.trim().length > 0,
+      )
     : [];
   const issueWorkMode = readTaskcoreIssueWorkModeFromContext(context);
 
@@ -280,10 +335,14 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
     agentHome,
   });
   if (shapedWorkspaceEnv.workspaceHints.length > 0) {
-    env.TASKCORE_WORKSPACES_JSON = JSON.stringify(shapedWorkspaceEnv.workspaceHints);
+    env.TASKCORE_WORKSPACES_JSON = JSON.stringify(
+      shapedWorkspaceEnv.workspaceHints,
+    );
   }
   if (runtimeServiceIntents.length > 0) {
-    env.TASKCORE_RUNTIME_SERVICE_INTENTS_JSON = JSON.stringify(runtimeServiceIntents);
+    env.TASKCORE_RUNTIME_SERVICE_INTENTS_JSON = JSON.stringify(
+      runtimeServiceIntents,
+    );
   }
   if (runtimeServices.length > 0) {
     env.TASKCORE_RUNTIME_SERVICES_JSON = JSON.stringify(runtimeServices);
@@ -332,11 +391,22 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
     graceSec,
     onLog,
   });
-  await ensureAdapterExecutionTargetCommandResolvable(command, executionTarget, cwd, runtimeEnv, {
-    installCommand: SANDBOX_INSTALL_COMMAND,
-    timeoutSec,
-  });
-  const resolvedCommand = await resolveAdapterExecutionTargetCommandForLogs(command, executionTarget, cwd, runtimeEnv);
+  await ensureAdapterExecutionTargetCommandResolvable(
+    command,
+    executionTarget,
+    cwd,
+    runtimeEnv,
+    {
+      installCommand: SANDBOX_INSTALL_COMMAND,
+      timeoutSec,
+    },
+  );
+  const resolvedCommand = await resolveAdapterExecutionTargetCommandForLogs(
+    command,
+    executionTarget,
+    cwd,
+    runtimeEnv,
+  );
   const loggedEnv = buildInvocationEnvForLogs(env, {
     runtimeEnv,
     includeRuntimeKeys: ["HOME", "CLAUDE_CONFIG_DIR"],
@@ -381,13 +451,19 @@ export async function runClaudeLogin(input: {
     authToken: input.authToken,
   });
 
-  const proc = await runAdapterExecutionTargetProcess(input.runId, null, runtime.command, ["login"], {
-    cwd: runtime.cwd,
-    env: runtime.env,
-    timeoutSec: runtime.timeoutSec,
-    graceSec: runtime.graceSec,
-    onLog,
-  });
+  const proc = await runAdapterExecutionTargetProcess(
+    input.runId,
+    null,
+    runtime.command,
+    ["login"],
+    {
+      cwd: runtime.cwd,
+      env: runtime.env,
+      timeoutSec: runtime.timeoutSec,
+      graceSec: runtime.graceSec,
+      onLog,
+    },
+  );
 
   const loginMeta = detectClaudeLoginRequired({
     parsed: null,
@@ -401,7 +477,9 @@ export async function runClaudeLogin(input: {
   });
 }
 
-export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult> {
+export async function execute(
+  ctx: AdapterExecutionContext,
+): Promise<AdapterExecutionResult> {
   const providerStop = createProviderStoppedBoundary(ctx.onProviderStopped);
   const engineSelection = await resolveClaudeExecutionEngineForRun(ctx);
   if (engineSelection.unavailableReason) {
@@ -420,13 +498,26 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     return executeClaudeAcp(ctx);
   }
 
-  const { runId, agent, runtime, config, context, onLog, onMeta, onSpawn, authToken } = ctx;
+  const {
+    runId,
+    agent,
+    runtime,
+    config,
+    context,
+    onLog,
+    onMeta,
+    onSpawn,
+    authToken,
+  } = ctx;
   const executionTarget = readAdapterExecutionTarget({
     executionTarget: ctx.executionTarget,
     legacyRemoteExecution: ctx.executionTransport?.remoteExecution,
   });
-  const executionTargetIsRemote = adapterExecutionTargetIsRemote(executionTarget);
-  const executionTargetIsSandbox = executionTarget?.kind === "remote" && executionTarget.transport === "sandbox";
+  const executionTargetIsRemote =
+    adapterExecutionTargetIsRemote(executionTarget);
+  const executionTargetIsSandbox =
+    executionTarget?.kind === "remote" &&
+    executionTarget.transport === "sandbox";
 
   const promptTemplate = asString(
     config.promptTemplate,
@@ -437,27 +528,38 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const effort = asString(config.effort, "");
   const chrome = asBoolean(config.chrome, false);
   const maxTurns = asNumber(config.maxTurnsPerRun, 0);
-  const dangerouslySkipPermissions = asBoolean(config.dangerouslySkipPermissions, true);
+  const dangerouslySkipPermissions = asBoolean(
+    config.dangerouslySkipPermissions,
+    true,
+  );
   const configEnv = parseObject(config.env);
   const workspaceContext = parseObject(context.taskcoreWorkspace);
   const workspaceCwd = asString(workspaceContext.cwd, "");
   const workspaceSource = asString(workspaceContext.source, "");
   const workspaceStrategy = asString(workspaceContext.strategy, "");
   const workspaceBranch = asString(workspaceContext.branchName, "") || null;
-  const workspaceWorktreePath = asString(workspaceContext.worktreePath, "") || null;
+  const workspaceWorktreePath =
+    asString(workspaceContext.worktreePath, "") || null;
   const agentHome = asString(workspaceContext.agentHome, "") || null;
   const workspaceHints = Array.isArray(context.taskcoreWorkspaces)
     ? context.taskcoreWorkspaces.filter(
-        (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
+        (value): value is Record<string, unknown> =>
+          typeof value === "object" && value !== null,
       )
     : [];
   const configuredCwd = asString(config.cwd, "");
-  const useConfiguredInsteadOfAgentHome = workspaceSource === "agent_home" && configuredCwd.length > 0;
-  const effectiveWorkspaceCwd = useConfiguredInsteadOfAgentHome ? "" : workspaceCwd;
+  const useConfiguredInsteadOfAgentHome =
+    workspaceSource === "agent_home" && configuredCwd.length > 0;
+  const effectiveWorkspaceCwd = useConfiguredInsteadOfAgentHome
+    ? ""
+    : workspaceCwd;
   const hasExplicitClaudeConfigDir =
-    typeof configEnv.CLAUDE_CONFIG_DIR === "string" && configEnv.CLAUDE_CONFIG_DIR.trim().length > 0;
+    typeof configEnv.CLAUDE_CONFIG_DIR === "string" &&
+    configEnv.CLAUDE_CONFIG_DIR.trim().length > 0;
   const instructionsFilePath = asString(config.instructionsFilePath, "").trim();
-  const instructionsFileDir = instructionsFilePath ? `${path.dirname(instructionsFilePath)}/` : "";
+  const instructionsFileDir = instructionsFilePath
+    ? `${path.dirname(instructionsFilePath)}/`
+    : "";
   const runtimeConfig = await buildClaudeRuntimeConfig({
     agentIdentity: ctx.agentIdentity,
     runId,
@@ -482,9 +584,18 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     graceSec,
     extraArgs,
   } = runtimeConfig;
-  Object.assign(env, claudeSandboxPermissionEnv({ dangerouslySkipPermissions, targetIsSandbox: executionTargetIsSandbox }));
+  Object.assign(
+    env,
+    claudeSandboxPermissionEnv({
+      dangerouslySkipPermissions,
+      targetIsSandbox: executionTargetIsSandbox,
+    }),
+  );
   let loggedEnv = initialLoggedEnv;
-  let effectiveExecutionCwd = adapterExecutionTargetRemoteCwd(executionTarget, cwd);
+  let effectiveExecutionCwd = adapterExecutionTargetRemoteCwd(
+    executionTarget,
+    cwd,
+  );
   const terminalResultCleanupGraceMs = Math.max(
     0,
     asNumber(config.terminalResultCleanupGraceMs, 5_000),
@@ -497,22 +608,31 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const modelEnv = executionTargetIsRemote ? env : effectiveEnv;
   const model = resolveClaudeModel(config.model, modelEnv);
   const billingType = resolveClaudeBillingType(effectiveEnv);
-  const claudeSkillEntries = await readTaskcoreRuntimeSkillEntries(config, __moduleDir);
-  const desiredSkillNames = new Set(resolveClaudeDesiredSkillNames(config, claudeSkillEntries));
+  const claudeSkillEntries = await readTaskcoreRuntimeSkillEntries(
+    config,
+    __moduleDir,
+  );
+  const desiredSkillNames = new Set(
+    resolveClaudeDesiredSkillNames(config, claudeSkillEntries),
+  );
   // Keep per-run working-copy paths out of the content-addressed system prompt.
   // Resumed sessions retain that prompt, so refresh the location on every turn.
   let combinedInstructionsContents: string | null = null;
   let instructionsPathDirective = "";
   if (instructionsFilePath) {
     try {
-      const instructionsContent = await fs.readFile(instructionsFilePath, "utf-8");
+      const instructionsContent = await fs.readFile(
+        instructionsFilePath,
+        "utf-8",
+      );
       instructionsPathDirective =
         `Agent instructions for this run were loaded from ${instructionsFilePath}. ` +
         `Resolve any relative file references from ${instructionsFileDir}. ` +
         `This base directory is authoritative for sibling instruction files such as ` +
         `./HEARTBEAT.md, ./SOUL.md, and ./TOOLS.md; do not resolve those from the parent agent directory. ` +
         `This location replaces any instruction file location from earlier turns.`;
-      combinedInstructionsContents = instructionsContent +
+      combinedInstructionsContents =
+        instructionsContent +
         "\nUse the agent instruction file location supplied in the current run prompt to resolve relative file references.";
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
@@ -540,8 +660,12 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   // Missing-source entries must never reach the bundle: their path does not
   // exist, so the bundle hasher would throw and fail the whole run over one
   // broken skill. Log each one instead so the cause lands in the run output.
-  const desiredSkillEntries = claudeSkillEntries.filter((entry) => desiredSkillNames.has(entry.key));
-  const mountableSkillEntries = desiredSkillEntries.filter((entry) => !isTaskcoreSkillSourceMissing(entry));
+  const desiredSkillEntries = claudeSkillEntries.filter((entry) =>
+    desiredSkillNames.has(entry.key),
+  );
+  const mountableSkillEntries = desiredSkillEntries.filter(
+    (entry) => !isTaskcoreSkillSourceMissing(entry),
+  );
   for (const entry of desiredSkillEntries) {
     if (!isTaskcoreSkillSourceMissing(entry)) continue;
     await onLog(
@@ -557,7 +681,11 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   });
   const runtimeMcpServers = ctx.runtimeMcp?.getServers() ?? [];
   const runtimeMcpIdentity = JSON.stringify(
-    runtimeMcpServers.map(({ name, url, connectionId }) => ({ name, url, connectionId })),
+    runtimeMcpServers.map(({ name, url, connectionId }) => ({
+      name,
+      url,
+      connectionId,
+    })),
   );
   const claudeRuntimeStateDir = resolveManagedClaudeRuntimeStateDir(
     process.env,
@@ -570,9 +698,13 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     servers: runtimeMcpServers,
   });
   const localMcpConfigDir = path.dirname(localMcpConfigPath);
-  const sharedClaudeConfigDir = config.managedAiConnection ? asString(configEnv.CLAUDE_CONFIG_DIR, "") : resolveSharedClaudeConfigDir(process.env);
+  const sharedClaudeConfigDir = config.managedAiConnection
+    ? asString(configEnv.CLAUDE_CONFIG_DIR, "")
+    : resolveSharedClaudeConfigDir(process.env);
   const networkScope = parseLocalProcessNetworkScope(config.networkScope);
-  const filesystemScope = parseLocalProcessFilesystemScope(config.filesystemScope);
+  const filesystemScope = parseLocalProcessFilesystemScope(
+    config.filesystemScope,
+  );
   const localProcessSandbox: LocalProcessSandboxOptions | null =
     (filesystemScope || networkScope) && !executionTargetIsRemote
       ? {
@@ -580,24 +712,40 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           filesystemScope,
           managedPaths: [
             { path: sharedClaudeConfigDir, access: "rw" },
-            { path: path.join(path.dirname(sharedClaudeConfigDir), ".claude.json"), access: "rw" },
+            {
+              path: path.join(
+                path.dirname(sharedClaudeConfigDir),
+                ".claude.json",
+              ),
+              access: "rw",
+            },
             { path: promptBundle.addDir, access: "ro" },
             { path: localMcpConfigDir, access: "ro" },
           ],
-          extraPaths: parseLocalProcessSandboxExtraPaths(config.filesystemExtraPaths),
+          extraPaths: parseLocalProcessSandboxExtraPaths(
+            config.filesystemExtraPaths,
+          ),
           homeDir: filesystemScope ? path.dirname(sharedClaudeConfigDir) : null,
           networkScope,
-          networkAllowlist: parseLocalProcessNetworkAllowlist(config.networkAllowlist),
+          networkAllowlist: parseLocalProcessNetworkAllowlist(
+            config.networkAllowlist,
+          ),
           networkTrustedUrls: [
             env.TASKCORE_API_URL,
             ...runtimeMcpServers.map((server) => server.url),
-          ].filter((value): value is string => typeof value === "string" && value.length > 0),
+          ].filter(
+            (value): value is string =>
+              typeof value === "string" && value.length > 0,
+          ),
           command: asString(config.filesystemSandboxCommand, "bwrap"),
         }
       : null;
   if (localProcessSandbox) {
     if (filesystemScope) env.CLAUDE_CONFIG_DIR = sharedClaudeConfigDir;
-    const scopes = [filesystemScope ? "workspace filesystem" : null, networkScope ? `${networkScope} network` : null]
+    const scopes = [
+      filesystemScope ? "workspace filesystem" : null,
+      networkScope ? `${networkScope} network` : null,
+    ]
       .filter(Boolean)
       .join(" and ");
     await onLog(
@@ -610,7 +758,9 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     adapterExecutionTargetUsesManagedHome(executionTarget) &&
     (!hasExplicitClaudeConfigDir || Boolean(config.managedAiConnection));
   const claudeConfigSeedDir = useManagedRemoteClaudeConfig
-    ? config.managedAiConnection ? sharedClaudeConfigDir : await prepareClaudeConfigSeed(process.env, onLog, agent.companyId)
+    ? config.managedAiConnection
+      ? sharedClaudeConfigDir
+      : await prepareClaudeConfigSeed(process.env, onLog, agent.companyId)
     : null;
   const preparedExecutionTargetRuntime = executionTargetIsRemote
     ? await (async () => {
@@ -640,11 +790,13 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
               followSymlinks: true,
             },
             ...(claudeConfigSeedDir
-              ? [{
-                key: "config-seed",
-                localDir: claudeConfigSeedDir,
-                followSymlinks: true,
-              }]
+              ? [
+                  {
+                    key: "config-seed",
+                    localDir: claudeConfigSeedDir,
+                    followSymlinks: true,
+                  },
+                ]
               : []),
           ],
         });
@@ -653,7 +805,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   if (preparedExecutionTargetRuntime?.workspaceRemoteDir) {
     effectiveExecutionCwd = preparedExecutionTargetRuntime.workspaceRemoteDir;
   }
-  const runtimeExecutionTarget = overrideAdapterExecutionTargetRemoteCwd(executionTarget, effectiveExecutionCwd);
+  const runtimeExecutionTarget = overrideAdapterExecutionTargetRemoteCwd(
+    executionTarget,
+    effectiveExecutionCwd,
+  );
   refreshTaskcoreWorkspaceEnvForExecution({
     env,
     envConfig: configEnv,
@@ -671,35 +826,53 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     executionCwd: effectiveExecutionCwd,
   });
   const restoreRemoteWorkspace = preparedExecutionTargetRuntime
-    ? () => preparedExecutionTargetRuntime.restoreWorkspace((line) => onLog("stdout", line))
+    ? () =>
+        preparedExecutionTargetRuntime.restoreWorkspace((line) =>
+          onLog("stdout", line),
+        )
     : null;
   const effectivePromptBundleAddDir = executionTargetIsRemote
-    ? preparedExecutionTargetRuntime?.assetDirs.skills ??
-      path.posix.join(effectiveExecutionCwd, ".taskcore-runtime", "claude", "skills")
+    ? (preparedExecutionTargetRuntime?.assetDirs.skills ??
+      path.posix.join(
+        effectiveExecutionCwd,
+        ".taskcore-runtime",
+        "claude",
+        "skills",
+      ))
     : promptBundle.addDir;
   const effectiveInstructionsFilePath = promptBundle.instructionsFilePath
     ? executionTargetIsRemote
-      ? path.posix.join(effectivePromptBundleAddDir, path.basename(promptBundle.instructionsFilePath))
+      ? path.posix.join(
+          effectivePromptBundleAddDir,
+          path.basename(promptBundle.instructionsFilePath),
+        )
       : promptBundle.instructionsFilePath
     : undefined;
   const effectiveMcpConfigPath = executionTargetIsRemote
     ? path.posix.join(
         preparedExecutionTargetRuntime?.assetDirs["mcp-config"] ??
-          path.posix.join(effectiveExecutionCwd, ".taskcore-runtime", "claude", "mcp-config"),
+          path.posix.join(
+            effectiveExecutionCwd,
+            ".taskcore-runtime",
+            "claude",
+            "mcp-config",
+          ),
         path.basename(localMcpConfigPath),
       )
     : localMcpConfigPath;
   const remoteClaudeRuntimeRoot = executionTargetIsRemote
-    ? preparedExecutionTargetRuntime?.runtimeRootDir ??
-      path.posix.join(effectiveExecutionCwd, ".taskcore-runtime", "claude")
+    ? (preparedExecutionTargetRuntime?.runtimeRootDir ??
+      path.posix.join(effectiveExecutionCwd, ".taskcore-runtime", "claude"))
     : null;
-  const remoteClaudeConfigSeedDir = claudeConfigSeedDir && remoteClaudeRuntimeRoot
-    ? preparedExecutionTargetRuntime?.assetDirs["config-seed"] ??
-      path.posix.join(remoteClaudeRuntimeRoot, "config-seed")
-    : null;
-  const remoteClaudeConfigDir = useManagedRemoteClaudeConfig && remoteClaudeRuntimeRoot
-    ? path.posix.join(remoteClaudeRuntimeRoot, "config")
-    : null;
+  const remoteClaudeConfigSeedDir =
+    claudeConfigSeedDir && remoteClaudeRuntimeRoot
+      ? (preparedExecutionTargetRuntime?.assetDirs["config-seed"] ??
+        path.posix.join(remoteClaudeRuntimeRoot, "config-seed"))
+      : null;
+  const remoteClaudeConfigDir =
+    useManagedRemoteClaudeConfig && remoteClaudeRuntimeRoot
+      ? path.posix.join(remoteClaudeRuntimeRoot, "config")
+      : null;
   if (remoteClaudeConfigDir && remoteClaudeConfigSeedDir) {
     env.CLAUDE_CONFIG_DIR = remoteClaudeConfigDir;
     loggedEnv.CLAUDE_CONFIG_DIR = remoteClaudeConfigDir;
@@ -721,13 +894,24 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       },
     });
   }
-  let taskcoreBridge: Awaited<ReturnType<typeof startAdapterExecutionTargetTaskcoreBridge>> = null;
-  if (executionTargetIsRemote && adapterExecutionTargetUsesTaskcoreBridge(runtimeExecutionTarget)) {
+  let taskcoreBridge: Awaited<
+    ReturnType<typeof startAdapterExecutionTargetTaskcoreBridge>
+  > = null;
+  if (
+    executionTargetIsRemote &&
+    adapterExecutionTargetUsesTaskcoreBridge(runtimeExecutionTarget)
+  ) {
     taskcoreBridge = await startAdapterExecutionTargetTaskcoreBridge({
       runId,
       target: runtimeExecutionTarget,
-      enableSandboxDuplexBridge: adapterExecutionTargetEnablesSandboxDuplexBridge(runtimeExecutionTarget),
-      duplexObservabilityRecorder: adapterExecutionTargetDuplexObservabilityRecorder(runtimeExecutionTarget),
+      enableSandboxDuplexBridge:
+        adapterExecutionTargetEnablesSandboxDuplexBridge(
+          runtimeExecutionTarget,
+        ),
+      duplexObservabilityRecorder:
+        adapterExecutionTargetDuplexObservabilityRecorder(
+          runtimeExecutionTarget,
+        ),
       runtimeRootDir: preparedExecutionTargetRuntime?.runtimeRootDir,
       adapterKey: "claude",
       timeoutSec,
@@ -768,24 +952,42 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   }
 
   const runtimeSessionParams = parseObject(runtime.sessionParams);
-  const runtimeSessionId = asString(runtimeSessionParams.sessionId, runtime.sessionId ?? "");
+  const runtimeSessionId = asString(
+    runtimeSessionParams.sessionId,
+    runtime.sessionId ?? "",
+  );
   const runtimeSessionCwd = asString(runtimeSessionParams.cwd, "");
-  const runtimeRemoteExecution = parseObject(runtimeSessionParams.remoteExecution);
-  const runtimePromptBundleKey = asString(runtimeSessionParams.promptBundleKey, "");
-  const runtimeMcpServerIdentity = asString(runtimeSessionParams.mcpServerIdentity, "");
+  const runtimeRemoteExecution = parseObject(
+    runtimeSessionParams.remoteExecution,
+  );
+  const runtimePromptBundleKey = asString(
+    runtimeSessionParams.promptBundleKey,
+    "",
+  );
+  const runtimeMcpServerIdentity = asString(
+    runtimeSessionParams.mcpServerIdentity,
+    "",
+  );
   const hasMatchingPromptBundle =
-    runtimePromptBundleKey.length === 0 || runtimePromptBundleKey === promptBundle.bundleKey;
+    runtimePromptBundleKey.length === 0 ||
+    runtimePromptBundleKey === promptBundle.bundleKey;
   const hasMatchingMcpServers =
     runtimeMcpServerIdentity.length === 0
       ? runtimeMcpServers.length === 0
       : runtimeMcpServerIdentity === runtimeMcpIdentity;
-  const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(runtimeSessionId);
+  const isValidUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      runtimeSessionId,
+    );
   const hasMatchingSessionCwd = claudeSessionCwdMatchesExecutionTarget({
     runtimeSessionCwd,
     effectiveExecutionCwd,
     executionTargetIsRemote,
   });
-  const hasMatchingExecutionTarget = adapterExecutionTargetSessionMatches(runtimeRemoteExecution, runtimeExecutionTarget);
+  const hasMatchingExecutionTarget = adapterExecutionTargetSessionMatches(
+    runtimeRemoteExecution,
+    runtimeExecutionTarget,
+  );
   const canResumeSession =
     runtimeSessionId.length > 0 &&
     isValidUuid &&
@@ -801,11 +1003,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       `[taskcore] Claude session "${runtimeSessionId}" is not a valid UUID and will not be passed to --resume.\n`,
     );
   }
-  if (
-    runtimeSessionId &&
-    isValidUuid &&
-    !hasMatchingExecutionTarget
-  ) {
+  if (runtimeSessionId && isValidUuid && !hasMatchingExecutionTarget) {
     await onLog(
       "stdout",
       `[taskcore] Claude session "${runtimeSessionId}" does not match the current execution target and will not be resumed in "${effectiveExecutionCwd}". Starting a fresh session.\n`,
@@ -821,7 +1019,11 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       `[taskcore] Claude session "${runtimeSessionId}" was saved for cwd "${runtimeSessionCwd}" and will not be resumed in "${effectiveExecutionCwd}".\n`,
     );
   }
-  if (runtimeSessionId && runtimePromptBundleKey.length > 0 && runtimePromptBundleKey !== promptBundle.bundleKey) {
+  if (
+    runtimeSessionId &&
+    runtimePromptBundleKey.length > 0 &&
+    runtimePromptBundleKey !== promptBundle.bundleKey
+  ) {
     await onLog(
       "stdout",
       `[taskcore] Claude session "${runtimeSessionId}" was saved for prompt bundle "${runtimePromptBundleKey}" and will not be resumed with "${promptBundle.bundleKey}".\n`,
@@ -854,11 +1056,13 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     const args = ["--print", "--output-format", "stream-json", "--verbose"];
     if (config.managedAiConnection) args.push("--setting-sources", "user");
     if (resumeSessionId) args.push("--resume", resumeSessionId);
-    args.push(...buildClaudeExecutionPermissionArgs({
-      dangerouslySkipPermissions,
-      targetIsRemote: executionTargetIsRemote,
-      localProcessUid: process.getuid?.() ?? null,
-    }));
+    args.push(
+      ...buildClaudeExecutionPermissionArgs({
+        dangerouslySkipPermissions,
+        targetIsRemote: executionTargetIsRemote,
+        localProcessUid: process.getuid?.() ?? null,
+      }),
+    );
     if (chrome) args.push("--chrome");
     // For Bedrock: only pass --model when the ID is a Bedrock-native identifier
     // (e.g. "us.anthropic.*" or ARN). Anthropic-style IDs like "claude-opus-4-6" are invalid
@@ -899,24 +1103,37 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   };
 
   const runAttempt = async (resumeSessionId: string | null) => {
-    await hydrateFreshSessionHandoff(ctx, { resumedSession: Boolean(resumeSessionId) });
+    await hydrateFreshSessionHandoff(ctx, {
+      resumedSession: Boolean(resumeSessionId),
+    });
     const renderedBootstrapPrompt =
       !resumeSessionId && bootstrapPromptTemplate.trim().length > 0
         ? renderTemplate(bootstrapPromptTemplate, templateData).trim()
         : "";
-    const { taskContextNote, wakePrompt } = selectTaskcorePromptSections(context, {
-      resumedSession: Boolean(resumeSessionId),
-      includeCommunicationGuidance: false,
-    });
-    const shouldUseResumeDeltaPrompt = Boolean(resumeSessionId) && wakePrompt.length > 0;
-    const renderedPrompt = shouldUseResumeDeltaPrompt || isTaskcoreRecoveryWakePayload(context.taskcoreWake)
-      ? ""
-      : renderTemplate(promptTemplate, templateData);
-    const sessionHandoffNote = asString(context.taskcoreSessionHandoffMarkdown, "").trim();
+    const { taskContextNote, wakePrompt } = selectTaskcorePromptSections(
+      context,
+      {
+        resumedSession: Boolean(resumeSessionId),
+        includeCommunicationGuidance: false,
+      },
+    );
+    const shouldUseResumeDeltaPrompt =
+      Boolean(resumeSessionId) && wakePrompt.length > 0;
+    const renderedPrompt =
+      shouldUseResumeDeltaPrompt ||
+      isTaskcoreRecoveryWakePayload(context.taskcoreWake)
+        ? ""
+        : renderTemplate(promptTemplate, templateData);
+    const sessionHandoffNote = asString(
+      context.taskcoreSessionHandoffMarkdown,
+      "",
+    ).trim();
     const prompt = joinPromptSections([
       instructionsPathDirective,
       renderedBootstrapPrompt,
-      selectInitialCommunicationGuidance(context, { resumedSession: Boolean(resumeSessionId) }),
+      selectInitialCommunicationGuidance(context, {
+        resumedSession: Boolean(resumeSessionId),
+      }),
       wakePrompt,
       sessionHandoffNote,
       taskContextNote,
@@ -930,11 +1147,15 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       taskContextChars: taskContextNote.length,
       heartbeatPromptChars: renderedPrompt.length,
     };
-    const attemptInstructionsFilePath = resumeSessionId ? undefined : effectiveInstructionsFilePath;
+    const attemptInstructionsFilePath = resumeSessionId
+      ? undefined
+      : effectiveInstructionsFilePath;
     const args = buildClaudeArgs(resumeSessionId, attemptInstructionsFilePath);
     const commandNotes: string[] = [];
     if (!resumeSessionId) {
-      commandNotes.push(`Using stable Claude prompt bundle ${promptBundle.bundleKey}.`);
+      commandNotes.push(
+        `Using stable Claude prompt bundle ${promptBundle.bundleKey}.`,
+      );
     }
     if (dangerouslySkipPermissions && executionTargetIsRemote) {
       commandNotes.push(
@@ -966,31 +1187,52 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     }
 
     const consumeAccounting = createClaudeStreamParser();
-    const accountingLog = createUsageCheckpointLog(onLog, ctx.onUsage, stdout => {
-      const parsed = consumeAccounting(stdout);
-      return { usage: parsed.usage ?? undefined, usageBasis: "per_run", costUsd: parsed.costUsd,
-        provider: "anthropic", biller: isBedrockAuth(effectiveEnv) ? "aws_bedrock" : "anthropic",
-        billingType, model: Object.keys(parseObject(parsed.resultJson?.modelUsage)).length > 1 ? "mixed" : parsed.model || model,
-          usageByModel: claudeModelReceipts(parsed.resultJson?.modelUsage), complete: parsed.resultJson !== null };
-    });
-    const proc = await runAdapterExecutionTargetProcess(runId, runtimeExecutionTarget, command, args, {
-      onProcessStopped: providerStop.beginInvocation(),
-      cwd,
-      env,
-      stdin: prompt,
-      timeoutSec,
-      graceSec,
-      onSpawn,
-      onRuntimeProgress: ctx.onRuntimeProgress,
-      onLog: accountingLog,
-      runLogTail: taskcoreBridge?.runLogTail,
-      settleRunDisposition: taskcoreBridge?.settleRunDisposition,
-      terminalResultCleanup: {
-        graceMs: terminalResultCleanupGraceMs,
-        hasTerminalResult: ({ stdout }) => parseClaudeStreamJson(stdout).resultJson !== null,
+    const accountingLog = createUsageCheckpointLog(
+      onLog,
+      ctx.onUsage,
+      (stdout) => {
+        const parsed = consumeAccounting(stdout);
+        return {
+          usage: parsed.usage ?? undefined,
+          usageBasis: "per_run",
+          costUsd: parsed.costUsd,
+          provider: "anthropic",
+          biller: isBedrockAuth(effectiveEnv) ? "aws_bedrock" : "anthropic",
+          billingType,
+          model:
+            Object.keys(parseObject(parsed.resultJson?.modelUsage)).length > 1
+              ? "mixed"
+              : parsed.model || model,
+          usageByModel: claudeModelReceipts(parsed.resultJson?.modelUsage),
+          complete: parsed.resultJson !== null,
+        };
       },
-      localProcessSandbox,
-    });
+    );
+    const proc = await runAdapterExecutionTargetProcess(
+      runId,
+      runtimeExecutionTarget,
+      command,
+      args,
+      {
+        onProcessStopped: providerStop.beginInvocation(),
+        cwd,
+        env,
+        stdin: prompt,
+        timeoutSec,
+        graceSec,
+        onSpawn,
+        onRuntimeProgress: ctx.onRuntimeProgress,
+        onLog: accountingLog,
+        runLogTail: taskcoreBridge?.runLogTail,
+        settleRunDisposition: taskcoreBridge?.settleRunDisposition,
+        terminalResultCleanup: {
+          graceMs: terminalResultCleanupGraceMs,
+          hasTerminalResult: ({ stdout }) =>
+            parseClaudeStreamJson(stdout).resultJson !== null,
+        },
+        localProcessSandbox,
+      },
+    );
     await accountingLog.flush();
 
     const parsedStream = parseClaudeStreamJson(proc.stdout);
@@ -1004,7 +1246,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       parsedStream: ReturnType<typeof parseClaudeStreamJson>;
       parsed: Record<string, unknown> | null;
     },
-    opts: { fallbackSessionId: string | null; clearSessionOnMissingSession?: boolean },
+    opts: {
+      fallbackSessionId: string | null;
+      clearSessionOnMissingSession?: boolean;
+    },
   ): AdapterExecutionResult => {
     const { proc, parsedStream, parsed } = attempt;
     const loginMeta = detectClaudeLoginRequired({
@@ -1029,7 +1274,11 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         usageBasis: "per_run",
         provider: "anthropic",
         biller: isBedrockAuth(effectiveEnv) ? "aws_bedrock" : "anthropic",
-        model: Object.keys(parseObject(parsedStream.resultJson?.modelUsage)).length > 1 ? "mixed" : parsedStream.model || model,
+        model:
+          Object.keys(parseObject(parsedStream.resultJson?.modelUsage)).length >
+          1
+            ? "mixed"
+            : parsedStream.model || model,
         usageByModel: claudeModelReceipts(parsedStream.resultJson?.modelUsage),
         billingType,
         costUsd: parsedStream.costUsd,
@@ -1061,35 +1310,40 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
           stderr: proc.stderr,
           errorMessage: fallbackErrorMessage,
         });
-      const transientRetryNotBefore = providerQuota || transientUpstream
-        ? extractClaudeRetryNotBefore({
-            parsed: null,
-            stdout: proc.stdout,
-            stderr: proc.stderr,
-            errorMessage: fallbackErrorMessage,
-          })
-        : null;
+      const transientRetryNotBefore =
+        providerQuota || transientUpstream
+          ? extractClaudeRetryNotBefore({
+              parsed: null,
+              stdout: proc.stdout,
+              stderr: proc.stderr,
+              errorMessage: fallbackErrorMessage,
+            })
+          : null;
       const errorCode = proc.errorCode
-        // Forward the transport-level error code from the run-disposition seam
-        // first, even on the unparsed path. A lost duplex control channel
-        // surfaces the typed `duplex_channel_lost` code before any provider
-        // classification, so the CLI lane and the ACP lane report it alike.
-        ? proc.errorCode
+        ? // Forward the transport-level error code from the run-disposition seam
+          // first, even on the unparsed path. A lost duplex control channel
+          // surfaces the typed `duplex_channel_lost` code before any provider
+          // classification, so the CLI lane and the ACP lane report it alike.
+          proc.errorCode
         : loginMeta.requiresLogin
-        ? "claude_auth_required"
-        : isClaudeModelNotFoundError({
-          parsed: null,
-          stdout: proc.stdout,
-          stderr: proc.stderr,
-          errorMessage: fallbackErrorMessage,
-        })
-        ? "model_not_found"
-        : providerQuota
+          ? "claude_auth_required"
+          : isClaudeModelNotFoundError({
+                parsed: null,
+                stdout: proc.stdout,
+                stderr: proc.stderr,
+                errorMessage: fallbackErrorMessage,
+              })
+            ? "model_not_found"
+            : providerQuota
+              ? "provider_quota"
+              : transientUpstream
+                ? "claude_transient_upstream"
+                : null;
+      const errorFamily = providerQuota
         ? "provider_quota"
         : transientUpstream
-        ? "claude_transient_upstream"
-        : null;
-      const errorFamily = providerQuota ? "provider_quota" : transientUpstream ? "transient_upstream" : null;
+          ? "transient_upstream"
+          : null;
       return {
         exitCode: proc.exitCode,
         signal: proc.signal,
@@ -1099,14 +1353,20 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         usageBasis: "per_run",
         provider: "anthropic",
         biller: isBedrockAuth(effectiveEnv) ? "aws_bedrock" : "anthropic",
-        model: Object.keys(parseObject(parsedStream.resultJson?.modelUsage)).length > 1 ? "mixed" : parsedStream.model || model,
+        model:
+          Object.keys(parseObject(parsedStream.resultJson?.modelUsage)).length >
+          1
+            ? "mixed"
+            : parsedStream.model || model,
         usageByModel: claudeModelReceipts(parsedStream.resultJson?.modelUsage),
         billingType,
         costUsd: parsedStream.costUsd,
         errorMessage: fallbackErrorMessage,
         errorCode,
         errorFamily,
-        retryNotBefore: transientRetryNotBefore ? transientRetryNotBefore.toISOString() : null,
+        retryNotBefore: transientRetryNotBefore
+          ? transientRetryNotBefore.toISOString()
+          : null,
         errorMeta,
         resultJson: {
           stdout: proc.stdout,
@@ -1119,15 +1379,22 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
             ? { transientRetryNotBefore: transientRetryNotBefore.toISOString() }
             : {}),
           ...(providerQuota && transientRetryNotBefore
-            ? { providerQuotaRetryNotBefore: transientRetryNotBefore.toISOString() }
+            ? {
+                providerQuotaRetryNotBefore:
+                  transientRetryNotBefore.toISOString(),
+              }
             : {}),
-          ...(proc.terminalResultCleanup ? { unmanagedBackgroundTask: proc.terminalResultCleanup } : {}),
+          ...(proc.terminalResultCleanup
+            ? { unmanagedBackgroundTask: proc.terminalResultCleanup }
+            : {}),
         },
         clearSession: Boolean(opts.clearSessionOnMissingSession),
       };
     }
 
-    const fallbackModelUsageTotals = parsedStream.usage ? null : claudeModelUsageTotals(parsed.modelUsage);
+    const fallbackModelUsageTotals = parsedStream.usage
+      ? null
+      : claudeModelUsageTotals(parsed.modelUsage);
     const usage =
       parsedStream.usage ??
       fallbackModelUsageTotals ??
@@ -1142,14 +1409,16 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     const usageBasis = parsedStream.usage
       ? parsedStream.usageBasis
       : fallbackModelUsageTotals
-      ? ("per_run" as const)
-      : null;
+        ? ("per_run" as const)
+        : null;
 
     const rawResolvedSessionId =
       parsedStream.sessionId ??
-      (asString(parsed.session_id, opts.fallbackSessionId ?? "") || opts.fallbackSessionId);
+      (asString(parsed.session_id, opts.fallbackSessionId ?? "") ||
+        opts.fallbackSessionId);
     const clearSessionForMaxTurns = isClaudeMaxTurnsResult(parsed);
-    const poisonedPreviousMessageId = isClaudePoisonedPreviousMessageIdError(parsed);
+    const poisonedPreviousMessageId =
+      isClaudePoisonedPreviousMessageIdError(parsed);
     // Fable 5 policy refusals exit cleanly (exitCode=0, is_error=false), so this
     // is intentionally independent of `failed` — otherwise a refusal looks like a
     // successful run to Taskcore and the heartbeat stalls silently. See RY-604.
@@ -1157,7 +1426,8 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     const parsedIsError = asBoolean(parsed.is_error, false);
     const parsedSubtype = asString(parsed.subtype, "").trim().toLowerCase();
     const parsedSucceeded = parsedSubtype === "success" && !parsedIsError;
-    const failed = !parsedSucceeded && ((proc.exitCode ?? 0) !== 0 || parsedIsError);
+    const failed =
+      !parsedSucceeded && ((proc.exitCode ?? 0) !== 0 || parsedIsError);
     // Validate-before-persist guard: never persist a sessionId whose transcript
     // is known-poisoned. The Claude CLI keeps an on-disk JSONL keyed by the
     // session id; if the last entry contains a non-`msg_`-prefixed
@@ -1166,25 +1436,30 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     // sessionId is dropped server-side. Drop here so resolveNextSessionState
     // calls clearTaskSessions on the next heartbeat. See RED-978 / RED-976.
     const shouldDropSessionForPoison = poisonedPreviousMessageId;
-    const resolvedSessionId = shouldDropSessionForPoison ? null : rawResolvedSessionId;
+    const resolvedSessionId = shouldDropSessionForPoison
+      ? null
+      : rawResolvedSessionId;
     const resolvedSessionParams = resolvedSessionId
       ? ({
-        sessionId: resolvedSessionId,
-        cwd,
-        promptBundleKey: promptBundle.bundleKey,
-        mcpServerIdentity: runtimeMcpIdentity,
-        ...(executionTargetIsRemote
-          ? {
-              remoteExecution: adapterExecutionTargetSessionIdentity(runtimeExecutionTarget),
-            }
-          : {}),
-        ...(workspaceId ? { workspaceId } : {}),
-        ...(workspaceRepoUrl ? { repoUrl: workspaceRepoUrl } : {}),
-        ...(workspaceRepoRef ? { repoRef: workspaceRepoRef } : {}),
-      } as Record<string, unknown>)
+          sessionId: resolvedSessionId,
+          cwd,
+          promptBundleKey: promptBundle.bundleKey,
+          mcpServerIdentity: runtimeMcpIdentity,
+          ...(executionTargetIsRemote
+            ? {
+                remoteExecution: adapterExecutionTargetSessionIdentity(
+                  runtimeExecutionTarget,
+                ),
+              }
+            : {}),
+          ...(workspaceId ? { workspaceId } : {}),
+          ...(workspaceRepoUrl ? { repoUrl: workspaceRepoUrl } : {}),
+          ...(workspaceRepoRef ? { repoRef: workspaceRepoRef } : {}),
+        } as Record<string, unknown>)
       : null;
     const errorMessage = failed
-      ? describeClaudeFailure(parsed) ?? `Claude exited with code ${proc.exitCode ?? -1}`
+      ? (describeClaudeFailure(parsed) ??
+        `Claude exited with code ${proc.exitCode ?? -1}`)
       : null;
     const providerQuota =
       failed &&
@@ -1209,67 +1484,86 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         stderr: proc.stderr,
         errorMessage,
       });
-    const transientRetryNotBefore = providerQuota || transientUpstream
-      ? extractClaudeRetryNotBefore({
-          parsed,
-          stdout: proc.stdout,
-          stderr: proc.stderr,
-          errorMessage,
-        })
-      : null;
+    const transientRetryNotBefore =
+      providerQuota || transientUpstream
+        ? extractClaudeRetryNotBefore({
+            parsed,
+            stdout: proc.stdout,
+            stderr: proc.stderr,
+            errorMessage,
+          })
+        : null;
     const resolvedErrorCode = proc.errorCode
-      // Forward the transport-level error code from the run-disposition seam
-      // first. A lost duplex control channel surfaces the typed
-      // `duplex_channel_lost` code before any provider classification.
-      ? proc.errorCode
+      ? // Forward the transport-level error code from the run-disposition seam
+        // first. A lost duplex control channel surfaces the typed
+        // `duplex_channel_lost` code before any provider classification.
+        proc.errorCode
       : loginMeta.requiresLogin
-      ? "claude_auth_required"
-      : failed && isClaudeModelNotFoundError({
-        parsed,
-        stdout: proc.stdout,
-        stderr: proc.stderr,
-        errorMessage,
-      })
-      ? "model_not_found"
-      : failed && clearSessionForMaxTurns
-      ? "max_turns_exhausted"
-      : failed && poisonedPreviousMessageId
-      ? "claude_poisoned_previous_message_id"
-      : providerQuota
-      ? "provider_quota"
-      : transientUpstream
-      ? "claude_transient_upstream"
-      : claudeRefusal
-      ? "claude_refusal"
-      : null;
+        ? "claude_auth_required"
+        : failed &&
+            isClaudeModelNotFoundError({
+              parsed,
+              stdout: proc.stdout,
+              stderr: proc.stderr,
+              errorMessage,
+            })
+          ? "model_not_found"
+          : failed && clearSessionForMaxTurns
+            ? "max_turns_exhausted"
+            : failed && poisonedPreviousMessageId
+              ? "claude_poisoned_previous_message_id"
+              : providerQuota
+                ? "provider_quota"
+                : transientUpstream
+                  ? "claude_transient_upstream"
+                  : claudeRefusal
+                    ? "claude_refusal"
+                    : null;
     const errorFamily = providerQuota
       ? "provider_quota"
       : transientUpstream
-      ? "transient_upstream"
-      : claudeRefusal
-      ? "model_refusal"
-      : null;
+        ? "transient_upstream"
+        : claudeRefusal
+          ? "model_refusal"
+          : null;
     const mergedResultJson: Record<string, unknown> = {
       ...parsed,
-      ...(failed && clearSessionForMaxTurns ? { stopReason: "max_turns_exhausted" } : {}),
-      ...(failed && poisonedPreviousMessageId ? { stopReason: "claude_poisoned_previous_message_id" } : {}),
-      ...(claudeRefusal ? { stopReason: "refusal", errorFamily: "model_refusal" } : {}),
+      ...(failed && clearSessionForMaxTurns
+        ? { stopReason: "max_turns_exhausted" }
+        : {}),
+      ...(failed && poisonedPreviousMessageId
+        ? { stopReason: "claude_poisoned_previous_message_id" }
+        : {}),
+      ...(claudeRefusal
+        ? { stopReason: "refusal", errorFamily: "model_refusal" }
+        : {}),
       ...(errorFamily ? { errorFamily } : {}),
-      ...(transientRetryNotBefore ? { retryNotBefore: transientRetryNotBefore.toISOString() } : {}),
-      ...(transientRetryNotBefore ? { transientRetryNotBefore: transientRetryNotBefore.toISOString() } : {}),
-      ...(providerQuota && transientRetryNotBefore ? { providerQuotaRetryNotBefore: transientRetryNotBefore.toISOString() } : {}),
-      ...(proc.terminalResultCleanup ? { unmanagedBackgroundTask: proc.terminalResultCleanup } : {}),
+      ...(transientRetryNotBefore
+        ? { retryNotBefore: transientRetryNotBefore.toISOString() }
+        : {}),
+      ...(transientRetryNotBefore
+        ? { transientRetryNotBefore: transientRetryNotBefore.toISOString() }
+        : {}),
+      ...(providerQuota && transientRetryNotBefore
+        ? { providerQuotaRetryNotBefore: transientRetryNotBefore.toISOString() }
+        : {}),
+      ...(proc.terminalResultCleanup
+        ? { unmanagedBackgroundTask: proc.terminalResultCleanup }
+        : {}),
     };
 
     return {
       exitCode: proc.exitCode,
       signal: proc.signal,
       timedOut: false,
-      usageComplete: parsedStream.resultJson !== null || parsed.type === "result",
+      usageComplete:
+        parsedStream.resultJson !== null || parsed.type === "result",
       errorMessage,
       errorCode: resolvedErrorCode,
       errorFamily,
-      retryNotBefore: transientRetryNotBefore ? transientRetryNotBefore.toISOString() : null,
+      retryNotBefore: transientRetryNotBefore
+        ? transientRetryNotBefore.toISOString()
+        : null,
       errorMeta,
       usage,
       usageByModel: claudeModelReceipts(parsed.modelUsage),
@@ -1279,7 +1573,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       sessionDisplayId: resolvedSessionId,
       provider: "anthropic",
       biller: isBedrockAuth(effectiveEnv) ? "aws_bedrock" : "anthropic",
-      model: Object.keys(parseObject(parsed.modelUsage)).length > 1 ? "mixed" : parsedStream.model || asString(parsed.model, model),
+      model:
+        Object.keys(parseObject(parsed.modelUsage)).length > 1
+          ? "mixed"
+          : parsedStream.model || asString(parsed.model, model),
       billingType,
       costUsd: parsedStream.costUsd,
       resultJson: mergedResultJson,
@@ -1295,9 +1592,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   };
 
   try {
-    const minimumCliVersion = passesConfiguredModel && claudeCommandLooksLike(command, "claude")
-      ? minimumClaudeCliVersionForModel(model)
-      : null;
+    const minimumCliVersion =
+      passesConfiguredModel && claudeCommandLooksLike(command, "claude")
+        ? minimumClaudeCliVersionForModel(model)
+        : null;
     if (minimumCliVersion) {
       const detectedCliVersion = await readClaudeCommandVersion({
         runId,
@@ -1347,10 +1645,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         ? isClaudeUnknownSessionError(initial.parsed)
           ? "unknown"
           : isClaudePoisonedPreviousMessageIdError(initial.parsed)
-          ? "poisoned"
-          : isClaudeImageProcessingError(initial.parsed)
-          ? "image"
-          : null
+            ? "poisoned"
+            : isClaudeImageProcessingError(initial.parsed)
+              ? "image"
+              : null
         : null;
 
     if (sessionErrorKind !== null) {
@@ -1358,8 +1656,8 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         sessionErrorKind === "poisoned"
           ? "returned a poisoned message-id"
           : sessionErrorKind === "image"
-          ? "contains an unprocessable image"
-          : "is unavailable";
+            ? "contains an unprocessable image"
+            : "is unavailable";
       await onLog(
         "stdout",
         `[taskcore] Claude resume session "${sessionId}" ${reason}; retrying with a fresh session.\n`,
@@ -1368,7 +1666,12 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         const claudeConfigDir = resolveSharedClaudeConfigDir(effectiveEnv);
         // Mirrors Claude Code's project-dir encoding: non-alphanumeric chars become "-"; existing hyphens pass through.
         const encodedCwd = effectiveExecutionCwd.replace(/[^a-zA-Z0-9-]/g, "-");
-        const poisonedJsonlPath = path.join(claudeConfigDir, "projects", encodedCwd, `${sessionId}.jsonl`);
+        const poisonedJsonlPath = path.join(
+          claudeConfigDir,
+          "projects",
+          encodedCwd,
+          `${sessionId}.jsonl`,
+        );
         let unlinked = false;
         try {
           await fs.unlink(poisonedJsonlPath);
@@ -1378,17 +1681,25 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         }
         if (unlinked) {
           try {
-            await onLog("stdout", `[taskcore] Removed poisoned session file: ${poisonedJsonlPath}\n`);
+            await onLog(
+              "stdout",
+              `[taskcore] Removed poisoned session file: ${poisonedJsonlPath}\n`,
+            );
           } catch {
             // log stream may be closed; the unlink already succeeded
           }
         }
       }
       const retry = await runAttempt(null);
-      return toAdapterResult(retry, { fallbackSessionId: null, clearSessionOnMissingSession: true });
+      return toAdapterResult(retry, {
+        fallbackSessionId: null,
+        clearSessionOnMissingSession: true,
+      });
     }
 
-    return toAdapterResult(initial, { fallbackSessionId: runtimeSessionId || runtime.sessionId });
+    return toAdapterResult(initial, {
+      fallbackSessionId: runtimeSessionId || runtime.sessionId,
+    });
   } finally {
     try {
       await providerStop.collectBeforeRestore();

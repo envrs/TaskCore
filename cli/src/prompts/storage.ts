@@ -1,6 +1,9 @@
 import * as p from "@clack/prompts";
 import type { StorageConfig } from "../config/schema.js";
-import { resolveDefaultStorageDir, resolveTaskcoreInstanceId } from "../config/home.js";
+import {
+  resolveDefaultStorageDir,
+  resolveTaskcoreInstanceId,
+} from "../config/home.js";
 
 function defaultStorageBaseDir(): string {
   return resolveDefaultStorageDir(resolveTaskcoreInstanceId());
@@ -22,7 +25,9 @@ export function defaultStorageConfig(): StorageConfig {
   };
 }
 
-export async function promptStorage(current?: StorageConfig): Promise<StorageConfig> {
+export async function promptStorage(
+  current?: StorageConfig,
+): Promise<StorageConfig> {
   const base = current ?? defaultStorageConfig();
 
   const provider = await p.select({
@@ -56,7 +61,8 @@ export async function promptStorage(current?: StorageConfig): Promise<StorageCon
       validate: (value) => {
         // Clack validates the raw input before applying defaultValue —
         // validate the value that will actually be submitted.
-        if ((value || baseDirDefault).trim().length === 0) return "Storage base directory is required";
+        if ((value || baseDirDefault).trim().length === 0)
+          return "Storage base directory is required";
       },
     });
 
@@ -81,7 +87,8 @@ export async function promptStorage(current?: StorageConfig): Promise<StorageCon
     defaultValue: bucketDefault,
     placeholder: "taskcore",
     validate: (value) => {
-      if ((value || bucketDefault).trim().length === 0) return "Bucket is required";
+      if ((value || bucketDefault).trim().length === 0)
+        return "Bucket is required";
     },
   });
 
@@ -95,7 +102,8 @@ export async function promptStorage(current?: StorageConfig): Promise<StorageCon
     defaultValue: regionDefault,
     placeholder: "us-east-1",
     validate: (value) => {
-      if ((value || regionDefault).trim().length === 0) return "Region is required";
+      if ((value || regionDefault).trim().length === 0)
+        return "Region is required";
     },
   });
 
@@ -148,4 +156,3 @@ export async function promptStorage(current?: StorageConfig): Promise<StorageCon
     },
   };
 }
-

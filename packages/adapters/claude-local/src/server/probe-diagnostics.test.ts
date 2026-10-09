@@ -8,7 +8,9 @@ import {
 
 describe("normalizeClaudeLoginUrl", () => {
   it("accepts an allowlisted https Claude host with no query or fragment", () => {
-    expect(normalizeClaudeLoginUrl("https://claude.ai/login")).toBe("https://claude.ai/login");
+    expect(normalizeClaudeLoginUrl("https://claude.ai/login")).toBe(
+      "https://claude.ai/login",
+    );
   });
 
   it("accepts an allowlisted Anthropic subdomain", () => {
@@ -18,11 +20,15 @@ describe("normalizeClaudeLoginUrl", () => {
   });
 
   it("rejects a URL with a query", () => {
-    expect(normalizeClaudeLoginUrl("https://claude.ai/login?token=secret")).toBeNull();
+    expect(
+      normalizeClaudeLoginUrl("https://claude.ai/login?token=secret"),
+    ).toBeNull();
   });
 
   it("rejects a URL with a fragment", () => {
-    expect(normalizeClaudeLoginUrl("https://claude.ai/login#access_token=secret")).toBeNull();
+    expect(
+      normalizeClaudeLoginUrl("https://claude.ai/login#access_token=secret"),
+    ).toBeNull();
   });
 
   it("rejects a non-https URL", () => {
@@ -30,16 +36,22 @@ describe("normalizeClaudeLoginUrl", () => {
   });
 
   it("rejects a non-allowlisted host", () => {
-    expect(normalizeClaudeLoginUrl("https://evil.example.com/claude-login")).toBeNull();
+    expect(
+      normalizeClaudeLoginUrl("https://evil.example.com/claude-login"),
+    ).toBeNull();
   });
 
   it("rejects a look-alike host that only ends with the brand word", () => {
-    expect(normalizeClaudeLoginUrl("https://claude.ai.evil.com/login")).toBeNull();
+    expect(
+      normalizeClaudeLoginUrl("https://claude.ai.evil.com/login"),
+    ).toBeNull();
     expect(normalizeClaudeLoginUrl("https://notclaude.ai/login")).toBeNull();
   });
 
   it("rejects a URL that embeds credentials or a port", () => {
-    expect(normalizeClaudeLoginUrl("https://user:pass@claude.ai/login")).toBeNull();
+    expect(
+      normalizeClaudeLoginUrl("https://user:pass@claude.ai/login"),
+    ).toBeNull();
     expect(normalizeClaudeLoginUrl("https://claude.ai:8443/login")).toBeNull();
   });
 
@@ -58,9 +70,11 @@ describe("buildClaudeLoginRequiredHint", () => {
   });
 
   it("falls back to the fixed hint for an unsafe URL", () => {
-    expect(buildClaudeLoginRequiredHint("https://evil.example.com/claude-login?leak=secret")).toBe(
-      "Run `claude login` in this environment, then retry the probe.",
-    );
+    expect(
+      buildClaudeLoginRequiredHint(
+        "https://evil.example.com/claude-login?leak=secret",
+      ),
+    ).toBe("Run `claude login` in this environment, then retry the probe.");
   });
 
   it("falls back to the fixed hint for a null URL", () => {
@@ -106,8 +120,12 @@ describe("logSandboxProbeDiagnostic", () => {
 
   it("drops a null or non-finite exit code", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    logSandboxProbeDiagnostic("probe failed", "nonzero_exit", { exitCode: null });
-    logSandboxProbeDiagnostic("probe failed", "nonzero_exit", { exitCode: Number.NaN });
+    logSandboxProbeDiagnostic("probe failed", "nonzero_exit", {
+      exitCode: null,
+    });
+    logSandboxProbeDiagnostic("probe failed", "nonzero_exit", {
+      exitCode: Number.NaN,
+    });
     for (const call of warnSpy.mock.calls) {
       expect(call[1]).toEqual({ classification: "nonzero_exit" });
     }
@@ -135,8 +153,12 @@ describe("logSandboxProbeDiagnostic", () => {
 
   it("drops an empty or non-string error class", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    logSandboxProbeDiagnostic("probe failed", "spawn_error", { errorClass: null });
-    logSandboxProbeDiagnostic("probe failed", "spawn_error", { errorClass: "***" });
+    logSandboxProbeDiagnostic("probe failed", "spawn_error", {
+      errorClass: null,
+    });
+    logSandboxProbeDiagnostic("probe failed", "spawn_error", {
+      errorClass: "***",
+    });
     for (const call of warnSpy.mock.calls) {
       expect(call[1]).toEqual({ classification: "spawn_error" });
     }

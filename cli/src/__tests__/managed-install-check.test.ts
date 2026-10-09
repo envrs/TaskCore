@@ -20,7 +20,9 @@ afterEach(() => {
 
 describe("managed install doctor checks", () => {
   it("passes for a consistent store, manifest, current link, shim, and PATH", () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-install-doctor-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-install-doctor-"),
+    );
     const paths = resolveInstallStorePaths({
       taskcoreHome: path.join(root, ".taskcore"),
       homeDir: root,
@@ -42,11 +44,15 @@ describe("managed install doctor checks", () => {
     writeManagedShim(paths);
     process.env.PATH = `${path.dirname(paths.shimPath)}${path.delimiter}${originalPath ?? ""}`;
 
-    expect(managedInstallChecks(paths).every((result) => result.status === "pass")).toBe(true);
+    expect(
+      managedInstallChecks(paths).every((result) => result.status === "pass"),
+    ).toBe(true);
   });
 
   it("fails when managed artifacts exist without a manifest", () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-install-doctor-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-install-doctor-"),
+    );
     const paths = resolveInstallStorePaths({
       taskcoreHome: path.join(root, ".taskcore"),
       homeDir: root,
@@ -55,12 +61,17 @@ describe("managed install doctor checks", () => {
     fs.writeFileSync(paths.markerPath, MANAGED_STORE_MARKER);
 
     expect(managedInstallChecks(paths)).toEqual([
-      expect.objectContaining({ name: "Managed install manifest", status: "fail" }),
+      expect.objectContaining({
+        name: "Managed install manifest",
+        status: "fail",
+      }),
     ]);
   });
 
   it("ignores the shared CLI directory when it only contains update notice state", () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-install-doctor-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-install-doctor-"),
+    );
     const paths = resolveInstallStorePaths({
       taskcoreHome: path.join(root, ".taskcore"),
       homeDir: root,
@@ -74,7 +85,9 @@ describe("managed install doctor checks", () => {
   });
 
   it("ignores an empty installs directory left by a harmless lock lifecycle", () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-install-doctor-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-install-doctor-"),
+    );
     const paths = resolveInstallStorePaths({
       taskcoreHome: path.join(root, ".taskcore"),
       homeDir: root,

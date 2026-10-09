@@ -191,7 +191,7 @@ from a short-lived candidate branch:
    (for example `candidate/beta-2026.811.0`)
 2. cherry-pick only the required fix commits onto it and push the branch
 3. dispatch `release.yml` with `channel: beta` and `candidate_branch:
-   candidate/beta-<target>`
+candidate/beta-<target>`
 4. selection validates the branch name, rejects heads that already shipped
    as a beta, records the cherry-picked commits in the job summary, and the
    head runs **full verification** before publishing (it never went through
@@ -279,11 +279,11 @@ The workflow:
 [`docker.yml`](../.github/workflows/docker.yml) publishes both the self-hosted
 image and the `-cloud` variant with the same lane mapping:
 
-| Build ref | Tags |
-| --- | --- |
-| `master` push | `:canary`, `:sha-<short>` |
-| `nightly/v*` tag | `:nightly`, `:sha-<short>` |
-| `beta/v*` tag | `:beta`, `:sha-<short>` |
+| Build ref         | Tags                                                  |
+| ----------------- | ----------------------------------------------------- |
+| `master` push     | `:canary`, `:sha-<short>`                             |
+| `nightly/v*` tag  | `:nightly`, `:sha-<short>`                            |
+| `beta/v*` tag     | `:beta`, `:sha-<short>`                               |
 | `v*` tag (stable) | `:latest`, `:YYYY.MDD.P`, `:YYYY.MDD`, `:sha-<short>` |
 
 Lane tags are pushed by release workflows using `GITHUB_TOKEN`, and GitHub

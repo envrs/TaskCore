@@ -24,12 +24,12 @@ quarantine, resource filters, installs, and audit continue to use Apps v2.
 
 Taskcore pins `@vercel/connect` to `0.6.1`.
 
-| Setting | Meaning |
-| --- | --- |
+| Setting                                | Meaning                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TASKCORE_VERCEL_CONNECT_ENABLED=true` | Enables the backend capability for controlled testing and existing connections. It does not currently expose a customer-facing setup entry. |
-| `VERCEL_OIDC_TOKEN` | Workload identity injected by Vercel and preferred when present. |
-| `TASKCORE_VERCEL_CONNECT_ACCESS_TOKEN` | BYO instance bootstrap authority for deployments without Vercel workload OIDC. |
-| `TASKCORE_INSTANCE_ID` | Included in derived pseudonymous user subjects when configured. |
+| `VERCEL_OIDC_TOKEN`                    | Workload identity injected by Vercel and preferred when present.                                                                            |
+| `TASKCORE_VERCEL_CONNECT_ACCESS_TOKEN` | BYO instance bootstrap authority for deployments without Vercel workload OIDC.                                                              |
+| `TASKCORE_INSTANCE_ID`                 | Included in derived pseudonymous user subjects when configured.                                                                             |
 
 The feature flag gates creation only. Existing Vercel-backed connections keep
 resolving when the flag is later disabled, provided workload OIDC or the BYO
@@ -122,14 +122,14 @@ pseudonymous subject ID is server-only and redacted from APIs.
 
 Stable Taskcore reason codes include:
 
-| Code | Operator action |
-| --- | --- |
-| `vercel_connect_unavailable` | Restore workload OIDC or the BYO access token. |
-| `vercel_connect_auth_failed` | Repair or refresh Taskcore's Vercel authority, and verify that the configured token type is accepted by Connect. |
-| `vercel_connect_connector_not_found` | Attach the pasted connector to the correct Vercel project/environment. |
-| `vercel_connect_authorization_required` | Reauthorize the responsible identity in Vercel Connect. |
-| `vercel_connect_installation_required` | Complete the provider installation in Vercel, then run **Check again**. |
-| `vercel_connect_request_failed` | Inspect Vercel status/audit and retry; upstream bodies remain redacted. |
+| Code                                    | Operator action                                                                                                  |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `vercel_connect_unavailable`            | Restore workload OIDC or the BYO access token.                                                                   |
+| `vercel_connect_auth_failed`            | Repair or refresh Taskcore's Vercel authority, and verify that the configured token type is accepted by Connect. |
+| `vercel_connect_connector_not_found`    | Attach the pasted connector to the correct Vercel project/environment.                                           |
+| `vercel_connect_authorization_required` | Reauthorize the responsible identity in Vercel Connect.                                                          |
+| `vercel_connect_installation_required`  | Complete the provider installation in Vercel, then run **Check again**.                                          |
+| `vercel_connect_request_failed`         | Inspect Vercel status/audit and retry; upstream bodies remain redacted.                                          |
 
 Revocation or missing user authorization marks the grant
 `needs_reauthorization` and blocks calls. When a responsible user is known,

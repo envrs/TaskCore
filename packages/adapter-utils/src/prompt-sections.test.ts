@@ -6,8 +6,13 @@ describe("task and event section ownership", () => {
   it("preserves resumed wake data without reintroducing generic procedures", () => {
     const context = createPromptContextFixture();
     for (const includeExecutionContract of [undefined, false, true]) {
-      const sections = selectSections(context, { resumedSession: true, includeExecutionContract });
-      expect(sections.taskContextNote).toBe(context.taskcoreTaskMarkdownAssignmentCompact);
+      const sections = selectSections(context, {
+        resumedSession: true,
+        includeExecutionContract,
+      });
+      expect(sections.taskContextNote).toBe(
+        context.taskcoreTaskMarkdownAssignmentCompact,
+      );
       expect(sections.wakePrompt).toContain('"id":"comment-second"');
       expect(sections.wakePrompt).not.toContain("Execution contract:");
     }
@@ -21,13 +26,19 @@ describe("task and event section ownership", () => {
     expect(taskContextNote).not.toContain("comment-first");
     expect(wakePrompt).not.toContain(context.taskcoreWake.issue.description);
     expect(wakePrompt).not.toContain('"objective":');
-    expect(wakePrompt).toContain('"objectiveSource":{"kind":"description","id":"issue-1"');
+    expect(wakePrompt).toContain(
+      '"objectiveSource":{"kind":"description","id":"issue-1"',
+    );
     for (const message of context.executionContinuation.messages) {
       expect(wakePrompt).toContain(`"id":"${message.id}"`);
       expect(wakePrompt).toContain(message.body);
     }
-    expect(wakePrompt.indexOf('"id":"comment-first"')).toBeLessThan(wakePrompt.indexOf('"id":"comment-second"'));
-    expect(wakePrompt.indexOf('"id":"comment-second"')).toBeLessThan(wakePrompt.indexOf('"id":"comment-scope"'));
+    expect(wakePrompt.indexOf('"id":"comment-first"')).toBeLessThan(
+      wakePrompt.indexOf('"id":"comment-second"'),
+    );
+    expect(wakePrompt.indexOf('"id":"comment-second"')).toBeLessThan(
+      wakePrompt.indexOf('"id":"comment-scope"'),
+    );
     expect(wakePrompt).toContain('"sourceTrust":"human"');
     expect(wakePrompt).toContain("Untrusted continuation evidence");
     expect(wakePrompt).toContain("receipt-1");
@@ -37,20 +48,31 @@ describe("task and event section ownership", () => {
   it("reselects full bootstrap and history when the attempt becomes fresh", () => {
     const context = createPromptContextFixture();
     const resumed = selectSections(context, { resumedSession: true });
-    expect(resumed.taskContextNote).toBe(context.taskcoreTaskMarkdownAssignmentCompact);
+    expect(resumed.taskContextNote).toBe(
+      context.taskcoreTaskMarkdownAssignmentCompact,
+    );
     expect(resumed.wakePrompt).not.toContain('"id":"comment-first"');
     const fresh = selectSections(context, { resumedSession: false });
-    expect(fresh.taskContextNote).toContain(context.taskcoreTaskCommunicationGuidance);
-    expect(fresh.taskContextNote).toContain(context.taskcoreTaskMarkdownAssignment);
+    expect(fresh.taskContextNote).toContain(
+      context.taskcoreTaskCommunicationGuidance,
+    );
+    expect(fresh.taskContextNote).toContain(
+      context.taskcoreTaskMarkdownAssignment,
+    );
     expect(fresh.wakePrompt).toContain('"id":"comment-first"');
     expect(context.executionContinuation.messages).toHaveLength(3);
   });
 
   it("retains old input fields and the wake description when no assignment was provided", () => {
     const context = createPromptContextFixture();
-    expect(selectSections({ taskcoreTaskMarkdown: "Legacy assignment" }).taskContextNote).toBe("Legacy assignment");
+    expect(
+      selectSections({ taskcoreTaskMarkdown: "Legacy assignment" })
+        .taskContextNote,
+    ).toBe("Legacy assignment");
     const sections = selectSections({ taskcoreWake: context.taskcoreWake });
     expect(sections.taskContextNote).toBe("");
-    expect(sections.wakePrompt).toContain(context.taskcoreWake.issue.description);
+    expect(sections.wakePrompt).toContain(
+      context.taskcoreWake.issue.description,
+    );
   });
 });

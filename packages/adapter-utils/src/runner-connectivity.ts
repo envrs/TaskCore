@@ -66,7 +66,12 @@ export class TaskcoreRunnerTransportError extends Error {
 }
 
 function connectPath(runId: string): string {
-  if (!runId || runId.includes("/") || runId.includes("?") || runId.includes("#")) {
+  if (
+    !runId ||
+    runId.includes("/") ||
+    runId.includes("?") ||
+    runId.includes("#")
+  ) {
     throw new TaskcoreRunnerTransportError(
       "runner_transport_ineligible",
       "Runner run id is not safe for a WebSocket route.",
@@ -105,18 +110,20 @@ export function buildDirectRunnerConnectUrl(input: {
   return url.toString();
 }
 
-export async function resolveTaskcoreRunnerTransport(input: {
-  target: AdapterExecutionTarget;
-  runId: string;
-  localConnectUrl: string;
-  runnerPublicUrl?: string | null;
-  runnerCaBundlePath?: string | null;
-  getRunnerIngressEndpoint?: (input: {
-    leaseId: string;
-    port: number;
-    path: string;
-  }) => Promise<RunnerIngressEndpoint>;
-} & RunnerIngressAuthorization): Promise<TaskcoreRunnerTransport> {
+export async function resolveTaskcoreRunnerTransport(
+  input: {
+    target: AdapterExecutionTarget;
+    runId: string;
+    localConnectUrl: string;
+    runnerPublicUrl?: string | null;
+    runnerCaBundlePath?: string | null;
+    getRunnerIngressEndpoint?: (input: {
+      leaseId: string;
+      port: number;
+      path: string;
+    }) => Promise<RunnerIngressEndpoint>;
+  } & RunnerIngressAuthorization,
+): Promise<TaskcoreRunnerTransport> {
   if (input.target.kind === "local") {
     return { mode: "local_loopback", connectUrl: input.localConnectUrl };
   }
@@ -137,7 +144,9 @@ export async function resolveTaskcoreRunnerTransport(input: {
     input.target.effectiveCapabilities?.runnerWebSocketIngress === true
   ) {
     const ingressAuthorized =
-      input.runnerIngressAuthorized ?? input.enableRunnerPreviewIngress ?? false;
+      input.runnerIngressAuthorized ??
+      input.enableRunnerPreviewIngress ??
+      false;
     if (!ingressAuthorized) {
       throw new TaskcoreRunnerTransportError(
         "runner_ingress_unavailable",

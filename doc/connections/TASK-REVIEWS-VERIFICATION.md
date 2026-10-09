@@ -33,13 +33,13 @@ Each journey creates a company, agent, and custom MCP connection in an isolated
 embedded database. Ask first is configured through the permissions UI. The provider
 returns fixture page names; **these are not real Notion pages**.
 
-| Journey | Observed provider calls | Verified outcome |
-| --- | ---: | --- |
-| Approve in task | 1 | Stored call executes; resumed task posts Roadmap/Meeting notes; Connections pending item clears |
-| Decline in Connections | 0 | One-click decline; open task updates; resumed agent reports decline |
-| Always allow | 2 | Initial approved call and a later call with changed arguments; later task has no review |
-| Provider failure | 1 | Human approval remains recorded; task shows execution failure and resumed agent reports it |
-| Restart while waiting | 1 | Pending request survives actual server restart; approval executes once and task returns page results |
+| Journey                | Observed provider calls | Verified outcome                                                                                     |
+| ---------------------- | ----------------------: | ---------------------------------------------------------------------------------------------------- |
+| Approve in task        |                       1 | Stored call executes; resumed task posts Roadmap/Meeting notes; Connections pending item clears      |
+| Decline in Connections |                       0 | One-click decline; open task updates; resumed agent reports decline                                  |
+| Always allow           |                       2 | Initial approved call and a later call with changed arguments; later task has no review              |
+| Provider failure       |                       1 | Human approval remains recorded; task shows execution failure and resumed agent reports it           |
+| Restart while waiting  |                       1 | Pending request survives actual server restart; approval executes once and task returns page results |
 
 All journeys also exercise takeover dismissal/reopening, an ordinary comment while
 pending, reload, and cross-tab synchronization. Review creation performs zero

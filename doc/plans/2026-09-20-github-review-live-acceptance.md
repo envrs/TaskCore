@@ -111,13 +111,11 @@ from unit tests or setup verification. No production rollout or merge.
 - Posted inline discussion reply `4057054794` to existing finding `4057015898`. Run `1672cc40-6ef1-44f5-918a-7ce918180bbe` replied in that same GitHub inline thread (`4057056730`) and did not start an assessment.
 - Source `97555697beeb52b6919ad072fa54cbc8dd0200f6` fixes the late review projection race. New regression passes, 182 focused GitHub tests pass (844 unrelated skipped), server typecheck passes, and workspace build passes. Latest-source preview artifacts are building in workflow `35513614358` (correlation `0ea2d78c-8fe2-4c76-968e-fd4d54c16fb4`). The intermediate `1c7a83be2` Linux Cloud image build succeeded; publication/deployment remains in progress.
 
-
 - Inline discussion revealed a Taskcore ownership defect: the prior PR #3 reply returned to the GitHub thread but created GIT-5 instead of using GIT-3. Revision `edd27f1d973ce5cdacdb9c922d85f320773af5ca` binds each newly published finding thread to its publishing task, preserving existing ownership on conflict. A regression test delivers a normalized inline mention against that binding. All 182 focused GitHub tests and workspace build passed.
 - Fresh PR #4 finding `4057069349` from run `766cfd63-af49-4389-870d-cfe99302cdc7` was correctly bound to GIT-4 before any reply. Reply `4057077365` started run `e2e2b057-6482-4f8e-a431-6ce4b7185307` on GIT-4. Its answer `4057078309` stayed in the original GitHub inline thread, the 17 review IDs were unchanged, and check `106086663396` remained completed/failure at 3/5. Embedded-browser screenshot confirmed the rendered answer. The old misrouted GIT-5 is retained as failure evidence.
 - The actual late intermediate projection became `superseded` through maintenance after restart; no database state repair was performed.
 - Intermediate application and matching migrator `1c7a83be25d9e0b8764b244d4872cff1ffa7c358` reached staging through supported deployment request `758a6ced-a096-41f0-9f74-0dd4e7532257`. Native runtime retry `e1ffbde4-a187-4480-bd98-33dd5429a086` found a second packaging failure: the provider manifest was mode 0600 and Cloud remaps the runtime UID from 1000 to 1001. Revision `fc035fb9d785a45d5a96bab10ac4d7c00326bf72` ships the non-secret build manifest readable by the runtime and tests reading it as UID 65534 during the image build. The code artifact remains root-owned.
 - Staging existing-App storage and repository refresh succeeded through normal authenticated APIs. Activation correctly refused until a signed webhook ping reaches that instance. The QA App still points locally while final local checks finish. Anonymous manifest callback reached the instance and rejected invalid state with 400; adjacent management/extra-path requests received gateway 401.
-
 
 ## Access negatives and staged ingress
 
@@ -129,7 +127,6 @@ from unit tests or setup verification. No production rollout or merge.
 - Staging guest-disabled test: explicit GitHub issue #5 comment `5750240131` generated signed delivery `da77a02a-7681-4c0e-8f6f-9acf14f19fd4`, which was filtered because the external identity was unlinked. No run started. Restored the explicitly sponsored restricted guest in configuration revision 3. The initial issue body alone was not a delivered mention, so it is not counted as this negative test.
 - Core CI passed all checks except the old GitHub wizard browser test and three actionable review findings. Updated the browser regression to the approved setup; tightened verification to all five exact required tool entries and read-only Contents access. Replaced network-spanning database transactions with a renewable, token-fenced per-PR publication lease using the existing lease table. Regression coverage proves concurrent exclusion, no database lock during provider I/O, expired-owner recovery, and stale-owner fencing.
 
-
 ## Hosted agent execution through Cloud
 
 - Cloud application and matching migrator `fc035fb9d785a45d5a96bab10ac4d7c00326bf72` deployed successfully in request `1ea509ef-622c-40c9-bde0-e2d801976ec6` / workflow `35515237490`. Native managed Claude prerequisite run `a3828152-cfc1-4ce2-9e01-292c379a431f` succeeded after both provider packaging repairs.
@@ -139,7 +136,6 @@ from unit tests or setup verification. No production rollout or merge.
 - That first hosted evidence upload was rejected because the agent chose unsupported `application/gzip`. It did not invalidate the actual build/render evidence in the run, but it did prevent artifact delivery. Configuration revision 4 now requests supported ZIP evidence and real newlines. Push `2dd58f7298389b6ede0f27c9e08dbc3b379c2d89`, adding visible `oogabooga`, started automatic run `c733430b-e38d-4a65-aed8-4cea61c07438` on the same GIT-3; result pending at this checkpoint.
 - Revision `8ef27d6186b94bb76a8be11fd7519fc520783c05` passed 184 focused GitHub tests, server typecheck, workspace build, and all CI checks. One unrelated existing agent-chat browser shard failed on its first 5-second UI timeout; all four tests passed locally and the failed CI job passed on rerun. Greptile reviewed this exact revision at 5/5 with all three actionable threads resolved.
 - Extended the GitHub browser regression to verify pause/resume, failed-delivery replay, reconnect with saved credentials and permanent agent assignment, and removal. The full setup/management/lifecycle test passed in 21 seconds. This mock-backed browser regression is recorded separately from the real GitHub/Cloud agent executions above.
-
 
 ## Hosted repeat reviews and final concurrency repair
 
@@ -151,7 +147,6 @@ from unit tests or setup verification. No production rollout or merge.
 - Hosted formal-review qualification is not inferred from the score. The first explicitly enabled REQUEST_CHANGES request produced another 3/5 assessment but the agent omitted the formal tool. Updated the configurable mention prompt in revision 7 to read metadata policy, discover the formal tool, and verify its receipt. The rerun is in progress; no formal pass is claimed at this checkpoint.
 - Archived the unused staging personal OAuth draft through the normal connection-removal API. It had never been authorized; its pending OAuth state was discarded. No personal GitHub credential was given to the bot.
 
-
 ### Staging restart, redelivery, and final link repair
 
 The dedicated Cloud tenant served application and matching preview migrator source `7cc096905ed95b9ff749692473effc3fdf8e48ac` through supported deployment workflow `35517924356`. Health confirmed a new process starting at 14:56:36Z, while all 11 existing runs and five review records persisted. Actual GitHub redelivery `3843815948192587776` retained GUID `5425bc70-b501-11f1-9b69-f440615dadef`, returned 202, and produced no duplicate run or review.
@@ -159,7 +154,6 @@ The dedicated Cloud tenant served application and matching preview migrator sour
 After restoring automatic push reviews, PR #6 head `b82e329e3f1d22ec174498795e1a6ca09a778fc2` rendered only uppercase OOGABOOGA. Hosted run `51101ba7-f67d-46f5-9a38-ee9ad6485a78` generated/built/rendered both stories, used the configured case-sensitive word match, and failed check `106098111113` at 3/5. The downloaded ZIP artifact `82f2f9ec-28a1-4497-acdd-593a5327b2f3` independently confirmed the script, visible text, and screenshots.
 
 Inspecting the live check exposed a navigation defect: absent `details_url`, GitHub used the App registration homepage, still pointing to the earlier local tunnel. Check publications now explicitly point to the underlying task on the trusted current runtime origin, or the connector review page while no task exists. Regression assertions cover pending, failing, passing, a renamed vanity hostname, and a gated pre-task check.
-
 
 ### 2026-09-21: remove the Cloud provider-pack packaging change
 

@@ -28,7 +28,7 @@ Agents that can call arbitrary MCP tools can also leak data, modify accounts, or
 ## What's new for agents
 
 - Agents speak MCP only to the Taskcore gateway. The gateway returns the agent's effective tool list, validates each call against profile + policies, and records the result.
-- When a call resolves to `require_approval`, the agent's call blocks until a human decides. The agent does not see *why* a call was denied — that detail is in the audit log for the operator. This is deliberate: agents must not learn to route around denials.
+- When a call resolves to `require_approval`, the agent's call blocks until a human decides. The agent does not see _why_ a call was denied — that detail is in the audit log for the operator. This is deliberate: agents must not learn to route around denials.
 - Tool call arguments and results are subject to a redaction plan recorded on each call event.
 
 ## Default posture

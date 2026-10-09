@@ -1,6 +1,17 @@
 import { execFile as execFileCallback, spawn } from "node:child_process";
 import { symlinkSync } from "node:fs";
-import { chmod, lstat, mkdir, mkdtemp, readFile, readdir, readlink, rename, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  readlink,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -29,29 +40,49 @@ describe("stdin file race (parent PAP-4037)", () => {
   afterEach(async () => {
     while (cleanupDirs.length > 0) {
       const dir = cleanupDirs.pop();
-      if (dir) await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+      if (dir)
+        await rm(dir, { recursive: true, force: true }).catch(() => undefined);
     }
   });
 
   // ---- Poller wrapper harness -------------------------------------------
 
-  type DeliveredFrame = { seq: number; type: string; stream?: string; data?: string; message?: string };
+  type DeliveredFrame = {
+    seq: number;
+    type: string;
+    stream?: string;
+    data?: string;
+    message?: string;
+  };
 
   // Run the real emitted poller wrapper as a node process. The streamed variant
   // writes one JSON frame per line to its stdout, so the test reads the frames
   // directly. The child command is `cat`, so every byte the poller writes to
   // the child stdin comes back as a `data` frame.
   async function startPollerWrapper(options?: { maxRetries?: number }) {
-    const sessionDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-stdin-poll-"));
+    const sessionDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-stdin-poll-"),
+    );
     cleanupDirs.push(sessionDir);
     const stdinDir = path.join(sessionDir, "stdin");
     await mkdir(stdinDir, { recursive: true });
 
     const wrapperPath = path.join(sessionDir, "wrapper.mjs");
-    await writeFile(wrapperPath, getProcessSessionRemoteSource({ outputToStdout: true }), "utf8");
+    await writeFile(
+      wrapperPath,
+      getProcessSessionRemoteSource({ outputToStdout: true }),
+      "utf8",
+    );
 
-    const config = { command: "cat", args: [] as string[], cwd: sessionDir, env: {} };
-    const commandPayload = Buffer.from(JSON.stringify(config), "utf8").toString("base64");
+    const config = {
+      command: "cat",
+      args: [] as string[],
+      cwd: sessionDir,
+      env: {},
+    };
+    const commandPayload = Buffer.from(JSON.stringify(config), "utf8").toString(
+      "base64",
+    );
 
     const env: Record<string, string> = {
       ...process.env,
@@ -59,7 +90,9 @@ describe("stdin file race (parent PAP-4037)", () => {
       TASKCORE_PROCESS_SESSION_COMMAND_B64: commandPayload,
     };
     if (options?.maxRetries != null) {
-      env.TASKCORE_PROCESS_SESSION_STDIN_MAX_RETRIES = String(options.maxRetries);
+      env.TASKCORE_PROCESS_SESSION_STDIN_MAX_RETRIES = String(
+        options.maxRetries,
+      );
     }
 
     const child = spawn(process.execPath, [wrapperPath], {
@@ -80,7 +113,9 @@ describe("stdin file race (parent PAP-4037)", () => {
       }
     });
 
-    const exited = new Promise<void>((resolve) => child.on("close", () => resolve()));
+    const exited = new Promise<void>((resolve) =>
+      child.on("close", () => resolve()),
+    );
 
     return {
       sessionDir,
@@ -113,8 +148,15 @@ describe("stdin file race (parent PAP-4037)", () => {
   // Concatenate every stdout `data` frame and decode it back to text.
   function collectDelivered(frames: DeliveredFrame[]): string {
     return frames
-      .filter((frame) => frame.type === "data" && frame.stream === "stdout" && typeof frame.data === "string")
-      .map((frame) => Buffer.from(frame.data as string, "base64").toString("utf8"))
+      .filter(
+        (frame) =>
+          frame.type === "data" &&
+          frame.stream === "stdout" &&
+          typeof frame.data === "string",
+      )
+      .map((frame) =>
+        Buffer.from(frame.data as string, "base64").toString("utf8"),
+      )
       .join("");
   }
 
@@ -122,7 +164,10 @@ describe("stdin file race (parent PAP-4037)", () => {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async function waitFor(check: () => boolean | Promise<boolean>, timeoutMs = 4_000): Promise<void> {
+  async function waitFor(
+    check: () => boolean | Promise<boolean>,
+    timeoutMs = 4_000,
+  ): Promise<void> {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (await check()) return;
@@ -147,9 +192,14 @@ describe("stdin file race (parent PAP-4037)", () => {
 
     // The content lands in the same file. The poller must deliver it on a later
     // cycle, because it kept the file across the empty read.
-    await poller.writeFileAtomic("000000000001.json", stdinMessage("late-payload"));
+    await poller.writeFileAtomic(
+      "000000000001.json",
+      stdinMessage("late-payload"),
+    );
 
-    await waitFor(() => collectDelivered(poller.frames).includes("late-payload"));
+    await waitFor(() =>
+      collectDelivered(poller.frames).includes("late-payload"),
+    );
 
     await poller.writeFileAtomic("000000000002.json", stdinEndMessage);
     await poller.exited;
@@ -166,9 +216,14 @@ describe("stdin file race (parent PAP-4037)", () => {
     // retry limit, then it delivers the later valid file. So one bad file blocks
     // the loop only until the retry limit, not forever.
     await poller.writeFileRaw("000000000001.json", "{ this is not valid json");
-    await poller.writeFileAtomic("000000000002.json", stdinMessage("valid-after-bad"));
+    await poller.writeFileAtomic(
+      "000000000002.json",
+      stdinMessage("valid-after-bad"),
+    );
 
-    await waitFor(() => collectDelivered(poller.frames).includes("valid-after-bad"));
+    await waitFor(() =>
+      collectDelivered(poller.frames).includes("valid-after-bad"),
+    );
 
     await poller.writeFileAtomic("000000000003.json", stdinEndMessage);
     await poller.exited;
@@ -195,9 +250,14 @@ describe("stdin file race (parent PAP-4037)", () => {
 
     // The earlier file's content lands. The poller delivers it, then reads the
     // stdinEnd and closes the stream.
-    await poller.writeFileAtomic("000000000001.json", stdinMessage("early-payload"));
+    await poller.writeFileAtomic(
+      "000000000001.json",
+      stdinMessage("early-payload"),
+    );
 
-    await waitFor(() => collectDelivered(poller.frames).includes("early-payload"));
+    await waitFor(() =>
+      collectDelivered(poller.frames).includes("early-payload"),
+    );
     await poller.exited;
 
     expect(collectDelivered(poller.frames)).toBe("early-payload");
@@ -213,13 +273,21 @@ describe("stdin file race (parent PAP-4037)", () => {
 
     await waitFor(() =>
       poller.frames.some(
-        (frame) => frame.type === "error" && typeof frame.message === "string" && frame.message.includes("Dropped unreadable stdin file"),
+        (frame) =>
+          frame.type === "error" &&
+          typeof frame.message === "string" &&
+          frame.message.includes("Dropped unreadable stdin file"),
       ),
     );
 
     // The loop still works after the drop: a later valid file is delivered.
-    await poller.writeFileAtomic("000000000002.json", stdinMessage("still-alive"));
-    await waitFor(() => collectDelivered(poller.frames).includes("still-alive"));
+    await poller.writeFileAtomic(
+      "000000000002.json",
+      stdinMessage("still-alive"),
+    );
+    await waitFor(() =>
+      collectDelivered(poller.frames).includes("still-alive"),
+    );
 
     await poller.writeFileAtomic("000000000003.json", stdinEndMessage);
     await poller.exited;
@@ -234,7 +302,10 @@ describe("stdin file race (parent PAP-4037)", () => {
     // File 2 is complete, but file 1 has not appeared yet (a host reordering).
     // The poller must not deliver file 2 ahead of the missing file 1. It holds
     // the send order and waits for the earlier file.
-    await poller.writeFileAtomic("000000000002.json", stdinMessage("second-payload"));
+    await poller.writeFileAtomic(
+      "000000000002.json",
+      stdinMessage("second-payload"),
+    );
     await delay(300);
     // File 2 is still on disk and nothing was delivered: the poller holds it.
     const afterHold = await readdir(poller.stdinDir);
@@ -242,8 +313,13 @@ describe("stdin file race (parent PAP-4037)", () => {
     expect(collectDelivered(poller.frames)).toBe("");
 
     // File 1 arrives. The poller now delivers file 1 then file 2, in send order.
-    await poller.writeFileAtomic("000000000001.json", stdinMessage("first-payload"));
-    await waitFor(() => collectDelivered(poller.frames).includes("second-payload"));
+    await poller.writeFileAtomic(
+      "000000000001.json",
+      stdinMessage("first-payload"),
+    );
+    await waitFor(() =>
+      collectDelivered(poller.frames).includes("second-payload"),
+    );
     expect(collectDelivered(poller.frames)).toBe("first-payloadsecond-payload");
 
     await poller.writeFileAtomic("000000000003.json", stdinEndMessage);
@@ -257,7 +333,10 @@ describe("stdin file race (parent PAP-4037)", () => {
     // File 1 never appears. File 2 is complete. After the retry limit the poller
     // writes a loud error event and advances past the gap, then delivers file 2.
     // So a permanent reordering fails loud, never silently.
-    await poller.writeFileAtomic("000000000002.json", stdinMessage("after-gap"));
+    await poller.writeFileAtomic(
+      "000000000002.json",
+      stdinMessage("after-gap"),
+    );
 
     await waitFor(() =>
       poller.frames.some(
@@ -298,26 +377,44 @@ describe("stdin file race (parent PAP-4037)", () => {
         const script = input.args?.[1] ?? "";
         if (onExecute) await onExecute(script);
         const command =
-          input.command === "bash" ? "/bin/bash" : input.command === "sh" ? "/bin/sh" : input.command;
-        return runChildProcess(`stdin-order-run-${counter}`, command, input.args ?? [], {
-          cwd: input.cwd ?? process.cwd(),
-          env: input.env ?? {},
-          stdin: input.stdin,
-          timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-          graceSec: 5,
-          onLog: input.onLog ?? (async () => {}),
-        });
+          input.command === "bash"
+            ? "/bin/bash"
+            : input.command === "sh"
+              ? "/bin/sh"
+              : input.command;
+        return runChildProcess(
+          `stdin-order-run-${counter}`,
+          command,
+          input.args ?? [],
+          {
+            cwd: input.cwd ?? process.cwd(),
+            env: input.env ?? {},
+            stdin: input.stdin,
+            timeoutSec: Math.max(
+              1,
+              Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+            ),
+            graceSec: 5,
+            onLog: input.onLog ?? (async () => {}),
+          },
+        );
       },
     };
   }
 
   it("serializes host stdin writes so a slow earlier write still lands first", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-stdin-host-order-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-stdin-host-order-"),
+    );
     cleanupDirs.push(rootDir);
     // The child echoes every stdin byte to stdout, so the wrapper reports the
     // exact bytes and order the child received on its stdin.
     const childPath = path.join(rootDir, "echo-child.mjs");
-    await writeFile(childPath, "process.stdin.on('data', (c) => process.stdout.write(c));\n", "utf8");
+    await writeFile(
+      childPath,
+      "process.stdin.on('data', (c) => process.stdout.write(c));\n",
+      "utf8",
+    );
 
     // Record the send-order-relevant event: the completion of each stdin file's
     // finalize (atomic rename). Delay the finalize of the FIRST file, so its
@@ -325,7 +422,8 @@ describe("stdin file race (parent PAP-4037)", () => {
     // rename would land first; the per-session chain must keep the send order.
     const finalizeOrder: string[] = [];
     const runner = createLocalSandboxRunner(async (script) => {
-      const finalizeMatch = /base64 -d[\s\S]*mv '[^']*\.decoded' '([^']+\.json)'/.exec(script);
+      const finalizeMatch =
+        /base64 -d[\s\S]*mv '[^']*\.decoded' '([^']+\.json)'/.exec(script);
       if (finalizeMatch) {
         const remotePath = finalizeMatch[1];
         if (remotePath.endsWith("000000000001.json")) await delay(300);
@@ -375,8 +473,16 @@ describe("stdin file race (parent PAP-4037)", () => {
         peerBuffer = lines.pop() || "";
         for (const line of lines) {
           if (!line.trim()) continue;
-          const frame = JSON.parse(line) as { type?: string; stream?: string; data?: string };
-          if (frame.type === "data" && frame.stream === "stdout" && typeof frame.data === "string") {
+          const frame = JSON.parse(line) as {
+            type?: string;
+            stream?: string;
+            data?: string;
+          };
+          if (
+            frame.type === "data" &&
+            frame.stream === "stdout" &&
+            typeof frame.data === "string"
+          ) {
             delivered.push(Buffer.from(frame.data, "base64").toString("utf8"));
           }
         }
@@ -397,7 +503,10 @@ describe("stdin file race (parent PAP-4037)", () => {
       // The two finalize renames complete in send order, not in the order the
       // delayed and fast writes would otherwise finish.
       await waitFor(() => finalizeOrder.length >= 2, 8_000);
-      expect(finalizeOrder.slice(0, 2)).toEqual(["000000000001.json", "000000000002.json"]);
+      expect(finalizeOrder.slice(0, 2)).toEqual([
+        "000000000001.json",
+        "000000000002.json",
+      ]);
 
       // End to end: the child receives the two payloads intact and in send
       // order, so the prompt is byte-identical on the child stdin.
@@ -410,10 +519,16 @@ describe("stdin file race (parent PAP-4037)", () => {
   });
 
   it("holds stdinEnd on stop until an earlier pending stdin write lands first", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-stdin-stop-order-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-stdin-stop-order-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "echo-child.mjs");
-    await writeFile(childPath, "process.stdin.on('data', (c) => process.stdout.write(c));\n", "utf8");
+    await writeFile(
+      childPath,
+      "process.stdin.on('data', (c) => process.stdout.write(c));\n",
+      "utf8",
+    );
 
     // Record each stdin file finalize (atomic rename). `finalizeStarted` marks
     // the start; `finalizeOrder` marks the completion. Delay the FIRST chunk's
@@ -423,7 +538,8 @@ describe("stdin file race (parent PAP-4037)", () => {
     const finalizeStarted: string[] = [];
     const finalizeOrder: string[] = [];
     const runner = createLocalSandboxRunner(async (script) => {
-      const finalizeMatch = /base64 -d[\s\S]*mv '[^']*\.decoded' '([^']+\.json)'/.exec(script);
+      const finalizeMatch =
+        /base64 -d[\s\S]*mv '[^']*\.decoded' '([^']+\.json)'/.exec(script);
       if (finalizeMatch) {
         const name = path.posix.basename(finalizeMatch[1]);
         finalizeStarted.push(name);
@@ -485,7 +601,11 @@ describe("stdin file race (parent PAP-4037)", () => {
       // so all three finalizes are complete when it returns, in send order.
       await bridge!.stop();
       stopped = true;
-      expect(finalizeOrder).toEqual(["000000000001.json", "000000000002.json", "000000000003.json"]);
+      expect(finalizeOrder).toEqual([
+        "000000000001.json",
+        "000000000002.json",
+        "000000000003.json",
+      ]);
     } finally {
       peer?.destroy();
       if (!stopped) await bridge?.stop();
@@ -493,17 +613,29 @@ describe("stdin file race (parent PAP-4037)", () => {
   });
 
   it.each([
-    ...["prepare", "append", "finalize", "late-finalize"].map((stage) =>
-      [stage, "Request failed with status code 502"] as const),
-    ...[502, 503, 504].map((status) =>
-      ["finalize", `Cloudflare sandbox bridge request failed with HTTP ${status}.`] as const),
+    ...["prepare", "append", "finalize", "late-finalize"].map(
+      (stage) => [stage, "Request failed with status code 502"] as const,
+    ),
+    ...[502, 503, 504].map(
+      (status) =>
+        [
+          "finalize",
+          `Cloudflare sandbox bridge request failed with HTTP ${status}.`,
+        ] as const,
+    ),
   ])(
     "recovers a transient %s failure (%s) without repeating or reordering stdin",
     async (stage, failure) => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-stdin-retry-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-stdin-retry-"),
+      );
       cleanupDirs.push(rootDir);
       const childPath = path.join(rootDir, "echo-child.mjs");
-      await writeFile(childPath, "process.stdin.on('data', (c) => process.stdout.write(c));\n", "utf8");
+      await writeFile(
+        childPath,
+        "process.stdin.on('data', (c) => process.stdout.write(c));\n",
+        "utf8",
+      );
       const first = "first-" + "x".repeat(70_000);
       let delivered = "";
       let injected = false;
@@ -512,17 +644,22 @@ describe("stdin file race (parent PAP-4037)", () => {
       const runner = {
         execute: async (input: Parameters<typeof local.execute>[0]) => {
           const script = input.args?.[1] ?? "";
-          const matches = script.includes("/stdin/000000000001.json") && (
-            stage === "prepare" ? script.includes("mkdir -p") :
-            stage === "append" ? script.startsWith("printf") : script.startsWith("base64 -d")
-          );
+          const matches =
+            script.includes("/stdin/000000000001.json") &&
+            (stage === "prepare"
+              ? script.includes("mkdir -p")
+              : stage === "append"
+                ? script.startsWith("printf")
+                : script.startsWith("base64 -d"));
           if (matches && !injected) {
             injected = true;
-            if (stage === "late-finalize") lateFinalize = () => local.execute(input);
+            if (stage === "late-finalize")
+              lateFinalize = () => local.execute(input);
             else if (stage !== "prepare") await local.execute(input);
             // The provider can lose the response after the receiver consumed
             // the file. A retry must not repeat those bytes on the ACP stream.
-            if (stage === "finalize") await waitFor(() => delivered === first, 8_000);
+            if (stage === "finalize")
+              await waitFor(() => delivered === first, 8_000);
             throw new Error(failure);
           }
           return local.execute(input);
@@ -530,15 +667,26 @@ describe("stdin file race (parent PAP-4037)", () => {
       };
       const bridge = await startAdapterExecutionTargetProcessSessionBridge({
         runId: "run-stdin-retry",
-        target: { kind: "remote", transport: "sandbox", remoteCwd: rootDir, runner },
+        target: {
+          kind: "remote",
+          transport: "sandbox",
+          remoteCwd: rootDir,
+          runner,
+        },
         runtimeRootDir: path.join(rootDir, "runtime"),
-        adapterKey: "acpx", command: process.execPath, args: [childPath], cwd: rootDir, env: {},
+        adapterKey: "acpx",
+        command: process.execPath,
+        args: [childPath],
+        cwd: rootDir,
+        env: {},
       });
       let peer: net.Socket | undefined;
       try {
         const source = await readFile(bridge!.agentCommand, "utf8");
         const port = Number(/port: (\d+)/.exec(source)![1]);
-        const token = JSON.parse(/const token = (".*?");/.exec(source)![1]) as string;
+        const token = JSON.parse(
+          /const token = (".*?");/.exec(source)![1],
+        ) as string;
         peer = net.createConnection({ host: "127.0.0.1", port });
         peer.on("error", () => {});
         peer.setEncoding("utf8");
@@ -554,7 +702,13 @@ describe("stdin file race (parent PAP-4037)", () => {
         });
         await new Promise<void>((resolve) => peer!.once("connect", resolve));
         for (const text of [first, "-second"])
-          peer.write(JSON.stringify({ token, type: "stdin", data: Buffer.from(text).toString("base64") }) + "\n");
+          peer.write(
+            JSON.stringify({
+              token,
+              type: "stdin",
+              data: Buffer.from(text).toString("base64"),
+            }) + "\n",
+          );
         await waitFor(() => delivered.endsWith("-second"), 10_000);
         expect(injected).toBe(true);
         expect(delivered).toBe(first + "-second");
@@ -563,13 +717,26 @@ describe("stdin file race (parent PAP-4037)", () => {
           // Cleanup may invalidate its private upload, but it cannot touch
           // the retry's data or repeat input after newer messages arrived.
           await lateFinalize();
-          peer.write(JSON.stringify({ token, type: "stdin", data: Buffer.from("-third").toString("base64") }) + "\n");
+          peer.write(
+            JSON.stringify({
+              token,
+              type: "stdin",
+              data: Buffer.from("-third").toString("base64"),
+            }) + "\n",
+          );
           await waitFor(() => delivered.endsWith("-third"), 8_000);
           expect(delivered).toBe(first + "-second-third");
         }
         await waitFor(async () => {
-          const files = await readdir(path.join(rootDir, "runtime", "process-sessions"), { recursive: true });
-          return files.every((file) => !file.endsWith(".taskcore-upload.b64") && !file.endsWith(".taskcore-upload.decoded"));
+          const files = await readdir(
+            path.join(rootDir, "runtime", "process-sessions"),
+            { recursive: true },
+          );
+          return files.every(
+            (file) =>
+              !file.endsWith(".taskcore-upload.b64") &&
+              !file.endsWith(".taskcore-upload.decoded"),
+          );
         });
       } finally {
         peer?.destroy();
@@ -589,76 +756,128 @@ describe("stdin file race (parent PAP-4037)", () => {
     ["Request failed with status code 403", 1],
     ["Cloudflare sandbox bridge request failed with HTTP 403.", 1],
     ["Remote command failed: Request failed with status code 502", 1],
-    ["Cloudflare sandbox bridge request failed with HTTP 502. sensitive-input", 1],
+    [
+      "Cloudflare sandbox bridge request failed with HTTP 502. sensitive-input",
+      1,
+    ],
     ["Remote command failed: sensitive-input", 1],
     ["Provider never responds", 1],
-  ] as const)("bounds input failure %s to %i attempts and stops later writes", async (failure, expectedAttempts) => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-stdin-failed-"));
-    cleanupDirs.push(rootDir);
-    let attempts = 0;
-    let laterWrite = false;
-    let stderr = "";
-    const runner = createLocalSandboxRunner(async (script) => {
-      if (!script.startsWith("mkdir -p")) return;
-      if (script.includes("/stdin/000000000002.json")) laterWrite = true;
-      if (script.includes("/stdin/000000000001.json")) {
-        attempts += 1;
-        if (failure === "Provider never responds") await new Promise<void>(() => {});
-        throw new Error(failure);
+  ] as const)(
+    "bounds input failure %s to %i attempts and stops later writes",
+    async (failure, expectedAttempts) => {
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-stdin-failed-"),
+      );
+      cleanupDirs.push(rootDir);
+      let attempts = 0;
+      let laterWrite = false;
+      let stderr = "";
+      const runner = createLocalSandboxRunner(async (script) => {
+        if (!script.startsWith("mkdir -p")) return;
+        if (script.includes("/stdin/000000000002.json")) laterWrite = true;
+        if (script.includes("/stdin/000000000001.json")) {
+          attempts += 1;
+          if (failure === "Provider never responds")
+            await new Promise<void>(() => {});
+          throw new Error(failure);
+        }
+      });
+      const bridge = await startAdapterExecutionTargetProcessSessionBridge({
+        runId: "run-stdin-failed",
+        timeoutSec: failure === "Provider never responds" ? 5 : undefined,
+        target: {
+          kind: "remote",
+          transport: "sandbox",
+          remoteCwd: rootDir,
+          runner,
+        },
+        runtimeRootDir: path.join(rootDir, "runtime"),
+        adapterKey: "acpx",
+        command: "cat",
+        args: [],
+        cwd: rootDir,
+        env: {},
+        onLog: async (stream, chunk) => {
+          if (stream === "stderr") stderr += chunk;
+        },
+      });
+      let peer: net.Socket | undefined;
+      try {
+        const source = await readFile(bridge!.agentCommand, "utf8");
+        const port = Number(/port: (\d+)/.exec(source)![1]);
+        const token = JSON.parse(
+          /const token = (".*?");/.exec(source)![1],
+        ) as string;
+        peer = net.createConnection({ host: "127.0.0.1", port });
+        peer.setEncoding("utf8");
+        peer.on("error", () => {});
+        let output = "";
+        peer.on("data", (chunk) => {
+          output += chunk;
+        });
+        const closed = new Promise<void>((resolve) =>
+          peer!.on("close", () => resolve()),
+        );
+        await new Promise<void>((resolve) => peer!.once("connect", resolve));
+        for (const text of ["first", "second"])
+          peer.write(
+            JSON.stringify({
+              token,
+              type: "stdin",
+              data: Buffer.from(text).toString("base64"),
+            }) + "\n",
+          );
+        await closed;
+        expect(attempts).toBe(expectedAttempts);
+        expect(laterWrite).toBe(false);
+        expect(JSON.parse(output)).toEqual({
+          type: "error",
+          message: "ACP process session input delivery failed.",
+        });
+        expect(stderr).toContain("ACP process session input delivery failed.");
+        expect(stderr).not.toContain(failure);
+      } finally {
+        peer?.destroy();
+        await bridge?.stop();
       }
-    });
-    const bridge = await startAdapterExecutionTargetProcessSessionBridge({
-      runId: "run-stdin-failed",
-      timeoutSec: failure === "Provider never responds" ? 5 : undefined,
-      target: { kind: "remote", transport: "sandbox", remoteCwd: rootDir, runner },
-      runtimeRootDir: path.join(rootDir, "runtime"),
-      adapterKey: "acpx", command: "cat", args: [], cwd: rootDir, env: {},
-      onLog: async (stream, chunk) => { if (stream === "stderr") stderr += chunk; },
-    });
-    let peer: net.Socket | undefined;
-    try {
-      const source = await readFile(bridge!.agentCommand, "utf8");
-      const port = Number(/port: (\d+)/.exec(source)![1]);
-      const token = JSON.parse(/const token = (".*?");/.exec(source)![1]) as string;
-      peer = net.createConnection({ host: "127.0.0.1", port });
-      peer.setEncoding("utf8");
-      peer.on("error", () => {});
-      let output = "";
-      peer.on("data", (chunk) => { output += chunk; });
-      const closed = new Promise<void>((resolve) => peer!.on("close", () => resolve()));
-      await new Promise<void>((resolve) => peer!.once("connect", resolve));
-      for (const text of ["first", "second"])
-        peer.write(JSON.stringify({ token, type: "stdin", data: Buffer.from(text).toString("base64") }) + "\n");
-      await closed;
-      expect(attempts).toBe(expectedAttempts);
-      expect(laterWrite).toBe(false);
-      expect(JSON.parse(output)).toEqual({ type: "error", message: "ACP process session input delivery failed." });
-      expect(stderr).toContain("ACP process session input delivery failed.");
-      expect(stderr).not.toContain(failure);
-    } finally {
-      peer?.destroy();
-      await bridge?.stop();
-    }
-  }, 15_000);
+    },
+    15_000,
+  );
 
   it("stops after exhausted input retries even when failure logging stalls", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-stdin-log-stall-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-stdin-log-stall-"),
+    );
     cleanupDirs.push(rootDir);
     let attempts = 0;
     let loggingStarted = false;
     let releaseLog!: () => void;
-    const stalledLog = new Promise<void>((resolve) => { releaseLog = resolve; });
+    const stalledLog = new Promise<void>((resolve) => {
+      releaseLog = resolve;
+    });
     const runner = createLocalSandboxRunner(async (script) => {
-      if (script.startsWith("mkdir -p") && script.includes("/stdin/000000000001.json")) {
+      if (
+        script.startsWith("mkdir -p") &&
+        script.includes("/stdin/000000000001.json")
+      ) {
         attempts += 1;
         throw new Error("Request failed with status code 502");
       }
     });
     const bridge = await startAdapterExecutionTargetProcessSessionBridge({
       runId: "run-stdin-log-stall",
-      target: { kind: "remote", transport: "sandbox", remoteCwd: rootDir, runner },
+      target: {
+        kind: "remote",
+        transport: "sandbox",
+        remoteCwd: rootDir,
+        runner,
+      },
       runtimeRootDir: path.join(rootDir, "runtime"),
-      adapterKey: "acpx", command: "cat", args: [], cwd: rootDir, env: {},
+      adapterKey: "acpx",
+      command: "cat",
+      args: [],
+      cwd: rootDir,
+      env: {},
       onLog: async (stream) => {
         if (stream === "stderr") {
           loggingStarted = true;
@@ -671,25 +890,44 @@ describe("stdin file race (parent PAP-4037)", () => {
     try {
       const source = await readFile(bridge!.agentCommand, "utf8");
       const port = Number(/port: (\d+)/.exec(source)![1]);
-      const token = JSON.parse(/const token = (".*?");/.exec(source)![1]) as string;
+      const token = JSON.parse(
+        /const token = (".*?");/.exec(source)![1],
+      ) as string;
       peer = net.createConnection({ host: "127.0.0.1", port });
       peer.setEncoding("utf8");
       peer.on("error", () => {});
       let output = "";
-      peer.on("data", (chunk) => { output += chunk; });
-      const closed = new Promise<void>((resolve) => peer!.once("close", resolve));
+      peer.on("data", (chunk) => {
+        output += chunk;
+      });
+      const closed = new Promise<void>((resolve) =>
+        peer!.once("close", resolve),
+      );
       await new Promise<void>((resolve) => peer!.once("connect", resolve));
-      peer.write(JSON.stringify({ token, type: "stdin", data: Buffer.from("input").toString("base64") }) + "\n");
+      peer.write(
+        JSON.stringify({
+          token,
+          type: "stdin",
+          data: Buffer.from("input").toString("base64"),
+        }) + "\n",
+      );
       await closed;
       expect(attempts).toBe(3);
       expect(loggingStarted).toBe(true);
-      expect(JSON.parse(output)).toEqual({ type: "error", message: "ACP process session input delivery failed." });
+      expect(JSON.parse(output)).toEqual({
+        type: "error",
+        message: "ACP process session input delivery failed.",
+      });
       let stopped = false;
-      stop = bridge!.stop().then(() => { stopped = true; });
+      stop = bridge!.stop().then(() => {
+        stopped = true;
+      });
       // Teardown has a three-second acknowledgement budget. It must finish
       // while the run-log promise remains unresolved, including local cleanup.
       await waitFor(() => stopped, 6_000);
-      await expect(lstat(bridge!.agentCommand)).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(lstat(bridge!.agentCommand)).rejects.toMatchObject({
+        code: "ENOENT",
+      });
     } finally {
       releaseLog();
       peer?.destroy();
@@ -699,42 +937,56 @@ describe("stdin file race (parent PAP-4037)", () => {
 
   // ---- Host atomic-write tests ------------------------------------------
 
-  it.each(["fails", "stalls"])("preserves the upload failure when best-effort cleanup %s", async (cleanupMode) => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-upload-cleanup-"));
-    cleanupDirs.push(rootDir);
-    const local = createLocalSandboxRunner();
-    const uploadFailure = new Error("Request failed with status code 502");
-    let cleanupAttempted = false;
-    let rejectCleanup!: (error: Error) => void;
-    const stalledCleanup = new Promise<never>((_resolve, reject) => { rejectCleanup = reject; });
-    // Observe the test-owned promise even in the immediate-failure case.
-    void stalledCleanup.catch(() => {});
-    const client = createCommandManagedSandboxCallbackBridgeQueueClient({
-      remoteCwd: rootDir,
-      runner: {
-        execute: async (input) => {
-          const script = input.args?.[1] ?? "";
-          if (script.startsWith("rm -f")) {
-            cleanupAttempted = true;
-            if (cleanupMode === "stalls") return stalledCleanup;
-            throw new Error("Request failed with status code 403");
-          }
-          const result = await local.execute(input);
-          if (script.startsWith("printf")) throw uploadFailure;
-          return result;
+  it.each(["fails", "stalls"])(
+    "preserves the upload failure when best-effort cleanup %s",
+    async (cleanupMode) => {
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-upload-cleanup-"),
+      );
+      cleanupDirs.push(rootDir);
+      const local = createLocalSandboxRunner();
+      const uploadFailure = new Error("Request failed with status code 502");
+      let cleanupAttempted = false;
+      let rejectCleanup!: (error: Error) => void;
+      const stalledCleanup = new Promise<never>((_resolve, reject) => {
+        rejectCleanup = reject;
+      });
+      // Observe the test-owned promise even in the immediate-failure case.
+      void stalledCleanup.catch(() => {});
+      const client = createCommandManagedSandboxCallbackBridgeQueueClient({
+        remoteCwd: rootDir,
+        runner: {
+          execute: async (input) => {
+            const script = input.args?.[1] ?? "";
+            if (script.startsWith("rm -f")) {
+              cleanupAttempted = true;
+              if (cleanupMode === "stalls") return stalledCleanup;
+              throw new Error("Request failed with status code 403");
+            }
+            const result = await local.execute(input);
+            if (script.startsWith("printf")) throw uploadFailure;
+            return result;
+          },
         },
-      },
-    });
-    try {
-      await expect(Promise.race([
-        client.writeTextFile(path.join(rootDir, "message.json"), "test input"),
-        delay(1_000).then(() => { throw new Error("Upload waited for stalled cleanup"); }),
-      ])).rejects.toBe(uploadFailure);
-      expect(cleanupAttempted).toBe(true);
-    } finally {
-      rejectCleanup(new Error("Cleanup unavailable"));
-    }
-  });
+      });
+      try {
+        await expect(
+          Promise.race([
+            client.writeTextFile(
+              path.join(rootDir, "message.json"),
+              "test input",
+            ),
+            delay(1_000).then(() => {
+              throw new Error("Upload waited for stalled cleanup");
+            }),
+          ]),
+        ).rejects.toBe(uploadFailure);
+        expect(cleanupAttempted).toBe(true);
+      } finally {
+        rejectCleanup(new Error("Cleanup unavailable"));
+      }
+    },
+  );
 
   // A runner that executes each bridge shell script on the local filesystem,
   // so the test exercises the real command-managed `writeTextFile` script.
@@ -749,10 +1001,19 @@ describe("stdin file race (parent PAP-4037)", () => {
         timeoutMs?: number;
       }): Promise<RunProcessResult> => {
         const args = input.args ?? [];
-        if ((input.command === "sh" || input.command === "bash") && args[0] === "-c" && typeof args[1] === "string") {
+        if (
+          (input.command === "sh" || input.command === "bash") &&
+          args[0] === "-c" &&
+          typeof args[1] === "string"
+        ) {
           scripts.push(args[1]);
         }
-        const command = input.command === "sh" ? "/bin/sh" : input.command === "bash" ? "/bin/bash" : input.command;
+        const command =
+          input.command === "sh"
+            ? "/bin/sh"
+            : input.command === "bash"
+              ? "/bin/bash"
+              : input.command;
         try {
           const result = await execFile(command, args, {
             cwd: input.cwd,
@@ -769,7 +1030,11 @@ describe("stdin file race (parent PAP-4037)", () => {
             startedAt: null,
           };
         } catch (error) {
-          const err = error as NodeJS.ErrnoException & { stdout?: string; stderr?: string; code?: string | number | null };
+          const err = error as NodeJS.ErrnoException & {
+            stdout?: string;
+            stderr?: string;
+            code?: string | number | null;
+          };
           return {
             exitCode: typeof err.code === "number" ? err.code : null,
             signal: null,
@@ -785,7 +1050,9 @@ describe("stdin file race (parent PAP-4037)", () => {
   }
 
   it("finalizes the command-managed host write with an atomic rename onto the .json path", async () => {
-    const remoteRoot = await mkdtemp(path.join(os.tmpdir(), "taskcore-stdin-host-cmd-"));
+    const remoteRoot = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-stdin-host-cmd-"),
+    );
     cleanupDirs.push(remoteRoot);
     const stdinDir = path.join(remoteRoot, "stdin");
     await mkdir(stdinDir, { recursive: true });
@@ -810,7 +1077,9 @@ describe("stdin file race (parent PAP-4037)", () => {
     // The finalize script renames a non-`.json` temporary file onto the final
     // path. It never redirects the decode output straight into the `.json`
     // file, so a reader never sees an empty or partial `.json` file.
-    const finalizeScript = scripts.find((script) => script.includes("base64 -d"));
+    const finalizeScript = scripts.find((script) =>
+      script.includes("base64 -d"),
+    );
     expect(finalizeScript).toBeDefined();
     expect(finalizeScript).toContain(`mv `);
     expect(finalizeScript).not.toContain(`> '${jsonPath}'`);
@@ -818,7 +1087,9 @@ describe("stdin file race (parent PAP-4037)", () => {
   });
 
   it("never exposes a partial .json file under a concurrent reader (command-managed host write)", async () => {
-    const remoteRoot = await mkdtemp(path.join(os.tmpdir(), "taskcore-stdin-host-race-"));
+    const remoteRoot = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-stdin-host-race-"),
+    );
     cleanupDirs.push(remoteRoot);
     const stdinDir = path.join(remoteRoot, "stdin");
     await mkdir(stdinDir, { recursive: true });
@@ -845,7 +1116,9 @@ describe("stdin file race (parent PAP-4037)", () => {
             JSON.parse(raw);
             observedComplete += 1;
           } catch (error) {
-            readerErrors.push(error instanceof Error ? error.message : String(error));
+            readerErrors.push(
+              error instanceof Error ? error.message : String(error),
+            );
           }
         }
       }
@@ -876,7 +1149,8 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   afterEach(async () => {
     while (cleanupDirs.length > 0) {
       const dir = cleanupDirs.pop();
-      if (dir) await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+      if (dir)
+        await rm(dir, { recursive: true, force: true }).catch(() => undefined);
     }
   });
 
@@ -884,7 +1158,10 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async function waitFor(check: () => boolean | Promise<boolean>, timeoutMs = 8_000): Promise<void> {
+  async function waitFor(
+    check: () => boolean | Promise<boolean>,
+    timeoutMs = 8_000,
+  ): Promise<void> {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (await check()) return;
@@ -907,7 +1184,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // whether a specific test-authored script (identified by its own temp file
   // path) is still running. Production host code never does this — it never
   // matches or signals a process by name or command line.
-  async function findLivePidsByArgvSubstring(substring: string): Promise<number[]> {
+  async function findLivePidsByArgvSubstring(
+    substring: string,
+  ): Promise<number[]> {
     try {
       const { stdout } = await execFile("ps", ["-eo", "pid=,args="]);
       const pids: number[] = [];
@@ -950,13 +1229,18 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // under a later test.
   let fakeBirthtimePreloadDir: string | null = null;
   afterAll(async () => {
-    if (fakeBirthtimePreloadDir) await rm(fakeBirthtimePreloadDir, { recursive: true, force: true }).catch(() => undefined);
+    if (fakeBirthtimePreloadDir)
+      await rm(fakeBirthtimePreloadDir, { recursive: true, force: true }).catch(
+        () => undefined,
+      );
   });
   let fakeBirthtimePreloadPath: Promise<string> | null = null;
   async function getFakeBirthtimePreloadPath(): Promise<string> {
     if (!fakeBirthtimePreloadPath) {
       fakeBirthtimePreloadPath = (async () => {
-        const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-birthtime-preload-"));
+        const dir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-birthtime-preload-"),
+        );
         fakeBirthtimePreloadDir = dir;
         const preloadPath = path.join(dir, "fake-birthtime-preload.cjs");
         await writeFile(
@@ -1003,13 +1287,18 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // opts in, and it never touches this test file's own process.
   let probeSwapPreloadDir: string | null = null;
   afterAll(async () => {
-    if (probeSwapPreloadDir) await rm(probeSwapPreloadDir, { recursive: true, force: true }).catch(() => undefined);
+    if (probeSwapPreloadDir)
+      await rm(probeSwapPreloadDir, { recursive: true, force: true }).catch(
+        () => undefined,
+      );
   });
   let probeSwapPreloadPath: Promise<string> | null = null;
   async function getProbeSwapPreloadPath(): Promise<string> {
     if (!probeSwapPreloadPath) {
       probeSwapPreloadPath = (async () => {
-        const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-swap-preload-"));
+        const dir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-probe-swap-preload-"),
+        );
         probeSwapPreloadDir = dir;
         const preloadPath = path.join(dir, "probe-swap-preload.cjs");
         await writeFile(
@@ -1054,13 +1343,18 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // own process.
   let fstatFailurePreloadDir: string | null = null;
   afterAll(async () => {
-    if (fstatFailurePreloadDir) await rm(fstatFailurePreloadDir, { recursive: true, force: true }).catch(() => undefined);
+    if (fstatFailurePreloadDir)
+      await rm(fstatFailurePreloadDir, { recursive: true, force: true }).catch(
+        () => undefined,
+      );
   });
   let fstatFailurePreloadPath: Promise<string> | null = null;
   async function getFstatFailurePreloadPath(): Promise<string> {
     if (!fstatFailurePreloadPath) {
       fstatFailurePreloadPath = (async () => {
-        const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-fstat-failure-preload-"));
+        const dir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-fstat-failure-preload-"),
+        );
         fstatFailurePreloadDir = dir;
         const preloadPath = path.join(dir, "fstat-failure-preload.cjs");
         await writeFile(
@@ -1111,37 +1405,69 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     // control directory, through the preload above. See PAP-5338 AC-1: a
     // real "no usable creation time" filesystem is not reachable in this
     // sandbox, so the test simulates the exact Stats shape instead.
-    fakeBirthtime?: { target: "sessionDir" | "stdinDir"; mode: "zero" | "followCtime" };
+    fakeBirthtime?: {
+      target: "sessionDir" | "stdinDir";
+      mode: "zero" | "followCtime";
+    };
     // Makes the wrapper's own process observe a same-sandbox peer replacing
     // its birth-time probe file, through the preload above (PAP-5355). seq 1
     // is sessionDir's probe (the first one captureSessionIdentity() runs).
-    probeSwap?: { seq: 1 | 2; mode: "file" | "dir" | "symlink"; symlinkTarget?: string };
+    probeSwap?: {
+      seq: 1 | 2;
+      mode: "file" | "dir" | "symlink";
+      symlinkTarget?: string;
+    };
     // Makes the wrapper's own process observe an fstat() failure on the open
     // descriptor for its own birth-time probe file, through the preload above
     // (PAP-5374). seq 1 is sessionDir's probe (the first one
     // captureSessionIdentity() runs).
     fstatFailure?: { seq: 1 | 2 };
   }) {
-    const sessionDir = await mkdtemp(path.join(options?.parentDir ?? os.tmpdir(), "taskcore-wrapper-lifecycle-"));
+    const sessionDir = await mkdtemp(
+      path.join(
+        options?.parentDir ?? os.tmpdir(),
+        "taskcore-wrapper-lifecycle-",
+      ),
+    );
     cleanupDirs.push(sessionDir);
     const stdinDir = path.join(sessionDir, "stdin");
     const eventsDir = path.join(sessionDir, "events");
     await mkdir(stdinDir, { recursive: true });
-    if (options?.outputToStdout !== true) await mkdir(eventsDir, { recursive: true });
+    if (options?.outputToStdout !== true)
+      await mkdir(eventsDir, { recursive: true });
 
     const wrapperPath = path.join(sessionDir, "wrapper.mjs");
-    await writeFile(wrapperPath, getProcessSessionRemoteSource({ outputToStdout: options?.outputToStdout === true }), "utf8");
+    await writeFile(
+      wrapperPath,
+      getProcessSessionRemoteSource({
+        outputToStdout: options?.outputToStdout === true,
+      }),
+      "utf8",
+    );
 
-    const config = { command: options?.command ?? "cat", args: options?.args ?? [], cwd: sessionDir, env: {} };
-    const commandPayload = Buffer.from(JSON.stringify(config), "utf8").toString("base64");
+    const config = {
+      command: options?.command ?? "cat",
+      args: options?.args ?? [],
+      cwd: sessionDir,
+      env: {},
+    };
+    const commandPayload = Buffer.from(JSON.stringify(config), "utf8").toString(
+      "base64",
+    );
 
     const env: Record<string, string> = {
       ...process.env,
       TASKCORE_PROCESS_SESSION_DIR: sessionDir,
       TASKCORE_PROCESS_SESSION_COMMAND_B64: commandPayload,
     };
-    if (options?.maxRetries != null) env.TASKCORE_PROCESS_SESSION_STDIN_MAX_RETRIES = String(options.maxRetries);
-    if (options?.terminateGraceMs != null) env.TASKCORE_PROCESS_SESSION_TERMINATE_GRACE_MS = String(options.terminateGraceMs);
+    if (options?.maxRetries != null)
+      env.TASKCORE_PROCESS_SESSION_STDIN_MAX_RETRIES = String(
+        options.maxRetries,
+      );
+    if (options?.terminateGraceMs != null)
+      env.TASKCORE_PROCESS_SESSION_TERMINATE_GRACE_MS = String(
+        options.terminateGraceMs,
+      );
 
     const execArgv: string[] = [];
     if (options?.fakeBirthtime) {
@@ -1152,7 +1478,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     if (options?.probeSwap) {
       env.TASKCORE_TEST_PROBE_SWAP_SEQ = String(options.probeSwap.seq);
       env.TASKCORE_TEST_PROBE_SWAP_MODE = options.probeSwap.mode;
-      if (options.probeSwap.symlinkTarget) env.TASKCORE_TEST_PROBE_SWAP_SYMLINK_TARGET = options.probeSwap.symlinkTarget;
+      if (options.probeSwap.symlinkTarget)
+        env.TASKCORE_TEST_PROBE_SWAP_SYMLINK_TARGET =
+          options.probeSwap.symlinkTarget;
       execArgv.push("--require", await getProbeSwapPreloadPath());
     }
     if (options?.fstatFailure) {
@@ -1197,10 +1525,14 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     });
 
     async function readEventFiles(): Promise<WrapperFrame[]> {
-      const names = (await readdir(eventsDir).catch(() => [])).filter((name) => name.endsWith(".json")).sort();
+      const names = (await readdir(eventsDir).catch(() => []))
+        .filter((name) => name.endsWith(".json"))
+        .sort();
       const out: WrapperFrame[] = [];
       for (const name of names) {
-        const body = await readFile(path.join(eventsDir, name), "utf8").catch(() => "");
+        const body = await readFile(path.join(eventsDir, name), "utf8").catch(
+          () => "",
+        );
         if (!body.trim()) continue;
         try {
           out.push(JSON.parse(body) as WrapperFrame);
@@ -1230,7 +1562,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // drives the whole legacy-poll bridge for real: the socket handler, the
   // command-managed `writeTextFile`/`remove` scripts, the nohup wrapper
   // launch, and the output poll.
-  function createLocalSandboxRunner(onExecute?: (script: string) => Promise<void>) {
+  function createLocalSandboxRunner(
+    onExecute?: (script: string) => Promise<void>,
+  ) {
     let counter = 0;
     return {
       execute: async (input: {
@@ -1246,15 +1580,27 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         const script = input.args?.[1] ?? "";
         if (onExecute) await onExecute(script);
         const command =
-          input.command === "bash" ? "/bin/bash" : input.command === "sh" ? "/bin/sh" : input.command;
-        return runChildProcess(`wrapper-lifecycle-run-${counter}`, command, input.args ?? [], {
-          cwd: input.cwd ?? process.cwd(),
-          env: input.env ?? {},
-          stdin: input.stdin,
-          timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-          graceSec: 5,
-          onLog: input.onLog ?? (async () => {}),
-        });
+          input.command === "bash"
+            ? "/bin/bash"
+            : input.command === "sh"
+              ? "/bin/sh"
+              : input.command;
+        return runChildProcess(
+          `wrapper-lifecycle-run-${counter}`,
+          command,
+          input.args ?? [],
+          {
+            cwd: input.cwd ?? process.cwd(),
+            env: input.env ?? {},
+            stdin: input.stdin,
+            timeoutSec: Math.max(
+              1,
+              Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+            ),
+            graceSec: 5,
+            onLog: input.onLog ?? (async () => {}),
+          },
+        );
       },
     };
   }
@@ -1301,7 +1647,11 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     const bridge = await startAdapterExecutionTargetProcessSessionBridge({
       runId: input.runId,
       target,
-      runtimeRootDir: path.posix.join(input.rootDir, ".taskcore-runtime", "acpx"),
+      runtimeRootDir: path.posix.join(
+        input.rootDir,
+        ".taskcore-runtime",
+        "acpx",
+      ),
       adapterKey: "acpx",
       command: process.execPath,
       args: [childPath],
@@ -1311,26 +1661,37 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
       onLog: async () => {},
     });
     expect(bridge).not.toBeNull();
-    await waitFor(async () => (await readFile(pidFile, "utf8").catch(() => "")).trim().length > 0, 8_000);
+    await waitFor(
+      async () =>
+        (await readFile(pidFile, "utf8").catch(() => "")).trim().length > 0,
+      8_000,
+    );
     const pid = Number.parseInt((await readFile(pidFile, "utf8")).trim(), 10);
     return { bridge: bridge!, pid };
   }
 
   it("T1 exits within a bounded time when its session directory disappears with no message ever sent", async () => {
-    const wrapper = await startWrapperProcess({ outputToStdout: false, terminateGraceMs: 200 });
+    const wrapper = await startWrapperProcess({
+      outputToStdout: false,
+      terminateGraceMs: 200,
+    });
     // Let the poll loop run a few cycles before the directory disappears.
     await delay(150);
     await rm(wrapper.sessionDir, { recursive: true, force: true });
     await Promise.race([
       wrapper.exited,
       delay(4_000).then(() => {
-        throw new Error("The wrapper did not exit after its session directory disappeared.");
+        throw new Error(
+          "The wrapper did not exit after its session directory disappeared.",
+        );
       }),
     ]);
   });
 
   it("T2 leaves neither the wrapper nor a stubborn child alive after stop()", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-stubborn-child-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-stubborn-child-"),
+    );
     cleanupDirs.push(rootDir);
     const runner = createLocalSandboxRunner();
     const session = await startTrackedBridgeSession({
@@ -1342,16 +1703,31 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     // The emitted wrapper script's own path is unique to this test (it lives
     // under this test's fresh temp root), so a `ps` grep on it identifies
     // only this test's wrapper process, not a sibling test's.
-    const wrapperScriptSubstring = path.posix.join(rootDir, ".taskcore-runtime", "acpx", "process-sessions");
+    const wrapperScriptSubstring = path.posix.join(
+      rootDir,
+      ".taskcore-runtime",
+      "acpx",
+      "process-sessions",
+    );
     try {
       expect(isPidAlive(session.pid)).toBe(true);
-      await waitFor(async () => (await findLivePidsByArgvSubstring(wrapperScriptSubstring)).length > 0, 4_000);
+      await waitFor(
+        async () =>
+          (await findLivePidsByArgvSubstring(wrapperScriptSubstring)).length >
+          0,
+        4_000,
+      );
       await session.bridge.stop();
       // The child ignores SIGTERM, so `terminate()` needs its own grace
       // period (default 3s) before it escalates to SIGKILL.
       await waitFor(() => !isPidAlive(session.pid), 8_000);
       expect(isPidAlive(session.pid)).toBe(false);
-      await waitFor(async () => (await findLivePidsByArgvSubstring(wrapperScriptSubstring)).length === 0, 4_000);
+      await waitFor(
+        async () =>
+          (await findLivePidsByArgvSubstring(wrapperScriptSubstring)).length ===
+          0,
+        4_000,
+      );
     } finally {
       await session.bridge.stop().catch(() => undefined);
     }
@@ -1366,7 +1742,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     await Promise.race([
       wrapper.exited,
       delay(4_000).then(() => {
-        throw new Error("The wrapper did not exit on its own after its child exited.");
+        throw new Error(
+          "The wrapper did not exit on its own after its child exited.",
+        );
       }),
     ]);
     const events = await wrapper.readEventFiles();
@@ -1374,7 +1752,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   });
 
   it("T4 stopping one session leaves a sibling session's wrapper and child alive", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-session-isolation-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-session-isolation-"),
+    );
     cleanupDirs.push(rootDir);
     const runner = createLocalSandboxRunner();
     const sessionA = await startTrackedBridgeSession({
@@ -1406,7 +1786,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   }, 15_000);
 
   it("T5 still writes both control messages, finishes fast, and warns never after a forged exit event the live poll reads early", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-forged-exit-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-forged-exit-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "quiet-child.mjs");
     await writeFile(childPath, "process.stdin.resume();\n", "utf8");
@@ -1435,7 +1817,11 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
       env: {},
       timeoutSec: 5,
       onLog: async (stream, chunk) => {
-        if (stream === "stderr" && chunk.includes("did not acknowledge shutdown")) warnedCount += 1;
+        if (
+          stream === "stderr" &&
+          chunk.includes("did not acknowledge shutdown")
+        )
+          warnedCount += 1;
       },
     });
     expect(bridge).not.toBeNull();
@@ -1447,7 +1833,11 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
 
     // Forge an exit event from outside the wrapper, before any real shutdown.
     await mkdir(eventsDir, { recursive: true });
-    await writeFile(path.join(eventsDir, "999999999999.json"), `${JSON.stringify({ type: "exit", code: 0 })}\n`, "utf8");
+    await writeFile(
+      path.join(eventsDir, "999999999999.json"),
+      `${JSON.stringify({ type: "exit", code: 0 })}\n`,
+      "utf8",
+    );
 
     // Give the live 100 ms host poll time to read the forged file well
     // before stop() runs. This closes the gap T5 used to leave open: a
@@ -1461,10 +1851,16 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     await bridge!.stop();
     const elapsedMs = Date.now() - start;
 
-    const finalizeWrites = scripts.filter((script) => script.includes("base64 -d") && script.includes(".taskcore-upload.decoded"));
+    const finalizeWrites = scripts.filter(
+      (script) =>
+        script.includes("base64 -d") &&
+        script.includes(".taskcore-upload.decoded"),
+    );
     // stdinEnd, then shutdown: both control messages still land.
     expect(finalizeWrites.length).toBeGreaterThanOrEqual(2);
-    const removeScript = scripts.find((script) => script.trim().startsWith("rm -rf"));
+    const removeScript = scripts.find((script) =>
+      script.trim().startsWith("rm -rf"),
+    );
     expect(removeScript).toBeDefined();
     // The child never exits on its own, so the wrapper's own genuine
     // shutdownAck -- not the forged exit event -- is the only thing that can
@@ -1476,7 +1872,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   }, 10_000);
 
   it("T14 a forged exit event alone does not shorten the wait when the wrapper never truly runs", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-forged-only-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-forged-only-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "quiet-child.mjs");
     await writeFile(childPath, "process.stdin.resume();\n", "utf8");
@@ -1499,19 +1897,39 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         const script = input.args?.[1] ?? "";
         scripts.push(script);
         if (script.includes("nohup node")) {
-          return { exitCode: 0, signal: null, timedOut: false, stdout: "", stderr: "", pid: null, startedAt: null };
+          return {
+            exitCode: 0,
+            signal: null,
+            timedOut: false,
+            stdout: "",
+            stderr: "",
+            pid: null,
+            startedAt: null,
+          };
         }
         counter += 1;
         const command =
-          input.command === "bash" ? "/bin/bash" : input.command === "sh" ? "/bin/sh" : input.command;
-        return runChildProcess(`forged-only-run-${counter}`, command, input.args ?? [], {
-          cwd: input.cwd ?? process.cwd(),
-          env: input.env ?? {},
-          stdin: input.stdin,
-          timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-          graceSec: 5,
-          onLog: input.onLog ?? (async () => {}),
-        });
+          input.command === "bash"
+            ? "/bin/bash"
+            : input.command === "sh"
+              ? "/bin/sh"
+              : input.command;
+        return runChildProcess(
+          `forged-only-run-${counter}`,
+          command,
+          input.args ?? [],
+          {
+            cwd: input.cwd ?? process.cwd(),
+            env: input.env ?? {},
+            stdin: input.stdin,
+            timeoutSec: Math.max(
+              1,
+              Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+            ),
+            graceSec: 5,
+            onLog: input.onLog ?? (async () => {}),
+          },
+        );
       },
     };
     const target: AdapterSandboxExecutionTarget = {
@@ -1535,7 +1953,11 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
       env: {},
       timeoutSec: 5,
       onLog: async (stream, chunk) => {
-        if (stream === "stderr" && chunk.includes("did not acknowledge shutdown")) warnedCount += 1;
+        if (
+          stream === "stderr" &&
+          chunk.includes("did not acknowledge shutdown")
+        )
+          warnedCount += 1;
       },
     });
     expect(bridge).not.toBeNull();
@@ -1548,7 +1970,11 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     // Forge a terminal event from outside the wrapper. The wrapper never
     // started, so this is the only event that will ever exist on disk.
     await mkdir(eventsDir, { recursive: true });
-    await writeFile(path.join(eventsDir, "999999999999.json"), `${JSON.stringify({ type: "exit", code: 0 })}\n`, "utf8");
+    await writeFile(
+      path.join(eventsDir, "999999999999.json"),
+      `${JSON.stringify({ type: "exit", code: 0 })}\n`,
+      "utf8",
+    );
 
     // Give the live 100 ms host poll time to read the forged file well
     // before stop() runs, so this test cannot pass by accident: `stop()`
@@ -1566,12 +1992,16 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     // no forged event at all (compare T13).
     expect(elapsedMs).toBeGreaterThanOrEqual(2_900);
     expect(warnedCount).toBe(1);
-    const removeScript = scripts.find((script) => script.trim().startsWith("rm -rf"));
+    const removeScript = scripts.find((script) =>
+      script.trim().startsWith("rm -rf"),
+    );
     expect(removeScript).toBeDefined();
   }, 10_000);
 
   it("T6 issues no operating-system signal from the host during stop()", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-no-signal-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-no-signal-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "quiet-child.mjs");
     await writeFile(childPath, "process.stdin.resume();\n", "utf8");
@@ -1607,7 +2037,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
 
     // stop() only ever writes files and removes a directory. None of the
     // scripts it runs names a signal or a kill command.
-    const signalLike = scripts.filter((script) => /\bkill\b|SIGTERM|SIGKILL/i.test(script));
+    const signalLike = scripts.filter((script) =>
+      /\bkill\b|SIGTERM|SIGKILL/i.test(script),
+    );
     expect(signalLike).toEqual([]);
   });
 
@@ -1620,7 +2052,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     await Promise.race([
       wrapper.exited,
       delay(4_000).then(() => {
-        throw new Error("The wrapper did not exit after its child exited on its own.");
+        throw new Error(
+          "The wrapper did not exit after its child exited on its own.",
+        );
       }),
     ]);
     // The wrapper's own child-close handler already ran terminate() once (the
@@ -1636,7 +2070,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   });
 
   it("T9 exits with an error event when sessionDir is a symbolic link", async () => {
-    const targetDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-symlink-target-"));
+    const targetDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-symlink-target-"),
+    );
     cleanupDirs.push(targetDir);
     const linkDir = `${targetDir}-link`;
     const { symlink } = await import("node:fs/promises");
@@ -1644,9 +2080,20 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     cleanupDirs.push(linkDir);
 
     const wrapperPath = path.join(targetDir, "wrapper.mjs");
-    await writeFile(wrapperPath, getProcessSessionRemoteSource({ outputToStdout: true }), "utf8");
-    const config = { command: "cat", args: [] as string[], cwd: targetDir, env: {} };
-    const commandPayload = Buffer.from(JSON.stringify(config), "utf8").toString("base64");
+    await writeFile(
+      wrapperPath,
+      getProcessSessionRemoteSource({ outputToStdout: true }),
+      "utf8",
+    );
+    const config = {
+      command: "cat",
+      args: [] as string[],
+      cwd: targetDir,
+      env: {},
+    };
+    const commandPayload = Buffer.from(JSON.stringify(config), "utf8").toString(
+      "base64",
+    );
 
     const child = spawn(process.execPath, [wrapperPath], {
       cwd: targetDir,
@@ -1668,17 +2115,26 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         frames.push(JSON.parse(line) as WrapperFrame);
       }
     });
-    const exited = new Promise<void>((resolve) => child.on("close", () => resolve()));
+    const exited = new Promise<void>((resolve) =>
+      child.on("close", () => resolve()),
+    );
 
     await Promise.race([
       exited,
       delay(4_000).then(() => {
-        throw new Error("The wrapper did not exit after sessionDir was a symbolic link.");
+        throw new Error(
+          "The wrapper did not exit after sessionDir was a symbolic link.",
+        );
       }),
     ]);
-    expect(frames.some((frame) => frame.type === "error" && typeof frame.message === "string" && frame.message.includes("symbolic link"))).toBe(
-      true,
-    );
+    expect(
+      frames.some(
+        (frame) =>
+          frame.type === "error" &&
+          typeof frame.message === "string" &&
+          frame.message.includes("symbolic link"),
+      ),
+    ).toBe(true);
   });
 
   it("T10 the emitted wrapper strips its own session env vars from the child", async () => {
@@ -1690,10 +2146,20 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         "process.stdout.write(JSON.stringify(Object.keys(process.env).filter((k) => k.startsWith('TASKCORE_PROCESS_SESSION'))));process.exit(0)",
       ],
     });
-    await waitFor(() => wrapper.frames.some((frame) => frame.type === "exit"), 4_000);
+    await waitFor(
+      () => wrapper.frames.some((frame) => frame.type === "exit"),
+      4_000,
+    );
     const text = wrapper.frames
-      .filter((frame) => frame.type === "data" && frame.stream === "stdout" && typeof frame.data === "string")
-      .map((frame) => Buffer.from(frame.data as string, "base64").toString("utf8"))
+      .filter(
+        (frame) =>
+          frame.type === "data" &&
+          frame.stream === "stdout" &&
+          typeof frame.data === "string",
+      )
+      .map((frame) =>
+        Buffer.from(frame.data as string, "base64").toString("utf8"),
+      )
       .join("");
     const leakedKeys = JSON.parse(text || "[]") as string[];
     expect(leakedKeys).toEqual([]);
@@ -1711,7 +2177,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         .join("\n");
       const spawnCallSites = code.match(/\bspawn\(/g) ?? [];
       expect(spawnCallSites.length).toBe(1);
-      const killCallSites = [...code.matchAll(/[A-Za-z0-9_.$]*kill\(/g)].map((match) => match[0]);
+      const killCallSites = [...code.matchAll(/[A-Za-z0-9_.$]*kill\(/g)].map(
+        (match) => match[0],
+      );
       expect(killCallSites.length).toBeGreaterThan(0);
       for (const site of killCallSites) {
         expect(site).toBe("child.kill(");
@@ -1725,16 +2193,23 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
       // check runs once per variant and fails if a future edit lands the
       // latch in only one of them.
       expect(src).not.toContain("missingSessionDirStreak");
-      const identityLatchDeclarations = code.match(/\blet identityLost = false;/g) ?? [];
+      const identityLatchDeclarations =
+        code.match(/\blet identityLost = false;/g) ?? [];
       expect(identityLatchDeclarations.length).toBe(1);
-      const identityCaptureCallSites = code.match(/\bcaptureSessionIdentity\(\)/g) ?? [];
+      const identityCaptureCallSites =
+        code.match(/\bcaptureSessionIdentity\(\)/g) ?? [];
       expect(identityCaptureCallSites.length).toBeGreaterThan(0);
-      const identityVerifyCallSites = code.match(/\bverifySessionIdentity\(\)/g) ?? [];
+      const identityVerifyCallSites =
+        code.match(/\bverifySessionIdentity\(\)/g) ?? [];
       expect(identityVerifyCallSites.length).toBeGreaterThan(0);
       // The capture must run before the first poll cycle: its call site must
       // precede the `pollStdin()` call site in the emitted source.
-      expect(code.indexOf("await captureSessionIdentity();")).toBeGreaterThan(0);
-      expect(code.indexOf("await captureSessionIdentity();")).toBeLessThan(code.indexOf("void pollStdin()"));
+      expect(code.indexOf("await captureSessionIdentity();")).toBeGreaterThan(
+        0,
+      );
+      expect(code.indexOf("await captureSessionIdentity();")).toBeLessThan(
+        code.indexOf("void pollStdin()"),
+      );
     }
   });
 
@@ -1743,7 +2218,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // the file-poll loop stopped re-arming right after it delivered the
   // `exit` event and so never read the `shutdownAck` file that followed it.
   it("T12 stop() finishes well inside the shutdown budget and logs no warning after a normal child exit", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-normal-exit-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-normal-exit-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "quick-exit-child.mjs");
     await writeFile(childPath, "process.exit(0);\n", "utf8");
@@ -1770,7 +2247,11 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
       env: {},
       timeoutSec: 5,
       onLog: async (stream, chunk) => {
-        if (stream === "stderr" && chunk.includes("did not acknowledge shutdown")) warnedCount += 1;
+        if (
+          stream === "stderr" &&
+          chunk.includes("did not acknowledge shutdown")
+        )
+          warnedCount += 1;
       },
     });
     expect(bridge).not.toBeNull();
@@ -1792,7 +2273,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // remove `sessionDir`. The fix must not turn the bounded wait into an
   // unconditional skip.
   it("T13 warns and still removes sessionDir when the wrapper never acknowledges and never exits", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-never-acks-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-never-acks-"),
+    );
     cleanupDirs.push(rootDir);
     const childPath = path.join(rootDir, "quiet-child.mjs");
     await writeFile(childPath, "process.stdin.resume();\n", "utf8");
@@ -1816,19 +2299,39 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         const script = input.args?.[1] ?? "";
         scripts.push(script);
         if (script.includes("nohup node")) {
-          return { exitCode: 0, signal: null, timedOut: false, stdout: "", stderr: "", pid: null, startedAt: null };
+          return {
+            exitCode: 0,
+            signal: null,
+            timedOut: false,
+            stdout: "",
+            stderr: "",
+            pid: null,
+            startedAt: null,
+          };
         }
         counter += 1;
         const command =
-          input.command === "bash" ? "/bin/bash" : input.command === "sh" ? "/bin/sh" : input.command;
-        return runChildProcess(`never-acks-run-${counter}`, command, input.args ?? [], {
-          cwd: input.cwd ?? process.cwd(),
-          env: input.env ?? {},
-          stdin: input.stdin,
-          timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-          graceSec: 5,
-          onLog: input.onLog ?? (async () => {}),
-        });
+          input.command === "bash"
+            ? "/bin/bash"
+            : input.command === "sh"
+              ? "/bin/sh"
+              : input.command;
+        return runChildProcess(
+          `never-acks-run-${counter}`,
+          command,
+          input.args ?? [],
+          {
+            cwd: input.cwd ?? process.cwd(),
+            env: input.env ?? {},
+            stdin: input.stdin,
+            timeoutSec: Math.max(
+              1,
+              Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+            ),
+            graceSec: 5,
+            onLog: input.onLog ?? (async () => {}),
+          },
+        );
       },
     };
     const target: AdapterSandboxExecutionTarget = {
@@ -1852,7 +2355,11 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
       env: {},
       timeoutSec: 5,
       onLog: async (stream, chunk) => {
-        if (stream === "stderr" && chunk.includes("did not acknowledge shutdown")) warnedCount += 1;
+        if (
+          stream === "stderr" &&
+          chunk.includes("did not acknowledge shutdown")
+        )
+          warnedCount += 1;
       },
     });
     expect(bridge).not.toBeNull();
@@ -1865,7 +2372,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     // wrapper stopped.
     expect(elapsedMs).toBeGreaterThanOrEqual(2_900);
     expect(warnedCount).toBe(1);
-    const removeScript = scripts.find((script) => script.trim().startsWith("rm -rf"));
+    const removeScript = scripts.find((script) =>
+      script.trim().startsWith("rm -rf"),
+    );
     expect(removeScript).toBeDefined();
   }, 10_000);
 
@@ -1890,7 +2399,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // gap, because it is set fresh on every inode allocation even when the
   // allocator reissues an old inode number.
   it("T15 latches on a lost session identity: a recreated control directory cannot keep the wrapper or its child alive", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-lost-identity-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-lost-identity-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t15-child.pid");
     const childPath = path.join(rootDir, "t15-child.mjs");
@@ -1946,7 +2457,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         const script = input.args?.[1] ?? "";
         scripts.push(script);
 
-        const shutdownFilePath = stdinDir ? path.posix.join(stdinDir, "000000000002.json") : null;
+        const shutdownFilePath = stdinDir
+          ? path.posix.join(stdinDir, "000000000002.json")
+          : null;
         if (shutdownFilePath && script.includes(shutdownFilePath)) {
           if (!shutdownFileDeleted) {
             shutdownFileDeleted = true;
@@ -1963,24 +2476,42 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         // Match the removal of sessionDir itself, not the host's own
         // per-file event cleanup (which also runs `rm -rf` on a path that
         // has sessionDir as a substring).
-        if (!stdinDirRecreated && sessionDir && script.trim() === `rm -rf '${sessionDir}'`) {
+        if (
+          !stdinDirRecreated &&
+          sessionDir &&
+          script.trim() === `rm -rf '${sessionDir}'`
+        ) {
           stdinDirRecreated = true;
-          await rm(sessionDir, { recursive: true, force: true }).catch(() => undefined);
+          await rm(sessionDir, { recursive: true, force: true }).catch(
+            () => undefined,
+          );
           await mkdir(stdinDir, { recursive: true }).catch(() => undefined);
           await mkdir(eventsDir, { recursive: true }).catch(() => undefined);
           return syntheticSuccess;
         }
 
         const command =
-          input.command === "bash" ? "/bin/bash" : input.command === "sh" ? "/bin/sh" : input.command;
-        return runChildProcess(`lost-identity-run-${counter}`, command, input.args ?? [], {
-          cwd: input.cwd ?? process.cwd(),
-          env: input.env ?? {},
-          stdin: input.stdin,
-          timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-          graceSec: 5,
-          onLog: input.onLog ?? (async () => {}),
-        });
+          input.command === "bash"
+            ? "/bin/bash"
+            : input.command === "sh"
+              ? "/bin/sh"
+              : input.command;
+        return runChildProcess(
+          `lost-identity-run-${counter}`,
+          command,
+          input.args ?? [],
+          {
+            cwd: input.cwd ?? process.cwd(),
+            env: input.env ?? {},
+            stdin: input.stdin,
+            timeoutSec: Math.max(
+              1,
+              Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+            ),
+            graceSec: 5,
+            onLog: input.onLog ?? (async () => {}),
+          },
+        );
       },
     };
 
@@ -2014,11 +2545,24 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     eventsDir = dirsMatch![2];
     sessionDir = path.posix.dirname(stdinDir);
 
-    await waitFor(async () => (await readFile(pidFile, "utf8").catch(() => "")).trim().length > 0, 8_000);
+    await waitFor(
+      async () =>
+        (await readFile(pidFile, "utf8").catch(() => "")).trim().length > 0,
+      8_000,
+    );
     const pid = Number.parseInt((await readFile(pidFile, "utf8")).trim(), 10);
     expect(isPidAlive(pid)).toBe(true);
-    const wrapperScriptSubstring = path.posix.join(rootDir, ".taskcore-runtime", "acpx", "process-sessions");
-    await waitFor(async () => (await findLivePidsByArgvSubstring(wrapperScriptSubstring)).length > 0, 4_000);
+    const wrapperScriptSubstring = path.posix.join(
+      rootDir,
+      ".taskcore-runtime",
+      "acpx",
+      "process-sessions",
+    );
+    await waitFor(
+      async () =>
+        (await findLivePidsByArgvSubstring(wrapperScriptSubstring)).length > 0,
+      4_000,
+    );
 
     await bridge!.stop();
 
@@ -2035,14 +2579,23 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     // carries a different identity than the one captured at startup.
     await waitFor(() => !isPidAlive(pid), 8_000);
     expect(isPidAlive(pid)).toBe(false);
-    await waitFor(async () => (await findLivePidsByArgvSubstring(wrapperScriptSubstring)).length === 0, 8_000);
+    await waitFor(
+      async () =>
+        (await findLivePidsByArgvSubstring(wrapperScriptSubstring)).length ===
+        0,
+      8_000,
+    );
   }, 15_000);
 
   // ---- PAP-5338: reject a change-time creation-time substitute, and every
   // lstat error during verification -------------------------------------
 
   async function waitForTrackedChildPid(pidFile: string): Promise<number> {
-    await waitFor(async () => (await readFile(pidFile, "utf8").catch(() => "")).trim().length > 0, 8_000);
+    await waitFor(
+      async () =>
+        (await readFile(pidFile, "utf8").catch(() => "")).trim().length > 0,
+      8_000,
+    );
     return Number.parseInt((await readFile(pidFile, "utf8")).trim(), 10);
   }
 
@@ -2069,13 +2622,20 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // process table by the child's own script path (the same technique T15
   // above uses for the wrapper itself), which needs no cooperation from code
   // inside the child.
-  async function expectNoLiveProcessByArgvSubstring(substring: string): Promise<void> {
-    await waitFor(async () => (await findLivePidsByArgvSubstring(substring)).length === 0, 8_000);
+  async function expectNoLiveProcessByArgvSubstring(
+    substring: string,
+  ): Promise<void> {
+    await waitFor(
+      async () => (await findLivePidsByArgvSubstring(substring)).length === 0,
+      8_000,
+    );
     expect(await findLivePidsByArgvSubstring(substring)).toEqual([]);
   }
 
   it("T16 accepts a zero creation time when the filesystem does not report birth time", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-birthtime-zero-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-birthtime-zero-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t16-child.pid");
     const childPath = path.join(rootDir, "t16-child.mjs");
@@ -2106,7 +2666,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   }, 15_000);
 
   it("T17 fails closed at capture when the reported creation time follows the change time, so a change-time copy never passes as a real creation time", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-birthtime-followctime-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-birthtime-followctime-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t17-child.pid");
     const childPath = path.join(rootDir, "t17-child.mjs");
@@ -2134,7 +2696,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     // temp directory: the test denies traversal on that parent, and doing
     // that to the shared OS temp directory would break every other process
     // on the host that also uses it.
-    const parentDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-eacces-sessiondir-"));
+    const parentDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-eacces-sessiondir-"),
+    );
     cleanupDirs.push(parentDir);
     const pidFile = path.join(parentDir, "t18-child.pid");
     const childPath = path.join(parentDir, "t18-child.mjs");
@@ -2160,18 +2724,29 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
       // Restore permission so the shared cleanup can remove this directory.
       await chmod(parentDir, 0o700).catch(() => undefined);
     }
-    expect(wrapper.stderrText()).toMatch(/Latching on a lost process session identity/);
+    expect(wrapper.stderrText()).toMatch(
+      /Latching on a lost process session identity/,
+    );
   }, 15_000);
 
   it("T19 latches on an EACCES lstat failure on stdinDir during verification, even though sessionDir itself still stats cleanly", async () => {
-    const wrapperOptions = { outputToStdout: false as const, terminateGraceMs: 200 };
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-eacces-stdindir-"));
+    const wrapperOptions = {
+      outputToStdout: false as const,
+      terminateGraceMs: 200,
+    };
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-eacces-stdindir-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t19-child.pid");
     const childPath = path.join(rootDir, "t19-child.mjs");
     await writeFile(childPath, trackedChildSource(pidFile), "utf8");
 
-    const wrapper = await startWrapperProcess({ ...wrapperOptions, command: process.execPath, args: [childPath] });
+    const wrapper = await startWrapperProcess({
+      ...wrapperOptions,
+      command: process.execPath,
+      args: [childPath],
+    });
 
     const pid = await waitForTrackedChildPid(pidFile);
     await delay(150);
@@ -2184,25 +2759,42 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     } finally {
       await chmod(wrapper.sessionDir, 0o700).catch(() => undefined);
     }
-    expect(wrapper.stderrText()).toMatch(/Latching on a lost process session identity/);
+    expect(wrapper.stderrText()).toMatch(
+      /Latching on a lost process session identity/,
+    );
   }, 15_000);
 
   it("T20 refuses to write through a probe path a sandbox peer pre-created as a symbolic link, and leaves that link and its target untouched", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-symlink-race-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-probe-symlink-race-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t20-child.pid");
     const childPath = path.join(rootDir, "t20-child.mjs");
     await writeFile(childPath, trackedChildSource(pidFile), "utf8");
 
-    const sessionDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-symlink-session-"));
+    const sessionDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-probe-symlink-session-"),
+    );
     cleanupDirs.push(sessionDir);
     const stdinDir = path.join(sessionDir, "stdin");
     await mkdir(stdinDir, { recursive: true });
 
     const wrapperPath = path.join(sessionDir, "wrapper.mjs");
-    await writeFile(wrapperPath, getProcessSessionRemoteSource({ outputToStdout: true }), "utf8");
-    const config = { command: process.execPath, args: [childPath], cwd: sessionDir, env: {} };
-    const commandPayload = Buffer.from(JSON.stringify(config), "utf8").toString("base64");
+    await writeFile(
+      wrapperPath,
+      getProcessSessionRemoteSource({ outputToStdout: true }),
+      "utf8",
+    );
+    const config = {
+      command: process.execPath,
+      args: [childPath],
+      cwd: sessionDir,
+      env: {},
+    };
+    const commandPayload = Buffer.from(JSON.stringify(config), "utf8").toString(
+      "base64",
+    );
 
     // A file this test owns, standing in for a file a sandbox peer already
     // controls. The wrapper's probe write must never reach it.
@@ -2230,14 +2822,19 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     // sandbox peer racing to pre-create the path would have, so it gives the
     // strongest proof: the real wrapper process, under the real race, must
     // still refuse to follow the link.
-    const probePath = path.join(sessionDir, `.taskcore-birthtime-probe-${child.pid}-1`);
+    const probePath = path.join(
+      sessionDir,
+      `.taskcore-birthtime-probe-${child.pid}-1`,
+    );
     symlinkSync(probeLinkTarget, probePath);
 
     let stderrText = "";
     child.stderr.on("data", (chunk: Buffer) => {
       stderrText += chunk.toString("utf8");
     });
-    const exited = new Promise<void>((resolve) => child.on("close", () => resolve()));
+    const exited = new Promise<void>((resolve) =>
+      child.on("close", () => resolve()),
+    );
 
     await Promise.race([
       exited,
@@ -2261,7 +2858,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   // the last time before deciding whether to remove it.
 
   it("T21 still removes its own probe file normally when no peer ever replaces it", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-no-swap-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-probe-no-swap-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t21-child.pid");
     const childPath = path.join(rootDir, "t21-child.mjs");
@@ -2274,13 +2873,24 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     });
     await waitForTrackedChildPid(pidFile);
 
-    const probePath = path.join(wrapper.sessionDir, `.taskcore-birthtime-probe-${wrapper.pid}-1`);
-    await waitFor(async () => !(await lstat(probePath).then(() => true).catch(() => false)), 4_000);
+    const probePath = path.join(
+      wrapper.sessionDir,
+      `.taskcore-birthtime-probe-${wrapper.pid}-1`,
+    );
+    await waitFor(
+      async () =>
+        !(await lstat(probePath)
+          .then(() => true)
+          .catch(() => false)),
+      4_000,
+    );
     await expect(lstat(probePath)).rejects.toThrow();
   }, 15_000);
 
   it("T22 leaves a peer's replacement file untouched instead of deleting it", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-swap-file-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-probe-swap-file-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t22-child.pid");
     const childPath = path.join(rootDir, "t22-child.mjs");
@@ -2294,8 +2904,16 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     });
     await waitForTrackedChildPid(pidFile);
 
-    const probePath = path.join(wrapper.sessionDir, `.taskcore-birthtime-probe-${wrapper.pid}-1`);
-    await waitFor(async () => (await readFile(probePath, "utf8").catch(() => null)) === "peer-owned-content", 4_000);
+    const probePath = path.join(
+      wrapper.sessionDir,
+      `.taskcore-birthtime-probe-${wrapper.pid}-1`,
+    );
+    await waitFor(
+      async () =>
+        (await readFile(probePath, "utf8").catch(() => null)) ===
+        "peer-owned-content",
+      4_000,
+    );
     // The wrapper's own cleanup call already ran (the preload only swaps the
     // path the moment the wrapper itself checks it). This delay proves that
     // run settled and nothing removes the peer's file afterward.
@@ -2304,7 +2922,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   }, 15_000);
 
   it("T23 leaves a peer's replacement directory untouched instead of deleting it", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-swap-dir-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-probe-swap-dir-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t23-child.pid");
     const childPath = path.join(rootDir, "t23-child.mjs");
@@ -2318,14 +2938,25 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     });
     await waitForTrackedChildPid(pidFile);
 
-    const probePath = path.join(wrapper.sessionDir, `.taskcore-birthtime-probe-${wrapper.pid}-1`);
-    await waitFor(async () => await lstat(probePath).then((stats) => stats.isDirectory()).catch(() => false), 4_000);
+    const probePath = path.join(
+      wrapper.sessionDir,
+      `.taskcore-birthtime-probe-${wrapper.pid}-1`,
+    );
+    await waitFor(
+      async () =>
+        await lstat(probePath)
+          .then((stats) => stats.isDirectory())
+          .catch(() => false),
+      4_000,
+    );
     await delay(200);
     expect((await lstat(probePath)).isDirectory()).toBe(true);
   }, 15_000);
 
   it("T24 leaves a peer's replacement symbolic link and its target untouched instead of deleting or following it", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-swap-symlink-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-probe-swap-symlink-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t24-child.pid");
     const childPath = path.join(rootDir, "t24-child.mjs");
@@ -2343,8 +2974,17 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
     });
     await waitForTrackedChildPid(pidFile);
 
-    const probePath = path.join(wrapper.sessionDir, `.taskcore-birthtime-probe-${wrapper.pid}-1`);
-    await waitFor(async () => await lstat(probePath).then((stats) => stats.isSymbolicLink()).catch(() => false), 4_000);
+    const probePath = path.join(
+      wrapper.sessionDir,
+      `.taskcore-birthtime-probe-${wrapper.pid}-1`,
+    );
+    await waitFor(
+      async () =>
+        await lstat(probePath)
+          .then((stats) => stats.isSymbolicLink())
+          .catch(() => false),
+      4_000,
+    );
     await delay(200);
     expect((await lstat(probePath)).isSymbolicLink()).toBe(true);
     expect(await readlink(probePath)).toBe(linkTarget);
@@ -2352,7 +2992,9 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
   }, 15_000);
 
   it("T25 fails closed at capture when its own probe file's identity cannot be read, so no orphan wrapper or child ever starts polling", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-fstat-failure-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-probe-fstat-failure-"),
+    );
     cleanupDirs.push(rootDir);
     const pidFile = path.join(rootDir, "t25-child.pid");
     const childPath = path.join(rootDir, "t25-child.mjs");
@@ -2371,14 +3013,19 @@ describe("deterministic remote process-session wrapper shutdown (PAP-5316)", () 
         throw new Error("The wrapper process did not exit.");
       }),
     ]);
-    expect(wrapper.stderrText()).toMatch(/its own probe file's identity could not be read/);
+    expect(wrapper.stderrText()).toMatch(
+      /its own probe file's identity could not be read/,
+    );
     await expectNoLiveProcessByArgvSubstring(childPath);
 
     // With no verified identity for the probe file, the wrapper must not
     // remove it by path alone: it leaves the file exactly as it created it,
     // rather than risking removal of a different entry a peer may have put
     // at the same path.
-    const probePath = path.join(wrapper.sessionDir, `.taskcore-birthtime-probe-${wrapper.pid}-1`);
+    const probePath = path.join(
+      wrapper.sessionDir,
+      `.taskcore-birthtime-probe-${wrapper.pid}-1`,
+    );
     expect((await lstat(probePath)).isFile()).toBe(true);
   }, 15_000);
 });

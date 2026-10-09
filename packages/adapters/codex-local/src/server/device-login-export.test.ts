@@ -1,4 +1,14 @@
-import { chmod, lstat, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -10,7 +20,10 @@ import {
   removeProofHome,
   resolveProofHomeRoot,
 } from "./device-login-export.js";
-import { resolveManagedCodexHomeDir, resolveSharedCodexHomeDir } from "./codex-home.js";
+import {
+  resolveManagedCodexHomeDir,
+  resolveSharedCodexHomeDir,
+} from "./codex-home.js";
 
 const COMPANY = "company-a";
 const RUN = "run-1234";
@@ -38,11 +51,22 @@ describe("device-login credential export", () => {
     return dir;
   }
 
-  function envFor(instanceHome: string, extra: Record<string, string> = {}): NodeJS.ProcessEnv {
-    return { TASKCORE_HOME: instanceHome, TASKCORE_INSTANCE_ID: "default", ...extra };
+  function envFor(
+    instanceHome: string,
+    extra: Record<string, string> = {},
+  ): NodeJS.ProcessEnv {
+    return {
+      TASKCORE_HOME: instanceHome,
+      TASKCORE_INSTANCE_ID: "default",
+      ...extra,
+    };
   }
 
-  function subscriptionAuth(input: { accountId: string; lastRefresh?: string; marker?: string }): Buffer {
+  function subscriptionAuth(input: {
+    accountId: string;
+    lastRefresh?: string;
+    marker?: string;
+  }): Buffer {
     const suffix = input.marker ?? input.accountId;
     return Buffer.from(
       JSON.stringify({
@@ -64,7 +88,14 @@ describe("device-login credential export", () => {
     const env = envFor(home);
     const root = resolveProofHomeRoot(env, COMPANY);
     expect(root).toBe(
-      path.resolve(home, "instances", "default", "companies", COMPANY, "codex-device-login-proof"),
+      path.resolve(
+        home,
+        "instances",
+        "default",
+        "companies",
+        COMPANY,
+        "codex-device-login-proof",
+      ),
     );
     const a = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
     const b = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
@@ -81,7 +112,10 @@ describe("device-login credential export", () => {
     const env = envFor(home);
     const proofHome = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
     await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+      }),
       proofHome,
       env,
       companyId: COMPANY,
@@ -97,7 +131,10 @@ describe("device-login credential export", () => {
     const env = envFor(home);
     const proofHome = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
     const outcome = await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+      }),
       proofHome,
       env,
       companyId: COMPANY,
@@ -116,10 +153,22 @@ describe("device-login credential export", () => {
     const bytes = subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER });
     const shared = resolveSharedCodexHomeDir(env);
     const managed = resolveManagedCodexHomeDir(env, COMPANY);
-    const agentManaged = path.resolve(managed, "..", "agents", "agent-1", "codex-home");
+    const agentManaged = path.resolve(
+      managed,
+      "..",
+      "agents",
+      "agent-1",
+      "codex-home",
+    );
     for (const target of [shared, managed, agentManaged]) {
       await expect(
-        installDeviceLoginCredential({ sandboxAuthBytes: bytes, proofHome: target, env, companyId: COMPANY, log: noopLog }),
+        installDeviceLoginCredential({
+          sandboxAuthBytes: bytes,
+          proofHome: target,
+          env,
+          companyId: COMPANY,
+          log: noopLog,
+        }),
       ).rejects.toThrow();
     }
   });
@@ -137,31 +186,58 @@ describe("device-login credential export", () => {
     const linkedHome = path.join(root, `${RUN}-linked`);
     await symlink(realDir, linkedHome);
     await expect(
-      installDeviceLoginCredential({ sandboxAuthBytes: bytes, proofHome: linkedHome, env, companyId: COMPANY, log: noopLog }),
+      installDeviceLoginCredential({
+        sandboxAuthBytes: bytes,
+        proofHome: linkedHome,
+        env,
+        companyId: COMPANY,
+        log: noopLog,
+      }),
     ).rejects.toThrow();
 
     // A proof home whose auth.json is a symlink is rejected.
     const symAuthHome = path.join(root, `${RUN}-symauth`);
     await mkdir(symAuthHome, { recursive: true, mode: 0o700 });
-    await symlink(path.join(home, "target.json"), path.join(symAuthHome, "auth.json"));
+    await symlink(
+      path.join(home, "target.json"),
+      path.join(symAuthHome, "auth.json"),
+    );
     await expect(
-      installDeviceLoginCredential({ sandboxAuthBytes: bytes, proofHome: symAuthHome, env, companyId: COMPANY, log: noopLog }),
+      installDeviceLoginCredential({
+        sandboxAuthBytes: bytes,
+        proofHome: symAuthHome,
+        env,
+        companyId: COMPANY,
+        log: noopLog,
+      }),
     ).rejects.toThrow();
   });
 
   it("export_rejects_api_key_malformed_or_oversized_payload", async () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
-    const apiKey = Buffer.from(JSON.stringify({ OPENAI_API_KEY: "sk-secret-key" }));
+    const apiKey = Buffer.from(
+      JSON.stringify({ OPENAI_API_KEY: "sk-secret-key" }),
+    );
     const malformed = Buffer.from("this is not json {");
     const oversized = Buffer.concat([
       subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER }),
       Buffer.alloc(MAX_AUTH_JSON_BYTES + 10, 0x20),
     ]);
     for (const bytes of [apiKey, malformed, oversized]) {
-      const proofHome = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
+      const proofHome = deriveProofHome({
+        env,
+        companyId: COMPANY,
+        runId: RUN,
+      });
       await expect(
-        installDeviceLoginCredential({ sandboxAuthBytes: bytes, proofHome, env, companyId: COMPANY, log: noopLog }),
+        installDeviceLoginCredential({
+          sandboxAuthBytes: bytes,
+          proofHome,
+          env,
+          companyId: COMPANY,
+          log: noopLog,
+        }),
       ).rejects.toThrow();
       // No file was written on a rejected payload.
       await expect(stat(path.join(proofHome, "auth.json"))).rejects.toThrow();
@@ -174,14 +250,22 @@ describe("device-login credential export", () => {
     const proofHome = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
     const authPath = path.join(proofHome, "auth.json");
     await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "old" }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: OLDER,
+        marker: "old",
+      }),
       proofHome,
       env,
       companyId: COMPANY,
       log: noopLog,
     });
     const outcome = await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "new" }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "new",
+      }),
       proofHome,
       env,
       companyId: COMPANY,
@@ -199,7 +283,11 @@ describe("device-login credential export", () => {
     const proofHome = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
     const authPath = path.join(proofHome, "auth.json");
     await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "keep" }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "keep",
+      }),
       proofHome,
       env,
       companyId: COMPANY,
@@ -207,7 +295,11 @@ describe("device-login credential export", () => {
     });
     // Older same identity: kept.
     const olderOutcome = await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "older" }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: OLDER,
+        marker: "older",
+      }),
       proofHome,
       env,
       companyId: COMPANY,
@@ -216,7 +308,11 @@ describe("device-login credential export", () => {
     expect(olderOutcome).toBe("kept");
     // Different identity, even newer: kept.
     const otherOutcome = await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: OTHER_ACCOUNT, lastRefresh: NEWER, marker: "other" }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: OTHER_ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "other",
+      }),
       proofHome,
       env,
       companyId: COMPANY,
@@ -234,7 +330,10 @@ describe("device-login credential export", () => {
     const proofHome = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
     const logs: string[] = [];
     await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+      }),
       proofHome,
       env,
       companyId: COMPANY,
@@ -254,11 +353,18 @@ describe("device-login credential export", () => {
     const shared = resolveSharedCodexHomeDir(env);
     await mkdir(shared, { recursive: true, mode: 0o700 });
     const sentinel = path.join(shared, "auth.json");
-    await writeFile(sentinel, JSON.stringify({ tokens: { account_id: "host", refresh_token: "host" } }), { mode: 0o600 });
+    await writeFile(
+      sentinel,
+      JSON.stringify({ tokens: { account_id: "host", refresh_token: "host" } }),
+      { mode: 0o600 },
+    );
 
     const proofHome = deriveProofHome({ env, companyId: COMPANY, runId: RUN });
     await installDeviceLoginCredential({
-      sandboxAuthBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER }),
+      sandboxAuthBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+      }),
       proofHome,
       env,
       companyId: COMPANY,
@@ -277,7 +383,9 @@ describe("device-login credential export", () => {
     const env = envFor(home);
     const outside = path.join(home, "not-a-proof-home");
     await mkdir(outside, { recursive: true });
-    await expect(removeProofHome(outside, { env, companyId: COMPANY })).rejects.toThrow();
+    await expect(
+      removeProofHome(outside, { env, companyId: COMPANY }),
+    ).rejects.toThrow();
     // The outside directory is untouched.
     expect((await lstat(outside)).isDirectory()).toBe(true);
   });

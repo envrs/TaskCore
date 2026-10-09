@@ -71,7 +71,9 @@ function createMockSdkAgent(options: MockAgentOptions = {}) {
   const sendRun = options.sendRun ?? createMockRun();
   return {
     agentId: options.agentId ?? sendRun.agentId,
-    send: vi.fn(async (_prompt: string, _options?: Record<string, unknown>) => sendRun),
+    send: vi.fn(
+      async (_prompt: string, _options?: Record<string, unknown>) => sendRun,
+    ),
     [Symbol.asyncDispose]: vi.fn(async () => {}),
   };
 }
@@ -144,31 +146,37 @@ describe("cursor_cloud execute", () => {
     getRunMock.mockReset();
   });
 
-  it.each([false, true])("sends the central chat directive to Cursor Cloud (custom=%s)", async (custom) => {
-    const sdkAgent = createMockSdkAgent();
-    createMock.mockResolvedValue(sdkAgent);
-    const ctx = createContext();
-    if (!custom) delete ctx.config.promptTemplate;
-    const directive = "Chat directive: clarify goals and hand plans off to project tasks.";
-    ctx.context = {
-      ...ctx.context,
-      conversationMode: true,
-      taskcoreTaskMarkdown: directive,
-      taskcoreWake: {
-        reason: "issue_commented",
-        issue: { id: "issue-1", workMode: "planning", status: "in_progress" },
-        interactionKind: "request_confirmation",
-        interactionStatus: "accepted",
-      },
-    };
-    const result = await execute(ctx);
-    expect(result.exitCode).toBe(0);
-    const prompt = String(sdkAgent.send.mock.calls[0]?.[0]);
-    expect(prompt).toContain(directive);
-    expect(prompt).toContain(custom ? "Do the work for" : "You are agent agent-1");
-    expect(prompt).not.toContain("Execution contract:");
-    expect(prompt).not.toContain("Create child issues");
-  });
+  it.each([false, true])(
+    "sends the central chat directive to Cursor Cloud (custom=%s)",
+    async (custom) => {
+      const sdkAgent = createMockSdkAgent();
+      createMock.mockResolvedValue(sdkAgent);
+      const ctx = createContext();
+      if (!custom) delete ctx.config.promptTemplate;
+      const directive =
+        "Chat directive: clarify goals and hand plans off to project tasks.";
+      ctx.context = {
+        ...ctx.context,
+        conversationMode: true,
+        taskcoreTaskMarkdown: directive,
+        taskcoreWake: {
+          reason: "issue_commented",
+          issue: { id: "issue-1", workMode: "planning", status: "in_progress" },
+          interactionKind: "request_confirmation",
+          interactionStatus: "accepted",
+        },
+      };
+      const result = await execute(ctx);
+      expect(result.exitCode).toBe(0);
+      const prompt = String(sdkAgent.send.mock.calls[0]?.[0]);
+      expect(prompt).toContain(directive);
+      expect(prompt).toContain(
+        custom ? "Do the work for" : "You are agent agent-1",
+      );
+      expect(prompt).not.toContain("Execution contract:");
+      expect(prompt).not.toContain("Create child issues");
+    },
+  );
 
   it("sends assignment context on an ordinary cloud task turn", async () => {
     const sdkAgent = createMockSdkAgent();
@@ -182,7 +190,9 @@ describe("cursor_cloud execute", () => {
     expect(prompt).toContain("You are agent agent-1 (Cursor Cloud Agent).");
     expect(prompt).toContain("Connection tools:");
     expect(prompt).not.toContain("Execution contract:");
-    expect(prompt.indexOf("Append the same ledger entry.")).toBeLessThan(prompt.indexOf("Change the final scope to the launch checklist."));
+    expect(prompt.indexOf("Append the same ledger entry.")).toBeLessThan(
+      prompt.indexOf("Change the final scope to the launch checklist."),
+    );
     expect(prompt.split("Append the same ledger entry.")).toHaveLength(3);
   });
 
@@ -191,14 +201,19 @@ describe("cursor_cloud execute", () => {
     createMock.mockResolvedValue(sdkAgent);
     const ctx = createContext();
     const description = "start " + "context ".repeat(25_000) + " end";
-    ctx.config.env = { CURSOR_API_KEY: "cursor-secret", TASKCORE_WAKE_PAYLOAD_JSON: description };
+    ctx.config.env = {
+      CURSOR_API_KEY: "cursor-secret",
+      TASKCORE_WAKE_PAYLOAD_JSON: description,
+    };
     ctx.context.taskcoreWake = {
       reason: "issue_assigned",
       issue: { id: "issue-1", description },
     };
     const result = await execute(ctx);
     expect(result.exitCode).toBe(0);
-    expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).not.toHaveProperty("TASKCORE_WAKE_PAYLOAD_JSON");
+    expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).not.toHaveProperty(
+      "TASKCORE_WAKE_PAYLOAD_JSON",
+    );
     expect(sdkAgent.send.mock.calls[0]?.[0]).toContain(description);
   });
 
@@ -214,7 +229,10 @@ describe("cursor_cloud execute", () => {
         },
       ],
     });
-    const sdkAgent = createMockSdkAgent({ agentId: "agent-fresh", sendRun: run });
+    const sdkAgent = createMockSdkAgent({
+      agentId: "agent-fresh",
+      sendRun: run,
+    });
     createMock.mockResolvedValue(sdkAgent);
     const ctx = createContext();
 
@@ -229,7 +247,12 @@ describe("cursor_cloud execute", () => {
       model: { id: "gpt-5.4" },
       cloud: {
         env: { type: "cloud" },
-        repos: [{ url: "https://github.com/khulnasoft/taskcore.git", startingRef: "main" }],
+        repos: [
+          {
+            url: "https://github.com/khulnasoft/taskcore.git",
+            startingRef: "main",
+          },
+        ],
       },
     });
     expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).toMatchObject({
@@ -241,8 +264,12 @@ describe("cursor_cloud execute", () => {
     });
     // When a run JWT is present the callback URL is retained so the worker can
     // authenticate its Taskcore API calls.
-    expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).toHaveProperty("TASKCORE_API_URL");
-    expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).not.toHaveProperty("CURSOR_API_KEY");
+    expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).toHaveProperty(
+      "TASKCORE_API_URL",
+    );
+    expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).not.toHaveProperty(
+      "CURSOR_API_KEY",
+    );
 
     expect(result).toMatchObject({
       exitCode: 0,
@@ -255,7 +282,12 @@ describe("cursor_cloud execute", () => {
         latestRunId: "run-123",
         runtime: "cloud",
         envType: "cloud",
-        repos: [{ url: "https://github.com/khulnasoft/taskcore.git", startingRef: "main" }],
+        repos: [
+          {
+            url: "https://github.com/khulnasoft/taskcore.git",
+            startingRef: "main",
+          },
+        ],
       },
     });
     expect(ctx.logs.map((entry) => entry.chunk)).toEqual(
@@ -271,8 +303,12 @@ describe("cursor_cloud execute", () => {
     const keys = generateKeyPairSync("ed25519");
     const identity = {
       keyId: "sha256:assigned-identity",
-      publicKeyPem: keys.publicKey.export({ type: "spki", format: "pem" }).toString(),
-      privateKeyPem: keys.privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
+      publicKeyPem: keys.publicKey
+        .export({ type: "spki", format: "pem" })
+        .toString(),
+      privateKeyPem: keys.privateKey
+        .export({ type: "pkcs8", format: "pem" })
+        .toString(),
     };
     const sdkAgent = createMockSdkAgent();
     createMock.mockResolvedValue(sdkAgent);
@@ -294,10 +330,18 @@ describe("cursor_cloud execute", () => {
     });
     expect(env).not.toHaveProperty("taskcore_agent_private_key");
     const challenge = Buffer.from("managed cloud identity");
-    expect(verify(null, challenge, identity.publicKeyPem,
-      sign(null, challenge, env.TASKCORE_AGENT_PRIVATE_KEY))).toBe(true);
+    expect(
+      verify(
+        null,
+        challenge,
+        identity.publicKeyPem,
+        sign(null, challenge, env.TASKCORE_AGENT_PRIVATE_KEY),
+      ),
+    ).toBe(true);
     const privateBody = identity.privateKeyPem.split("\n")[1];
-    expect(JSON.stringify([ctx.meta, ctx.logs, sdkAgent.send.mock.calls])).not.toContain(privateBody);
+    expect(
+      JSON.stringify([ctx.meta, ctx.logs, sdkAgent.send.mock.calls]),
+    ).not.toContain(privateBody);
   });
 
   it("omits empty environment values while preserving nonempty values exactly", async () => {
@@ -323,25 +367,36 @@ describe("cursor_cloud execute", () => {
     expect(env).not.toHaveProperty("SSH_AUTH_SOCK");
     expect(env).not.toHaveProperty("EMPTY_PLAIN");
     expect(env).not.toHaveProperty("CURSOR_API_KEY");
-    expect(env).toMatchObject({ EXTRA_FLAG: "0", PADDED_VALUE: "  retain whitespace  " });
+    expect(env).toMatchObject({
+      EXTRA_FLAG: "0",
+      PADDED_VALUE: "  retain whitespace  ",
+    });
     expect(Object.values(env).every((value) => value !== "")).toBe(true);
   });
 
   it("reports dispatch before starting the first remote SDK operation", async () => {
     const run = createMockRun({ agentId: "agent-dispatch" });
-    const sdkAgent = createMockSdkAgent({ agentId: "agent-dispatch", sendRun: run });
+    const sdkAgent = createMockSdkAgent({
+      agentId: "agent-dispatch",
+      sendRun: run,
+    });
     createMock.mockResolvedValue(sdkAgent);
     const onDispatch = vi.fn();
 
     await execute(createContext({ onDispatch }));
 
     expect(onDispatch).toHaveBeenCalledTimes(1);
-    expect(onDispatch.mock.invocationCallOrder[0]).toBeLessThan(createMock.mock.invocationCallOrder[0]!);
+    expect(onDispatch.mock.invocationCallOrder[0]).toBeLessThan(
+      createMock.mock.invocationCallOrder[0]!,
+    );
   });
 
   it("omits the Taskcore API callback when no run JWT is issued (remote worker cannot call home)", async () => {
     const run = createMockRun({ agentId: "agent-no-jwt" });
-    const sdkAgent = createMockSdkAgent({ agentId: "agent-no-jwt", sendRun: run });
+    const sdkAgent = createMockSdkAgent({
+      agentId: "agent-no-jwt",
+      sendRun: run,
+    });
     createMock.mockResolvedValue(sdkAgent);
     // cursor_cloud is registered with supportsLocalAgentJwt=false, so heartbeat
     // passes no authToken. A remote cloud worker must not receive a callback URL
@@ -350,7 +405,8 @@ describe("cursor_cloud execute", () => {
 
     await execute(ctx);
 
-    const envVars = (createMock.mock.calls[0]?.[0]?.cloud?.envVars ?? {}) as Record<string, string>;
+    const envVars = (createMock.mock.calls[0]?.[0]?.cloud?.envVars ??
+      {}) as Record<string, string>;
     expect(envVars).not.toHaveProperty("TASKCORE_API_KEY");
     expect(envVars).not.toHaveProperty("TASKCORE_API_URL");
     expect(envVars).not.toHaveProperty("TASKCORE_API_BRIDGE_MODE");
@@ -364,8 +420,14 @@ describe("cursor_cloud execute", () => {
 
   it("resumes a matching saved session when no active run can be reattached", async () => {
     getRunMock.mockResolvedValue(createMockRun({ status: "finished" }));
-    const resumedRun = createMockRun({ id: "run-resumed", agentId: "agent-resumed" });
-    const sdkAgent = createMockSdkAgent({ agentId: "agent-resumed", sendRun: resumedRun });
+    const resumedRun = createMockRun({
+      id: "run-resumed",
+      agentId: "agent-resumed",
+    });
+    const sdkAgent = createMockSdkAgent({
+      agentId: "agent-resumed",
+      sendRun: resumedRun,
+    });
     resumeMock.mockResolvedValue(sdkAgent);
     const ctx = createContext({
       runtime: {
@@ -377,7 +439,12 @@ describe("cursor_cloud execute", () => {
           latestRunId: "run-previous",
           runtime: "cloud",
           envType: "cloud",
-          repos: [{ url: "https://github.com/khulnasoft/taskcore.git", startingRef: "main" }],
+          repos: [
+            {
+              url: "https://github.com/khulnasoft/taskcore.git",
+              startingRef: "main",
+            },
+          ],
         },
       },
     });
@@ -425,7 +492,10 @@ describe("cursor_cloud execute", () => {
         model: { id: "gpt-5.4" },
       },
     });
-    const sdkAgent = createMockSdkAgent({ agentId: "agent-attached", sendRun: followUpRun });
+    const sdkAgent = createMockSdkAgent({
+      agentId: "agent-attached",
+      sendRun: followUpRun,
+    });
     resumeMock.mockResolvedValue(sdkAgent);
     const ctx = createContext({
       runtime: {
@@ -437,7 +507,12 @@ describe("cursor_cloud execute", () => {
           latestRunId: "run-attached",
           runtime: "cloud",
           envType: "cloud",
-          repos: [{ url: "https://github.com/khulnasoft/taskcore.git", startingRef: "main" }],
+          repos: [
+            {
+              url: "https://github.com/khulnasoft/taskcore.git",
+              startingRef: "main",
+            },
+          ],
         },
       },
     });
@@ -459,7 +534,9 @@ describe("cursor_cloud execute", () => {
     const logChunks = ctx.logs.map((entry) => entry.chunk);
     expect(logChunks).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("Reattached to existing Cursor run run-attached."),
+        expect.stringContaining(
+          "Reattached to existing Cursor run run-attached.",
+        ),
         expect.stringContaining("Prior Cursor run run-attached finished"),
         expect.stringContaining("Started Cursor run run-followup."),
         expect.stringContaining('"runId":"run-attached"'),
@@ -476,7 +553,9 @@ describe("cursor_cloud execute", () => {
 
   it("explains a rejected Cursor default without silently choosing another model", async () => {
     const sdkAgent = createMockSdkAgent();
-    sdkAgent.send.mockRejectedValue(new Error("[invalid_model] Model 'gpt-5' is not available or invalid."));
+    sdkAgent.send.mockRejectedValue(
+      new Error("[invalid_model] Model 'gpt-5' is not available or invalid."),
+    );
     createMock.mockResolvedValue(sdkAgent);
     const ctx = createContext();
     delete ctx.config.model;
@@ -486,21 +565,33 @@ describe("cursor_cloud execute", () => {
     expect(createMock.mock.calls[0]?.[0]).not.toHaveProperty("model");
     expect(sdkAgent.send).toHaveBeenCalledWith(expect.any(String), {});
     expect(result.exitCode).toBe(1);
-    expect(result.errorMessage).toContain("Cursor rejected its configured default model");
-    expect(result.errorMessage).toContain("https://cursor.com/dashboard/cloud-agents");
+    expect(result.errorMessage).toContain(
+      "Cursor rejected its configured default model",
+    );
+    expect(result.errorMessage).toContain(
+      "https://cursor.com/dashboard/cloud-agents",
+    );
     expect(sdkAgent.send).toHaveBeenCalledTimes(1);
   });
 
   it("makes Cursor repository setup failures actionable without launching another run", async () => {
     const sdkAgent = createMockSdkAgent();
-    sdkAgent.send.mockRejectedValue(new Error("[validation_error] Failed to determine repository default branch"));
+    sdkAgent.send.mockRejectedValue(
+      new Error(
+        "[validation_error] Failed to determine repository default branch",
+      ),
+    );
     createMock.mockResolvedValue(sdkAgent);
 
     const result = await execute(createContext());
 
     expect(result.exitCode).toBe(1);
-    expect(result.errorMessage).toContain("Cursor's GitHub integration can access https://github.com/khulnasoft/taskcore.git");
-    expect(result.errorMessage).toContain("https://cursor.com/dashboard/cloud-agents");
+    expect(result.errorMessage).toContain(
+      "Cursor's GitHub integration can access https://github.com/khulnasoft/taskcore.git",
+    );
+    expect(result.errorMessage).toContain(
+      "https://cursor.com/dashboard/cloud-agents",
+    );
     expect(sdkAgent.send).toHaveBeenCalledTimes(1);
   });
 
@@ -516,7 +607,10 @@ describe("cursor_cloud execute", () => {
         model: { id: "gpt-5.4" },
       },
     });
-    const sdkAgent = createMockSdkAgent({ agentId: "agent-cancelled", sendRun: cancelledRun });
+    const sdkAgent = createMockSdkAgent({
+      agentId: "agent-cancelled",
+      sendRun: cancelledRun,
+    });
     createMock.mockResolvedValue(sdkAgent);
     const ctx = createContext();
 

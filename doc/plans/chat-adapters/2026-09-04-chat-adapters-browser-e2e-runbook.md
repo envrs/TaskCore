@@ -18,13 +18,13 @@ This document is the browser acceptance contract during implementation and the s
 
 The required setup path in this runbook is deliberately the path the current branch can execute. Optional provisioning paths become blocking only after they ship:
 
-| Provider        | Required executable setup                                                                                                | Non-shipped convenience                        |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| Provider        | Required executable setup                                                                                               | Non-shipped convenience                        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | Slack           | Customer-owned Slack app created from Taskcore's manifest; Bot User OAuth Token and Signing Secret entered once         | Managed **Add to Slack** OAuth installation    |
 | GitHub          | Customer-owned GitHub App; Taskcore-generated webhook secret copied to GitHub, then App ID and private key entered once | GitHub App Manifest create-and-return exchange |
-| Discord         | Customer-owned Discord bot; bot token, Application ID, and Server ID entered once; direct Gateway transport              | None                                           |
-| Microsoft Teams | Customer-owned single-tenant Entra app, Azure Bot, and Teams app; client ID, tenant ID, and client secret entered once   | None                                           |
-| Telegram        | BotFather bot token entered once                                                                                         | None                                           |
+| Discord         | Customer-owned Discord bot; bot token, Application ID, and Server ID entered once; direct Gateway transport             | None                                           |
+| Microsoft Teams | Customer-owned single-tenant Entra app, Azure Bot, and Teams app; client ID, tenant ID, and client secret entered once  | None                                           |
+| Telegram        | BotFather bot token entered once                                                                                        | None                                           |
 
 Customer-owned credentials are the complete first-release path for every provider. The two named managed exchanges are future conveniences, not shipped setup controls, release dependencies, or instructions the operator should search for in the current UI.
 
@@ -141,10 +141,10 @@ The required v1 journeys stay in the browser. If Taskcore later ships a product-
 
 ### 2.3 Two complementary suites
 
-| Suite                          |                                                              Frequency | Purpose                                                                                                                                                                                 |
-| ------------------------------ | ---------------------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Suite                          |                                                              Frequency | Purpose                                                                                                                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Deterministic provider fixture |                                                     Every pull request | Browser coverage of Taskcore setup, Settings, Access, Conversations, Activity, task attribution, durable delivery, deduplication, and publication without external provider flakiness. |
-| Real-provider browser run      | Nightly for active development; required before stable adapter release | Proves provider registration/consent, real webhook delivery, native identity, native thread/object behavior, rendering, files, actions, permission changes, and provider links.         |
+| Real-provider browser run      | Nightly for active development; required before stable adapter release | Proves provider registration/consent, real webhook delivery, native identity, native thread/object behavior, rendering, files, actions, permission changes, and provider links.        |
 
 A mock pass cannot replace the live-provider pass. A live-provider pass also does not replace signature, idempotency, company-boundary, or failure-injection tests below the browser layer.
 
@@ -179,8 +179,8 @@ I keep these sessions distinct for the whole run:
 
 | Browser session      | Signed-in identity | Tabs kept open                                                   |
 | -------------------- | ------------------ | ---------------------------------------------------------------- |
-| Installer            | Dana E2E           | Taskcore, provider app administration, provider conversation    |
-| Linked participant   | Ari E2E            | Provider conversation, Taskcore identity-link confirmation      |
+| Installer            | Dana E2E           | Taskcore, provider app administration, provider conversation     |
+| Linked participant   | Ari E2E            | Provider conversation, Taskcore identity-link confirmation       |
 | Unlinked participant | Jules E2E          | Provider conversation only until a denial or link flow is tested |
 
 When a provider requires MFA, CAPTCHA, passkey, tenant approval, organization approval, or secret handling, I stop on that exact page and ask the user for only that browser action. I state which session and tab is waiting and the button or field that must be completed. After the user says it is ready, I re-read the current page and continue at the next uncompleted step; I do not restart setup or ask for credentials in chat.
@@ -218,7 +218,7 @@ behavior and record the actual result, native run, and provider receipt:
 | `LONG <run-id>`      | Emit safe queued/working progress and a final response long enough to exercise native streaming or post/edit fallback. |
 | `FILE <run-id>`      | Read the attached `chat-e2e.txt`, report its marker, and publish `chat-e2e-result.txt`.                                |
 | `FORM <run-id>`      | Request one short text value and one choice using the richest supported interaction, then echo the submitted values.   |
-| `GOVERN <run-id>`    | Create a governed Taskcore approval and publish only the provider-safe approval status/link.                          |
+| `GOVERN <run-id>`    | Create a governed Taskcore approval and publish only the provider-safe approval status/link.                           |
 | `FAIL <run-id>`      | Terminate predictably after the safe working state so failure publication and retry are observable.                    |
 
 A deterministic suite may use a dedicated process adapter or simulated model
@@ -231,9 +231,9 @@ when the native runner makes them available to Taskcore.
 ### 3.2 Required people
 
 | Role                 | Taskcore identity            | Provider identity              | Purpose                                                        |
-| -------------------- | ----------------------------- | ------------------------------ | -------------------------------------------------------------- |
-| Installer            | Dana E2E · company admin      | Provider sandbox administrator | Creates the connection and changes Settings/Access.            |
-| Linked participant   | Ari E2E · ordinary member     | Separate provider member       | Confirms identity linking and current Taskcore authorization. |
+| -------------------- | ---------------------------- | ------------------------------ | -------------------------------------------------------------- |
+| Installer            | Dana E2E · company admin     | Provider sandbox administrator | Creates the connection and changes Settings/Access.            |
+| Linked participant   | Ari E2E · ordinary member    | Separate provider member       | Confirms identity linking and current Taskcore authorization.  |
 | Unlinked participant | Jules E2E · no Taskcore link | Separate provider member       | Exercises restricted external access and link-required denial. |
 
 The provider bot identity is dedicated to `Maya E2E`. It must not share a native bot identity with another Taskcore agent endpoint.
@@ -242,11 +242,11 @@ The provider bot identity is dedicated to `Maya E2E`. It must not share a native
 
 All resources must be disposable or explicitly designated for Taskcore testing:
 
-| Provider | Available/enabled fixture                | Available/disabled fixture          |
-| -------- | ---------------------------------------- | ----------------------------------- |
-| Slack    | `#pc-e2e-enabled`                        | `#pc-e2e-disabled`                  |
+| Provider | Available/enabled fixture               | Available/disabled fixture         |
+| -------- | --------------------------------------- | ---------------------------------- |
+| Slack    | `#pc-e2e-enabled`                       | `#pc-e2e-disabled`                 |
 | GitHub   | `taskcore-chat-e2e-enabled`             | `taskcore-chat-e2e-disabled`       |
-| Discord  | `#pc-e2e-enabled`                        | `#pc-e2e-disabled`                  |
+| Discord  | `#pc-e2e-enabled`                       | `#pc-e2e-disabled`                 |
 | Teams    | `Taskcore Chat E2E / Enabled`           | `Taskcore Chat E2E / Disabled`     |
 | Telegram | `Taskcore Chat E2E Enabled` group/forum | `Taskcore Chat E2E Disabled` group |
 
@@ -278,12 +278,12 @@ Reconnect always retains the endpoint's immutable provider bot identity. It reva
 
 Removing a connection archives the Taskcore endpoint, stops its runtime, marks retained conversation history `endpoint_removed`, and retires endpoint-owned credentials. It is not a provider uninstall. Slack, GitHub, Discord, and Microsoft resources remain installed or registered until an operator removes them at the provider. Telegram is the one automated provider-cleanup exception: Taskcore durably removes the bot webhook and command menu before retiring the saved token, but the BotFather bot and its chat memberships still remain.
 
-| Provider        | What still exists after **Remove connection**                                                               |
-| --------------- | ----------------------------------------------------------------------------------------------------------- |
-| Slack           | The Slack app installation and any channel memberships                                                      |
-| GitHub          | The GitHub App registration, installations, repository grants, and webhook configuration                    |
-| Discord         | The Discord application and the bot's server installation                                                   |
-| Microsoft Teams | The Entra app registration, Azure Bot, custom Teams app, and team/chat installations                        |
+| Provider        | What still exists after **Remove connection**                                                              |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| Slack           | The Slack app installation and any channel memberships                                                     |
+| GitHub          | The GitHub App registration, installations, repository grants, and webhook configuration                   |
+| Discord         | The Discord application and the bot's server installation                                                  |
+| Microsoft Teams | The Entra app registration, Azure Bot, custom Teams app, and team/chat installations                       |
 | Telegram        | The BotFather bot and chat memberships; only Taskcore's webhook and command menu are removed automatically |
 
 ### 3.5 Shared preflight
@@ -312,10 +312,10 @@ Before starting a provider run:
 
 I drive every unblocked browser step myself. I pause and ask the user only at these boundaries:
 
-| Provider        | Human action that may be required                                                                                                            | What I do immediately afterward                                                                     |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Provider        | Human action that may be required                                                                                                           | What I do immediately afterward                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Slack           | Sign in to the sandbox workspace, approve installation, or paste the customer-owned bot token/signing secret into Taskcore's masked fields. | Resume at the Slack consent result, verify the requested scopes, invite the bot, and execute S1–S7. |
-| GitHub          | Sign in to the sandbox organization, approve App creation/installation, or upload a newly generated private key for the manual path.         | Verify the repository grant and permissions, then execute G1–G7.                                    |
+| GitHub          | Sign in to the sandbox organization, approve App creation/installation, or upload a newly generated private key for the manual path.        | Verify the repository grant and permissions, then execute G1–G7.                                    |
 | Discord         | Sign in to the developer portal, complete CAPTCHA, approve the server install, or paste the bot token into Taskcore's masked field.         | Verify the bot identity, Message Content intent, exact install permissions, and execute DC1–DC7.    |
 | Microsoft Teams | Sign in to the test tenant, satisfy tenant-admin consent, or enter the client secret in Taskcore's masked field.                            | Verify the created bot/app identity and install target, then execute T1–T7.                         |
 | Telegram        | Sign in to Telegram Web or copy the BotFather token into Taskcore's masked field.                                                           | Verify the bot identity with the provider, then execute TG1–TG6.                                    |
@@ -1059,21 +1059,21 @@ Slack Socket Mode and Telegram polling receive separate instance-admin smoke tes
 
 “Automatic” means the richest safe native behavior is used without an endpoint toggle. “Fallback” means the provider visibly receives the documented safe alternative.
 
-| Capability               | Slack                         | GitHub                                    | Discord                                  | Teams                                                   | Telegram                                 |
-| ------------------------ | ----------------------------- | ----------------------------------------- | ---------------------------------------- | ------------------------------------------------------- | ---------------------------------------- |
-| Root activation          | Native mention                | Mention in issue/PR/review                | Root bot mention                         | Native mention                                          | DM message or group `/task@bot` command  |
-| Durable boundary         | Slack thread or DM generation | Existing issue/PR/review thread           | Created Discord thread or DM generation  | Channel post thread or chat generation                  | Chat generation or forum topic           |
-| Reaction acknowledgement | Automatic                     | Automatic                                 | Automatic                                | Automatic where supported                               | Automatic where allowed                  |
-| Streaming/progress       | Native stream, else post/edit | Coarse comment edit                       | Bounded post/edit; no native streaming   | Bounded post/edit; no native streaming                  | Throttled post/edit; optional DM draft   |
-| Rich cards               | Block Kit                     | GFM + Taskcore link                      | Discord embed                            | Adaptive Card                                           | Formatted text/inline keyboard           |
-| Buttons/selections       | Native                        | Fallback link                             | Native Gateway interaction               | Native card action                                      | Inline keyboard                          |
-| Modal/form               | Native modal                  | Fallback link                             | Native modal                             | Task module                                             | Sequential prompt/link fallback          |
+| Capability               | Slack                         | GitHub                                    | Discord                                 | Teams                                                   | Telegram                                 |
+| ------------------------ | ----------------------------- | ----------------------------------------- | --------------------------------------- | ------------------------------------------------------- | ---------------------------------------- |
+| Root activation          | Native mention                | Mention in issue/PR/review                | Root bot mention                        | Native mention                                          | DM message or group `/task@bot` command  |
+| Durable boundary         | Slack thread or DM generation | Existing issue/PR/review thread           | Created Discord thread or DM generation | Channel post thread or chat generation                  | Chat generation or forum topic           |
+| Reaction acknowledgement | Automatic                     | Automatic                                 | Automatic                               | Automatic where supported                               | Automatic where allowed                  |
+| Streaming/progress       | Native stream, else post/edit | Coarse comment edit                       | Bounded post/edit; no native streaming  | Bounded post/edit; no native streaming                  | Throttled post/edit; optional DM draft   |
+| Rich cards               | Block Kit                     | GFM + Taskcore link                       | Discord embed                           | Adaptive Card                                           | Formatted text/inline keyboard           |
+| Buttons/selections       | Native                        | Fallback link                             | Native Gateway interaction              | Native card action                                      | Inline keyboard                          |
+| Modal/form               | Native modal                  | Fallback link                             | Native modal                            | Task module                                             | Sequential prompt/link fallback          |
 | Commands                 | Registered slash command      | Text mention vocabulary only              | Registered `/taskcore status/new/close` | Card/message vocabulary                                 | `/new`, `/status`, `/close`              |
-| Files                    | Native send/receive           | Scoped inbound uploads + task output link | Native send/receive                      | Personal consent; channel/group pictures; task fallback | Native media/document                    |
-| DM                       | Native                        | Unsupported                               | Native                                   | Personal scope                                          | Native                                   |
-| Ephemeral/private denial | Ephemeral, then DM/text       | Safe public text/link                     | DM, then safe text                       | Targeted, then DM/text                                  | Recipient-bound callback; exact-actor DM |
-| Edit/delete audit        | Correction/tombstone          | Correction/tombstone                      | Correction/tombstone                     | Correction/tombstone where delivered                    | Correction/tombstone where delivered     |
-| Concurrent turns         | Queue by default              | Queue by default                          | Queue by default                         | Queue by default                                        | Queue by default                         |
+| Files                    | Native send/receive           | Scoped inbound uploads + task output link | Native send/receive                     | Personal consent; channel/group pictures; task fallback | Native media/document                    |
+| DM                       | Native                        | Unsupported                               | Native                                  | Personal scope                                          | Native                                   |
+| Ephemeral/private denial | Ephemeral, then DM/text       | Safe public text/link                     | DM, then safe text                      | Targeted, then DM/text                                  | Recipient-bound callback; exact-actor DM |
+| Edit/delete audit        | Correction/tombstone          | Correction/tombstone                      | Correction/tombstone                    | Correction/tombstone where delivered                    | Correction/tombstone where delivered     |
+| Concurrent turns         | Queue by default              | Queue by default                          | Queue by default                        | Queue by default                                        | Queue by default                         |
 
 A stable adapter fails qualification if it silently omits a supported maximal feature, exposes a feature toggle that should be automatic, claims an unsupported native behavior, or falls back without preserving task identity, authorization, and safe publication.
 

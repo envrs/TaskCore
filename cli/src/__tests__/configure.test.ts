@@ -85,7 +85,9 @@ describe("configure command", () => {
   });
 
   it("sets a failing exit code when no config exists", async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-configure-missing-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-configure-missing-"),
+    );
     const configPath = path.join(root, "missing.json");
 
     try {
@@ -98,12 +100,20 @@ describe("configure command", () => {
   });
 
   it("backs up invalid config bytes and refuses non-interactive replacement", async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-configure-invalid-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-configure-invalid-"),
+    );
     const configPath = path.join(root, "config.json");
     const invalidBytes = Buffer.from('{"server": invalid}\n', "utf8");
-    const stdinDescriptor = Object.getOwnPropertyDescriptor(process.stdin, "isTTY");
+    const stdinDescriptor = Object.getOwnPropertyDescriptor(
+      process.stdin,
+      "isTTY",
+    );
     fs.writeFileSync(configPath, invalidBytes);
-    Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: false });
+    Object.defineProperty(process.stdin, "isTTY", {
+      configurable: true,
+      value: false,
+    });
 
     try {
       await configure({ config: configPath, section: "server" });

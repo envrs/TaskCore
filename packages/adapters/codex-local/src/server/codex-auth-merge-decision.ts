@@ -30,7 +30,11 @@ export const KEEP_DESTINATION_EXIT = 20;
 /** Exit code: keep the destination; the source `last_refresh` was implausibly far in the future. */
 export const IMPLAUSIBLE_LAST_REFRESH_EXIT = 22;
 
-const KNOWN_EXIT_CODES = new Set([USE_SOURCE_EXIT, KEEP_DESTINATION_EXIT, IMPLAUSIBLE_LAST_REFRESH_EXIT]);
+const KNOWN_EXIT_CODES = new Set([
+  USE_SOURCE_EXIT,
+  KEEP_DESTINATION_EXIT,
+  IMPLAUSIBLE_LAST_REFRESH_EXIT,
+]);
 
 export interface DecideCodexAuthMergeOptions {
   /** Opt in to the cache-slot seed mode: fill an absent destination from a
@@ -53,7 +57,12 @@ export async function decideCodexAuthMerge(
   options: DecideCodexAuthMergeOptions,
 ): Promise<number> {
   const args = options.seedIfDestAbsent
-    ? [DECISION_SCRIPT_PATH, SEED_IF_DEST_ABSENT_FLAG, sourcePath, destinationPath]
+    ? [
+        DECISION_SCRIPT_PATH,
+        SEED_IF_DEST_ABSENT_FLAG,
+        sourcePath,
+        destinationPath,
+      ]
     : [DECISION_SCRIPT_PATH, sourcePath, destinationPath];
   try {
     await execFile("node", args);
@@ -70,7 +79,9 @@ export async function decideCodexAuthMerge(
           : error instanceof Error
             ? error.message
             : String(error);
-    throw new Error(`${options.errorLabel} decision predicate failed: ${detail}`);
+    throw new Error(
+      `${options.errorLabel} decision predicate failed: ${detail}`,
+    );
   }
   // `execFile` resolved, so the predicate exited 0. The predicate always exits
   // 10, 20, or 22, so a clean exit 0 is unexpected; fail loud.

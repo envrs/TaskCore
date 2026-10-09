@@ -21,11 +21,15 @@ interface PackageManifest {
 }
 
 const manifestPath = fileURLToPath(new URL("../package.json", import.meta.url));
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as PackageManifest;
+const manifest = JSON.parse(
+  readFileSync(manifestPath, "utf8"),
+) as PackageManifest;
 
 describe("publishConfig publishes the duplex observability subpath", () => {
   it("does not deny the subpath in publishConfig.exports", () => {
-    expect(manifest.publishConfig.exports).not.toHaveProperty("./duplex-observability");
+    expect(manifest.publishConfig.exports).not.toHaveProperty(
+      "./duplex-observability",
+    );
   });
 
   it("keeps the wildcard entry in publishConfig.exports so the subpath resolves through it", () => {

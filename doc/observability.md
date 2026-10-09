@@ -15,7 +15,7 @@ install includes it. It stays a no-op interface until an SDK registers a
 provider, so it exports no telemetry by itself.
 
 The SDK, the auto-instrumentation bundle, and the resources and
-semantic-conventions helpers are *optional peer dependencies*: they are not in
+semantic-conventions helpers are _optional peer dependencies_: they are not in
 the default lockfile, and the server loads them dynamically only when an
 operator turns the feature on. The three exporters below are mutually
 alternative peer dependencies — install exactly **one**, matching
@@ -83,10 +83,10 @@ pnpm add \
 Then add the exporter for the protocol you intend to use:
 
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | Exporter package                           | Version   |
-| ------------------------------ | ------------------------------------------- | --------- |
-| `grpc` (default if unset)      | `@opentelemetry/exporter-trace-otlp-grpc`   | `0.221.0` |
-| `http/protobuf`                | `@opentelemetry/exporter-trace-otlp-proto`  | `0.221.0` |
-| `http/json`                    | `@opentelemetry/exporter-trace-otlp-http`   | `0.221.0` |
+| ----------------------------- | ------------------------------------------ | --------- |
+| `grpc` (default if unset)     | `@opentelemetry/exporter-trace-otlp-grpc`  | `0.221.0` |
+| `http/protobuf`               | `@opentelemetry/exporter-trace-otlp-proto` | `0.221.0` |
+| `http/json`                   | `@opentelemetry/exporter-trace-otlp-http`  | `0.221.0` |
 
 For example, for the default gRPC path:
 
@@ -286,8 +286,8 @@ component and leave the other inactive.
 The supported server SDK version is **`@sentry/node@10.71.0`** — the exact
 version this feature is audited against (see "Server request data"
 below). Install it in the server, the same way you install the
-OpenTelemetry packages above. `@sentry/node` is an *optional peer
-dependency*: it is not in the default lockfile, and the server loads it
+OpenTelemetry packages above. `@sentry/node` is an _optional peer
+dependency_: it is not in the default lockfile, and the server loads it
 dynamically only when the backend DSN resolves to a value.
 `server/package.json` declares this exact version; installing a different
 version defeats the audit, so the server checks the installed version
@@ -925,7 +925,7 @@ absent, never a misleading `0`.
 | `stage.asset.<key>`                   | One inbound asset stage task inside `stage.sync`. It packs and uploads one managed-home asset. The `<key>` segment is the asset key.                       | `stage.sync`                    |
 | `stage.project.<id>`                  | One inbound referenced-project stage task inside `stage.sync`. It uploads one referenced project. The `<id>` segment is the project id.                    | `stage.sync`                    |
 | `pack`                                | Host-side workspace tarball build inside the `stage.workspace` task.                                                                                       | `stage.workspace`               |
-| `bridge.taskcore`                    | Taskcore bridge start step.                                                                                                                               | `sandbox.startup`               |
+| `bridge.taskcore`                     | Taskcore bridge start step.                                                                                                                                | `sandbox.startup`               |
 | `bridge.process-session`              | Process-session bridge start step.                                                                                                                         | `sandbox.startup`               |
 | `acp.handshake`                       | ACP session handshake step.                                                                                                                                | `sandbox.startup`               |
 | `sandbox.syncBack`                    | The settlement sync-back that restores the managed home at teardown.                                                                                       | the active run span             |
@@ -933,7 +933,7 @@ absent, never a misleading `0`.
 | `restore.asset.<key>`                 | One outbound asset restore task at teardown. It reads one asset back to its host store. The `<key>` segment is the asset key.                              | `sandbox.syncBack`              |
 | `sandbox.agentSession.sendInput`      | One outbound ACP message to the agent — the socket handler's one `writeTextFile` exec.                                                                     | the active run span             |
 | `sandbox.agentSession.pollOutput`     | One 100 ms poll tick — `list`, then `read`+`remove` per file found (`1 + 2n` execs).                                                                       | the active run span             |
-| `sandbox.callbackBridge.relayRequest` | One Taskcore-API callback request — read the request, write the response, remove it.                                                                      | the active run span             |
+| `sandbox.callbackBridge.relayRequest` | One Taskcore-API callback request — read the request, write the response, remove it.                                                                       | the active run span             |
 | `sandbox.agentProcess`                | The persistent streamed agent process the process-session bridge launches; open until the process settles or the bridge tears down, whichever comes first. | the active run span             |
 | `sandbox.exec`                        | One host-to-sandbox execution.                                                                                                                             | the active step or wrapper span |
 
@@ -985,8 +985,8 @@ The `taskcore.sandbox.startup.outcome` attribute uses a closed value set:
 
 The `sandbox.startup` root span uses this closed attribute allowlist.
 
-| Attribute                                | Type    | Optional | Meaning                                                    |
-| ---------------------------------------- | ------- | -------- | ---------------------------------------------------------- |
+| Attribute                               | Type    | Optional | Meaning                                                    |
+| --------------------------------------- | ------- | -------- | ---------------------------------------------------------- |
 | `taskcore.sandbox.startup.root.wall_ms` | number  | no       | The root-span wall time of the whole bring-up.             |
 | `taskcore.sandbox.startup.root.work_ms` | number  | no       | The sum of the step wall times.                            |
 | `taskcore.sandbox.startup.root.diff_ms` | number  | no       | `work_ms − wall_ms`; the overlap the parallel steps saved. |
@@ -1002,8 +1002,8 @@ The `sandbox.startup` root span uses this closed attribute allowlist.
 Each bring-up step span uses this closed attribute allowlist. The step name
 rides the span name, so no `step` attribute repeats it.
 
-| Attribute                                                    | Type   | Optional | Meaning                                                  |
-| ------------------------------------------------------------ | ------ | -------- | -------------------------------------------------------- |
+| Attribute                                                   | Type   | Optional | Meaning                                                  |
+| ----------------------------------------------------------- | ------ | -------- | -------------------------------------------------------- |
 | `taskcore.sandbox.startup.step.wall_ms`                     | number | no       | The wall time of the step.                               |
 | `taskcore.sandbox.startup.outcome`                          | string | no       | The step outcome (`ok`, `skipped`, or `failed`).         |
 | `taskcore.sandbox.startup.provider`                         | string | yes      | The normalized provider family.                          |
@@ -1019,8 +1019,8 @@ per-execution `sandbox.exec` child spans carry that detail.
 The `sandbox.exec` span uses this closed attribute allowlist. Taskcore omits a
 numeric attribute when the provider does not report the value.
 
-| Attribute                                       | Type    | Optional | Meaning                                                                    |
-| ----------------------------------------------- | ------- | -------- | -------------------------------------------------------------------------- |
+| Attribute                                      | Type    | Optional | Meaning                                                                    |
+| ---------------------------------------------- | ------- | -------- | -------------------------------------------------------------------------- |
 | `taskcore.sandbox.startup.provider`            | string  | no       | The normalized provider family.                                            |
 | `taskcore.sandbox.startup.exec.command`        | string  | no       | The clamped `argv[0]` command label.                                       |
 | `taskcore.sandbox.startup.exec.exit_code`      | number  | yes      | The numeric process exit code.                                             |
@@ -1051,18 +1051,18 @@ every field of a worker-sent span as untrusted input. The host re-clamps the
 span name and every attribute at one boundary, the `span.record` host handler,
 before it records the span.
 
-| Span                                 | Scope                                                                                                                                                                                | Parent                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| `sandbox.daytona.pack`               | The host-local pack step that builds the upload tarball. It makes no sandbox round trip.                                                                                             | the active startup step span                                                                 |
+| Span                                 | Scope                                                                                                                                                                               | Parent                                                                                       |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `sandbox.daytona.pack`               | The host-local pack step that builds the upload tarball. It makes no sandbox round trip.                                                                                            | the active startup step span                                                                 |
 | `sandbox.daytona.transfer`           | The transfer step: an upload to the sandbox (inbound) or a download from the sandbox (outbound). The `taskcore.sandbox.startup.transfer.direction` attribute records the direction. | the active sync task span (`stage.*` inbound, `restore.*` under `sandbox.syncBack` outbound) |
-| `sandbox.daytona.ensureDirectory`    | The `mkdir -p` step that ensures a directory exists before a write.                                                                                                                  | the active startup step span                                                                 |
-| `sandbox.daytona.checkSymlinkEscape` | The re-check step that a path resolves inside the workspace root before use.                                                                                                         | the active startup step span                                                                 |
-| `sandbox.daytona.promote`            | The atomic move of a staged temp onto its target via a pinned dir handle.                                                                                                            | the active startup step span                                                                 |
-| `sandbox.daytona.extractTarball`     | The one round trip that re-checks the path, runs `tar -xf`, and removes the scratch tarball.                                                                                         | the active startup step span                                                                 |
-| `sandbox.daytona.postUploadCommand`  | One caller-supplied post-upload command.                                                                                                                                             | the active startup step span                                                                 |
-| `sandbox.daytona.session.open`       | The create of the one persistent session for a lease, on the first in-run command.                                                                                                   | the active run span                                                                          |
-| `sandbox.daytona.session.close`      | The delete of that persistent session on lease release.                                                                                                                              | the active run span                                                                          |
-| `sandbox.daytona.other`              | Any span name outside the known set.                                                                                                                                                 | the active startup step span                                                                 |
+| `sandbox.daytona.ensureDirectory`    | The `mkdir -p` step that ensures a directory exists before a write.                                                                                                                 | the active startup step span                                                                 |
+| `sandbox.daytona.checkSymlinkEscape` | The re-check step that a path resolves inside the workspace root before use.                                                                                                        | the active startup step span                                                                 |
+| `sandbox.daytona.promote`            | The atomic move of a staged temp onto its target via a pinned dir handle.                                                                                                           | the active startup step span                                                                 |
+| `sandbox.daytona.extractTarball`     | The one round trip that re-checks the path, runs `tar -xf`, and removes the scratch tarball.                                                                                        | the active startup step span                                                                 |
+| `sandbox.daytona.postUploadCommand`  | One caller-supplied post-upload command.                                                                                                                                            | the active startup step span                                                                 |
+| `sandbox.daytona.session.open`       | The create of the one persistent session for a lease, on the first in-run command.                                                                                                  | the active run span                                                                          |
+| `sandbox.daytona.session.close`      | The delete of that persistent session on lease release.                                                                                                                             | the active run span                                                                          |
+| `sandbox.daytona.other`              | Any span name outside the known set.                                                                                                                                                | the active startup step span                                                                 |
 
 The host clamps the span name to the closed set of leaf names above (`pack`,
 `transfer`, `ensureDirectory`, `checkSymlinkEscape`, `promote`, `extractTarball`,
@@ -1077,8 +1077,8 @@ drops every other key, so a command, an argument, a path, an id, a standard
 output, or a standard error never rides a provider span. The host records only
 the attributes that the producer sends for one span.
 
-| Attribute                                        | Type   | Optional | Meaning                                                                                                   |
-| ------------------------------------------------ | ------ | -------- | --------------------------------------------------------------------------------------------------------- |
+| Attribute                                       | Type   | Optional | Meaning                                                                                                   |
+| ----------------------------------------------- | ------ | -------- | --------------------------------------------------------------------------------------------------------- |
 | `taskcore.sandbox.startup.provider`             | string | no       | The normalized provider family.                                                                           |
 | `taskcore.sandbox.startup.outcome`              | string | yes      | The step outcome (`ok`, `skipped`, or `failed`).                                                          |
 | `taskcore.sandbox.startup.pack.wall_ms`         | number | yes      | The host-local wall time of the pack step. It rides the `sandbox.daytona.pack` span.                      |
@@ -1173,14 +1173,14 @@ dimension set below rides only the spans and the `sandbox.duplex.transport`
 event, which use only these closed keys. A test asserts the exact set, so a new
 key never reaches a sink by accident.
 
-| Key | Type | Optional | Value set |
-| --- | --- | --- | --- |
-| `provider` | string | no | `daytona`, or `other` for any other plugin key. |
-| `transport` | string | no | `duplex`, `http2`, or `file`. `duplex` names the retired bespoke frame protocol; `http2` names the Node HTTP/2 session over the sandbox channel; a fallback record uses `file`. |
-| `outcome` | string | yes | `ok` or `error`. |
-| `fallback_reason` | string | yes | `gate_off`, `capability_absent`, `route_busy`, `entrypoint_sync_failed`, `broker_construction_failed`, `channel_open_failed`, `ready_invalid`, `ready_nonce_mismatch`, `ready_timeout`, `contaminated`, or `preface_missing`. It rides only a fallback record. `route_busy` marks the process-scoped route ceiling full. `entrypoint_sync_failed` and `broker_construction_failed` mark the named build step. `channel_open_failed` marks a failed channel open. `preface_missing` marks a missing or an invalid HTTP/2 client connection preface inside the bounded readiness buffer: the host found no valid preface after the accepted READY line, aborted the `http2` open, and moved the run to the file bridge (`queue_v1`) one time. |
-| `loss_class` | string | yes | `pre_dispatch` or `post_dispatch`, relative to the first request dispatch. It rides only a loss record. |
-| `loss_reason` | string | yes | `stdin_eof`, `provider_exit`, `heartbeat_timeout`, `rpc_failure`, `write_error`, `transport_closed`, or `other`. The host maps every loss cause to one of these values, so no raw provider text reaches a sink. `write_error` marks a rejected host-to-sandbox write. `transport_closed` marks a reason-less provider transport close with no exit data. It rides only a loss record. |
+| Key               | Type   | Optional | Value set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provider`        | string | no       | `daytona`, or `other` for any other plugin key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `transport`       | string | no       | `duplex`, `http2`, or `file`. `duplex` names the retired bespoke frame protocol; `http2` names the Node HTTP/2 session over the sandbox channel; a fallback record uses `file`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `outcome`         | string | yes      | `ok` or `error`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `fallback_reason` | string | yes      | `gate_off`, `capability_absent`, `route_busy`, `entrypoint_sync_failed`, `broker_construction_failed`, `channel_open_failed`, `ready_invalid`, `ready_nonce_mismatch`, `ready_timeout`, `contaminated`, or `preface_missing`. It rides only a fallback record. `route_busy` marks the process-scoped route ceiling full. `entrypoint_sync_failed` and `broker_construction_failed` mark the named build step. `channel_open_failed` marks a failed channel open. `preface_missing` marks a missing or an invalid HTTP/2 client connection preface inside the bounded readiness buffer: the host found no valid preface after the accepted READY line, aborted the `http2` open, and moved the run to the file bridge (`queue_v1`) one time. |
+| `loss_class`      | string | yes      | `pre_dispatch` or `post_dispatch`, relative to the first request dispatch. It rides only a loss record.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `loss_reason`     | string | yes      | `stdin_eof`, `provider_exit`, `heartbeat_timeout`, `rpc_failure`, `write_error`, `transport_closed`, or `other`. The host maps every loss cause to one of these values, so no raw provider text reaches a sink. `write_error` marks a rejected host-to-sandbox write. `transport_closed` marks a reason-less provider transport close with no exit data. It rides only a loss record.                                                                                                                                                                                                                                                                                                                                                       |
 
 To add a name or an enum value, extend the literal constant in
 `duplex-observability.ts` first, then update the test that asserts the closed set.

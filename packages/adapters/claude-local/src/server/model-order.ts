@@ -16,9 +16,13 @@ const FAMILY_RANK: Readonly<Record<string, number>> = {
 
 const FAMILY_PATTERN = "fable|mythos|opus|sonnet|haiku";
 // Current scheme: claude-opus-4-8, claude-fable-5-1, claude-opus-5.
-const MODERN_ID_RE = new RegExp(`^claude-(${FAMILY_PATTERN})-(\\d+)(?:-(\\d+))?$`);
+const MODERN_ID_RE = new RegExp(
+  `^claude-(${FAMILY_PATTERN})-(\\d+)(?:-(\\d+))?$`,
+);
 // Legacy scheme: claude-3-7-sonnet, claude-3-5-haiku, claude-3-opus.
-const LEGACY_ID_RE = new RegExp(`^claude-(\\d+)(?:-(\\d+))?-(${FAMILY_PATTERN})$`);
+const LEGACY_ID_RE = new RegExp(
+  `^claude-(\\d+)(?:-(\\d+))?-(${FAMILY_PATTERN})$`,
+);
 
 interface ClaudeModelKey {
   family: number;
@@ -31,7 +35,10 @@ interface ClaudeModelKey {
 }
 
 export function parseClaudeModelId(id: string): ClaudeModelKey | null {
-  let bare = id.trim().toLowerCase().replace(/\[1m\]$/, "");
+  let bare = id
+    .trim()
+    .toLowerCase()
+    .replace(/\[1m\]$/, "");
   // Bedrock ids: us.anthropic.claude-opus-4-6-v1, us.anthropic.claude-sonnet-4-5-20250929-v2:0
   bare = bare.replace(/^[a-z]+\.anthropic\./, "");
   let pinned = false;
@@ -52,13 +59,21 @@ export function parseClaudeModelId(id: string): ClaudeModelKey | null {
   const modern = bare.match(MODERN_ID_RE);
   if (modern) {
     return {
-      family: FAMILY_RANK[modern[1]], major: Number(modern[2]), minor: Number(modern[3] ?? 0), pinned, snapshot,
+      family: FAMILY_RANK[modern[1]],
+      major: Number(modern[2]),
+      minor: Number(modern[3] ?? 0),
+      pinned,
+      snapshot,
     };
   }
   const legacy = bare.match(LEGACY_ID_RE);
   if (legacy) {
     return {
-      family: FAMILY_RANK[legacy[3]], major: Number(legacy[1]), minor: Number(legacy[2] ?? 0), pinned, snapshot,
+      family: FAMILY_RANK[legacy[3]],
+      major: Number(legacy[1]),
+      minor: Number(legacy[2] ?? 0),
+      pinned,
+      snapshot,
     };
   }
   return null;
@@ -69,13 +84,18 @@ function compareVersions(a: ClaudeModelKey, b: ClaudeModelKey): number {
 }
 
 export function sortClaudeModels(models: AdapterModel[]): AdapterModel[] {
-  const keyed = models.map((model, index) => ({ model, index, key: parseClaudeModelId(model.id) }));
+  const keyed = models.map((model, index) => ({
+    model,
+    index,
+    key: parseClaudeModelId(model.id),
+  }));
 
   const newestByFamily = new Map<number, ClaudeModelKey>();
   for (const { key } of keyed) {
     if (!key) continue;
     const newest = newestByFamily.get(key.family);
-    if (!newest || compareVersions(key, newest) > 0) newestByFamily.set(key.family, key);
+    if (!newest || compareVersions(key, newest) > 0)
+      newestByFamily.set(key.family, key);
   }
   // 0: newest release of its family, 1: older release, 2: not a recognizable Claude id.
   const section = (key: ClaudeModelKey | null): number => {
@@ -89,11 +109,11 @@ export function sortClaudeModels(models: AdapterModel[]): AdapterModel[] {
       if (bySection !== 0) return bySection;
       if (a.key && b.key) {
         return (
-          a.key.family - b.key.family
-          || compareVersions(b.key, a.key)
-          || Number(a.key.pinned) - Number(b.key.pinned)
-          || b.key.snapshot - a.key.snapshot
-          || a.index - b.index
+          a.key.family - b.key.family ||
+          compareVersions(b.key, a.key) ||
+          Number(a.key.pinned) - Number(b.key.pinned) ||
+          b.key.snapshot - a.key.snapshot ||
+          a.index - b.index
         );
       }
       return a.index - b.index;

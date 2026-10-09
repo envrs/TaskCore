@@ -32,12 +32,18 @@ function createProgram(): Command {
   return program;
 }
 
-function jsonResponse(body: unknown = { ok: true }, init: ResponseInit = { status: 200 }): Response {
+function jsonResponse(
+  body: unknown = { ok: true },
+  init: ResponseInit = { status: 200 },
+): Response {
   return new Response(JSON.stringify(body), init);
 }
 
 function createTempContextPath() {
-  return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-connect-test-")), "context.json");
+  return path.join(
+    fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-connect-test-")),
+    "context.json",
+  );
 }
 
 function readContext(filePath: string) {
@@ -54,8 +60,14 @@ describe("connect command", () => {
   beforeEach(() => {
     originalStdinIsTTY = process.stdin.isTTY;
     originalStdoutIsTTY = process.stdout.isTTY;
-    Object.defineProperty(process.stdin, "isTTY", { value: true, configurable: true });
-    Object.defineProperty(process.stdout, "isTTY", { value: true, configurable: true });
+    Object.defineProperty(process.stdin, "isTTY", {
+      value: true,
+      configurable: true,
+    });
+    Object.defineProperty(process.stdout, "isTTY", {
+      value: true,
+      configurable: true,
+    });
     vi.restoreAllMocks();
     vi.mocked(loginBoardCli).mockResolvedValue({
       token: "board-login-token",
@@ -66,8 +78,14 @@ describe("connect command", () => {
   });
 
   afterEach(() => {
-    Object.defineProperty(process.stdin, "isTTY", { value: originalStdinIsTTY, configurable: true });
-    Object.defineProperty(process.stdout, "isTTY", { value: originalStdoutIsTTY, configurable: true });
+    Object.defineProperty(process.stdin, "isTTY", {
+      value: originalStdinIsTTY,
+      configurable: true,
+    });
+    Object.defineProperty(process.stdout, "isTTY", {
+      value: originalStdoutIsTTY,
+      configurable: true,
+    });
     vi.restoreAllMocks();
   });
 
@@ -75,46 +93,62 @@ describe("connect command", () => {
     const contextPath = createTempContextPath();
     vi.mocked(prompts.text).mockResolvedValue(API_BASE);
     vi.mocked(prompts.select).mockResolvedValue(COMPANY_ID);
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = new URL(String(input));
-      if (url.pathname === "/api/health") return jsonResponse({ status: "ok" });
-      if (url.pathname === "/api/companies") {
-        return jsonResponse([{ id: COMPANY_ID, name: "Connect Co" }]);
-      }
-      if (url.pathname === "/api/board-api-keys" && init?.method === "POST") {
-        return jsonResponse({
-          id: "board-key-1",
-          name: "connect-board-token",
-          token: "pcp_board_created",
-          createdAt: "2026-05-24T12:00:00.000Z",
-          expiresAt: null,
-        });
-      }
-      return jsonResponse({ error: `Unexpected ${init?.method ?? "GET"} ${url.pathname}` }, { status: 500 });
-    });
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = new URL(String(input));
+        if (url.pathname === "/api/health")
+          return jsonResponse({ status: "ok" });
+        if (url.pathname === "/api/companies") {
+          return jsonResponse([{ id: COMPANY_ID, name: "Connect Co" }]);
+        }
+        if (url.pathname === "/api/board-api-keys" && init?.method === "POST") {
+          return jsonResponse({
+            id: "board-key-1",
+            name: "connect-board-token",
+            token: "pcp_board_created",
+            createdAt: "2026-05-24T12:00:00.000Z",
+            expiresAt: null,
+          });
+        }
+        return jsonResponse(
+          { error: `Unexpected ${init?.method ?? "GET"} ${url.pathname}` },
+          { status: 500 },
+        );
+      },
+    );
     vi.stubGlobal("fetch", fetchMock);
 
-    await createProgram().parseAsync([
-      "connect",
-      "--persona",
-      "board",
-      "--profile",
-      "cli-board",
-      "--token-name",
-      "connect-board-token",
-      "--context",
-      contextPath,
-      "--api-base",
-      API_BASE,
-      "--json",
-    ], { from: "user" });
+    await createProgram().parseAsync(
+      [
+        "connect",
+        "--persona",
+        "board",
+        "--profile",
+        "cli-board",
+        "--token-name",
+        "connect-board-token",
+        "--context",
+        contextPath,
+        "--api-base",
+        API_BASE,
+        "--json",
+      ],
+      { from: "user" },
+    );
 
-    expect(loginBoardCli).toHaveBeenCalledWith(expect.objectContaining({
-      apiBase: API_BASE,
-      requestedAccess: "board",
-      command: "taskcore connect",
-    }));
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", new URL(String(call[0])).pathname])).toEqual([
+    expect(loginBoardCli).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiBase: API_BASE,
+        requestedAccess: "board",
+        command: "taskcore connect",
+      }),
+    );
+    expect(
+      fetchMock.mock.calls.map((call) => [
+        call[1]?.method ?? "GET",
+        new URL(String(call[0])).pathname,
+      ]),
+    ).toEqual([
       ["GET", "/api/health"],
       ["GET", "/api/companies"],
       ["POST", "/api/board-api-keys"],
@@ -137,43 +171,62 @@ describe("connect command", () => {
     const contextPath = createTempContextPath();
     vi.mocked(prompts.text).mockResolvedValue(API_BASE);
     vi.mocked(prompts.select).mockResolvedValue(AGENT_ID);
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = new URL(String(input));
-      if (url.pathname === "/api/health") return jsonResponse({ status: "ok" });
-      if (url.pathname === "/api/companies") {
-        return jsonResponse([{ id: COMPANY_ID, name: "Connect Co" }]);
-      }
-      if (url.pathname === `/api/companies/${COMPANY_ID}/agents`) {
-        return jsonResponse([{ id: AGENT_ID, name: "Connect Agent", role: "Operator" }]);
-      }
-      if (url.pathname === `/api/agents/${AGENT_ID}/keys` && init?.method === "POST") {
-        return jsonResponse({
-          id: "agent-key-1",
-          name: "connect-agent-token",
-          token: "pcp_agent_created",
-          createdAt: "2026-05-24T12:00:00.000Z",
-        });
-      }
-      return jsonResponse({ error: `Unexpected ${init?.method ?? "GET"} ${url.pathname}` }, { status: 500 });
-    });
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = new URL(String(input));
+        if (url.pathname === "/api/health")
+          return jsonResponse({ status: "ok" });
+        if (url.pathname === "/api/companies") {
+          return jsonResponse([{ id: COMPANY_ID, name: "Connect Co" }]);
+        }
+        if (url.pathname === `/api/companies/${COMPANY_ID}/agents`) {
+          return jsonResponse([
+            { id: AGENT_ID, name: "Connect Agent", role: "Operator" },
+          ]);
+        }
+        if (
+          url.pathname === `/api/agents/${AGENT_ID}/keys` &&
+          init?.method === "POST"
+        ) {
+          return jsonResponse({
+            id: "agent-key-1",
+            name: "connect-agent-token",
+            token: "pcp_agent_created",
+            createdAt: "2026-05-24T12:00:00.000Z",
+          });
+        }
+        return jsonResponse(
+          { error: `Unexpected ${init?.method ?? "GET"} ${url.pathname}` },
+          { status: 500 },
+        );
+      },
+    );
     vi.stubGlobal("fetch", fetchMock);
 
-    await createProgram().parseAsync([
-      "connect",
-      "--persona",
-      "agent",
-      "--profile",
-      "cli-agent",
-      "--token-name",
-      "connect-agent-token",
-      "--context",
-      contextPath,
-      "--api-base",
-      API_BASE,
-      "--json",
-    ], { from: "user" });
+    await createProgram().parseAsync(
+      [
+        "connect",
+        "--persona",
+        "agent",
+        "--profile",
+        "cli-agent",
+        "--token-name",
+        "connect-agent-token",
+        "--context",
+        contextPath,
+        "--api-base",
+        API_BASE,
+        "--json",
+      ],
+      { from: "user" },
+    );
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", new URL(String(call[0])).pathname])).toEqual([
+    expect(
+      fetchMock.mock.calls.map((call) => [
+        call[1]?.method ?? "GET",
+        new URL(String(call[0])).pathname,
+      ]),
+    ).toEqual([
       ["GET", "/api/health"],
       ["GET", "/api/companies"],
       ["GET", `/api/companies/${COMPANY_ID}/agents`],

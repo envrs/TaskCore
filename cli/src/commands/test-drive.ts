@@ -5,7 +5,11 @@ import { createServer } from "node:net";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { Option, type Command } from "commander";
-import type { Agent, Company, InstanceExperimentalSettings } from "@taskcore/shared";
+import type {
+  Agent,
+  Company,
+  InstanceExperimentalSettings,
+} from "@taskcore/shared";
 import { TaskcoreApiClient } from "../client/http.js";
 import { openUrl } from "../client/board-auth.js";
 import {
@@ -32,11 +36,15 @@ export interface TestDriveOptions {
   browser?: boolean;
 }
 
-export type TestDriveApi = Pick<TaskcoreApiClient, "get" | "post" | "patch" | "delete">;
+export type TestDriveApi = Pick<
+  TaskcoreApiClient,
+  "get" | "post" | "patch" | "delete"
+>;
 
 type HarnessDefinition = {
   adapterType: "claude_local" | "codex_local" | "opencode_local";
-  credentialTarget: "ANTHROPIC_API_KEY" | "OPENAI_API_KEY" | "OPENROUTER_API_KEY";
+  credentialTarget:
+    "ANTHROPIC_API_KEY" | "OPENAI_API_KEY" | "OPENROUTER_API_KEY";
   credentialName: string;
 };
 
@@ -105,7 +113,10 @@ function errorMessage(error: unknown): string {
   }
 }
 
-export function redactTestDriveText(text: string, credentials: Array<string | undefined>): string {
+export function redactTestDriveText(
+  text: string,
+  credentials: Array<string | undefined>,
+): string {
   let redacted = text;
   for (const credential of credentials) {
     if (!credential) continue;
@@ -150,11 +161,15 @@ async function loopbackPortAvailable(port: number): Promise<boolean> {
   });
 }
 
-export async function resolveTestDriveServerPort(preferredPort = 3100): Promise<number> {
+export async function resolveTestDriveServerPort(
+  preferredPort = 3100,
+): Promise<number> {
   for (let port = preferredPort; port <= 65_535; port += 1) {
     if (await loopbackPortAvailable(port)) return port;
   }
-  throw new Error(`No available loopback port found at or above ${preferredPort}.`);
+  throw new Error(
+    `No available loopback port found at or above ${preferredPort}.`,
+  );
 }
 
 /**
@@ -167,7 +182,9 @@ export async function prepareTestDriveEnvironment(
   cwd = process.cwd(),
 ): Promise<{ dataDir: string; linkedWorktree: boolean }> {
   const sourceEnvName = options.apiKeyEnv?.trim();
-  const preservedCredential = sourceEnvName ? process.env[sourceEnvName] : undefined;
+  const preservedCredential = sourceEnvName
+    ? process.env[sourceEnvName]
+    : undefined;
 
   for (const key of Object.keys(process.env)) {
     if (key.startsWith("TASKCORE_")) {
@@ -252,8 +269,12 @@ export function resolveTestDriveBootstrap(
     );
   }
 
-  const sourceEnvName = options.apiKeyEnv?.trim() || definition.credentialTarget;
-  if (options.apiKeyEnv !== undefined && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(sourceEnvName)) {
+  const sourceEnvName =
+    options.apiKeyEnv?.trim() || definition.credentialTarget;
+  if (
+    options.apiKeyEnv !== undefined &&
+    !/^[A-Za-z_][A-Za-z0-9_]*$/.test(sourceEnvName)
+  ) {
     throw new Error("--api-key-env must name a valid environment variable.");
   }
   const credential = options.apiKey ?? env[sourceEnvName];
@@ -269,7 +290,8 @@ export function resolveTestDriveBootstrap(
     agentName,
     ...(model ? { model } : {}),
     credential,
-    credentialSource: options.apiKey !== undefined ? "--api-key" : sourceEnvName,
+    credentialSource:
+      options.apiKey !== undefined ? "--api-key" : sourceEnvName,
   };
 }
 
@@ -277,9 +299,11 @@ function worktreeExecutionArmed(
   settings: InstanceExperimentalSettings,
   instanceId: string,
 ): boolean {
-  return settings.enableWorktreeRunExecution === true
-    && Boolean(settings.worktreeRunExecutionActivatedAt)
-    && settings.worktreeRunExecutionActivationInstanceId === instanceId;
+  return (
+    settings.enableWorktreeRunExecution === true &&
+    Boolean(settings.worktreeRunExecutionActivatedAt) &&
+    settings.worktreeRunExecutionActivationInstanceId === instanceId
+  );
 }
 
 export async function reconcileTestDriveWorktreeExecution(
@@ -287,25 +311,38 @@ export async function reconcileTestDriveWorktreeExecution(
   instanceId: string,
 ): Promise<void> {
   const current = requiredApiResult(
-    await api.get<InstanceExperimentalSettings>("/api/instance/settings/experimental"),
+    await api.get<InstanceExperimentalSettings>(
+      "/api/instance/settings/experimental",
+    ),
     "reading experimental settings",
   );
 
   if (!current.enableWorktreeRunExecution) {
-    await api.patch<InstanceExperimentalSettings>("/api/instance/settings/experimental", {
-      enableWorktreeRunExecution: true,
-    });
+    await api.patch<InstanceExperimentalSettings>(
+      "/api/instance/settings/experimental",
+      {
+        enableWorktreeRunExecution: true,
+      },
+    );
   } else if (!worktreeExecutionArmed(current, instanceId)) {
-    await api.patch<InstanceExperimentalSettings>("/api/instance/settings/experimental", {
-      enableWorktreeRunExecution: false,
-    });
-    await api.patch<InstanceExperimentalSettings>("/api/instance/settings/experimental", {
-      enableWorktreeRunExecution: true,
-    });
+    await api.patch<InstanceExperimentalSettings>(
+      "/api/instance/settings/experimental",
+      {
+        enableWorktreeRunExecution: false,
+      },
+    );
+    await api.patch<InstanceExperimentalSettings>(
+      "/api/instance/settings/experimental",
+      {
+        enableWorktreeRunExecution: true,
+      },
+    );
   }
 
   const verified = requiredApiResult(
-    await api.get<InstanceExperimentalSettings>("/api/instance/settings/experimental"),
+    await api.get<InstanceExperimentalSettings>(
+      "/api/instance/settings/experimental",
+    ),
     "verifying experimental settings",
   );
   if (!worktreeExecutionArmed(verified, instanceId)) {
@@ -342,13 +379,18 @@ export async function bootstrapTestDrive(input: {
   let company: Company | null = null;
   try {
     company = requiredApiResult(
-      await input.api.post<Company>("/api/companies", { name: resolved.companyName }),
+      await input.api.post<Company>("/api/companies", {
+        name: resolved.companyName,
+      }),
       "creating the test company",
     );
-    await input.api.post(`/api/companies/${company.id}/user-secret-definitions`, {
-      key: resolved.credentialTarget,
-      name: resolved.credentialName,
-    });
+    await input.api.post(
+      `/api/companies/${company.id}/user-secret-definitions`,
+      {
+        key: resolved.credentialTarget,
+        name: resolved.credentialName,
+      },
+    );
     await input.api.post(`/api/companies/${company.id}/me/user-secrets`, {
       definitionKey: resolved.credentialTarget,
       value: resolved.credential,
@@ -410,7 +452,9 @@ export async function testDriveCommand(
   // Commander has already copied the value into options. Remove it from the
   // JavaScript argv view before logging, telemetry, diagnostics, or startup.
   redactTestDriveArgv(options.apiKey);
-  const dataDir = path.resolve(process.env.TASKCORE_HOME ?? resolveTestDriveDataDir(options.dataDir));
+  const dataDir = path.resolve(
+    process.env.TASKCORE_HOME ?? resolveTestDriveDataDir(options.dataDir),
+  );
   const linkedWorktree = process.env.TASKCORE_IN_WORKTREE === "true";
   const instanceId = process.env.TASKCORE_INSTANCE_ID ?? "default";
   // Resolve environment-backed credentials against the CLI environment as it
@@ -420,13 +464,17 @@ export async function testDriveCommand(
   const possibleCredentials = [
     options.apiKey,
     options.apiKeyEnv ? bootstrapEnv[options.apiKeyEnv.trim()] : undefined,
-    bootstrapEnv[HARNESS_DEFINITIONS[options.harness ?? "claude"].credentialTarget],
+    bootstrapEnv[
+      HARNESS_DEFINITIONS[options.harness ?? "claude"].credentialTarget
+    ],
   ];
 
   p.log.message(pc.dim(`Data directory: ${dataDir}`));
   p.log.message(pc.dim("The data directory is retained when Taskcore exits."));
   if (options.apiKey !== undefined) {
-    p.log.warn("A key passed with --api-key may be visible in process arguments and shell history.");
+    p.log.warn(
+      "A key passed with --api-key may be visible in process arguments and shell history.",
+    );
   }
 
   try {
@@ -458,7 +506,9 @@ export async function testDriveCommand(
           );
         }
         if (linkedWorktree) {
-          p.log.success("Run tasks in this worktree is enabled for this instance.");
+          p.log.success(
+            "Run tasks in this worktree is enabled for this instance.",
+          );
         }
 
         const url = dashboardUrl(server);
@@ -470,20 +520,30 @@ export async function testDriveCommand(
         if (opened) {
           p.log.success(`Taskcore is ready and opened at ${pc.cyan(url)}.`);
         } else {
-          p.log.warn(`Taskcore is ready, but the browser could not be opened. Visit ${url}.`);
+          p.log.warn(
+            `Taskcore is ready, but the browser could not be opened. Visit ${url}.`,
+          );
         }
       },
     });
   } catch (error) {
-    throw new Error(redactTestDriveText(errorMessage(error), possibleCredentials), { cause: error });
+    throw new Error(
+      redactTestDriveText(errorMessage(error), possibleCredentials),
+      { cause: error },
+    );
   }
 }
 
 export function registerTestDriveCommand(program: Command): void {
   program
     .command("test-drive")
-    .description("Start an isolated, initialized Taskcore instance for manual testing")
-    .option("-d, --data-dir <path>", "Taskcore data directory to create or reuse")
+    .description(
+      "Start an isolated, initialized Taskcore instance for manual testing",
+    )
+    .option(
+      "-d, --data-dir <path>",
+      "Taskcore data directory to create or reuse",
+    )
     .option("--company-name <name>", "Initial company name", "Test Company")
     .option("--agent-name <name>", "Initial CEO agent name", "CEO")
     .addOption(
@@ -493,12 +553,15 @@ export function registerTestDriveCommand(program: Command): void {
     )
     .option("--model <model-id>", "Initial agent model")
     .addOption(
-      new Option("--api-key-env <variable>", "Read the provider key from an environment variable")
-        .conflicts("apiKey"),
+      new Option(
+        "--api-key-env <variable>",
+        "Read the provider key from an environment variable",
+      ).conflicts("apiKey"),
     )
     .addOption(
-      new Option("--api-key <value>", "Provider API key")
-        .conflicts("apiKeyEnv"),
+      new Option("--api-key <value>", "Provider API key").conflicts(
+        "apiKeyEnv",
+      ),
     )
     .option("--no-browser", "Do not open the initialized instance in a browser")
     .action(async (options: TestDriveOptions) => {

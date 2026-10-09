@@ -1,129 +1,148 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test } from "node:test";
+import assert from "node:assert/strict";
 import {
   addedWorkspaceDependencyNames,
   checkReleaseBootstrap,
-} from '../check-pr-release-bootstrap.mjs';
+} from "../check-pr-release-bootstrap.mjs";
 
-const MANIFEST_PATH = 'scripts/release-package-manifest.json';
+const MANIFEST_PATH = "scripts/release-package-manifest.json";
 
 function encodeManifest(entries) {
-  return { content: Buffer.from(JSON.stringify(entries)).toString('base64') };
+  return { content: Buffer.from(JSON.stringify(entries)).toString("base64") };
 }
 
 function stubGitHub({ base = [], head = [] }) {
   return async (path) => {
-    if (path.includes('ref=refs%2Fpull%2F')) return encodeManifest(head);
+    if (path.includes("ref=refs%2Fpull%2F")) return encodeManifest(head);
     if (path.includes(`/contents/`)) return encodeManifest(base);
     throw new Error(`unexpected fetch: ${path}`);
   };
 }
 
-const manifestChangedFile = { filename: MANIFEST_PATH, status: 'modified' };
+const manifestChangedFile = { filename: MANIFEST_PATH, status: "modified" };
 
-test('does nothing (and fetches nothing) when the manifest is untouched', async () => {
+test("does nothing (and fetches nothing) when the manifest is untouched", async () => {
   const result = await checkReleaseBootstrap(
-    [{ filename: 'server/src/index.ts', status: 'modified' }],
-    'token',
-    'taskcore/taskcore',
+    [{ filename: "server/src/index.ts", status: "modified" }],
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
-      fetchFromGitHub: async () => { throw new Error('should not fetch'); },
-      registryPackageExists: async () => { throw new Error('should not look up'); },
-    }
+      fetchFromGitHub: async () => {
+        throw new Error("should not fetch");
+      },
+      registryPackageExists: async () => {
+        throw new Error("should not look up");
+      },
+    },
   );
 
   assert.deepEqual(result, { passed: true, informational: [] });
 });
 
-test('notices a new publishFromCi:true package that is missing from npm', async () => {
+test("notices a new publishFromCi:true package that is missing from npm", async () => {
   const result = await checkReleaseBootstrap(
     [manifestChangedFile],
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: stubGitHub({
-        base: [{ dir: 'a', name: '@taskcore/existing', publishFromCi: true }],
+        base: [{ dir: "a", name: "@taskcore/existing", publishFromCi: true }],
         head: [
-          { dir: 'a', name: '@taskcore/existing', publishFromCi: true },
-          { dir: 'b', name: '@taskcore/brand-new', publishFromCi: true },
+          { dir: "a", name: "@taskcore/existing", publishFromCi: true },
+          { dir: "b", name: "@taskcore/brand-new", publishFromCi: true },
         ],
       }),
-      registryPackageExists: async (name) => name !== '@taskcore/brand-new',
-    }
+      registryPackageExists: async (name) => name !== "@taskcore/brand-new",
+    },
   );
 
   assert.equal(result.informational.length, 1);
   assert.match(result.informational[0], /@taskcore\/brand-new/);
-  assert.match(result.informational[0], /release:bootstrap-package -- @taskcore\/brand-new --publish/);
+  assert.match(
+    result.informational[0],
+    /release:bootstrap-package -- @taskcore\/brand-new --publish/,
+  );
   assert.match(result.informational[0], /No contributor action/);
 });
 
-test('stays quiet when the new package already exists on npm', async () => {
+test("stays quiet when the new package already exists on npm", async () => {
   const result = await checkReleaseBootstrap(
     [manifestChangedFile],
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: stubGitHub({
         base: [],
-        head: [{ dir: 'b', name: '@taskcore/already-bootstrapped', publishFromCi: true }],
+        head: [
+          {
+            dir: "b",
+            name: "@taskcore/already-bootstrapped",
+            publishFromCi: true,
+          },
+        ],
       }),
       registryPackageExists: async () => true,
-    }
+    },
   );
 
   assert.deepEqual(result.informational, []);
 });
 
-test('notices a publishFromCi flip from false to true on a missing package', async () => {
+test("notices a publishFromCi flip from false to true on a missing package", async () => {
   const result = await checkReleaseBootstrap(
     [manifestChangedFile],
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: stubGitHub({
-        base: [{ dir: 'b', name: '@taskcore/flipped', publishFromCi: false }],
-        head: [{ dir: 'b', name: '@taskcore/flipped', publishFromCi: true }],
+        base: [{ dir: "b", name: "@taskcore/flipped", publishFromCi: false }],
+        head: [{ dir: "b", name: "@taskcore/flipped", publishFromCi: true }],
       }),
       registryPackageExists: async () => false,
-    }
+    },
   );
 
   assert.equal(result.informational.length, 1);
   assert.match(result.informational[0], /@taskcore\/flipped/);
 });
 
-test('notices a publishFromCi:false package that published packages newly depend on', async () => {
+test("notices a publishFromCi:false package that published packages newly depend on", async () => {
   const files = [
     manifestChangedFile,
     {
-      filename: 'server/package.json',
-      status: 'modified',
+      filename: "server/package.json",
+      status: "modified",
       patch: '@@ -1 +1 @@\n+    "@taskcore/adapter-kimi-local": "workspace:*",',
     },
   ];
 
   const result = await checkReleaseBootstrap(
     files,
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: stubGitHub({
         base: [],
-        head: [{ dir: 'b', name: '@taskcore/adapter-kimi-local', publishFromCi: false }],
+        head: [
+          {
+            dir: "b",
+            name: "@taskcore/adapter-kimi-local",
+            publishFromCi: false,
+          },
+        ],
       }),
       registryPackageExists: async () => false,
-    }
+    },
   );
 
   assert.equal(result.informational.length, 1);
@@ -132,26 +151,33 @@ test('notices a publishFromCi:false package that published packages newly depend
   assert.match(result.informational[0], /drop the workspace dependency/);
 });
 
-test('notices a newly added dependency on an existing unpublished package even when the manifest is untouched', async () => {
+test("notices a newly added dependency on an existing unpublished package even when the manifest is untouched", async () => {
   const files = [
     {
-      filename: 'server/package.json',
-      status: 'modified',
-      patch: '@@ -1 +1 @@\n+    "@taskcore/adapter-hermes-gateway": "workspace:*",',
+      filename: "server/package.json",
+      status: "modified",
+      patch:
+        '@@ -1 +1 @@\n+    "@taskcore/adapter-hermes-gateway": "workspace:*",',
     },
   ];
 
-  const manifest = [{ dir: 'g', name: '@taskcore/adapter-hermes-gateway', publishFromCi: false }];
+  const manifest = [
+    {
+      dir: "g",
+      name: "@taskcore/adapter-hermes-gateway",
+      publishFromCi: false,
+    },
+  ];
   const result = await checkReleaseBootstrap(
     files,
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: stubGitHub({ base: manifest, head: manifest }),
       registryPackageExists: async () => false,
-    }
+    },
   );
 
   assert.equal(result.informational.length, 1);
@@ -159,107 +185,125 @@ test('notices a newly added dependency on an existing unpublished package even w
   assert.match(result.informational[0], /depend on it/);
 });
 
-test('stays quiet for a publishFromCi:false package nothing depends on', async () => {
+test("stays quiet for a publishFromCi:false package nothing depends on", async () => {
   const result = await checkReleaseBootstrap(
     [manifestChangedFile],
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: stubGitHub({
         base: [],
-        head: [{ dir: 'b', name: '@taskcore/deliberately-private', publishFromCi: false }],
+        head: [
+          {
+            dir: "b",
+            name: "@taskcore/deliberately-private",
+            publishFromCi: false,
+          },
+        ],
       }),
-      registryPackageExists: async () => { throw new Error('should not look up'); },
-    }
+      registryPackageExists: async () => {
+        throw new Error("should not look up");
+      },
+    },
   );
 
   assert.deepEqual(result.informational, []);
 });
 
-test('never looks up names outside the @taskcore scope', async () => {
+test("never looks up names outside the @taskcore scope", async () => {
   const lookedUp = [];
   const result = await checkReleaseBootstrap(
     [manifestChangedFile],
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: stubGitHub({
         base: [],
         head: [
-          { dir: 'x', name: '@evil/probe', publishFromCi: true },
-          { dir: 'y', name: 'unscoped-name', publishFromCi: true },
-          { dir: 'z', name: '@taskcore/UPPER', publishFromCi: true },
+          { dir: "x", name: "@evil/probe", publishFromCi: true },
+          { dir: "y", name: "unscoped-name", publishFromCi: true },
+          { dir: "z", name: "@taskcore/UPPER", publishFromCi: true },
         ],
       }),
       registryPackageExists: async (name) => {
         lookedUp.push(name);
         return false;
       },
-    }
+    },
   );
 
   assert.deepEqual(lookedUp, []);
   assert.deepEqual(result.informational, []);
 });
 
-test('stays quiet when the registry lookup fails', async () => {
+test("stays quiet when the registry lookup fails", async () => {
   const result = await checkReleaseBootstrap(
     [manifestChangedFile],
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: stubGitHub({
         base: [],
-        head: [{ dir: 'b', name: '@taskcore/brand-new', publishFromCi: true }],
+        head: [{ dir: "b", name: "@taskcore/brand-new", publishFromCi: true }],
       }),
-      registryPackageExists: async () => { throw new Error('registry down'); },
-    }
+      registryPackageExists: async () => {
+        throw new Error("registry down");
+      },
+    },
   );
 
   assert.deepEqual(result, { passed: true, informational: [] });
 });
 
-test('treats a missing base manifest as empty (every head entry is new)', async () => {
+test("treats a missing base manifest as empty (every head entry is new)", async () => {
   const result = await checkReleaseBootstrap(
     [manifestChangedFile],
-    'token',
-    'taskcore/taskcore',
+    "token",
+    "taskcore/taskcore",
     9967,
-    'master',
+    "master",
     {
       fetchFromGitHub: async (path) => {
-        if (path.includes('ref=refs%2Fpull%2F')) {
-          return encodeManifest([{ dir: 'b', name: '@taskcore/brand-new', publishFromCi: true }]);
+        if (path.includes("ref=refs%2Fpull%2F")) {
+          return encodeManifest([
+            { dir: "b", name: "@taskcore/brand-new", publishFromCi: true },
+          ]);
         }
-        throw new Error('404 base manifest');
+        throw new Error("404 base manifest");
       },
       registryPackageExists: async () => false,
-    }
+    },
   );
 
   assert.equal(result.informational.length, 1);
 });
 
-test('addedWorkspaceDependencyNames reads only added lines of package.json patches', () => {
+test("addedWorkspaceDependencyNames reads only added lines of package.json patches", () => {
   const names = addedWorkspaceDependencyNames([
     {
-      filename: 'server/package.json',
+      filename: "server/package.json",
       patch: [
-        '@@ -1,3 +1,4 @@',
+        "@@ -1,3 +1,4 @@",
         '     "@taskcore/context-line": "workspace:*",',
         '-    "@taskcore/removed-dep": "workspace:*",',
         '+    "@taskcore/added-dep": "workspace:*",',
-      ].join('\n'),
+      ].join("\n"),
     },
-    { filename: 'ui/src/index.ts', patch: '+    "@taskcore/not-a-pkg-json": "workspace:*",' },
-    { filename: 'node_modules/x/package.json', patch: '+    "@taskcore/vendored": "workspace:*",' },
+    {
+      filename: "ui/src/index.ts",
+      patch: '+    "@taskcore/not-a-pkg-json": "workspace:*",',
+    },
+    {
+      filename: "node_modules/x/package.json",
+      patch: '+    "@taskcore/vendored": "workspace:*",',
+    },
   ]);
 
-  assert.deepEqual([...names], ['@taskcore/added-dep']);
+  assert.deepEqual([...names], ["@taskcore/added-dep"]);
 });

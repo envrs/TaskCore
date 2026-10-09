@@ -59,13 +59,13 @@ Use **connection** as the unifying noun. A connection is four things:
 
 Everything else is an axis on that object:
 
-| Axis | Values | It answers |
-| --- | --- | --- |
-| Direction | outbound, inbound | Who is the client? |
-| Transport | MCP, native REST/OpenAPI, OAuth app install, webhook | How do bytes move? |
-| Auth mode | OAuth, API key/PAT, app installation, none | What does the secret represent? |
-| Credential owner | company, user, run | Whose identity acts? |
-| Packaging | catalog entry, plugin, skill | How does it ship? |
+| Axis             | Values                                               | It answers                      |
+| ---------------- | ---------------------------------------------------- | ------------------------------- |
+| Direction        | outbound, inbound                                    | Who is the client?              |
+| Transport        | MCP, native REST/OpenAPI, OAuth app install, webhook | How do bytes move?              |
+| Auth mode        | OAuth, API key/PAT, app installation, none           | What does the secret represent? |
+| Credential owner | company, user, run                                   | Whose identity acts?            |
+| Packaging        | catalog entry, plugin, skill                         | How does it ship?               |
 
 MCP is a transport, not a product category. "Install the Discord app",
 "connect Google Drive", and "add an MCP endpoint" all produce governed
@@ -76,14 +76,14 @@ connections with different transport/auth values.
 When you are unsure where a change belongs, place it on the narrowest layer that
 solves the problem:
 
-| Layer | Owns | Examples |
-| --- | --- | --- |
-| Surface | user-facing Apps, Connections, Review, Developer/Advanced screens | gallery cards, setup wizard, review queue |
-| Governance | profiles, bindings, allow/ask-first/block rules, quarantine, audit | read-only profile, ask-first write policy |
-| Capability | action catalogs, schemas, risk classes, changed-tool review | `search_issues`, `create_comment`, schema hash |
+| Layer      | Owns                                                               | Examples                                            |
+| ---------- | ------------------------------------------------------------------ | --------------------------------------------------- |
+| Surface    | user-facing Apps, Connections, Review, Developer/Advanced screens  | gallery cards, setup wizard, review queue           |
+| Governance | profiles, bindings, allow/ask-first/block rules, quarantine, audit | read-only profile, ask-first write policy           |
+| Capability | action catalogs, schemas, risk classes, changed-tool review        | `search_issues`, `create_comment`, schema hash      |
 | Credential | `company_secrets`, OAuth broker, credential resolver, token broker | Slack bot token ref, Google OAuth refresh token ref |
-| Identity | actor attribution and token exchange | board user, agent run, first-party service identity |
-| Transport | how the external system is reached | remote HTTP MCP, local stdio, REST/OpenAPI, webhook |
+| Identity   | actor attribution and token exchange                               | board user, agent run, first-party service identity |
+| Transport  | how the external system is reached                                 | remote HTTP MCP, local stdio, REST/OpenAPI, webhook |
 
 The agent should not hold a durable provider credential. It should hold a
 Taskcore run/session token; the server or broker resolves the connection,
@@ -91,17 +91,17 @@ checks governance, invokes the provider, and writes audit.
 
 ## Identity vs. connections
 
-Signing a user *in* and connecting a *resource* are different planes with
+Signing a user _in_ and connecting a _resource_ are different planes with
 different owners, different token profiles, and different homes. Do not merge
 them. This section is the public, connections-side statement of the identity
 model so connector implementers inherit the rule without depending on private
 identity-service documentation or re-deriving it.
 
-| Plane | Question | Lives where | Token profile |
-| --- | --- | --- | --- |
-| **P1. Sign-in methods** | *Who are you?* | `taskcore-id` (id.taskcore.ing → Account) | Minimal-scope provider tokens (`openid email profile`), used once to authenticate, encrypted at rest, never exported |
-| **P2. Connections (Apps)** | *What may your agents touch?* | Taskcore App instances (`tool_connections`), acquired via the **connect broker** for hosted + self-hosted | Rich-scope, long-lived resource tokens in the **instance's** encrypted vault; per-agent grants; risk-tier policy defaults |
-| **P3. Login with Taskcore** | *Who may authenticate against us?* | `taskcore-id` OIDC provider + DB-backed client registry | Our ES256 ID/access tokens issued *by* us to registered RPs (instances, the broker, future third parties) |
+| Plane                       | Question                           | Lives where                                                                                               | Token profile                                                                                                             |
+| --------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **P1. Sign-in methods**     | _Who are you?_                     | `taskcore-id` (id.taskcore.ing → Account)                                                                 | Minimal-scope provider tokens (`openid email profile`), used once to authenticate, encrypted at rest, never exported      |
+| **P2. Connections (Apps)**  | _What may your agents touch?_      | Taskcore App instances (`tool_connections`), acquired via the **connect broker** for hosted + self-hosted | Rich-scope, long-lived resource tokens in the **instance's** encrypted vault; per-agent grants; risk-tier policy defaults |
+| **P3. Login with Taskcore** | _Who may authenticate against us?_ | `taskcore-id` OIDC provider + DB-backed client registry                                                   | Our ES256 ID/access tokens issued _by_ us to registered RPs (instances, the broker, future third parties)                 |
 
 Everything in `doc/connections/` — the [First-30 matrix](./FIRST-30-MATRIX.md),
 the [connection authoring runbook](./CONNECTOR-PLAYBOOK.md), and the connect-broker work —
@@ -127,7 +127,7 @@ hold the planes apart (from the plan §3):
   resource tokens would make it the single juiciest target in the fleet; the
   broker is intentionally pass-through.
 - **Self-hosted symmetry.** Instances own their vaults, so self-hosters don't
-  depend on our uptime to *use* their own connections.
+  depend on our uptime to _use_ their own connections.
 - **Legibility.** Sign-in and connections answer different user questions, and
   every product we benchmarked (Vercel, Railway, GitHub, Google) keeps them on
   separate pages with separate names.
@@ -143,11 +143,11 @@ provider resource credential.
 
 Use the surface-correct name for each plane; they intentionally differ:
 
-| Surface | Plane | Name to use |
-| --- | --- | --- |
-| Taskcore App instances | P2 | **"Connections"** |
-| id.taskcore.ing Account | P1 | **"Ways to sign in"** |
-| id.taskcore.ing admin | P3 | **"OIDC clients"** (until the app store productizes it) |
+| Surface                 | Plane | Name to use                                             |
+| ----------------------- | ----- | ------------------------------------------------------- |
+| Taskcore App instances  | P2    | **"Connections"**                                       |
+| id.taskcore.ing Account | P1    | **"Ways to sign in"**                                   |
+| id.taskcore.ing admin   | P3    | **"OIDC clients"** (until the app store productizes it) |
 
 ## Packaging Rule
 
@@ -194,14 +194,14 @@ implementation branch is no longer the target. When you see old tickets or code
 using `connections`, `connection_grants`, or a provider-directory mental model,
 translate the intent into Apps v2:
 
-| Connections v1 intent | Apps v2 home |
-| --- | --- |
-| Provider directory | Apps gallery / `tool_applications` |
-| Configured provider instance | Connection / `tool_connections` |
-| Grant allowlist | Profiles, profile bindings, policies |
-| Resource filters | Policy/profile conditions plus provider config |
-| Tool broker | Tool gateway and runtime supervisor |
-| Connection UX tail | Apps, Connections, Review, Developer/Advanced IA |
+| Connections v1 intent        | Apps v2 home                                     |
+| ---------------------------- | ------------------------------------------------ |
+| Provider directory           | Apps gallery / `tool_applications`               |
+| Configured provider instance | Connection / `tool_connections`                  |
+| Grant allowlist              | Profiles, profile bindings, policies             |
+| Resource filters             | Policy/profile conditions plus provider config   |
+| Tool broker                  | Tool gateway and runtime supervisor              |
+| Connection UX tail           | Apps, Connections, Review, Developer/Advanced IA |
 
 Do not add new work to the retired v1 branch. If an old ticket still describes a
 valid product gap, retarget it to an active Apps v2 issue or close it as

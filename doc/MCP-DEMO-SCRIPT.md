@@ -376,12 +376,12 @@ Audit history is retained; the connection and application stay archived for the 
 
 The demo is also the clearest way to show the data boundary between Taskcore and the upstream MCP server.
 
-| Concern | Stored in the KV demo server | Stored in Taskcore |
-| --- | --- | --- |
-| Key/value entries | In-memory `Map`, lost on restart. | Not stored. The gateway only sees the MCP request/response envelope. |
-| Connection record (URL, optional token) | Not stored. | Persisted in `tool_connections`. The optional `KV_DEMO_TOKEN` becomes a secret. |
-| Profile / policy / binding decisions | Not stored. | Persisted under `tool_profiles`, `tool_policies`, `tool_profile_bindings`. |
-| Approval action requests | Not stored. | Persisted under `tool_action_requests`, linked to issue-thread interactions. |
-| Audit rows per call | Not stored. | Persisted under `tool_call_events`. Append-only. |
+| Concern                                 | Stored in the KV demo server      | Stored in Taskcore                                                              |
+| --------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------- |
+| Key/value entries                       | In-memory `Map`, lost on restart. | Not stored. The gateway only sees the MCP request/response envelope.            |
+| Connection record (URL, optional token) | Not stored.                       | Persisted in `tool_connections`. The optional `KV_DEMO_TOKEN` becomes a secret. |
+| Profile / policy / binding decisions    | Not stored.                       | Persisted under `tool_profiles`, `tool_policies`, `tool_profile_bindings`.      |
+| Approval action requests                | Not stored.                       | Persisted under `tool_action_requests`, linked to issue-thread interactions.    |
+| Audit rows per call                     | Not stored.                       | Persisted under `tool_call_events`. Append-only.                                |
 
 This is the contract the launch ships. If a future change loosens any of these — silent allow on a destructive tool, an approval that doesn't audit, a denied call without a reason code, or a retry that ignores the canonical-arguments hash — the demo will fail and so will QA.

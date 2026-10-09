@@ -6,7 +6,10 @@ import type { SshRemoteExecutionSpec } from "./ssh.js";
 import type { AdapterExecutionTarget } from "./execution-target.js";
 import type { RuntimeStatusSink } from "./runtime-progress.js";
 import type { AdapterExecutionPhaseSink } from "./execution-phase.js";
-import type { ExecutionContinuationEnvelope, NativeFinalizationResult } from "@taskcore/shared";
+import type {
+  ExecutionContinuationEnvelope,
+  NativeFinalizationResult,
+} from "@taskcore/shared";
 
 export interface AdapterAgent {
   id: string;
@@ -53,7 +56,22 @@ export interface AdapterUsageCheckpoint {
   costUsdExact?: string | null;
   costStatus?: "reported" | "estimated" | "unpriced";
   pricingContext?: { serviceTier?: string; contextTier?: "short" | "long" };
-  pricingProvenance?: { source: "provider_reported" | "provider_invoice" | "operator" | "rate_card" | "unknown"; version?: string; evidence?: string; inputCentsPerMillion?: string; cachedInputCentsPerMillion?: string; cacheWriteCentsPerMillion?: string; outputCentsPerMillion?: string; serviceTier?: string; contextTier?: "short" | "long" };
+  pricingProvenance?: {
+    source:
+      | "provider_reported"
+      | "provider_invoice"
+      | "operator"
+      | "rate_card"
+      | "unknown";
+    version?: string;
+    evidence?: string;
+    inputCentsPerMillion?: string;
+    cachedInputCentsPerMillion?: string;
+    cacheWriteCentsPerMillion?: string;
+    outputCentsPerMillion?: string;
+    serviceTier?: string;
+    contextTier?: "short" | "long";
+  };
   cacheAdjustedCostUsd?: number | null;
   providerRequestId?: string | null;
   complete: boolean;
@@ -101,12 +119,14 @@ export type AdapterExecutionErrorFamily =
 
 export interface AdapterExecutionResult {
   /** Positive evidence for retrying bootstrap; absent evidence never authorizes replay. */
-  executionRecovery?: { kind: "bootstrap"; providerWorkStarted: false } | {
-    kind: "interrupted";
-    providerStopped: true;
-    sessionPreserved: true;
-    actionOutcomes: "settled";
-  };
+  executionRecovery?:
+    | { kind: "bootstrap"; providerWorkStarted: false }
+    | {
+        kind: "interrupted";
+        providerStopped: true;
+        sessionPreserved: true;
+        actionOutcomes: "settled";
+      };
   exitCode: number | null;
   signal: string | null;
   timedOut: boolean;
@@ -140,7 +160,22 @@ export interface AdapterExecutionResult {
   costUsdExact?: string | null;
   costStatus?: "reported" | "estimated" | "unpriced";
   pricingContext?: { serviceTier?: string; contextTier?: "short" | "long" };
-  pricingProvenance?: { source: "provider_reported" | "provider_invoice" | "operator" | "rate_card" | "unknown"; version?: string; evidence?: string; inputCentsPerMillion?: string; cachedInputCentsPerMillion?: string; cacheWriteCentsPerMillion?: string; outputCentsPerMillion?: string; serviceTier?: string; contextTier?: "short" | "long" };
+  pricingProvenance?: {
+    source:
+      | "provider_reported"
+      | "provider_invoice"
+      | "operator"
+      | "rate_card"
+      | "unknown";
+    version?: string;
+    evidence?: string;
+    inputCentsPerMillion?: string;
+    cachedInputCentsPerMillion?: string;
+    cacheWriteCentsPerMillion?: string;
+    outputCentsPerMillion?: string;
+    serviceTier?: string;
+    contextTier?: "short" | "long";
+  };
   providerRequestId?: string | null;
   usageComplete?: boolean;
   /**
@@ -159,7 +194,10 @@ export interface AdapterExecutionResult {
    * `error`, so a reader of the run learns why the project dropped. Absent or empty on a local
    * target, or when every staged referenced project succeeded.
    */
-  referencedProjectStagingFailures?: Array<{ projectId: string; error: string }>;
+  referencedProjectStagingFailures?: Array<{
+    projectId: string;
+    error: string;
+  }>;
   summary?: string | null;
   clearSession?: boolean;
   question?: {
@@ -176,7 +214,9 @@ export interface AdapterExecutionResult {
 
 export interface AdapterSessionCodec {
   deserialize(raw: unknown): Record<string, unknown> | null;
-  serialize(params: Record<string, unknown> | null): Record<string, unknown> | null;
+  serialize(
+    params: Record<string, unknown> | null,
+  ): Record<string, unknown> | null;
   getDisplayId?: (params: Record<string, unknown> | null) => string | null;
 }
 
@@ -203,7 +243,8 @@ export interface AdapterRuntimeMcpAccess {
   getServers(): AdapterRuntimeMcpServer[];
 }
 
-export type AdapterRuntimeToolDelivery = "native_mcp" | "environment" | "invocation_context";
+export type AdapterRuntimeToolDelivery =
+  "native_mcp" | "environment" | "invocation_context";
 
 export interface AdapterRuntimeToolAccess {
   version: 1;
@@ -281,7 +322,11 @@ export interface AdapterExecutionContext {
    * remote operation.
    */
   onDispatch?: () => void;
-  onSpawn?: (meta: { pid: number; processGroupId: number | null; startedAt: string }) => Promise<void>;
+  onSpawn?: (meta: {
+    pid: number;
+    processGroupId: number | null;
+    startedAt: string;
+  }) => Promise<void>;
   authToken?: string;
   /**
    * The injected OpenTelemetry startup trace context (tracer + root
@@ -320,17 +365,10 @@ export interface AdapterEnvironmentTestResult {
 export type AdapterSkillSyncMode = "unsupported" | "persistent" | "ephemeral";
 
 export type AdapterSkillState =
-  | "available"
-  | "configured"
-  | "installed"
-  | "missing"
-  | "stale"
-  | "external";
+  "available" | "configured" | "installed" | "missing" | "stale" | "external";
 
 export type AdapterSkillOrigin =
-  | "company_managed"
-  | "user_installed"
-  | "external_unknown";
+  "company_managed" | "user_installed" | "external_unknown";
 
 export interface AdapterSkillEntry {
   key: string;
@@ -503,14 +541,20 @@ export interface AcpTargetDescriptor {
 export interface ServerAdapterModule {
   type: string;
   execute(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult>;
-  testEnvironment(ctx: AdapterEnvironmentTestContext): Promise<AdapterEnvironmentTestResult>;
+  testEnvironment(
+    ctx: AdapterEnvironmentTestContext,
+  ): Promise<AdapterEnvironmentTestResult>;
   acp?: AcpTargetDescriptor;
   listSkills?: (ctx: AdapterSkillContext) => Promise<AdapterSkillSnapshot>;
-  syncSkills?: (ctx: AdapterSkillContext, desiredSkills: string[]) => Promise<AdapterSkillSnapshot>;
+  syncSkills?: (
+    ctx: AdapterSkillContext,
+    desiredSkills: string[],
+  ) => Promise<AdapterSkillSnapshot>;
   sessionCodec?: AdapterSessionCodec;
   sessionManagement?: import("./session-compaction.js").AdapterSessionManagement;
   /** Selected harness can resume its conversation with this run's tool bindings. */
-  supportsToolRefreshOnResume?: boolean | ((config: Record<string, unknown>) => boolean);
+  supportsToolRefreshOnResume?:
+    boolean | ((config: Record<string, unknown>) => boolean);
   supportsLocalAgentJwt?: boolean;
   /** How this adapter receives Taskcore's run-scoped control tools. */
   runtimeToolDelivery?: AdapterRuntimeToolDelivery;
@@ -543,7 +587,12 @@ export interface ServerAdapterModule {
    * Returns the detected model/provider and the config source, or null if
    * the adapter does not support detection or no config is found.
    */
-  detectModel?: () => Promise<{ model: string; provider: string; source: string; candidates?: string[] } | null>;
+  detectModel?: () => Promise<{
+    model: string;
+    provider: string;
+    source: string;
+    candidates?: string[];
+  } | null>;
   /**
    * Optional: return a declarative config schema so the UI can render
    * adapter-specific form fields without shipping React components.
@@ -585,7 +634,9 @@ export interface ServerAdapterModule {
    * Optional: describe how this adapter's runtime command should be launched
    * and provisioned in fresh remote environments such as sandboxes.
    */
-  getRuntimeCommandSpec?: (config: Record<string, unknown>) => AdapterRuntimeCommandSpec | null;
+  getRuntimeCommandSpec?: (
+    config: Record<string, unknown>,
+  ) => AdapterRuntimeCommandSpec | null;
 
   /**
    * Optional: declare the interactive sandbox login capability. The server uses
@@ -617,11 +668,7 @@ export type ProviderActivityFamily =
   | "provider_notice";
 
 export type ProviderActivityStatus =
-  | "running"
-  | "completed"
-  | "failed"
-  | "interrupted"
-  | "informational";
+  "running" | "completed" | "failed" | "interrupted" | "informational";
 
 export interface TranscriptWorkspaceChangeFile {
   path: string;
@@ -684,27 +731,161 @@ export interface TaskcoreQuestionSet {
 
 export interface TaskcoreQuestionResponse {
   schema: "taskcore.question_response.v1";
-  answers: Record<string, { selectedOptionIds?: string[]; text?: string; customText?: string }>;
+  answers: Record<
+    string,
+    { selectedOptionIds?: string[]; text?: string; customText?: string }
+  >;
 }
 
 export type TranscriptEntry =
-  | { kind: "assistant"; ts: string; text: string; delta?: boolean; channel?: "progress" | "final" | "unknown"; itemId?: string }
-  | { kind: "thinking"; ts: string; text: string; delta?: boolean; lifecycle?: "started" | "completed"; channel?: "summary" | "detail" | "unknown"; itemId?: string }
+  | {
+      kind: "assistant";
+      ts: string;
+      text: string;
+      delta?: boolean;
+      channel?: "progress" | "final" | "unknown";
+      itemId?: string;
+    }
+  | {
+      kind: "thinking";
+      ts: string;
+      text: string;
+      delta?: boolean;
+      lifecycle?: "started" | "completed";
+      channel?: "summary" | "detail" | "unknown";
+      itemId?: string;
+    }
   | { kind: "user"; ts: string; text: string }
-  | { kind: "tool_call"; ts: string; name: string; input: unknown; toolUseId?: string; invocationId?: string; actionRequestId?: string }
-  | { kind: "tool_result"; ts: string; toolUseId: string; toolName?: string; content: string; isError: boolean; delta?: boolean }
+  | {
+      kind: "tool_call";
+      ts: string;
+      name: string;
+      input: unknown;
+      toolUseId?: string;
+      invocationId?: string;
+      actionRequestId?: string;
+    }
+  | {
+      kind: "tool_result";
+      ts: string;
+      toolUseId: string;
+      toolName?: string;
+      content: string;
+      isError: boolean;
+      delta?: boolean;
+    }
   | { kind: "init"; ts: string; model: string; sessionId: string }
-  | { kind: "result"; ts: string; text: string; inputTokens: number; outputTokens: number; cachedTokens: number; costUsd: number; subtype: string; isError: boolean; errors: string[] }
+  | {
+      kind: "result";
+      ts: string;
+      text: string;
+      inputTokens: number;
+      outputTokens: number;
+      cachedTokens: number;
+      costUsd: number;
+      subtype: string;
+      isError: boolean;
+      errors: string[];
+    }
   | { kind: "stderr"; ts: string; text: string }
   | { kind: "system"; ts: string; text: string }
   | { kind: "stdout"; ts: string; text: string }
-  | { kind: "diff"; ts: string; changeType: "add" | "remove" | "context" | "hunk" | "file_header" | "truncation"; text: string }
-  | { kind: "provider_activity"; ts: string; family: ProviderActivityFamily; eventType: string; status: ProviderActivityStatus; title: string; summary: string; payload: Record<string, unknown> }
-  | { kind: "workspace_change"; ts: string; changeSetId: string; revision: number; source: "harness_reported" | "runner_verified"; complete: boolean; files: TranscriptWorkspaceChangeFile[]; totals: { files: number; additions: number | null; deletions: number | null }; patchArtifactRef: string | null }
-  | { kind: "workspace_file_reference"; ts: string; referenceId: string; source: "harness_reported" | "runner_verified"; path: string; displayName: string; mediaType: string | null; presentation: "document" | "code" | "image" | "generic"; line: number | null; preview: string | null; previewTruncated: boolean; contentDigest: string | null }
-  | { kind: "runtime_request"; ts: string; requestId: string; requestKind: "runtime" | "command_approval" | "file_approval" | "permission_approval" | "user_input" | "elicitation" | null; turnId: string | null; requestType: "permission" | "input"; status: "pending" | "resolved" | "expired" | "cancelled"; prompt: string; choices: Array<{ key: string; label: string }>; fields: Array<{ name: string; label: string; placeholder: string | null }>; questionSet?: TaskcoreQuestionSet | null; resolvedAction?: string | null; response?: TaskcoreQuestionResponse | null }
-  | { kind: "run_result"; ts: string; disposition: "done" | "blocked" | "needs_review" | "yielded"; summary: string; objectiveSatisfied: boolean | null; verification: TranscriptRunVerification[]; remainingWork: Array<{ description: string; blocksCompletion: boolean }>; blocker: { reasonCode: string; unblockAction: string; scope: "current_track" | "task_wide" } | null; artifacts: TranscriptRunArtifact[]; acceptedResponseWake?: { runId: string; sourceEventId: string } }
-  | { kind: "run_terminal"; ts: string; turnState: "completed" | "failed" | "interrupted" | "cancelled"; runState: "succeeded" | "failed" | "cancelled"; disposition: "done" | "blocked" | "needs_review" | "yielded"; stopReason?: string };
+  | {
+      kind: "diff";
+      ts: string;
+      changeType:
+        "add" | "remove" | "context" | "hunk" | "file_header" | "truncation";
+      text: string;
+    }
+  | {
+      kind: "provider_activity";
+      ts: string;
+      family: ProviderActivityFamily;
+      eventType: string;
+      status: ProviderActivityStatus;
+      title: string;
+      summary: string;
+      payload: Record<string, unknown>;
+    }
+  | {
+      kind: "workspace_change";
+      ts: string;
+      changeSetId: string;
+      revision: number;
+      source: "harness_reported" | "runner_verified";
+      complete: boolean;
+      files: TranscriptWorkspaceChangeFile[];
+      totals: {
+        files: number;
+        additions: number | null;
+        deletions: number | null;
+      };
+      patchArtifactRef: string | null;
+    }
+  | {
+      kind: "workspace_file_reference";
+      ts: string;
+      referenceId: string;
+      source: "harness_reported" | "runner_verified";
+      path: string;
+      displayName: string;
+      mediaType: string | null;
+      presentation: "document" | "code" | "image" | "generic";
+      line: number | null;
+      preview: string | null;
+      previewTruncated: boolean;
+      contentDigest: string | null;
+    }
+  | {
+      kind: "runtime_request";
+      ts: string;
+      requestId: string;
+      requestKind:
+        | "runtime"
+        | "command_approval"
+        | "file_approval"
+        | "permission_approval"
+        | "user_input"
+        | "elicitation"
+        | null;
+      turnId: string | null;
+      requestType: "permission" | "input";
+      status: "pending" | "resolved" | "expired" | "cancelled";
+      prompt: string;
+      choices: Array<{ key: string; label: string }>;
+      fields: Array<{
+        name: string;
+        label: string;
+        placeholder: string | null;
+      }>;
+      questionSet?: TaskcoreQuestionSet | null;
+      resolvedAction?: string | null;
+      response?: TaskcoreQuestionResponse | null;
+    }
+  | {
+      kind: "run_result";
+      ts: string;
+      disposition: "done" | "blocked" | "needs_review" | "yielded";
+      summary: string;
+      objectiveSatisfied: boolean | null;
+      verification: TranscriptRunVerification[];
+      remainingWork: Array<{ description: string; blocksCompletion: boolean }>;
+      blocker: {
+        reasonCode: string;
+        unblockAction: string;
+        scope: "current_track" | "task_wide";
+      } | null;
+      artifacts: TranscriptRunArtifact[];
+      acceptedResponseWake?: { runId: string; sourceEventId: string };
+    }
+  | {
+      kind: "run_terminal";
+      ts: string;
+      turnState: "completed" | "failed" | "interrupted" | "cancelled";
+      runState: "succeeded" | "failed" | "cancelled";
+      disposition: "done" | "blocked" | "needs_review" | "yielded";
+      stopReason?: string;
+    };
 
 export type StdoutLineParser = (line: string, ts: string) => TranscriptEntry[];
 

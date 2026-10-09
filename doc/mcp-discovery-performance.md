@@ -46,12 +46,12 @@ Node 26.4.0 on macOS; forced GC before each measurement; heap/RSS sampled every
 2 ms. Baseline: `f2e0f196308629ef05c7f65782243e1713b208f0`.
 [Raw measurements](benchmarks/2026-10-01-mcp-discovery.json) retain every sample.
 
-| Scenario | Queries | Peak extra heap | Elapsed time |
-| --- | ---: | ---: | ---: |
-| Baseline, 900 tools, one listing | 11,489 | 1,680–1,698 MiB | 3.54–3.63 s |
-| Fixed, 900 tools, one listing | 36 | 37–37 MiB | 0.24–0.24 s |
-| Fixed, 900 tools, 16 listings | 576 total | 169–187 MiB | 3.63–3.65 s |
-| Fixed, 900 tools, four connections, 16 listings | 624 total | 146–174 MiB | 3.69–3.72 s |
+| Scenario                                        |   Queries | Peak extra heap | Elapsed time |
+| ----------------------------------------------- | --------: | --------------: | -----------: |
+| Baseline, 900 tools, one listing                |    11,489 | 1,680–1,698 MiB |  3.54–3.63 s |
+| Fixed, 900 tools, one listing                   |        36 |       37–37 MiB |  0.24–0.24 s |
+| Fixed, 900 tools, 16 listings                   | 576 total |     169–187 MiB |  3.63–3.65 s |
+| Fixed, 900 tools, four connections, 16 listings | 624 total |     146–174 MiB |  3.69–3.72 s |
 
 Before the listing optimization, the 50-versus-500-tool regression test failed
 with 722 versus 6,422 statements. The connection-row duplication test also failed.

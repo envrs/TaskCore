@@ -61,13 +61,13 @@ holds a usable subscription credential. "Sandbox has auth" means the run's
 sandbox `auth.json` holds a usable credential at teardown. `X` and `Y` are two
 different subscription identities (`account_id`).
 
-| # | Host store | Sandbox cred | Inbound: sandbox home gets | Copy-back: host store | Cache write | Cache vend | Identity anchor |
-|---|---|---|---|---|---|---|---|
-| 1a | HAS `X` | HAS `X`, newer | fresher of the two (`X`) | overwrite with newer `X` | write slot `X` | may stage a strictly-newer cached `X` | host and sandbox both name `X` |
-| 1b | HAS `X` | HAS `Y` (`Y != X`) | host `X` (predicate rejects `Y`) | keep host `X` | write slot `Y` (per identity) | may stage a strictly-newer cached `X` | host names `X`; `Y` is cached, never adopted |
-| 2 | HAS `X` | NONE | host `X` | keep host (sandbox absent) | no write (no source) | may stage a strictly-newer cached `X` | host names `X` |
-| 3 | NONE | HAS `Y` | image-login fallback; host store **never seeded** | keep host **empty** (never seed) | write slot `Y` | **none** (host empty, no random pick) | sandbox names `Y`; host is silent |
-| 4 | NONE | NONE | image-login fallback, or the run fails | keep host **empty** | no write | **none** | no side names an identity |
+| #   | Host store | Sandbox cred       | Inbound: sandbox home gets                        | Copy-back: host store            | Cache write                   | Cache vend                            | Identity anchor                              |
+| --- | ---------- | ------------------ | ------------------------------------------------- | -------------------------------- | ----------------------------- | ------------------------------------- | -------------------------------------------- |
+| 1a  | HAS `X`    | HAS `X`, newer     | fresher of the two (`X`)                          | overwrite with newer `X`         | write slot `X`                | may stage a strictly-newer cached `X` | host and sandbox both name `X`               |
+| 1b  | HAS `X`    | HAS `Y` (`Y != X`) | host `X` (predicate rejects `Y`)                  | keep host `X`                    | write slot `Y` (per identity) | may stage a strictly-newer cached `X` | host names `X`; `Y` is cached, never adopted |
+| 2   | HAS `X`    | NONE               | host `X`                                          | keep host (sandbox absent)       | no write (no source)          | may stage a strictly-newer cached `X` | host names `X`                               |
+| 3   | NONE       | HAS `Y`            | image-login fallback; host store **never seeded** | keep host **empty** (never seed) | write slot `Y`                | **none** (host empty, no random pick) | sandbox names `Y`; host is silent            |
+| 4   | NONE       | NONE               | image-login fallback, or the run fails            | keep host **empty**              | no write                      | **none**                              | no side names an identity                    |
 
 The cache changes an outcome only in the "stage a strictly-newer cached copy of
 an identity the host already holds" cases (rows 1a, 1b, 2, vend column). It never

@@ -5,9 +5,16 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-const workflow = readFileSync(new URL("../../workflows/docker.yml", import.meta.url), "utf8");
+const workflow = readFileSync(
+  new URL("../../workflows/docker.yml", import.meta.url),
+  "utf8",
+);
 const job = workflow.split("  promote_canary_channel:\n")[1];
-const script = job.split("        run: |\n")[1].split("\n").map(line => line.replace(/^ {10}/, "")).join("\n");
+const script = job
+  .split("        run: |\n")[1]
+  .split("\n")
+  .map((line) => line.replace(/^ {10}/, ""))
+  .join("\n");
 const sha = "a".repeat(40);
 
 test("canary promotion waits for the standard manifest and keeps its serialized channel", () => {
@@ -35,22 +42,60 @@ else if (args.slice(0, 3).join(" ") === "buildx imagetools inspect") process.exi
 else if (args.slice(0, 3).join(" ") !== "buildx imagetools create") process.exit(99);
 `;
     try {
-      for (const command of ["curl", "gh", "docker"]) writeFileSync(path.join(dir, command), fixture, { mode: 0o755 });
+      for (const command of ["curl", "gh", "docker"])
+        writeFileSync(path.join(dir, command), fixture, { mode: 0o755 });
       const result = spawnSync("bash", ["-e", "-o", "pipefail", "-c", script], {
-        encoding: "utf8", env: {
-          ...process.env, PATH: `${dir}${path.delimiter}${process.env.PATH}`,
-          IMAGE: "ghcr.io/khulnasoft/taskcore", GITHUB_repository: "khulnasoft/taskcore",
-          TEST_CALLS: log, TEST_SHA: sha, COMMIT_PRESENT: String(commitPresent), IMAGE_PRESENT: String(imagePresent),
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${dir}${path.delimiter}${process.env.PATH}`,
+          IMAGE: "ghcr.io/khulnasoft/taskcore",
+          GITHUB_repository: "khulnasoft/taskcore",
+          TEST_CALLS: log,
+          TEST_SHA: sha,
+          COMMIT_PRESENT: String(commitPresent),
+          IMAGE_PRESENT: String(imagePresent),
         },
       });
       assert.equal(result.status, 0, result.stderr);
-      const calls = readFileSync(log, "utf8").trim().split("\n").map(line => JSON.parse(line));
-      assert.ok(calls.find(call => call.command === "gh").args.some(arg => arg.includes("canary%2Fv2026.922.0-canary.1")));
-      const docker = calls.filter(call => call.command === "docker").map(call => call.args);
+      const calls = readFileSync(log, "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
+      assert.ok(
+        calls
+          .find((call) => call.command === "gh")
+          .args.some((arg) => arg.includes("canary%2Fv2026.922.0-canary.1")),
+      );
+      const docker = calls
+        .filter((call) => call.command === "docker")
+        .map((call) => call.args);
       assert.deepEqual(docker, [
-        ...(commitPresent ? [["buildx", "imagetools", "inspect", "ghcr.io/khulnasoft/taskcore:sha-aaaaaaa"]] : []),
-        ...(commitPresent && imagePresent ? [["buildx", "imagetools", "create", "-t", "ghcr.io/khulnasoft/taskcore:canary", "ghcr.io/khulnasoft/taskcore:sha-aaaaaaa"]] : []),
+        ...(commitPresent
+          ? [
+              [
+                "buildx",
+                "imagetools",
+                "inspect",
+                "ghcr.io/khulnasoft/taskcore:sha-aaaaaaa",
+              ],
+            ]
+          : []),
+        ...(commitPresent && imagePresent
+          ? [
+              [
+                "buildx",
+                "imagetools",
+                "create",
+                "-t",
+                "ghcr.io/khulnasoft/taskcore:canary",
+                "ghcr.io/khulnasoft/taskcore:sha-aaaaaaa",
+              ],
+            ]
+          : []),
       ]);
-    } finally { rmSync(dir, { recursive: true, force: true }); }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 }

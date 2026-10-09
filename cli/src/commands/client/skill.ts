@@ -15,7 +15,9 @@ interface SkillOptions extends BaseClientOptions {
 }
 
 export function registerSkillCommands(program: Command): void {
-  const skill = program.command("skill").description("Company skill operations");
+  const skill = program
+    .command("skill")
+    .description("Company skill operations");
 
   addCompanyGet(skill, "list", "List company skills", "skills");
 
@@ -28,7 +30,12 @@ export function registerSkillCommands(program: Command): void {
       .action(async (skillId: string, opts: SkillOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          printOutput(await ctx.api.get(apiPath`/api/companies/${ctx.companyId}/skills/${skillId}`), { json: ctx.json });
+          printOutput(
+            await ctx.api.get(
+              apiPath`/api/companies/${ctx.companyId}/skills/${skillId}`,
+            ),
+            { json: ctx.json },
+          );
         } catch (err) {
           handleCommandError(err);
         }
@@ -47,30 +54,10 @@ export function registerSkillCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const query = new URLSearchParams({ path: opts.path ?? "SKILL.md" });
-          printOutput(await ctx.api.get(`${apiPath`/api/companies/${ctx.companyId}/skills/${skillId}/files`}?${query.toString()}`), { json: ctx.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
-    { includeCompany: false },
-  );
-
-  addCompanyPost(skill, "create", "Create a local company skill", "skills", true);
-  addCompanyPost(skill, "import", "Import company skills from a source", "skills/import", true);
-  addCompanyPost(skill, "scan-projects", "Scan project workspaces for company skills", "skills/scan-projects", true);
-
-  addCommonClientOptions(
-    skill
-      .command("file:update")
-      .description("Update a company skill file")
-      .argument("<skillId>", "Skill ID")
-      .option("-C, --company-id <id>", "Company ID")
-      .requiredOption("--payload-json <json>", "CompanySkillFileUpdate JSON payload")
-      .action(async (skillId: string, opts: SkillOptions) => {
-        try {
-          const ctx = resolveCommandContext(opts, { requireCompany: true });
           printOutput(
-            await ctx.api.patch(apiPath`/api/companies/${ctx.companyId}/skills/${skillId}/files`, parseJson(opts.payloadJson ?? "{}")),
+            await ctx.api.get(
+              `${apiPath`/api/companies/${ctx.companyId}/skills/${skillId}/files`}?${query.toString()}`,
+            ),
             { json: ctx.json },
           );
         } catch (err) {
@@ -80,27 +67,111 @@ export function registerSkillCommands(program: Command): void {
     { includeCompany: false },
   );
 
-  addSkillAction(skill, "update-status", "Get company skill update status", "update-status", "GET");
-  addSkillAction(skill, "install-update", "Install available company skill update", "install-update", "POST");
+  addCompanyPost(
+    skill,
+    "create",
+    "Create a local company skill",
+    "skills",
+    true,
+  );
+  addCompanyPost(
+    skill,
+    "import",
+    "Import company skills from a source",
+    "skills/import",
+    true,
+  );
+  addCompanyPost(
+    skill,
+    "scan-projects",
+    "Scan project workspaces for company skills",
+    "skills/scan-projects",
+    true,
+  );
+
+  addCommonClientOptions(
+    skill
+      .command("file:update")
+      .description("Update a company skill file")
+      .argument("<skillId>", "Skill ID")
+      .option("-C, --company-id <id>", "Company ID")
+      .requiredOption(
+        "--payload-json <json>",
+        "CompanySkillFileUpdate JSON payload",
+      )
+      .action(async (skillId: string, opts: SkillOptions) => {
+        try {
+          const ctx = resolveCommandContext(opts, { requireCompany: true });
+          printOutput(
+            await ctx.api.patch(
+              apiPath`/api/companies/${ctx.companyId}/skills/${skillId}/files`,
+              parseJson(opts.payloadJson ?? "{}"),
+            ),
+            { json: ctx.json },
+          );
+        } catch (err) {
+          handleCommandError(err);
+        }
+      }),
+    { includeCompany: false },
+  );
+
+  addSkillAction(
+    skill,
+    "update-status",
+    "Get company skill update status",
+    "update-status",
+    "GET",
+  );
+  addSkillAction(
+    skill,
+    "install-update",
+    "Install available company skill update",
+    "install-update",
+    "POST",
+  );
   addSkillAction(skill, "delete", "Delete a company skill", "", "DELETE");
 }
 
-function addCompanyGet(parent: Command, name: string, description: string, path: string): void {
+function addCompanyGet(
+  parent: Command,
+  name: string,
+  description: string,
+  path: string,
+): void {
   addCommonClientOptions(
-    parent.command(name).description(description).option("-C, --company-id <id>", "Company ID").action(async (opts: SkillOptions) => {
-      try {
-        const ctx = resolveCommandContext(opts, { requireCompany: true });
-        printOutput(await ctx.api.get(`${apiPath`/api/companies/${ctx.companyId}`}/${path}`), { json: ctx.json });
-      } catch (err) {
-        handleCommandError(err);
-      }
-    }),
+    parent
+      .command(name)
+      .description(description)
+      .option("-C, --company-id <id>", "Company ID")
+      .action(async (opts: SkillOptions) => {
+        try {
+          const ctx = resolveCommandContext(opts, { requireCompany: true });
+          printOutput(
+            await ctx.api.get(
+              `${apiPath`/api/companies/${ctx.companyId}`}/${path}`,
+            ),
+            { json: ctx.json },
+          );
+        } catch (err) {
+          handleCommandError(err);
+        }
+      }),
     { includeCompany: false },
   );
 }
 
-function addCompanyPost(parent: Command, name: string, description: string, path: string, requirePayload = false): void {
-  const command = parent.command(name).description(description).option("-C, --company-id <id>", "Company ID");
+function addCompanyPost(
+  parent: Command,
+  name: string,
+  description: string,
+  path: string,
+  requirePayload = false,
+): void {
+  const command = parent
+    .command(name)
+    .description(description)
+    .option("-C, --company-id <id>", "Company ID");
   if (requirePayload) {
     command.requiredOption("--payload-json <json>", "JSON payload");
   } else {
@@ -110,7 +181,13 @@ function addCompanyPost(parent: Command, name: string, description: string, path
     command.action(async (opts: SkillOptions) => {
       try {
         const ctx = resolveCommandContext(opts, { requireCompany: true });
-        printOutput(await ctx.api.post(`${apiPath`/api/companies/${ctx.companyId}`}/${path}`, parseJson(opts.payloadJson ?? "{}")), { json: ctx.json });
+        printOutput(
+          await ctx.api.post(
+            `${apiPath`/api/companies/${ctx.companyId}`}/${path}`,
+            parseJson(opts.payloadJson ?? "{}"),
+          ),
+          { json: ctx.json },
+        );
       } catch (err) {
         handleCommandError(err);
       }
@@ -119,7 +196,13 @@ function addCompanyPost(parent: Command, name: string, description: string, path
   );
 }
 
-function addSkillAction(parent: Command, name: string, description: string, suffix: string, method: "GET" | "POST" | "DELETE"): void {
+function addSkillAction(
+  parent: Command,
+  name: string,
+  description: string,
+  suffix: string,
+  method: "GET" | "POST" | "DELETE",
+): void {
   addCommonClientOptions(
     parent
       .command(name)

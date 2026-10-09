@@ -12,11 +12,11 @@ The default integration uses Composio Connect at `https://connect.composio.dev/m
 
 There are three objects to distinguish:
 
-| Object | Meaning |
-| --- | --- |
+| Object                                | Meaning                                                                                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Saved Composio connection in Taskcore | An endpoint, credentials, access rules, and tool catalog. We have called this a gateway. Multiple saved Composio connections are possible. |
-| Connected app account in Composio | A particular authorized Circleback, Spotify, or other app account. |
-| App row in Taskcore | A cached observation of an account available through a saved gateway, plus a convenient setup or management entry point. |
+| Connected app account in Composio     | A particular authorized Circleback, Spotify, or other app account.                                                                         |
+| App row in Taskcore                   | A cached observation of an account available through a saved gateway, plus a convenient setup or management entry point.                   |
 
 **An observed Circleback row does not create another credential or independent connection in Taskcore.** The public app catalog is another separate thing: it says Composio supports Circleback, without proving that this gateway has an authorized Circleback account.
 
@@ -50,15 +50,15 @@ Consequently, an account can be available for execution even before the Apps pag
 
 These findings come from the current worktree and a read-only check of the local test gateway.
 
-| Capability | Current behavior |
-| --- | --- |
-| Reuse an already connected app | Setup lists the requested toolkit first. An active account skips creating another authorization link. No agent task is necessary. |
-| Authorize an app from Taskcore | The backend requests a hosted Composio authorization link. Completion checks account status again. |
-| Recognize a known account | Safe account IDs, aliases, statuses, default flags, and check times are cached. A fresh check confirmed Circleback is active. |
-| Discover an app connected independently | The Apps page checks its visible catalog toolkits and previously observed or configured toolkits. A previously unseen app can remain undiscovered until its page or search is checked. |
-| Notice external disconnection | Rechecking a known toolkit replaces the observation with the provider's returned account list. Until then, the card can be stale. |
-| Rename or remove an app account | Taskcore calls Composio, then lists accounts again to confirm the change. This changes upstream state. |
-| Give Circleback its own agent permissions | The row's Permissions action opens the saved Composio gateway's permissions. It is not an independent Circleback permission boundary. |
+| Capability                                | Current behavior                                                                                                                                                                       |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reuse an already connected app            | Setup lists the requested toolkit first. An active account skips creating another authorization link. No agent task is necessary.                                                      |
+| Authorize an app from Taskcore            | The backend requests a hosted Composio authorization link. Completion checks account status again.                                                                                     |
+| Recognize a known account                 | Safe account IDs, aliases, statuses, default flags, and check times are cached. A fresh check confirmed Circleback is active.                                                          |
+| Discover an app connected independently   | The Apps page checks its visible catalog toolkits and previously observed or configured toolkits. A previously unseen app can remain undiscovered until its page or search is checked. |
+| Notice external disconnection             | Rechecking a known toolkit replaces the observation with the provider's returned account list. Until then, the card can be stale.                                                      |
+| Rename or remove an app account           | Taskcore calls Composio, then lists accounts again to confirm the change. This changes upstream state.                                                                                 |
+| Give Circleback its own agent permissions | The row's Permissions action opens the saved Composio gateway's permissions. It is not an independent Circleback permission boundary.                                                  |
 
 Refresh happens on page entry, changes to the visible catalog query, and browser focus. The one-minute query freshness setting is **not** a background polling schedule. We have no full inventory reconciliation job or lifecycle webhook integration here.
 
@@ -71,12 +71,12 @@ Two additional presentation gaps matter:
 
 ## Who owns which permissions
 
-| Question | Authority |
-| --- | --- |
-| Is this app account authorized and active? | Composio, backed by the app's authorization. |
-| What access did the app's OAuth consent grant? | The app and Composio's authorization configuration. |
-| Can this Taskcore human or agent use the saved gateway credential? | Taskcore's grants and access controls. |
-| Is this exposed MCP tool allowed, denied, or subject to approval? | Taskcore's tool policy. |
+| Question                                                                        | Authority                                                                  |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Is this app account authorized and active?                                      | Composio, backed by the app's authorization.                               |
+| What access did the app's OAuth consent grant?                                  | The app and Composio's authorization configuration.                        |
+| Can this Taskcore human or agent use the saved gateway credential?              | Taskcore's grants and access controls.                                     |
+| Is this exposed MCP tool allowed, denied, or subject to approval?               | Taskcore's tool policy.                                                    |
 | Can this agent use only Circleback through a broadly enabled Composio executor? | Not established by the Circleback app row or its current Permissions link. |
 
 New gateways now default to all humans and all agents. That makes the gateway available to those actors; it does not override credential requirements, tool policies, or Composio's own account restrictions. App setup preserves the saved gateway's existing rules.
@@ -91,15 +91,15 @@ Likewise, an app card's absence, a native app's precedence, or removing a cached
 
 The following is the proposed behavior, assuming the account belongs to the identity and scope reachable by the saved gateway.
 
-| Event | Expected Taskcore behavior |
-| --- | --- |
-| Connect Circleback in Composio | Import it into connected apps automatically. No second OAuth flow or local activation step. |
-| Click Connect when Circleback is already active | Verify and show the existing account. Do not create another account. |
-| Disconnect Circleback in Composio | Update the account row after reconciliation. Provider execution follows upstream state even while our card is stale. |
-| App authorization expires | Show Needs sign-in and offer the provider's reauthorization flow. |
-| Composio cannot be reached | Keep the last observation, mark it stale, and show Check again. Do not claim a confirmed disconnection. |
-| Add a second account for the same app | Show both accounts. Do not imply that clicking one pins all later agent calls to it unless execution actually enforces that choice. |
-| Remove Composio from Taskcore | Remove local access to that saved gateway. Keep upstream app accounts in Composio. |
+| Event                                           | Expected Taskcore behavior                                                                                                          |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Connect Circleback in Composio                  | Import it into connected apps automatically. No second OAuth flow or local activation step.                                         |
+| Click Connect when Circleback is already active | Verify and show the existing account. Do not create another account.                                                                |
+| Disconnect Circleback in Composio               | Update the account row after reconciliation. Provider execution follows upstream state even while our card is stale.                |
+| App authorization expires                       | Show Needs sign-in and offer the provider's reauthorization flow.                                                                   |
+| Composio cannot be reached                      | Keep the last observation, mark it stale, and show Check again. Do not claim a confirmed disconnection.                             |
+| Add a second account for the same app           | Show both accounts. Do not imply that clicking one pins all later agent calls to it unless execution actually enforces that choice. |
+| Remove Composio from Taskcore                   | Remove local access to that saved gateway. Keep upstream app accounts in Composio.                                                  |
 
 Composio documents automatic OAuth token refresh and an expired-account event. That gives us one potential sync signal, but does not prove that our Connect credential can subscribe to every creation, deletion, or status event. [Authentication lifecycle](https://docs.composio.dev/docs/authentication)
 

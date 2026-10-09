@@ -1,6 +1,18 @@
 import { createHash } from "node:crypto";
 import { promises as fsPromises } from "node:fs";
-import { chmod, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, symlink, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -32,9 +44,7 @@ describe("workspace restore merge", () => {
   });
 
   it("round-trips a deterministic durable snapshot and rejects traversal", async () => {
-    const rootDir = await mkdtemp(
-      path.join(os.tmpdir(), "taskcore-snapshot-"),
-    );
+    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-snapshot-"));
     cleanupDirs.push(rootDir);
     await mkdir(path.join(rootDir, "nested"), { recursive: true });
     await writeFile(path.join(rootDir, "b.txt"), "bravo\n", "utf8");
@@ -42,7 +52,8 @@ describe("workspace restore merge", () => {
 
     const snapshot = await captureDirectorySnapshot(rootDir, { exclude: [] });
     const serialized = serializeDirectorySnapshot(snapshot);
-    if (serialized.version !== 1) throw new Error("Expected legacy in-memory snapshot");
+    if (serialized.version !== 1)
+      throw new Error("Expected legacy in-memory snapshot");
     const restored = parseDirectorySnapshot(serialized);
 
     expect(serialized.entries.map(([relativePath]) => relativePath)).toEqual([
@@ -63,25 +74,45 @@ describe("workspace restore merge", () => {
   });
 
   it("preserves sibling files when sequential stale-baseline restores create the same nested directory tree", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-restore-merge-"),
+    );
     cleanupDirs.push(rootDir);
 
     const targetDir = path.join(rootDir, "target");
     const sourceADir = path.join(rootDir, "source-a");
     const sourceBDir = path.join(rootDir, "source-b");
     await mkdir(targetDir, { recursive: true });
-    await mkdir(path.join(sourceADir, "manual-qa", "environment-matrix", "ssh"), { recursive: true });
-    await mkdir(path.join(sourceBDir, "manual-qa", "environment-matrix", "ssh"), { recursive: true });
+    await mkdir(
+      path.join(sourceADir, "manual-qa", "environment-matrix", "ssh"),
+      { recursive: true },
+    );
+    await mkdir(
+      path.join(sourceBDir, "manual-qa", "environment-matrix", "ssh"),
+      { recursive: true },
+    );
 
     const baseline = await captureDirectorySnapshot(targetDir, { exclude: [] });
 
     await writeFile(
-      path.join(sourceADir, "manual-qa", "environment-matrix", "ssh", "claude_local.md"),
+      path.join(
+        sourceADir,
+        "manual-qa",
+        "environment-matrix",
+        "ssh",
+        "claude_local.md",
+      ),
       "ssh claude\n",
       "utf8",
     );
     await writeFile(
-      path.join(sourceBDir, "manual-qa", "environment-matrix", "ssh", "codex_local.md"),
+      path.join(
+        sourceBDir,
+        "manual-qa",
+        "environment-matrix",
+        "ssh",
+        "codex_local.md",
+      ),
       "ssh codex\n",
       "utf8",
     );
@@ -98,35 +129,68 @@ describe("workspace restore merge", () => {
     });
 
     await expect(
-      readFile(path.join(targetDir, "manual-qa", "environment-matrix", "ssh", "claude_local.md"), "utf8"),
+      readFile(
+        path.join(
+          targetDir,
+          "manual-qa",
+          "environment-matrix",
+          "ssh",
+          "claude_local.md",
+        ),
+        "utf8",
+      ),
     ).resolves.toBe("ssh claude\n");
     await expect(
-      readFile(path.join(targetDir, "manual-qa", "environment-matrix", "ssh", "codex_local.md"), "utf8"),
+      readFile(
+        path.join(
+          targetDir,
+          "manual-qa",
+          "environment-matrix",
+          "ssh",
+          "codex_local.md",
+        ),
+        "utf8",
+      ),
     ).resolves.toBe("ssh codex\n");
   });
 
   it("preserves a host file replacing a deleted baseline directory and continues the restore", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-conflict-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-restore-conflict-"),
+    );
     cleanupDirs.push(rootDir);
     const targetDir = path.join(rootDir, "target");
     const sourceDir = path.join(rootDir, "source");
-    await mkdir(path.join(targetDir, "replaced", "nested"), { recursive: true });
+    await mkdir(path.join(targetDir, "replaced", "nested"), {
+      recursive: true,
+    });
     await mkdir(sourceDir);
-    const baseline = await captureDirectorySnapshot(targetDir, { exclude: [], diskBacked: true });
+    const baseline = await captureDirectorySnapshot(targetDir, {
+      exclude: [],
+      diskBacked: true,
+    });
     try {
       await rm(path.join(targetDir, "replaced"), { recursive: true });
       await writeFile(path.join(targetDir, "replaced"), "host change");
       await writeFile(path.join(sourceDir, "other.txt"), "sandbox change");
       await mergeDirectoryWithBaseline({ baseline, sourceDir, targetDir });
-      expect(await readFile(path.join(targetDir, "replaced"), "utf8")).toBe("host change");
-      expect(await readFile(path.join(targetDir, "other.txt"), "utf8")).toBe("sandbox change");
-    } finally { await disposeDirectorySnapshot(baseline); }
+      expect(await readFile(path.join(targetDir, "replaced"), "utf8")).toBe(
+        "host change",
+      );
+      expect(await readFile(path.join(targetDir, "other.txt"), "utf8")).toBe(
+        "sandbox change",
+      );
+    } finally {
+      await disposeDirectorySnapshot(baseline);
+    }
   });
 
   it("ignores non-file entries when capturing snapshots", async () => {
     if (process.platform === "win32") return;
 
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-restore-merge-"),
+    );
     cleanupDirs.push(rootDir);
     const socketPath = path.join(rootDir, "runtime.sock");
     const server = net.createServer();
@@ -154,37 +218,64 @@ describe("workspace restore merge", () => {
       "Daytona syncOut refusing tarball link whose target escapes the extraction dir: link -> /private",
       "Daytona sync source path is not a confined absolute path: ../private",
       "Daytona sync source path escapes the workspace remote dir: /private",
-      ...[40, 41, 42, 44, 45].map((code) => `Daytona outbound symlink-escape guard command failed (exit ${code}): private detail`),
+      ...[40, 41, 42, 44, 45].map(
+        (code) =>
+          `Daytona outbound symlink-escape guard command failed (exit ${code}): private detail`,
+      ),
     ])("holds the deterministic confinement refusal: %s", (message) => {
-      expect(classifyWorkspaceRestoreFailure(new Error(message))).toBe("restore_unsafe_archive");
-      expect(describeWorkspaceRestoreFailure(classifyWorkspaceRestoreFailure(new Error(message)))).not.toContain("private");
+      expect(classifyWorkspaceRestoreFailure(new Error(message))).toBe(
+        "restore_unsafe_archive",
+      );
+      expect(
+        describeWorkspaceRestoreFailure(
+          classifyWorkspaceRestoreFailure(new Error(message)),
+        ),
+      ).not.toContain("private");
     });
 
     it("preserves the generic policy for other outbound command failures", () => {
-      expect(classifyWorkspaceRestoreFailure(new Error("Daytona outbound symlink-escape guard command failed (exit 1): transport failed"))).toBe("restore_failed");
+      expect(
+        classifyWorkspaceRestoreFailure(
+          new Error(
+            "Daytona outbound symlink-escape guard command failed (exit 1): transport failed",
+          ),
+        ),
+      ).toBe("restore_failed");
     });
 
     it("maps an EACCES error to restore_permission_denied", () => {
       const error: NodeJS.ErrnoException = new Error("permission denied");
       error.code = "EACCES";
-      expect(classifyWorkspaceRestoreFailure(error)).toBe("restore_permission_denied");
+      expect(classifyWorkspaceRestoreFailure(error)).toBe(
+        "restore_permission_denied",
+      );
     });
 
     it("maps an EPERM error to restore_permission_denied", () => {
       const error: NodeJS.ErrnoException = new Error("operation not permitted");
       error.code = "EPERM";
-      expect(classifyWorkspaceRestoreFailure(error)).toBe("restore_permission_denied");
+      expect(classifyWorkspaceRestoreFailure(error)).toBe(
+        "restore_permission_denied",
+      );
     });
 
     it("maps the lock-timeout code to restore_lock_timeout", () => {
-      const error: NodeJS.ErrnoException = new Error("Timed out waiting for workspace restore lock at /some/path");
+      const error: NodeJS.ErrnoException = new Error(
+        "Timed out waiting for workspace restore lock at /some/path",
+      );
       error.code = WORKSPACE_RESTORE_LOCK_TIMEOUT_CODE;
-      expect(classifyWorkspaceRestoreFailure(error)).toBe("restore_lock_timeout");
+      expect(classifyWorkspaceRestoreFailure(error)).toBe(
+        "restore_lock_timeout",
+      );
     });
 
     it("maps an unrecognized error, a string, and null to the default restore_failed code", () => {
-      expect(classifyWorkspaceRestoreFailure(new Error("some other failure"))).toBe("restore_failed");
-      expect(classifyWorkspaceRestoreFailure("a plain string")).toBe("restore_failed");
+      expect(
+        classifyWorkspaceRestoreFailure(new Error("some other failure")),
+      ).toBe("restore_failed");
+      expect(classifyWorkspaceRestoreFailure("a plain string")).toBe(
+        "restore_failed",
+      );
       expect(classifyWorkspaceRestoreFailure(null)).toBe("restore_failed");
     });
   });
@@ -197,7 +288,9 @@ describe("workspace restore merge", () => {
       expect(describeWorkspaceRestoreFailure("restore_lock_timeout")).toBe(
         "the restore timed out waiting for the workspace merge lock",
       );
-      expect(describeWorkspaceRestoreFailure("restore_failed")).toBe("the restore failed");
+      expect(describeWorkspaceRestoreFailure("restore_failed")).toBe(
+        "the restore failed",
+      );
     });
 
     it("never reflects a sentinel host path or process id, however the caught error is classified", () => {
@@ -208,7 +301,9 @@ describe("workspace restore merge", () => {
       );
       error.code = "EACCES";
 
-      const line = describeWorkspaceRestoreFailure(classifyWorkspaceRestoreFailure(error));
+      const line = describeWorkspaceRestoreFailure(
+        classifyWorkspaceRestoreFailure(error),
+      );
 
       expect(line).not.toContain(sentinelPath);
       expect(line).not.toContain(sentinelPid);
@@ -234,7 +329,8 @@ describe("workspace restore merge", () => {
     afterEach(() => {
       if (previousHome === undefined) delete process.env.TASKCORE_HOME;
       else process.env.TASKCORE_HOME = previousHome;
-      if (previousInstanceId === undefined) delete process.env.TASKCORE_INSTANCE_ID;
+      if (previousInstanceId === undefined)
+        delete process.env.TASKCORE_INSTANCE_ID;
       else process.env.TASKCORE_INSTANCE_ID = previousInstanceId;
       previousHome = undefined;
       previousInstanceId = undefined;
@@ -243,9 +339,14 @@ describe("workspace restore merge", () => {
     it.skipIf(process.platform === "win32")(
       "restores successfully when the parent directory of the target is not writable",
       async () => {
-        const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+        const rootDir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-restore-merge-"),
+        );
         cleanupDirs.push(rootDir);
-        useTempTaskcoreHome(path.join(rootDir, "taskcore-home"), "test-instance");
+        useTempTaskcoreHome(
+          path.join(rootDir, "taskcore-home"),
+          "test-instance",
+        );
 
         // The old lock sat beside the target, so it needed mkdir rights in the
         // target's parent. The new lock root lives under TASKCORE_HOME instead,
@@ -256,8 +357,14 @@ describe("workspace restore merge", () => {
         await mkdir(targetDir, { recursive: true });
         await mkdir(sourceDir, { recursive: true });
 
-        const baseline = await captureDirectorySnapshot(targetDir, { exclude: [] });
-        await writeFile(path.join(sourceDir, "new-file.md"), "new content\n", "utf8");
+        const baseline = await captureDirectorySnapshot(targetDir, {
+          exclude: [],
+        });
+        await writeFile(
+          path.join(sourceDir, "new-file.md"),
+          "new content\n",
+          "utf8",
+        );
 
         await chmod(readOnlyParent, 0o500);
         try {
@@ -267,14 +374,18 @@ describe("workspace restore merge", () => {
           await chmod(readOnlyParent, 0o700).catch(() => undefined);
         }
 
-        await expect(readFile(path.join(targetDir, "new-file.md"), "utf8")).resolves.toBe("new content\n");
+        await expect(
+          readFile(path.join(targetDir, "new-file.md"), "utf8"),
+        ).resolves.toBe("new content\n");
       },
     );
 
     it.skipIf(process.platform === "win32")(
       "acquires the same lock for two alias paths that resolve to one canonical target",
       async () => {
-        const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+        const rootDir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-restore-merge-"),
+        );
         cleanupDirs.push(rootDir);
         const taskcoreHome = path.join(rootDir, "taskcore-home");
         useTempTaskcoreHome(taskcoreHome, "test-instance");
@@ -284,7 +395,13 @@ describe("workspace restore merge", () => {
         await mkdir(targetDir, { recursive: true });
         await symlink(targetDir, aliasDir);
 
-        const lockRootDir = path.join(taskcoreHome, "instances", "test-instance", "locks", "directory-merge");
+        const lockRootDir = path.join(
+          taskcoreHome,
+          "instances",
+          "test-instance",
+          "locks",
+          "directory-merge",
+        );
 
         let lockNameViaTarget = "";
         await withDirectoryMergeLock(targetDir, async () => {
@@ -304,12 +421,19 @@ describe("workspace restore merge", () => {
     );
 
     it("rejects a lock root that already exists as a symlink", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const taskcoreHome = path.join(rootDir, "taskcore-home");
       useTempTaskcoreHome(taskcoreHome, "test-instance");
 
-      const locksDir = path.join(taskcoreHome, "instances", "test-instance", "locks");
+      const locksDir = path.join(
+        taskcoreHome,
+        "instances",
+        "test-instance",
+        "locks",
+      );
       const decoyDir = path.join(rootDir, "decoy");
       await mkdir(locksDir, { recursive: true });
       await mkdir(decoyDir, { recursive: true });
@@ -318,31 +442,44 @@ describe("workspace restore merge", () => {
       const targetDir = path.join(rootDir, "target");
       await mkdir(targetDir, { recursive: true });
 
-      await expect(withDirectoryMergeLock(targetDir, async () => undefined)).rejects.toThrow(
-        /not a plain directory/,
-      );
+      await expect(
+        withDirectoryMergeLock(targetDir, async () => undefined),
+      ).rejects.toThrow(/not a plain directory/);
     });
 
     it("rejects a lock root that already exists as a non-directory", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const taskcoreHome = path.join(rootDir, "taskcore-home");
       useTempTaskcoreHome(taskcoreHome, "test-instance");
 
-      const locksDir = path.join(taskcoreHome, "instances", "test-instance", "locks");
+      const locksDir = path.join(
+        taskcoreHome,
+        "instances",
+        "test-instance",
+        "locks",
+      );
       await mkdir(locksDir, { recursive: true });
-      await writeFile(path.join(locksDir, "directory-merge"), "not a directory\n", "utf8");
+      await writeFile(
+        path.join(locksDir, "directory-merge"),
+        "not a directory\n",
+        "utf8",
+      );
 
       const targetDir = path.join(rootDir, "target");
       await mkdir(targetDir, { recursive: true });
 
-      await expect(withDirectoryMergeLock(targetDir, async () => undefined)).rejects.toThrow(
-        /not a plain directory/,
-      );
+      await expect(
+        withDirectoryMergeLock(targetDir, async () => undefined),
+      ).rejects.toThrow(/not a plain directory/);
     });
 
     it("closes the create/validate TOCTOU window: rejects a lock root a racing writer swapped for a symlink during creation", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const taskcoreHome = path.join(rootDir, "taskcore-home");
       useTempTaskcoreHome(taskcoreHome, "test-instance");
@@ -353,7 +490,10 @@ describe("workspace restore merge", () => {
       await mkdir(decoyDir, { recursive: true });
       // Pre-create the lock root's parent, so the mock below only has to
       // reproduce what `fs.mkdir({ recursive: true })` does to the leaf path.
-      await mkdir(path.join(taskcoreHome, "instances", "test-instance", "locks"), { recursive: true });
+      await mkdir(
+        path.join(taskcoreHome, "instances", "test-instance", "locks"),
+        { recursive: true },
+      );
 
       // Real `fs.mkdir({ recursive: true })` does not fail on a leaf that
       // already exists as a symlink to a real directory. This stub reproduces
@@ -362,22 +502,26 @@ describe("workspace restore merge", () => {
       // exist yet" check and its own `mkdir` call, then resolves the way a
       // real `mkdir` would (silently) — proving the resolver must validate
       // what `mkdir` actually left behind, not trust that the call resolved.
-      const mkdirSpy = vi.spyOn(fsPromises, "mkdir").mockImplementationOnce(async (dirPath) => {
-        await symlink(decoyDir, dirPath as string);
-        return undefined;
-      });
+      const mkdirSpy = vi
+        .spyOn(fsPromises, "mkdir")
+        .mockImplementationOnce(async (dirPath) => {
+          await symlink(decoyDir, dirPath as string);
+          return undefined;
+        });
 
       try {
-        await expect(withDirectoryMergeLock(targetDir, async () => undefined)).rejects.toThrow(
-          /not a plain directory/,
-        );
+        await expect(
+          withDirectoryMergeLock(targetDir, async () => undefined),
+        ).rejects.toThrow(/not a plain directory/);
       } finally {
         mkdirSpy.mockRestore();
       }
     });
 
     it("keeps the private lock database and removes diagnostic ownership after release", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const taskcoreHome = path.join(rootDir, "taskcore-home");
       useTempTaskcoreHome(taskcoreHome, "test-instance");
@@ -385,22 +529,35 @@ describe("workspace restore merge", () => {
       const targetDir = path.join(rootDir, "target");
       await mkdir(targetDir, { recursive: true });
 
-      const lockRootDir = path.join(taskcoreHome, "instances", "test-instance", "locks", "directory-merge");
+      const lockRootDir = path.join(
+        taskcoreHome,
+        "instances",
+        "test-instance",
+        "locks",
+        "directory-merge",
+      );
       let entriesDuringLock: string[] = [];
       await withDirectoryMergeLock(targetDir, async () => {
         entriesDuringLock = await readdir(lockRootDir);
       });
 
       expect((await stat(lockRootDir)).mode & 0o777).toBe(0o700);
-      expect(entriesDuringLock.filter((name) => name.endsWith(".owner.json"))).toHaveLength(1);
+      expect(
+        entriesDuringLock.filter((name) => name.endsWith(".owner.json")),
+      ).toHaveLength(1);
       const entriesAfterRelease = await readdir(lockRootDir);
       expect(entriesAfterRelease).toHaveLength(1);
       expect(entriesAfterRelease[0]).toMatch(/\.lock\.sqlite$/);
-      expect((await stat(path.join(lockRootDir, entriesAfterRelease[0]!))).mode & 0o777).toBe(0o600);
+      expect(
+        (await stat(path.join(lockRootDir, entriesAfterRelease[0]!))).mode &
+          0o777,
+      ).toBe(0o600);
     });
 
     it("classifies the real lock-timeout error by its stable code, never by the message text", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const taskcoreHome = path.join(rootDir, "taskcore-home");
       useTempTaskcoreHome(taskcoreHome, "test-instance");
@@ -412,8 +569,16 @@ describe("workspace restore merge", () => {
       // never reports it stale and the retry loop can only leave through the
       // deadline check. The owner pid is this test process, which stays alive.
       const canonicalTargetDir = await realpath(targetDir);
-      const lockKey = createHash("sha256").update(canonicalTargetDir).digest("hex");
-      const lockRootDir = path.join(taskcoreHome, "instances", "test-instance", "locks", "directory-merge");
+      const lockKey = createHash("sha256")
+        .update(canonicalTargetDir)
+        .digest("hex");
+      const lockRootDir = path.join(
+        taskcoreHome,
+        "instances",
+        "test-instance",
+        "locks",
+        "directory-merge",
+      );
       const heldLockDir = path.join(lockRootDir, `${lockKey}.lock`);
       await mkdir(heldLockDir, { recursive: true });
       await writeFile(
@@ -446,39 +611,79 @@ describe("workspace restore merge", () => {
       // trace of the classified outcome, so a message-text match could not
       // have produced this result.
       expect(caughtError?.message).not.toContain("restore_lock_timeout");
-      expect(classifyWorkspaceRestoreFailure(caughtError)).toBe("restore_lock_timeout");
-      expect(caughtError).toMatchObject({ workspaceRestoreLock: {
-        ownerState: "alive", ownerSameProcess: true, knownLocalHolder: false,
-      } });
+      expect(classifyWorkspaceRestoreFailure(caughtError)).toBe(
+        "restore_lock_timeout",
+      );
+      expect(caughtError).toMatchObject({
+        workspaceRestoreLock: {
+          ownerState: "alive",
+          ownerSameProcess: true,
+          knownLocalHolder: false,
+        },
+      });
     });
 
     it("reports a known live holder without releasing it when a contender times out", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-lock-holder-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-lock-holder-"),
+      );
       cleanupDirs.push(rootDir);
       useTempTaskcoreHome(path.join(rootDir, "home"), "test-instance");
       const targetDir = path.join(rootDir, "target");
       await mkdir(targetDir);
-      const lockRoot = path.join(rootDir, "home", "instances", "test-instance", "locks", "directory-merge");
+      const lockRoot = path.join(
+        rootDir,
+        "home",
+        "instances",
+        "test-instance",
+        "locks",
+        "directory-merge",
+      );
       const contender = vi.fn();
       await withDirectoryMergeLock(targetDir, async () => {
         const now = Date.now();
-        const clock = vi.spyOn(Date, "now").mockReturnValue(now)
-          .mockReturnValueOnce(now).mockReturnValueOnce(now + 30_001);
+        const clock = vi
+          .spyOn(Date, "now")
+          .mockReturnValue(now)
+          .mockReturnValueOnce(now)
+          .mockReturnValueOnce(now + 30_001);
         try {
-          await expect(withDirectoryMergeLock(targetDir, contender, process.env, "agent_directory_release")).rejects.toMatchObject({
+          await expect(
+            withDirectoryMergeLock(
+              targetDir,
+              contender,
+              process.env,
+              "agent_directory_release",
+            ),
+          ).rejects.toMatchObject({
             code: WORKSPACE_RESTORE_LOCK_TIMEOUT_CODE,
-            workspaceRestoreLock: { ownerState: "alive", ownerSameProcess: true,
-              knownLocalHolder: true, ownerPredatesProcess: false, operation: "agent_directory_release" },
+            workspaceRestoreLock: {
+              ownerState: "alive",
+              ownerSameProcess: true,
+              knownLocalHolder: true,
+              ownerPredatesProcess: false,
+              operation: "agent_directory_release",
+            },
           });
-        } finally { clock.mockRestore(); }
+        } finally {
+          clock.mockRestore();
+        }
         expect(contender).not.toHaveBeenCalled();
-        expect((await readdir(lockRoot)).filter((name) => name.endsWith(".owner.json"))).toHaveLength(1);
+        expect(
+          (await readdir(lockRoot)).filter((name) =>
+            name.endsWith(".owner.json"),
+          ),
+        ).toHaveLength(1);
       });
-      expect(await readdir(lockRoot)).toEqual([expect.stringMatching(/\.lock\.sqlite$/)]);
+      expect(await readdir(lockRoot)).toEqual([
+        expect.stringMatching(/\.lock\.sqlite$/),
+      ]);
     });
 
     it("delivers the timeout when the diagnostic owner read stalls and ignores its late rejection", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-lock-read-stall-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-lock-read-stall-"),
+      );
       cleanupDirs.push(rootDir);
       useTempTaskcoreHome(path.join(rootDir, "home"), "test-instance");
       const targetDir = path.join(rootDir, "target");
@@ -487,36 +692,54 @@ describe("workspace restore merge", () => {
       await withDirectoryMergeLock(targetDir, async () => {
         const now = Date.now();
         vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-        const clock = vi.spyOn(Date, "now").mockReturnValue(now)
-          .mockReturnValueOnce(now).mockReturnValueOnce(now + 30_001);
+        const clock = vi
+          .spyOn(Date, "now")
+          .mockReturnValue(now)
+          .mockReturnValueOnce(now)
+          .mockReturnValueOnce(now + 30_001);
         let markReadStarted!: (signal: AbortSignal) => void;
-        const readStarted = new Promise<AbortSignal>((resolve) => { markReadStarted = resolve; });
+        const readStarted = new Promise<AbortSignal>((resolve) => {
+          markReadStarted = resolve;
+        });
         let rejectStalledRead!: (error: Error) => void;
-        const stalledRead = new Promise<string>((_resolve, reject) => { rejectStalledRead = reject; });
+        const stalledRead = new Promise<string>((_resolve, reject) => {
+          rejectStalledRead = reject;
+        });
         const realReadFile = fsPromises.readFile;
-        const readSpy = vi.spyOn(fsPromises, "readFile")
+        const readSpy = vi
+          .spyOn(fsPromises, "readFile")
           .mockImplementation((file, options) => {
-            if (!options || typeof options !== "object" || !options.signal) return realReadFile(file, options);
+            if (!options || typeof options !== "object" || !options.signal)
+              return realReadFile(file, options);
             markReadStarted(options.signal);
             return stalledRead;
           });
         try {
-          const pending = withDirectoryMergeLock(targetDir, contender, process.env, "agent_directory_release")
-            .catch((error: unknown) => error);
+          const pending = withDirectoryMergeLock(
+            targetDir,
+            contender,
+            process.env,
+            "agent_directory_release",
+          ).catch((error: unknown) => error);
           const signal = await readStarted;
           await vi.advanceTimersByTimeAsync(100);
           const error = await pending;
           expect(error).toMatchObject({
             code: WORKSPACE_RESTORE_LOCK_TIMEOUT_CODE,
-            workspaceRestoreLock: { ownerState: "unknown", knownLocalHolder: true,
-              operation: "agent_directory_release" },
+            workspaceRestoreLock: {
+              ownerState: "unknown",
+              knownLocalHolder: true,
+              operation: "agent_directory_release",
+            },
           });
           expect(signal.aborted).toBe(true);
           expect(vi.getTimerCount()).toBe(0);
           rejectStalledRead(new Error("late filesystem failure"));
           await Promise.resolve();
           expect(contender).not.toHaveBeenCalled();
-          expect(error).toMatchObject({ workspaceRestoreLock: { ownerState: "unknown" } });
+          expect(error).toMatchObject({
+            workspaceRestoreLock: { ownerState: "unknown" },
+          });
         } finally {
           vi.useRealTimers();
           readSpy.mockRestore();
@@ -526,74 +749,151 @@ describe("workspace restore merge", () => {
     });
 
     it.each([
-      { label: "malformed JSON", raw: "{invalid-json", code: undefined, ownerState: "invalid" },
-      { label: "a missing file", raw: undefined, code: "ENOENT", ownerState: "missing" },
-      { label: "an unreadable file", raw: undefined, code: "EACCES", ownerState: "unknown" },
-    ])("distinguishes $label in the diagnostic read", async ({ raw, code, ownerState }) => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-lock-read-state-"));
-      cleanupDirs.push(rootDir);
-      useTempTaskcoreHome(path.join(rootDir, "home"), "test-instance");
-      const targetDir = path.join(rootDir, "target");
-      await mkdir(targetDir);
-      const contender = vi.fn();
-      await withDirectoryMergeLock(targetDir, async () => {
-        const now = Date.now();
-        const clock = vi.spyOn(Date, "now").mockReturnValue(now)
-          .mockReturnValueOnce(now).mockReturnValueOnce(now + 30_001);
-        const realReadFile = fsPromises.readFile;
-        const readSpy = vi.spyOn(fsPromises, "readFile")
-          .mockImplementation(async (file, options) => {
-            if (!options || typeof options !== "object" || !options.signal) return realReadFile(file, options);
-            if (code) throw Object.assign(new Error("owner read failed"), { code });
-            return raw!;
-          });
-        try {
-          await expect(withDirectoryMergeLock(targetDir, contender)).rejects.toMatchObject({
-            code: WORKSPACE_RESTORE_LOCK_TIMEOUT_CODE,
-            workspaceRestoreLock: { ownerState, knownLocalHolder: true },
-          });
-          expect(contender).not.toHaveBeenCalled();
-        } finally {
-          readSpy.mockRestore();
-          clock.mockRestore();
-        }
-      });
-    });
+      {
+        label: "malformed JSON",
+        raw: "{invalid-json",
+        code: undefined,
+        ownerState: "invalid",
+      },
+      {
+        label: "a missing file",
+        raw: undefined,
+        code: "ENOENT",
+        ownerState: "missing",
+      },
+      {
+        label: "an unreadable file",
+        raw: undefined,
+        code: "EACCES",
+        ownerState: "unknown",
+      },
+    ])(
+      "distinguishes $label in the diagnostic read",
+      async ({ raw, code, ownerState }) => {
+        const rootDir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-lock-read-state-"),
+        );
+        cleanupDirs.push(rootDir);
+        useTempTaskcoreHome(path.join(rootDir, "home"), "test-instance");
+        const targetDir = path.join(rootDir, "target");
+        await mkdir(targetDir);
+        const contender = vi.fn();
+        await withDirectoryMergeLock(targetDir, async () => {
+          const now = Date.now();
+          const clock = vi
+            .spyOn(Date, "now")
+            .mockReturnValue(now)
+            .mockReturnValueOnce(now)
+            .mockReturnValueOnce(now + 30_001);
+          const realReadFile = fsPromises.readFile;
+          const readSpy = vi
+            .spyOn(fsPromises, "readFile")
+            .mockImplementation(async (file, options) => {
+              if (!options || typeof options !== "object" || !options.signal)
+                return realReadFile(file, options);
+              if (code)
+                throw Object.assign(new Error("owner read failed"), { code });
+              return raw!;
+            });
+          try {
+            await expect(
+              withDirectoryMergeLock(targetDir, contender),
+            ).rejects.toMatchObject({
+              code: WORKSPACE_RESTORE_LOCK_TIMEOUT_CODE,
+              workspaceRestoreLock: { ownerState, knownLocalHolder: true },
+            });
+            expect(contender).not.toHaveBeenCalled();
+          } finally {
+            readSpy.mockRestore();
+            clock.mockRestore();
+          }
+        });
+      },
+    );
 
     it("reports an owner older than this process without reclaiming a live PID", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-lock-older-owner-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-lock-older-owner-"),
+      );
       cleanupDirs.push(rootDir);
       useTempTaskcoreHome(path.join(rootDir, "home"), "test-instance");
       const targetDir = path.join(rootDir, "target");
       await mkdir(targetDir);
-      const lockKey = createHash("sha256").update(await realpath(targetDir)).digest("hex");
-      const lockDir = path.join(rootDir, "home", "instances", "test-instance", "locks", "directory-merge", `${lockKey}.lock`);
+      const lockKey = createHash("sha256")
+        .update(await realpath(targetDir))
+        .digest("hex");
+      const lockDir = path.join(
+        rootDir,
+        "home",
+        "instances",
+        "test-instance",
+        "locks",
+        "directory-merge",
+        `${lockKey}.lock`,
+      );
       await mkdir(lockDir, { recursive: true });
       const now = Date.now();
-      const owner = JSON.stringify({ pid: process.pid, createdAt: new Date(now - process.uptime() * 1000 - 10_000).toISOString(), private: "private owner payload" });
+      const owner = JSON.stringify({
+        pid: process.pid,
+        createdAt: new Date(
+          now - process.uptime() * 1000 - 10_000,
+        ).toISOString(),
+        private: "private owner payload",
+      });
       await writeFile(path.join(lockDir, "owner.json"), owner);
-      const clock = vi.spyOn(Date, "now").mockReturnValue(now)
-        .mockReturnValueOnce(now).mockReturnValueOnce(now + 30_001);
+      const clock = vi
+        .spyOn(Date, "now")
+        .mockReturnValue(now)
+        .mockReturnValueOnce(now)
+        .mockReturnValueOnce(now + 30_001);
       let caught: unknown;
-      try { await withDirectoryMergeLock(targetDir, async () => { throw new Error("must not acquire"); }); }
-      catch (error) { caught = error; }
-      finally { clock.mockRestore(); }
-      expect(caught).toMatchObject({ code: WORKSPACE_RESTORE_LOCK_TIMEOUT_CODE,
-        workspaceRestoreLock: { ownerState: "alive", ownerSameProcess: true,
-          knownLocalHolder: false, ownerPredatesProcess: true } });
-      const diagnostic = (caught as { workspaceRestoreLock: Record<string, unknown> }).workspaceRestoreLock;
-      expect(Object.keys(diagnostic).sort()).toEqual(["knownLocalHolder", "ownerAgeMs", "ownerPredatesProcess", "ownerSameProcess", "ownerState", "waitMs"]);
+      try {
+        await withDirectoryMergeLock(targetDir, async () => {
+          throw new Error("must not acquire");
+        });
+      } catch (error) {
+        caught = error;
+      } finally {
+        clock.mockRestore();
+      }
+      expect(caught).toMatchObject({
+        code: WORKSPACE_RESTORE_LOCK_TIMEOUT_CODE,
+        workspaceRestoreLock: {
+          ownerState: "alive",
+          ownerSameProcess: true,
+          knownLocalHolder: false,
+          ownerPredatesProcess: true,
+        },
+      });
+      const diagnostic = (
+        caught as { workspaceRestoreLock: Record<string, unknown> }
+      ).workspaceRestoreLock;
+      expect(Object.keys(diagnostic).sort()).toEqual([
+        "knownLocalHolder",
+        "ownerAgeMs",
+        "ownerPredatesProcess",
+        "ownerSameProcess",
+        "ownerState",
+        "waitMs",
+      ]);
       expect(JSON.stringify(diagnostic)).not.toContain("private");
       expect(JSON.stringify(diagnostic)).not.toContain(lockDir);
-      expect(await readFile(path.join(lockDir, "owner.json"), "utf8")).toBe(owner);
+      expect(await readFile(path.join(lockDir, "owner.json"), "utf8")).toBe(
+        owner,
+      );
     });
 
     it.skipIf(process.platform === "win32")(
       "serializes two concurrent writers that address one target through different aliases",
       async () => {
-        const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+        const rootDir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-restore-merge-"),
+        );
         cleanupDirs.push(rootDir);
-        useTempTaskcoreHome(path.join(rootDir, "taskcore-home"), "test-instance");
+        useTempTaskcoreHome(
+          path.join(rootDir, "taskcore-home"),
+          "test-instance",
+        );
 
         const targetDir = path.join(rootDir, "target");
         const aliasDir = path.join(rootDir, "target-alias");
@@ -627,15 +927,26 @@ describe("workspace restore merge", () => {
     // always reading `process.env`.
 
     it("two callers that pass the same env with a temporary TASKCORE_HOME take the same lock under that home", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const explicitHome = path.join(rootDir, "explicit-home");
-      const env: NodeJS.ProcessEnv = { TASKCORE_HOME: explicitHome, TASKCORE_INSTANCE_ID: "test-instance" };
+      const env: NodeJS.ProcessEnv = {
+        TASKCORE_HOME: explicitHome,
+        TASKCORE_INSTANCE_ID: "test-instance",
+      };
 
       const targetDir = path.join(rootDir, "target");
       await mkdir(targetDir, { recursive: true });
 
-      const lockRootDir = path.join(explicitHome, "instances", "test-instance", "locks", "directory-merge");
+      const lockRootDir = path.join(
+        explicitHome,
+        "instances",
+        "test-instance",
+        "locks",
+        "directory-merge",
+      );
 
       let lockNameFirstCaller = "";
       await withDirectoryMergeLock(
@@ -663,31 +974,51 @@ describe("workspace restore merge", () => {
     });
 
     it("does not write a lock entry under process.env.TASKCORE_HOME when the caller passes its own env", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const explicitHome = path.join(rootDir, "explicit-home");
-      const env: NodeJS.ProcessEnv = { TASKCORE_HOME: explicitHome, TASKCORE_INSTANCE_ID: "test-instance" };
+      const env: NodeJS.ProcessEnv = {
+        TASKCORE_HOME: explicitHome,
+        TASKCORE_INSTANCE_ID: "test-instance",
+      };
 
       const targetDir = path.join(rootDir, "target");
       await mkdir(targetDir, { recursive: true });
       const canonicalTargetDir = await realpath(targetDir);
-      const lockKey = createHash("sha256").update(canonicalTargetDir).digest("hex");
+      const lockKey = createHash("sha256")
+        .update(canonicalTargetDir)
+        .digest("hex");
 
       // Resolved with no `env` argument, so it reads `process.env` exactly the way
       // the real instance root does — unaffected by the explicit `env` above.
       const realInstanceRoot = resolveTaskcoreInstanceRootForAdapter();
-      const realLockPath = path.join(realInstanceRoot, "locks", "directory-merge", `${lockKey}.lock`);
+      const realLockPath = path.join(
+        realInstanceRoot,
+        "locks",
+        "directory-merge",
+        `${lockKey}.lock`,
+      );
 
       await withDirectoryMergeLock(targetDir, async () => undefined, env);
 
       await expect(lstat(realLockPath)).rejects.toThrow();
 
-      const explicitLockRootDir = path.join(explicitHome, "instances", "test-instance", "locks", "directory-merge");
+      const explicitLockRootDir = path.join(
+        explicitHome,
+        "instances",
+        "test-instance",
+        "locks",
+        "directory-merge",
+      );
       await expect(stat(explicitLockRootDir)).resolves.toBeTruthy();
     });
 
     it("resolves the lock root under the default instance id when the caller env sets TASKCORE_HOME but not TASKCORE_INSTANCE_ID, ignoring process.env.TASKCORE_INSTANCE_ID", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const explicitHome = path.join(rootDir, "explicit-home");
       const env: NodeJS.ProcessEnv = { TASKCORE_HOME: explicitHome };
@@ -700,22 +1031,38 @@ describe("workspace restore merge", () => {
 
         // The independent, no-caller-env resolution of "TASKCORE_HOME set,
         // TASKCORE_INSTANCE_ID unset" — the expected default instance id.
-        const expectedInstanceRoot = resolveTaskcoreInstanceRootForAdapter({ homeDir: explicitHome, env: {} });
-        const expectedLockRootDir = path.join(expectedInstanceRoot, "locks", "directory-merge");
-        const wrongInstanceLockRootDir = path.join(explicitHome, "instances", "wrong-instance", "locks", "directory-merge");
+        const expectedInstanceRoot = resolveTaskcoreInstanceRootForAdapter({
+          homeDir: explicitHome,
+          env: {},
+        });
+        const expectedLockRootDir = path.join(
+          expectedInstanceRoot,
+          "locks",
+          "directory-merge",
+        );
+        const wrongInstanceLockRootDir = path.join(
+          explicitHome,
+          "instances",
+          "wrong-instance",
+          "locks",
+          "directory-merge",
+        );
 
         await withDirectoryMergeLock(targetDir, async () => undefined, env);
 
         await expect(stat(expectedLockRootDir)).resolves.toBeTruthy();
         await expect(stat(wrongInstanceLockRootDir)).rejects.toThrow();
       } finally {
-        if (previousInstanceId === undefined) delete process.env.TASKCORE_INSTANCE_ID;
+        if (previousInstanceId === undefined)
+          delete process.env.TASKCORE_INSTANCE_ID;
         else process.env.TASKCORE_INSTANCE_ID = previousInstanceId;
       }
     });
 
     it("does not read process.env.TASKCORE_HOME when the caller env sets neither variable", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-restore-merge-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-restore-merge-"),
+      );
       cleanupDirs.push(rootDir);
       const fakeProcessHome = path.join(rootDir, "process-home");
       const fallbackOsHome = path.join(rootDir, "os-home");
@@ -725,15 +1072,23 @@ describe("workspace restore merge", () => {
       process.env.TASKCORE_HOME = fakeProcessHome;
       // Stand in for the real host home directory, so the "no env at all"
       // fallback lands under a temp dir instead of the real ~/.taskcore.
-      const homedirSpy = vi.spyOn(os, "homedir").mockReturnValue(fallbackOsHome);
+      const homedirSpy = vi
+        .spyOn(os, "homedir")
+        .mockReturnValue(fallbackOsHome);
       try {
         const targetDir = path.join(rootDir, "target");
         await mkdir(targetDir, { recursive: true });
 
         // The independent, no-caller-env resolution of "neither variable set" —
         // the expected fallback root under the mocked home directory.
-        const expectedInstanceRoot = resolveTaskcoreInstanceRootForAdapter({ env: {} });
-        const expectedLockRootDir = path.join(expectedInstanceRoot, "locks", "directory-merge");
+        const expectedInstanceRoot = resolveTaskcoreInstanceRootForAdapter({
+          env: {},
+        });
+        const expectedLockRootDir = path.join(
+          expectedInstanceRoot,
+          "locks",
+          "directory-merge",
+        );
 
         await withDirectoryMergeLock(targetDir, async () => undefined, {});
 
@@ -750,8 +1105,11 @@ describe("workspace restore merge", () => {
 
 describe("conflict-preserving directory restore", () => {
   it("preflights competing edits before applying any other change and deduplicates replay", async () => {
-    const root = await fsPromises.realpath(await mkdtemp(path.join(os.tmpdir(), "directory-cas-")));
-    const source = path.join(root, "source"), target = path.join(root, "target");
+    const root = await fsPromises.realpath(
+      await mkdtemp(path.join(os.tmpdir(), "directory-cas-")),
+    );
+    const source = path.join(root, "source"),
+      target = path.join(root, "target");
     try {
       await mkdir(target);
       await writeFile(path.join(target, "conflict"), "baseline");
@@ -760,43 +1118,118 @@ describe("conflict-preserving directory restore", () => {
       await writeFile(path.join(source, "conflict"), "incoming");
       await writeFile(path.join(source, "independent"), "also incoming");
       await writeFile(path.join(target, "conflict"), "board");
-      await expect(mergeDirectoryWithBaseline({ baseline, sourceDir: source, targetDir: target, conflictPolicy: "reject" })).rejects.toMatchObject({ code: "DIRECTORY_MERGE_CONFLICT", paths: ["conflict"] });
-      await expect(stat(path.join(target, "independent"))).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(
+        mergeDirectoryWithBaseline({
+          baseline,
+          sourceDir: source,
+          targetDir: target,
+          conflictPolicy: "reject",
+        }),
+      ).rejects.toMatchObject({
+        code: "DIRECTORY_MERGE_CONFLICT",
+        paths: ["conflict"],
+      });
+      await expect(
+        stat(path.join(target, "independent")),
+      ).rejects.toMatchObject({ code: "ENOENT" });
       await writeFile(path.join(target, "conflict"), "baseline");
-      await expect(mergeDirectoryWithBaseline({ baseline, sourceDir: source, targetDir: target, conflictPolicy: "reject", afterApply: async () => { throw new Error("receipt interrupted"); } })).rejects.toThrow("receipt interrupted");
-      await mergeDirectoryWithBaseline({ baseline, sourceDir: source, targetDir: target, conflictPolicy: "reject" });
-      expect(await readFile(path.join(target, "independent"), "utf8")).toBe("also incoming");
-    } finally { await rm(root, { recursive: true, force: true }); }
+      await expect(
+        mergeDirectoryWithBaseline({
+          baseline,
+          sourceDir: source,
+          targetDir: target,
+          conflictPolicy: "reject",
+          afterApply: async () => {
+            throw new Error("receipt interrupted");
+          },
+        }),
+      ).rejects.toThrow("receipt interrupted");
+      await mergeDirectoryWithBaseline({
+        baseline,
+        sourceDir: source,
+        targetDir: target,
+        conflictPolicy: "reject",
+      });
+      expect(await readFile(path.join(target, "independent"), "utf8")).toBe(
+        "also incoming",
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("preserves a newly added child when another run removes or replaces its parent", async () => {
-    const root = await fsPromises.realpath(await mkdtemp(path.join(os.tmpdir(), "directory-delete-cas-")));
-    const source = path.join(root, "source"), target = path.join(root, "target");
+    const root = await fsPromises.realpath(
+      await mkdtemp(path.join(os.tmpdir(), "directory-delete-cas-")),
+    );
+    const source = path.join(root, "source"),
+      target = path.join(root, "target");
     try {
       await mkdir(path.join(target, "folder"), { recursive: true });
       const baseline = await captureDirectorySnapshot(target);
       await mkdir(source);
       await writeFile(path.join(target, "folder", "new"), "concurrent");
-      await expect(mergeDirectoryWithBaseline({ baseline, sourceDir: source, targetDir: target, conflictPolicy: "reject" })).rejects.toMatchObject({ paths: ["folder/new"] });
-      expect(await readFile(path.join(target, "folder", "new"), "utf8")).toBe("concurrent");
-    } finally { await rm(root, { recursive: true, force: true }); }
+      await expect(
+        mergeDirectoryWithBaseline({
+          baseline,
+          sourceDir: source,
+          targetDir: target,
+          conflictPolicy: "reject",
+        }),
+      ).rejects.toMatchObject({ paths: ["folder/new"] });
+      expect(await readFile(path.join(target, "folder", "new"), "utf8")).toBe(
+        "concurrent",
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
 
-
 it("strict preflight preserves excluded descendants when a directory becomes a file", async () => {
-  const root = await fsPromises.realpath(await mkdtemp(path.join(os.tmpdir(), "directory-excluded-cas-")));
-  const target = path.join(root, "target"), source = path.join(root, "source");
+  const root = await fsPromises.realpath(
+    await mkdtemp(path.join(os.tmpdir(), "directory-excluded-cas-")),
+  );
+  const target = path.join(root, "target"),
+    source = path.join(root, "source");
   await mkdir(path.join(target, "folder", "node_modules"), { recursive: true });
-  await writeFile(path.join(target, "folder", "node_modules", "keep"), "excluded contents");
-  const baseline = await captureDirectorySnapshot(target, { exclude: ["*/node_modules"], diskBacked: true });
+  await writeFile(
+    path.join(target, "folder", "node_modules", "keep"),
+    "excluded contents",
+  );
+  const baseline = await captureDirectorySnapshot(target, {
+    exclude: ["*/node_modules"],
+    diskBacked: true,
+  });
   try {
     await mkdir(source);
     await writeFile(path.join(source, "folder"), "replacement");
-    await writeFile(path.join(source, "independent"), "must not partially apply");
-    await expect(mergeDirectoryWithBaseline({ baseline, sourceDir: source, targetDir: target, conflictPolicy: "reject" }))
-      .rejects.toMatchObject({ code: "DIRECTORY_MERGE_CONFLICT", paths: expect.arrayContaining(["folder/node_modules/keep"]) });
-    expect(await readFile(path.join(target, "folder", "node_modules", "keep"), "utf8")).toBe("excluded contents");
-    await expect(stat(path.join(target, "independent"))).rejects.toMatchObject({ code: "ENOENT" });
-  } finally { await disposeDirectorySnapshot(baseline); await rm(root, { recursive: true, force: true }); }
+    await writeFile(
+      path.join(source, "independent"),
+      "must not partially apply",
+    );
+    await expect(
+      mergeDirectoryWithBaseline({
+        baseline,
+        sourceDir: source,
+        targetDir: target,
+        conflictPolicy: "reject",
+      }),
+    ).rejects.toMatchObject({
+      code: "DIRECTORY_MERGE_CONFLICT",
+      paths: expect.arrayContaining(["folder/node_modules/keep"]),
+    });
+    expect(
+      await readFile(
+        path.join(target, "folder", "node_modules", "keep"),
+        "utf8",
+      ),
+    ).toBe("excluded contents");
+    await expect(stat(path.join(target, "independent"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  } finally {
+    await disposeDirectorySnapshot(baseline);
+    await rm(root, { recursive: true, force: true });
+  }
 });

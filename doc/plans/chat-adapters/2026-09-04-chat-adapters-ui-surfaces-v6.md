@@ -65,8 +65,8 @@ A setup screen may show only something the operator must click, copy, paste, upl
 | 39  | Telegram        | Conversations            | Telegram conversations                 | 1280×1160 | 375×1600 |
 | 40  | Telegram        | Activity                 | Telegram activity                      | 1280×1200 | 375×1640 |
 | 24  | Telegram        | Conversation walkthrough | How Telegram conversations work        | 1280×960  | 375×1320 |
-| 11  | Taskcore       | Task                     | Externally bound task                  | 1280×800  | 375×812  |
-| 12  | Taskcore       | Agent                    | Agent Channels                         | 1280×800  | 375×812  |
+| 11  | Taskcore        | Task                     | Externally bound task                  | 1280×800  | 375×812  |
+| 12  | Taskcore        | Agent                    | Agent Channels                         | 1280×800  | 375×812  |
 
 ## Annotation and action notes
 

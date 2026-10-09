@@ -128,7 +128,9 @@ describe("createLoginPtyTransport", () => {
     const delivered = session.writes.join("");
     expect(delivered).toBe("WXYZ" + ENTER);
     expect(delivered.endsWith(ENTER)).toBe(true);
-    expect(delivered.indexOf("WXYZ")).toBeLessThan(delivered.lastIndexOf(ENTER));
+    expect(delivered.indexOf("WXYZ")).toBeLessThan(
+      delivered.lastIndexOf(ENTER),
+    );
   });
 
   it("resolves start with the child exit code", async () => {

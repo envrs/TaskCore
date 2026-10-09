@@ -1,4 +1,13 @@
-import { chmod, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -10,8 +19,14 @@ import {
   type CredentialReadinessResult,
 } from "./adapter-auth-promotion.js";
 import { MAX_AUTH_JSON_BYTES } from "./device-login-export.js";
-import { resolveManagedCodexHomeDir, resolveSharedCodexHomeDir } from "./codex-home.js";
-import { resolveCodexAuthCacheDir, resolveCodexAuthCacheEntryPath } from "./codex-auth-cache.js";
+import {
+  resolveManagedCodexHomeDir,
+  resolveSharedCodexHomeDir,
+} from "./codex-home.js";
+import {
+  resolveCodexAuthCacheDir,
+  resolveCodexAuthCacheEntryPath,
+} from "./codex-auth-cache.js";
 
 const COMPANY_A = "company-a";
 const COMPANY_B = "company-b";
@@ -40,12 +55,17 @@ describe("device-login credential promotion", () => {
   });
 
   async function makeInstanceRoot(): Promise<string> {
-    const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-promotion-"));
+    const dir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-promotion-"),
+    );
     cleanupDirs.push(dir);
     return dir;
   }
 
-  function envFor(instanceHome: string, extra: Record<string, string> = {}): NodeJS.ProcessEnv {
+  function envFor(
+    instanceHome: string,
+    extra: Record<string, string> = {},
+  ): NodeJS.ProcessEnv {
     return {
       TASKCORE_HOME: instanceHome,
       TASKCORE_INSTANCE_ID: "default",
@@ -75,11 +95,17 @@ describe("device-login credential promotion", () => {
   }
 
   const ready = (): CredentialReadinessResult => ({ ready: true });
-  const notReady = (): CredentialReadinessResult => ({ ready: false, reason: "auth_unusable" });
+  const notReady = (): CredentialReadinessResult => ({
+    ready: false,
+    reason: "auth_unusable",
+  });
   const soleOwner = () => true;
   const noopLog = (_line: string): void => {};
 
-  function companyHomeAuthPath(env: NodeJS.ProcessEnv, companyId: string): string {
+  function companyHomeAuthPath(
+    env: NodeJS.ProcessEnv,
+    companyId: string,
+  ): string {
     return path.join(resolveManagedCodexHomeDir(env, companyId), "auth.json");
   }
 
@@ -129,7 +155,10 @@ describe("device-login credential promotion", () => {
     });
     expect(result.outcome).toBe("promoted");
 
-    const homeAuth = await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8");
+    const homeAuth = await readFile(
+      companyHomeAuthPath(env, COMPANY_A),
+      "utf8",
+    );
     expect(JSON.parse(homeAuth).tokens.account_id).toBe(ACCOUNT);
     const accountAuth = await readFile(
       resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A),
@@ -146,7 +175,11 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "old" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: OLDER,
+        marker: "old",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -155,7 +188,11 @@ describe("device-login credential promotion", () => {
       log: noopLog,
     });
     const result = await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "new" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "new",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -165,7 +202,10 @@ describe("device-login credential promotion", () => {
     });
     expect(result.outcome).toBe("promoted");
     const accountAuth = JSON.parse(
-      await readFile(resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A), "utf8"),
+      await readFile(
+        resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A),
+        "utf8",
+      ),
     );
     expect(accountAuth.last_refresh).toBe(NEWER);
     expect(accountAuth.tokens.refresh_token).toContain("new");
@@ -175,7 +215,11 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "keep" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "keep",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -184,7 +228,11 @@ describe("device-login credential promotion", () => {
       log: noopLog,
     });
     const result = await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "older" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: OLDER,
+        marker: "older",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -194,7 +242,10 @@ describe("device-login credential promotion", () => {
     });
     expect(result.outcome).toBe("kept");
     const accountAuth = JSON.parse(
-      await readFile(resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A), "utf8"),
+      await readFile(
+        resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A),
+        "utf8",
+      ),
     );
     expect(accountAuth.tokens.refresh_token).toContain("keep");
   });
@@ -203,7 +254,11 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "first" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "first",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -212,7 +267,11 @@ describe("device-login credential promotion", () => {
       log: noopLog,
     });
     const result = await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: OTHER_ACCOUNT, lastRefresh: NEWER, marker: "other" }),
+      authBytes: subscriptionAuth({
+        accountId: OTHER_ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "other",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -224,7 +283,10 @@ describe("device-login credential promotion", () => {
     // succeeds instead of failing behind the first account's home.
     expect(result.outcome).toBe("promoted");
     const otherAccountAuth = JSON.parse(
-      await readFile(resolveCodexAuthCacheEntryPath(env, OTHER_ACCOUNT, COMPANY_A), "utf8"),
+      await readFile(
+        resolveCodexAuthCacheEntryPath(env, OTHER_ACCOUNT, COMPANY_A),
+        "utf8",
+      ),
     );
     expect(otherAccountAuth.tokens.account_id).toBe(OTHER_ACCOUNT);
   });
@@ -267,7 +329,11 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "first" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: OLDER,
+        marker: "first",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -276,7 +342,11 @@ describe("device-login credential promotion", () => {
       log: noopLog,
     });
     const result = await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "second" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "second",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -299,7 +369,11 @@ describe("device-login credential promotion", () => {
     const env = envFor(home);
     const [first, second] = await Promise.all([
       promoteDeviceLoginCredential({
-        authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "racer-a" }),
+        authBytes: subscriptionAuth({
+          accountId: ACCOUNT,
+          lastRefresh: NEWER,
+          marker: "racer-a",
+        }),
         companyId: COMPANY_A,
         userInitiated: true,
         checkReadiness: ready,
@@ -308,7 +382,11 @@ describe("device-login credential promotion", () => {
         log: noopLog,
       }),
       promoteDeviceLoginCredential({
-        authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "racer-b" }),
+        authBytes: subscriptionAuth({
+          accountId: ACCOUNT,
+          lastRefresh: NEWER,
+          marker: "racer-b",
+        }),
         companyId: COMPANY_A,
         userInitiated: true,
         checkReadiness: ready,
@@ -333,7 +411,11 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "first" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "first",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -343,7 +425,11 @@ describe("device-login credential promotion", () => {
     });
     const before = await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8");
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: OTHER_ACCOUNT, lastRefresh: NEWER, marker: "other" }),
+      authBytes: subscriptionAuth({
+        accountId: OTHER_ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "other",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -353,7 +439,9 @@ describe("device-login credential promotion", () => {
     });
     // The company default home fallback still names the first account: a
     // second account never clobbers it once some account has claimed it.
-    expect(await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8")).toBe(before);
+    expect(await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8")).toBe(
+      before,
+    );
   });
 
   it("promotion seeds the company default home when it holds no usable credential", async () => {
@@ -369,7 +457,10 @@ describe("device-login credential promotion", () => {
       log: noopLog,
     });
     expect(result.outcome).toBe("promoted");
-    const homeAuth = await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8");
+    const homeAuth = await readFile(
+      companyHomeAuthPath(env, COMPANY_A),
+      "utf8",
+    );
     expect(JSON.parse(homeAuth).tokens.account_id).toBe(ACCOUNT);
   });
 
@@ -381,7 +472,11 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "old" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: OLDER,
+        marker: "old",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -390,7 +485,11 @@ describe("device-login credential promotion", () => {
       log: noopLog,
     });
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "new" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "new",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -398,7 +497,9 @@ describe("device-login credential promotion", () => {
       env,
       log: noopLog,
     });
-    const homeAuth = JSON.parse(await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8"));
+    const homeAuth = JSON.parse(
+      await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8"),
+    );
     expect(homeAuth.last_refresh).toBe(NEWER);
     expect(homeAuth.tokens.refresh_token).toContain("new");
   });
@@ -407,7 +508,11 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "keep" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "keep",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -416,7 +521,11 @@ describe("device-login credential promotion", () => {
       log: noopLog,
     });
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "older" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: OLDER,
+        marker: "older",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -424,7 +533,9 @@ describe("device-login credential promotion", () => {
       env,
       log: noopLog,
     });
-    const homeAuth = JSON.parse(await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8"));
+    const homeAuth = JSON.parse(
+      await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8"),
+    );
     expect(homeAuth.tokens.refresh_token).toContain("keep");
   });
 
@@ -436,14 +547,22 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     const hostAuthPath = path.join(home, "host-auth.json");
-    const hostBytes = subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "host" });
+    const hostBytes = subscriptionAuth({
+      accountId: ACCOUNT,
+      lastRefresh: OLDER,
+      marker: "host",
+    });
     await writeFile(hostAuthPath, hostBytes);
     const companyHome = resolveManagedCodexHomeDir(env, COMPANY_A);
     await mkdir(companyHome, { recursive: true, mode: 0o700 });
     await symlink(hostAuthPath, companyHomeAuthPath(env, COMPANY_A));
 
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "fresh" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "fresh",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -454,11 +573,15 @@ describe("device-login credential promotion", () => {
 
     const stat = await lstat(companyHomeAuthPath(env, COMPANY_A));
     expect(stat.isSymbolicLink()).toBe(false);
-    const homeAuth = JSON.parse(await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8"));
+    const homeAuth = JSON.parse(
+      await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8"),
+    );
     expect(homeAuth.tokens.refresh_token).toContain("fresh");
     // The symlink target — standing in for the host's ~/.codex/auth.json — was
     // never written.
-    expect(await readFile(hostAuthPath, "utf8")).toBe(hostBytes.toString("utf8"));
+    expect(await readFile(hostAuthPath, "utf8")).toBe(
+      hostBytes.toString("utf8"),
+    );
   });
 
   it("promotion fails the login when the account identifier cannot become a handle", async () => {
@@ -466,7 +589,10 @@ describe("device-login credential promotion", () => {
     const env = envFor(home);
     await expect(
       promoteDeviceLoginCredential({
-        authBytes: subscriptionAuth({ accountId: "acct 42", lastRefresh: NEWER }),
+        authBytes: subscriptionAuth({
+          accountId: "acct 42",
+          lastRefresh: NEWER,
+        }),
         companyId: COMPANY_A,
         userInitiated: true,
         checkReadiness: ready,
@@ -487,7 +613,11 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "original" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "original",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -497,7 +627,11 @@ describe("device-login credential promotion", () => {
     });
     await expect(
       promoteDeviceLoginCredential({
-        authBytes: subscriptionAuth({ accountId: ` ${ACCOUNT}`, lastRefresh: NEWER, marker: "padded" }),
+        authBytes: subscriptionAuth({
+          accountId: ` ${ACCOUNT}`,
+          lastRefresh: NEWER,
+          marker: "padded",
+        }),
         companyId: COMPANY_A,
         userInitiated: true,
         checkReadiness: ready,
@@ -510,7 +644,10 @@ describe("device-login credential promotion", () => {
     // login wrote. The padded login never read it, never wrote it, and never
     // received a "kept" outcome that would report it as authenticated.
     const accountAuth = JSON.parse(
-      await readFile(resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A), "utf8"),
+      await readFile(
+        resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A),
+        "utf8",
+      ),
     );
     expect(accountAuth.tokens.refresh_token).toContain("original");
   });
@@ -567,7 +704,10 @@ describe("device-login credential promotion", () => {
 
     expect(result.outcome).toBe("promoted");
     const accountAuth = JSON.parse(
-      await readFile(resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A), "utf8"),
+      await readFile(
+        resolveCodexAuthCacheEntryPath(env, ACCOUNT, COMPANY_A),
+        "utf8",
+      ),
     );
     expect(accountAuth.tokens.account_id).toBe(ACCOUNT);
     const haystack = logs.join("\n");
@@ -580,8 +720,12 @@ describe("device-login credential promotion", () => {
     const home = await makeInstanceRoot();
     const env = envFor(home);
     const malformed = Buffer.from("this is not json {");
-    const apiKey = Buffer.from(JSON.stringify({ OPENAI_API_KEY: "sk-secret-key" }));
-    const nonSubscription = Buffer.from(JSON.stringify({ tokens: { account_id: "" } }));
+    const apiKey = Buffer.from(
+      JSON.stringify({ OPENAI_API_KEY: "sk-secret-key" }),
+    );
+    const nonSubscription = Buffer.from(
+      JSON.stringify({ tokens: { account_id: "" } }),
+    );
     const oversized = Buffer.concat([
       subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER }),
       Buffer.alloc(MAX_AUTH_JSON_BYTES + 10, 0x20),
@@ -651,7 +795,11 @@ describe("device-login credential promotion", () => {
     const env = envFor(home);
     // Seed Company B first.
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: OLDER, marker: "b-cred" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: OLDER,
+        marker: "b-cred",
+      }),
       companyId: COMPANY_B,
       userInitiated: true,
       checkReadiness: ready,
@@ -663,7 +811,11 @@ describe("device-login credential promotion", () => {
 
     // A Company A login for the same identity, even newer, must not touch B.
     await promoteDeviceLoginCredential({
-      authBytes: subscriptionAuth({ accountId: ACCOUNT, lastRefresh: NEWER, marker: "a-cred" }),
+      authBytes: subscriptionAuth({
+        accountId: ACCOUNT,
+        lastRefresh: NEWER,
+        marker: "a-cred",
+      }),
       companyId: COMPANY_A,
       userInitiated: true,
       checkReadiness: ready,
@@ -671,8 +823,12 @@ describe("device-login credential promotion", () => {
       env,
       log: noopLog,
     });
-    expect(await readFile(companyHomeAuthPath(env, COMPANY_B), "utf8")).toBe(before);
-    const aHome = JSON.parse(await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8"));
+    expect(await readFile(companyHomeAuthPath(env, COMPANY_B), "utf8")).toBe(
+      before,
+    );
+    const aHome = JSON.parse(
+      await readFile(companyHomeAuthPath(env, COMPANY_A), "utf8"),
+    );
     expect(aHome.tokens.refresh_token).toContain("a-cred");
   });
 
@@ -688,8 +844,8 @@ describe("device-login credential promotion", () => {
       isSoleActiveOwner: soleOwner,
       env,
       log: (line) => {
-          logs.push(line);
-        },
+        logs.push(line);
+      },
     });
     const haystack = logs.join("\n");
     expect(haystack).not.toContain(TOKEN_SENTINEL);
@@ -752,7 +908,9 @@ describe("staged credential readiness", () => {
   });
 
   it("returns not ready for malformed bytes", async () => {
-    const result = await checkStagedCredentialReadiness(Buffer.from("not-json"));
+    const result = await checkStagedCredentialReadiness(
+      Buffer.from("not-json"),
+    );
     expect(result.ready).toBe(false);
     expect(result.reason).toBe("no_usable_auth");
   });

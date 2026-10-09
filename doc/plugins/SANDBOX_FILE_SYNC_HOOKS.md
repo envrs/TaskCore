@@ -33,7 +33,9 @@ the base64 fallback for both directions. Define both or neither.
 
 ```ts
 export default definePlugin({
-  async setup() { /* ... */ },
+  async setup() {
+    /* ... */
+  },
   async onEnvironmentSyncIn(params) {
     return { operations: await transferInbound(params) };
   },
@@ -50,21 +52,25 @@ opaque id and a list of source→target **file mappings**:
 
 ```ts
 interface PluginSyncOperation {
-  operationId: string;               // opaque, non-sensitive; do NOT interpret it
+  operationId: string; // opaque, non-sensitive; do NOT interpret it
   files: PluginSyncFileMapping[];
 }
 
 interface PluginSyncFileMapping {
-  sourcePath: string;                // absolute
-  targetPath: string;                // absolute
+  sourcePath: string; // absolute
+  targetPath: string; // absolute
   kind: "file" | "directory";
-  mode?: number;                     // POSIX mode to apply at the target
-  exclude?: string[];                // glob excludes for a directory mapping
-  followSymlinks?: boolean;          // directory symlink handling; see below
+  mode?: number; // POSIX mode to apply at the target
+  exclude?: string[]; // glob excludes for a directory mapping
+  followSymlinks?: boolean; // directory symlink handling; see below
 }
 
 interface PluginEnvironmentSyncResult {
-  operations: { operationId: string; filesTransferred: number; bytesTransferred: number }[];
+  operations: {
+    operationId: string;
+    filesTransferred: number;
+    bytesTransferred: number;
+  }[];
 }
 ```
 
@@ -77,7 +83,7 @@ sandbox paths are POSIX. Return per-operation `filesTransferred` /
 
 Operations are applied strictly in array order, and the orchestrator invokes the
 hooks in a fixed lifecycle order (inbound before execution, outbound after). The
-orchestrator owns *what* and *when*; a provider only executes the opaque
+orchestrator owns _what_ and _when_; a provider only executes the opaque
 transfers it is handed and must not reorder them.
 
 ### A provider may tar internally

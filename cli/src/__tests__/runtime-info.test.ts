@@ -12,7 +12,8 @@ import {
 const roots: string[] = [];
 
 afterEach(() => {
-  for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
+  for (const root of roots.splice(0))
+    fs.rmSync(root, { recursive: true, force: true });
 });
 
 function fixture(): { filePath: string; info: TaskcoreRuntimeInfo } {
@@ -50,7 +51,10 @@ describe("runtime info", () => {
 
   it("rejects malformed runtime info", () => {
     const { filePath } = fixture();
-    fs.writeFileSync(filePath, JSON.stringify({ schemaVersion: 1, port: 70_000 }));
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({ schemaVersion: 1, port: 70_000 }),
+    );
     expect(readRuntimeInfo("default", filePath)).toBeNull();
   });
 });

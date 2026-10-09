@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { runTurn, type StartedTurn, type TurnFinalizeInput, type TurnSteps } from "./turn-sequence.js";
+import {
+  runTurn,
+  type StartedTurn,
+  type TurnFinalizeInput,
+  type TurnSteps,
+} from "./turn-sequence.js";
 import { createRunResourceLedger } from "./run-resource-ledger.js";
 import type { TurnCompletion } from "./run-contracts.js";
 
@@ -15,7 +20,10 @@ function finalizedTurn(): TurnCompletion {
 function failedTurn(error: unknown): TurnCompletion {
   return {
     kind: "failed",
-    cause: { kind: "turn_failed", error: error instanceof Error ? error : new Error(String(error)) },
+    cause: {
+      kind: "turn_failed",
+      error: error instanceof Error ? error : new Error(String(error)),
+    },
     resources: createRunResourceLedger().takeForSettlement(),
   };
 }
@@ -26,28 +34,43 @@ function noopStarted(): StartedTurn {
 
 // A base set of steps whose bodies do nothing. Each test overrides the steps it
 // drives and records the calls it cares about.
-function baseSteps(order: string[], overrides: Partial<TurnSteps<string>> = {}): TurnSteps<string> {
+function baseSteps(
+  order: string[],
+  overrides: Partial<TurnSteps<string>> = {},
+): TurnSteps<string> {
   return {
     timeoutMs: overrides.timeoutMs,
     timeoutMessage: overrides.timeoutMessage ?? "timed out",
-    promptBuild: overrides.promptBuild ?? (async () => {
-      order.push("promptBuild");
-    }),
-    preTurnUsage: overrides.preTurnUsage ?? (async () => {
-      order.push("preTurnUsage");
-    }),
-    turnStart: overrides.turnStart ?? (() => {
-      order.push("turnStart");
-      return noopStarted();
-    }),
-    eventRelay: overrides.eventRelay ?? (async () => {
-      order.push("eventRelay");
-      return "terminal";
-    }),
-    turnFinalize: overrides.turnFinalize ?? (async (input) => {
-      order.push(`turnFinalize:${input.kind}`);
-      return input.kind === "terminal" ? finalizedTurn() : failedTurn(input.error);
-    }),
+    promptBuild:
+      overrides.promptBuild ??
+      (async () => {
+        order.push("promptBuild");
+      }),
+    preTurnUsage:
+      overrides.preTurnUsage ??
+      (async () => {
+        order.push("preTurnUsage");
+      }),
+    turnStart:
+      overrides.turnStart ??
+      (() => {
+        order.push("turnStart");
+        return noopStarted();
+      }),
+    eventRelay:
+      overrides.eventRelay ??
+      (async () => {
+        order.push("eventRelay");
+        return "terminal";
+      }),
+    turnFinalize:
+      overrides.turnFinalize ??
+      (async (input) => {
+        order.push(`turnFinalize:${input.kind}`);
+        return input.kind === "terminal"
+          ? finalizedTurn()
+          : failedTurn(input.error);
+      }),
   };
 }
 
@@ -64,7 +87,9 @@ describe("ACPX turn sequence", () => {
       },
       turnFinalize: async (input) => {
         finalizeInputs.push(input);
-        return input.kind === "terminal" ? finalizedTurn() : failedTurn(input.error);
+        return input.kind === "terminal"
+          ? finalizedTurn()
+          : failedTurn(input.error);
       },
     });
 
@@ -73,13 +98,20 @@ describe("ACPX turn sequence", () => {
     expect(completion.kind).toBe("failed");
     // The error routed through the one finalize step with the `turn` phase.
     expect(finalizeInputs).toHaveLength(1);
-    expect(finalizeInputs[0]).toMatchObject({ kind: "error", error: boom, phase: "turn" });
+    expect(finalizeInputs[0]).toMatchObject({
+      kind: "error",
+      error: boom,
+      phase: "turn",
+    });
   });
 
   it("test_run_turn_owns_timer_and_abort_controller", async () => {
     vi.useFakeTimers();
     try {
-      const captured: { signal: AbortSignal | null; cancelReason: string | null } = {
+      const captured: {
+        signal: AbortSignal | null;
+        cancelReason: string | null;
+      } = {
         signal: null,
         cancelReason: null,
       };
@@ -102,7 +134,9 @@ describe("ACPX turn sequence", () => {
         eventRelay: async () => relayPromise,
         turnFinalize: async (input) => {
           finalizeInputs.push(input);
-          return input.kind === "terminal" ? finalizedTurn() : failedTurn(input.error);
+          return input.kind === "terminal"
+            ? finalizedTurn()
+            : failedTurn(input.error);
         },
       });
 
@@ -122,7 +156,10 @@ describe("ACPX turn sequence", () => {
       expect(completion).toEqual({ kind: "finalized" });
       // The finalize step saw the timeout flag the sequence tracked.
       expect(finalizeInputs).toHaveLength(1);
-      expect(finalizeInputs[0]).toMatchObject({ kind: "terminal", timedOut: true });
+      expect(finalizeInputs[0]).toMatchObject({
+        kind: "terminal",
+        timedOut: true,
+      });
     } finally {
       vi.useRealTimers();
     }
@@ -140,14 +177,20 @@ describe("ACPX turn sequence", () => {
       },
       turnFinalize: async (input) => {
         finalizeInputs.push(input);
-        return input.kind === "terminal" ? finalizedTurn() : failedTurn(input.error);
+        return input.kind === "terminal"
+          ? finalizedTurn()
+          : failedTurn(input.error);
       },
     });
 
     const completion = await runTurn(steps);
     expect(completion.kind).toBe("failed");
     expect(finalizeInputs).toHaveLength(1);
-    expect(finalizeInputs[0]).toMatchObject({ kind: "error", error: boom, phase: "prepare_turn" });
+    expect(finalizeInputs[0]).toMatchObject({
+      kind: "error",
+      error: boom,
+      phase: "prepare_turn",
+    });
     // The later steps never ran.
     expect(order).not.toContain("preTurnUsage");
     expect(order).not.toContain("turnStart");

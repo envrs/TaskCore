@@ -1,5 +1,8 @@
 import { cancellableSandboxStartup } from "./startup-cancellation.js";
-import { withAdapterExecutionPhase, type AdapterExecutionPhase } from "../execution-phase.js";
+import {
+  withAdapterExecutionPhase,
+  type AdapterExecutionPhase,
+} from "../execution-phase.js";
 import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import os from "node:os";
@@ -38,7 +41,11 @@ import {
   type ReferencedSourceIgnoreResolution,
   type SandboxAdditionalSource,
 } from "@taskcore/adapter-utils/execution-target";
-import { captureLocalProcess, capturedProcessExited, killCapturedLocalProcess } from "./local-process-control.js";
+import {
+  captureLocalProcess,
+  capturedProcessExited,
+  killCapturedLocalProcess,
+} from "./local-process-control.js";
 import type { DuplexLossReason } from "../duplex-observability.js";
 import { DUPLEX_CHANNEL_LOST_ERROR_CODE } from "../bridge-transport-contract.js";
 import {
@@ -49,7 +56,10 @@ import {
   type AcpxTerminalSessionFailureDiagnostic,
 } from "./terminal-session-failure.js";
 export type { AcpxTerminalSessionFailure } from "./terminal-session-failure.js";
-import type { WorkspaceRestoreFailureCode, WorkspaceRestoreOutcome } from "../workspace-restore-merge.js";
+import type {
+  WorkspaceRestoreFailureCode,
+  WorkspaceRestoreOutcome,
+} from "../workspace-restore-merge.js";
 import type { WorkspaceRestoreDiagnostic } from "../workspace-restore-diagnostics.js";
 import {
   classifyWorkspaceRestoreFailure,
@@ -148,7 +158,10 @@ import {
   type ChildStderrState,
   type RuntimeCacheEntry,
 } from "./run-site-host.js";
-import { createSandboxRunSite, type SandboxRunSite } from "./run-site-sandbox.js";
+import {
+  createSandboxRunSite,
+  type SandboxRunSite,
+} from "./run-site-sandbox.js";
 import {
   createRuntimeSpanRunner,
   emitRunPhaseTiming,
@@ -192,7 +205,10 @@ function routeChildStderr(state: ChildStderrState, chunk: string) {
 }
 
 function flushChildStderr(state: ChildStderrState) {
-  if (state.pendingLiveLine && !BENIGN_NES_CLOSE_STDERR.test(state.pendingLiveLine)) {
+  if (
+    state.pendingLiveLine &&
+    !BENIGN_NES_CLOSE_STDERR.test(state.pendingLiveLine)
+  ) {
     process.stderr.write(state.pendingLiveLine);
   }
   state.pendingLiveLine = "";
@@ -331,7 +347,9 @@ export interface AcpxRemoteManagedHomeContext {
    * runtime. The seam passes its per-adapter home `assets` here; the returned
    * `assetDirs`/`runtimeRootDir` are what it remaps the home env var onto.
    */
-  stage: (assets: AdapterManagedRuntimeAsset[]) => Promise<PreparedAdapterExecutionTargetRuntime>;
+  stage: (
+    assets: AdapterManagedRuntimeAsset[],
+  ) => Promise<PreparedAdapterExecutionTargetRuntime>;
 }
 
 export interface AcpxRemoteManagedHomeResult {
@@ -414,7 +432,10 @@ export interface AcpxEngineExecutorOptions {
    */
   resolveBillingIdentity?: (
     ctx: AdapterExecutionContext,
-  ) => AcpxEngineBillingIdentity | null | Promise<AcpxEngineBillingIdentity | null>;
+  ) =>
+    | AcpxEngineBillingIdentity
+    | null
+    | Promise<AcpxEngineBillingIdentity | null>;
   /**
    * Per-adapter remote managed-home seed + remap (+ codex copy-back). See
    * {@link AcpxRemoteManagedHomeContext}. Absent → the remote lane stages the
@@ -511,12 +532,16 @@ const defaultWarmHandles = new Map<string, RuntimeCacheEntry>();
 const defaultStagedRuntimes = new Map<string, StagedRuntimeCacheEntry>();
 const defaultStagingLocks = new Map<string, Promise<unknown>>();
 
-function resolveEngineSettings(options: AcpxEngineExecutorOptions): AcpxEngineSettings {
+function resolveEngineSettings(
+  options: AcpxEngineExecutorOptions,
+): AcpxEngineSettings {
   const moduleDir = path.resolve(options.moduleDir ?? defaultModuleDir);
   return {
     adapterType: options.adapterType?.trim() || "acp_engine",
     moduleDir,
-    packageRootDir: path.resolve(options.packageRootDir ?? path.resolve(moduleDir, "../..")),
+    packageRootDir: path.resolve(
+      options.packageRootDir ?? path.resolve(moduleDir, "../.."),
+    ),
   };
 }
 
@@ -532,7 +557,10 @@ function stableJson(value: unknown): string {
 }
 
 function shortHash(value: unknown): string {
-  return createHash("sha256").update(stableJson(value)).digest("hex").slice(0, 16);
+  return createHash("sha256")
+    .update(stableJson(value))
+    .digest("hex")
+    .slice(0, 16);
 }
 
 /**
@@ -541,7 +569,9 @@ function shortHash(value: unknown): string {
  * enter the hash. Those identifiers scope the outer session key only (see
  * `SessionKeyIdentity`).
  */
-export function buildSessionFingerprint(identity: SessionFingerprintIdentity): string {
+export function buildSessionFingerprint(
+  identity: SessionFingerprintIdentity,
+): string {
   return shortHash(identity);
 }
 
@@ -549,7 +579,10 @@ export function buildSessionFingerprint(identity: SessionFingerprintIdentity): s
  * Build the session key from the fingerprint and the outer-key identity. The key
  * form is `taskcore:companyId:agentId:taskKey:fingerprint`.
  */
-export function buildSessionKey(identity: SessionKeyIdentity, fingerprint: string): string {
+export function buildSessionKey(
+  identity: SessionKeyIdentity,
+  fingerprint: string,
+): string {
   return `taskcore:${identity.companyId}:${identity.agentId}:${identity.taskKey}:${fingerprint}`;
 }
 
@@ -591,11 +624,10 @@ const ACPX_INHERITED_HOST_ENV_KEYS = new Set([
   "ALL_PROXY",
 ]);
 
-const ACPX_INHERITED_PROVIDER_ENV_KEYS: Readonly<Record<string, ReadonlySet<string>>> = {
-  codex: new Set([
-    "OPENAI_API_KEY",
-    "CODEX_API_KEY",
-  ]),
+const ACPX_INHERITED_PROVIDER_ENV_KEYS: Readonly<
+  Record<string, ReadonlySet<string>>
+> = {
+  codex: new Set(["OPENAI_API_KEY", "CODEX_API_KEY"]),
   claude: new Set([
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_AUTH_TOKEN",
@@ -761,9 +793,13 @@ export async function referencedSourceContentSignature(
   const walk = async (relative: string): Promise<void> => {
     const current = relative ? path.join(localPath, relative) : localPath;
     const dirents = await fs.readdir(current, { withFileTypes: true });
-    dirents.sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0));
+    dirents.sort((left, right) =>
+      left.name < right.name ? -1 : left.name > right.name ? 1 : 0,
+    );
     for (const dirent of dirents) {
-      const next = relative ? path.posix.join(relative, dirent.name) : dirent.name;
+      const next = relative
+        ? path.posix.join(relative, dirent.name)
+        : dirent.name;
       if (isIgnoredByGitResolution(next)) {
         continue;
       }
@@ -799,7 +835,8 @@ export async function referencedSourceContentSignature(
 }
 
 function defaultTaskcoreInstanceDir(): string {
-  const home = process.env.TASKCORE_HOME?.trim() || path.join(os.homedir(), ".taskcore");
+  const home =
+    process.env.TASKCORE_HOME?.trim() || path.join(os.homedir(), ".taskcore");
   const instanceId = process.env.TASKCORE_INSTANCE_ID?.trim() || "default";
   return resolveTaskcoreInstanceRootForAdapter({
     homeDir: home,
@@ -808,14 +845,29 @@ function defaultTaskcoreInstanceDir(): string {
 }
 
 function defaultStateDir(companyId: string, agentId: string): string {
-  return path.join(defaultTaskcoreInstanceDir(), "companies", companyId, "acp-engine", "agents", agentId);
+  return path.join(
+    defaultTaskcoreInstanceDir(),
+    "companies",
+    companyId,
+    "acp-engine",
+    "agents",
+    agentId,
+  );
 }
 
 function resolveManagedCodexHomeDir(companyId: string): string {
-  return path.join(defaultTaskcoreInstanceDir(), "companies", companyId, "codex-home");
+  return path.join(
+    defaultTaskcoreInstanceDir(),
+    "companies",
+    companyId,
+    "codex-home",
+  );
 }
 
-function resolveManagedCodexApiKeyHomeDir(companyId: string, agentId: string): string {
+function resolveManagedCodexApiKeyHomeDir(
+  companyId: string,
+  agentId: string,
+): string {
   return path.join(defaultStateDir(companyId, agentId), "codex-home");
 }
 
@@ -826,18 +878,27 @@ function resolveManagedCodexApiKeyHomeDir(companyId: string, agentId: string): s
 // `resolveManagedCodexHomeDir` above duplicates the Codex adapter's own
 // helper.
 function resolveManagedGrokHomeDir(companyId: string): string {
-  return path.join(defaultTaskcoreInstanceDir(), "companies", companyId, "grok-home");
+  return path.join(
+    defaultTaskcoreInstanceDir(),
+    "companies",
+    companyId,
+    "grok-home",
+  );
 }
 
 // Walk up from startDir looking for `node_modules/.bin/<binName>`. This matches
 // npm/pnpm binary hoisting in packaged installs while preserving monorepo dev.
-export async function findAncestorBin(startDir: string, binName: string): Promise<string | null> {
+export async function findAncestorBin(
+  startDir: string,
+  binName: string,
+): Promise<string | null> {
   let current = path.resolve(startDir);
   while (true) {
     const binDir = path.join(current, "node_modules", ".bin");
-    const candidates = process.platform === "win32"
-      ? [path.join(binDir, `${binName}.cmd`), path.join(binDir, binName)]
-      : [path.join(binDir, binName)];
+    const candidates =
+      process.platform === "win32"
+        ? [path.join(binDir, `${binName}.cmd`), path.join(binDir, binName)]
+        : [path.join(binDir, binName)];
     for (const candidate of candidates) {
       if (await pathExists(candidate)) return candidate;
     }
@@ -866,7 +927,12 @@ async function resolveBuiltInAgentCommand(input: {
     // rather than a flag (gemini) or a dedicated bin (claude/codex).
     return { command: "kimi acp", shellCommand: "kimi acp" };
   }
-  const binName = agent === "claude" ? "claude-agent-acp" : agent === "codex" ? "codex-acp" : null;
+  const binName =
+    agent === "claude"
+      ? "claude-agent-acp"
+      : agent === "codex"
+        ? "codex-acp"
+        : null;
   if (!binName) return null;
   if (executionTargetIsRemote) {
     return { command: binName, shellCommand: binName };
@@ -882,22 +948,34 @@ const execFileAsync = promisify(execFile);
 const GEMINI_NATIVE_ACP_FLAG_MIN_VERSION = [0, 33, 0] as const;
 const GEMINI_VERSION_PROBE_TIMEOUT_MS = 2000;
 
-export function parseGeminiVersionParts(output: string | null | undefined): number[] | null {
+export function parseGeminiVersionParts(
+  output: string | null | undefined,
+): number[] | null {
   const match = output?.match(/(\d+)\.(\d+)\.(\d+)/);
   if (!match) return null;
   return [Number(match[1]), Number(match[2]), Number(match[3])];
 }
 
-export function geminiVersionSupportsNativeAcpFlag(parts: number[] | null): boolean {
+export function geminiVersionSupportsNativeAcpFlag(
+  parts: number[] | null,
+): boolean {
   if (!parts) return true;
-  for (let index = 0; index < GEMINI_NATIVE_ACP_FLAG_MIN_VERSION.length; index += 1) {
-    const diff = (parts[index] ?? 0) - GEMINI_NATIVE_ACP_FLAG_MIN_VERSION[index];
+  for (
+    let index = 0;
+    index < GEMINI_NATIVE_ACP_FLAG_MIN_VERSION.length;
+    index += 1
+  ) {
+    const diff =
+      (parts[index] ?? 0) - GEMINI_NATIVE_ACP_FLAG_MIN_VERSION[index];
     if (diff !== 0) return diff > 0;
   }
   return true;
 }
 
-export function rewriteGeminiAcpFlagForVersion(commandShell: string, versionParts: number[] | null): string {
+export function rewriteGeminiAcpFlagForVersion(
+  commandShell: string,
+  versionParts: number[] | null,
+): string {
   if (geminiVersionSupportsNativeAcpFlag(versionParts)) return commandShell;
   return commandShell
     .trim()
@@ -915,7 +993,10 @@ function geminiAcpCommandTokens(commandShell: string): string[] | null {
   return tokens;
 }
 
-async function normalizeGeminiAcpCommandShell(commandShell: string, env: NodeJS.ProcessEnv): Promise<string> {
+async function normalizeGeminiAcpCommandShell(
+  commandShell: string,
+  env: NodeJS.ProcessEnv,
+): Promise<string> {
   const tokens = geminiAcpCommandTokens(commandShell);
   if (!tokens) return commandShell;
   let versionParts: number[] | null = null;
@@ -938,7 +1019,10 @@ function normalizeAgent(config: Record<string, unknown>): string {
 }
 
 async function pathExists(candidate: string): Promise<boolean> {
-  return fs.access(candidate).then(() => true).catch(() => false);
+  return fs
+    .access(candidate)
+    .then(() => true)
+    .catch(() => false);
 }
 
 async function ensureParentDir(target: string): Promise<void> {
@@ -990,7 +1074,10 @@ async function ensureSymlink(target: string, source: string): Promise<void> {
   await symlinkOrCopyFile(resolvedSource, target);
 }
 
-async function symlinkOrCopyFile(source: string, target: string): Promise<void> {
+async function symlinkOrCopyFile(
+  source: string,
+  target: string,
+): Promise<void> {
   try {
     await fs.symlink(source, target);
   } catch (err) {
@@ -999,7 +1086,10 @@ async function symlinkOrCopyFile(source: string, target: string): Promise<void> 
   }
 }
 
-function isErrnoException(err: unknown, code: string): err is NodeJS.ErrnoException {
+function isErrnoException(
+  err: unknown,
+  code: string,
+): err is NodeJS.ErrnoException {
   return err instanceof Error && "code" in err && err.code === code;
 }
 
@@ -1035,12 +1125,14 @@ async function prepareManagedCodexHome(input: {
     });
   } else {
     const sourceAuth = path.join(sourceHome, "auth.json");
-    if (await pathExists(sourceAuth)) await ensureSymlink(targetAuth, sourceAuth);
+    if (await pathExists(sourceAuth))
+      await ensureSymlink(targetAuth, sourceAuth);
   }
 
   for (const name of ["config.json", "config.toml", "instructions.md"]) {
     const source = path.join(sourceHome, name);
-    if (await pathExists(source)) await ensureCopiedFile(path.join(targetHome, name), source);
+    if (await pathExists(source))
+      await ensureCopiedFile(path.join(targetHome, name), source);
   }
 
   await onLog(
@@ -1074,8 +1166,14 @@ async function hashPathContents(
     const entries = await fs.readdir(candidate, { withFileTypes: true });
     entries.sort((left, right) => left.name.localeCompare(right.name));
     for (const entry of entries) {
-      const childRelativePath = relativePath.length > 0 ? `${relativePath}/${entry.name}` : entry.name;
-      await hashPathContents(path.join(candidate, entry.name), hash, childRelativePath, seenDirectories);
+      const childRelativePath =
+        relativePath.length > 0 ? `${relativePath}/${entry.name}` : entry.name;
+      await hashPathContents(
+        path.join(candidate, entry.name),
+        hash,
+        childRelativePath,
+        seenDirectories,
+      );
     }
     return;
   }
@@ -1096,10 +1194,17 @@ async function buildSkillSetKey(input: {
 }): Promise<string> {
   const hash = createHash("sha256");
   hash.update(`taskcore-acpx-${input.label}-skills:v1\n`);
-  const sorted = [...input.skills].sort((left, right) => left.runtimeName.localeCompare(right.runtimeName));
+  const sorted = [...input.skills].sort((left, right) =>
+    left.runtimeName.localeCompare(right.runtimeName),
+  );
   for (const entry of sorted) {
     hash.update(`skill:${entry.key}:${entry.runtimeName}\n`);
-    await hashPathContents(entry.source, hash, entry.runtimeName, new Set<string>());
+    await hashPathContents(
+      entry.source,
+      hash,
+      entry.runtimeName,
+      new Set<string>(),
+    );
   }
   return hash.digest("hex");
 }
@@ -1107,9 +1212,16 @@ async function buildSkillSetKey(input: {
 async function resolveSelectedRuntimeSkills(
   config: Record<string, unknown>,
   moduleDir: string,
-): Promise<{ allSkills: TaskcoreSkillEntry[]; selectedSkills: TaskcoreSkillEntry[]; desiredSkillNames: string[] }> {
+): Promise<{
+  allSkills: TaskcoreSkillEntry[];
+  selectedSkills: TaskcoreSkillEntry[];
+  desiredSkillNames: string[];
+}> {
   const allSkills = await readTaskcoreRuntimeSkillEntries(config, moduleDir);
-  const desiredSkillNames = resolveLegacyTaskcoreDesiredSkillNames(config, allSkills);
+  const desiredSkillNames = resolveLegacyTaskcoreDesiredSkillNames(
+    config,
+    allSkills,
+  );
   const desiredSet = new Set(desiredSkillNames);
   return {
     allSkills,
@@ -1117,7 +1229,8 @@ async function resolveSelectedRuntimeSkills(
     // selected entry's path contents, and a nonexistent source would abort
     // runtime construction over one broken skill.
     selectedSkills: allSkills.filter(
-      (entry) => desiredSet.has(entry.key) && !isTaskcoreSkillSourceMissing(entry),
+      (entry) =>
+        desiredSet.has(entry.key) && !isTaskcoreSkillSourceMissing(entry),
     ),
     desiredSkillNames,
   };
@@ -1142,9 +1255,18 @@ async function prepareClaudeSkillRuntime(input: {
    */
   bundleDir: string | null;
 }> {
-  const { allSkills, selectedSkills, desiredSkillNames } = await resolveSelectedRuntimeSkills(input.config, input.moduleDir);
-  const skillSetKey = await buildSkillSetKey({ skills: selectedSkills, label: "claude" });
-  const bundleRoot = path.join(input.stateDir, "runtime-skills", "claude", skillSetKey);
+  const { allSkills, selectedSkills, desiredSkillNames } =
+    await resolveSelectedRuntimeSkills(input.config, input.moduleDir);
+  const skillSetKey = await buildSkillSetKey({
+    skills: selectedSkills,
+    label: "claude",
+  });
+  const bundleRoot = path.join(
+    input.stateDir,
+    "runtime-skills",
+    "claude",
+    skillSetKey,
+  );
   const skillsHome = path.join(bundleRoot, ".claude", "skills");
   await fs.mkdir(skillsHome, { recursive: true });
 
@@ -1160,7 +1282,9 @@ async function prepareClaudeSkillRuntime(input: {
     const target = path.join(skillsHome, entry.runtimeName);
     try {
       const result = await materializeTaskcoreSkillCopy(entry.source, target);
-      const skillMdStat = await fs.stat(path.join(target, "SKILL.md")).catch(() => null);
+      const skillMdStat = await fs
+        .stat(path.join(target, "SKILL.md"))
+        .catch(() => null);
       if (!skillMdStat?.isFile()) {
         await fs.rm(target, { recursive: true, force: true });
         await input.onLog(
@@ -1185,27 +1309,35 @@ async function prepareClaudeSkillRuntime(input: {
   }
 
   const selectedNames = materializedNames.sort();
-  const skillDescriptions = await Promise.all(selectedNames.map(async (name) => {
-    const file = path.join(skillsHome, name, "SKILL.md");
-    let description = "";
-    try {
-      const parsed = parseFrontmatterMarkdown(await fs.readFile(file, "utf8"));
-      description = asString(parsed.frontmatter.description, "").replace(/\s+/g, " ").trim().slice(0, 512);
-    } catch {
-      // A readable skill without valid routing metadata remains available.
-      // Do not substitute its body for a missing description.
-    }
-    return `- ${name}${description ? `: ${description}` : ""} (file: ${file})`;
-  }));
-  const promptInstructions = selectedNames.length > 0
-    ? [
-        "Taskcore has materialized selected runtime skills for this ACPX Claude session.",
-        `Skill root: ${skillsHome}`,
-        `Selected skills: ${selectedNames.join(", ")}`,
-        ...skillDescriptions,
-        "When a task calls for one of these skills, read its SKILL.md from that root and follow it.",
-      ].join("\n")
-    : "";
+  const skillDescriptions = await Promise.all(
+    selectedNames.map(async (name) => {
+      const file = path.join(skillsHome, name, "SKILL.md");
+      let description = "";
+      try {
+        const parsed = parseFrontmatterMarkdown(
+          await fs.readFile(file, "utf8"),
+        );
+        description = asString(parsed.frontmatter.description, "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 512);
+      } catch {
+        // A readable skill without valid routing metadata remains available.
+        // Do not substitute its body for a missing description.
+      }
+      return `- ${name}${description ? `: ${description}` : ""} (file: ${file})`;
+    }),
+  );
+  const promptInstructions =
+    selectedNames.length > 0
+      ? [
+          "Taskcore has materialized selected runtime skills for this ACPX Claude session.",
+          `Skill root: ${skillsHome}`,
+          `Selected skills: ${selectedNames.join(", ")}`,
+          ...skillDescriptions,
+          "When a task calls for one of these skills, read its SKILL.md from that root and follow it.",
+        ].join("\n")
+      : "";
 
   return {
     identity: {
@@ -1216,20 +1348,31 @@ async function prepareClaudeSkillRuntime(input: {
       skillRoot: selectedNames.length > 0 ? skillsHome : null,
     },
     promptInstructions,
-    commandNotes: selectedNames.length > 0
-      ? [`Materialized ${selectedNames.length} Taskcore skill(s) for ACPX Claude at ${skillsHome}.`]
-      : [],
+    commandNotes:
+      selectedNames.length > 0
+        ? [
+            `Materialized ${selectedNames.length} Taskcore skill(s) for ACPX Claude at ${skillsHome}.`,
+          ]
+        : [],
     bundleDir: selectedNames.length > 0 ? skillsHome : null,
   };
 }
 
-async function readManagedCodexSkillsManifest(skillsHome: string): Promise<Set<string>> {
-  const manifestPath = path.join(skillsHome, TASKCORE_MANAGED_CODEX_SKILLS_MANIFEST);
+async function readManagedCodexSkillsManifest(
+  skillsHome: string,
+): Promise<Set<string>> {
+  const manifestPath = path.join(
+    skillsHome,
+    TASKCORE_MANAGED_CODEX_SKILLS_MANIFEST,
+  );
   try {
     const raw = JSON.parse(await fs.readFile(manifestPath, "utf8")) as unknown;
     const parsed = parseObject(raw);
     const skills = Array.isArray(parsed.managedSkillNames)
-      ? parsed.managedSkillNames.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      ? parsed.managedSkillNames.filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
       : [];
     return new Set(skills);
   } catch {
@@ -1237,7 +1380,10 @@ async function readManagedCodexSkillsManifest(skillsHome: string): Promise<Set<s
   }
 }
 
-async function writeManagedCodexSkillsManifest(skillsHome: string, skillNames: Iterable<string>): Promise<void> {
+async function writeManagedCodexSkillsManifest(
+  skillsHome: string,
+  skillNames: Iterable<string>,
+): Promise<void> {
   const managedSkillNames = Array.from(new Set(skillNames)).sort();
   await fs.writeFile(
     path.join(skillsHome, TASKCORE_MANAGED_CODEX_SKILLS_MANIFEST),
@@ -1259,19 +1405,27 @@ async function reconcileManagedCodexSkills(input: {
   selectedSkills: TaskcoreSkillEntry[];
   onLog: AdapterExecutionContext["onLog"];
 }): Promise<void> {
-  const desired = new Set(input.selectedSkills.map((entry) => entry.runtimeName));
+  const desired = new Set(
+    input.selectedSkills.map((entry) => entry.runtimeName),
+  );
   const managed = await readManagedCodexSkillsManifest(input.skillsHome);
-  const availableByRuntimeName = new Map(input.allSkills.map((entry) => [entry.runtimeName, entry]));
+  const availableByRuntimeName = new Map(
+    input.allSkills.map((entry) => [entry.runtimeName, entry]),
+  );
 
   for (const name of managed) {
     if (desired.has(name)) continue;
     if (await removeSkillTarget(path.join(input.skillsHome, name))) {
-      await input.onLog("stdout", `[taskcore] Revoked ACPX Codex skill "${name}" from ${input.skillsHome}\n`);
+      await input.onLog(
+        "stdout",
+        `[taskcore] Revoked ACPX Codex skill "${name}" from ${input.skillsHome}\n`,
+      );
     }
   }
 
   for (const entry of input.allSkills) {
-    if (desired.has(entry.runtimeName) || managed.has(entry.runtimeName)) continue;
+    if (desired.has(entry.runtimeName) || managed.has(entry.runtimeName))
+      continue;
     const target = path.join(input.skillsHome, entry.runtimeName);
     const existing = await fs.lstat(target).catch(() => null);
     if (!existing?.isSymbolicLink()) continue;
@@ -1280,14 +1434,20 @@ async function reconcileManagedCodexSkills(input: {
     const resolvedLinkedPath = path.resolve(path.dirname(target), linkedPath);
     if (resolvedLinkedPath !== path.resolve(entry.source)) continue;
     if (await removeSkillTarget(target)) {
-      await input.onLog("stdout", `[taskcore] Revoked legacy ACPX Codex skill "${entry.runtimeName}" from ${input.skillsHome}\n`);
+      await input.onLog(
+        "stdout",
+        `[taskcore] Revoked legacy ACPX Codex skill "${entry.runtimeName}" from ${input.skillsHome}\n`,
+      );
     }
   }
 
   for (const name of managed) {
     if (desired.has(name) || availableByRuntimeName.has(name)) continue;
     if (await removeSkillTarget(path.join(input.skillsHome, name))) {
-      await input.onLog("stdout", `[taskcore] Revoked unavailable ACPX Codex skill "${name}" from ${input.skillsHome}\n`);
+      await input.onLog(
+        "stdout",
+        `[taskcore] Revoked unavailable ACPX Codex skill "${name}" from ${input.skillsHome}\n`,
+      );
     }
   }
 }
@@ -1315,30 +1475,40 @@ async function prepareCodexSkillRuntime(input: {
   const now = input.now ?? (() => Date.now());
   const envConfig = parseObject(input.config.env);
   const configuredCodexHome =
-    typeof envConfig.CODEX_HOME === "string" && envConfig.CODEX_HOME.trim().length > 0
+    typeof envConfig.CODEX_HOME === "string" &&
+    envConfig.CODEX_HOME.trim().length > 0
       ? path.resolve(envConfig.CODEX_HOME.trim())
       : null;
   const sourceCodexHome =
-    typeof process.env.CODEX_HOME === "string" && process.env.CODEX_HOME.trim().length > 0
+    typeof process.env.CODEX_HOME === "string" &&
+    process.env.CODEX_HOME.trim().length > 0
       ? path.resolve(process.env.CODEX_HOME.trim())
       : path.join(os.homedir(), ".codex");
-  const apiKey = input.env.OPENAI_API_KEY?.trim() || input.env.CODEX_API_KEY?.trim()
-    || process.env.OPENAI_API_KEY?.trim() || process.env.CODEX_API_KEY?.trim();
+  const apiKey =
+    input.env.OPENAI_API_KEY?.trim() ||
+    input.env.CODEX_API_KEY?.trim() ||
+    process.env.OPENAI_API_KEY?.trim() ||
+    process.env.CODEX_API_KEY?.trim();
   // Keep API-key auth separate from the company home used by subscription
   // agents, so one agent cannot switch another agent's login on its next turn.
   const managedCodexHome = apiKey
     ? resolveManagedCodexApiKeyHomeDir(input.companyId, input.agentId)
     : resolveManagedCodexHomeDir(input.companyId);
-  const effectiveCodexHome = configuredCodexHome ??
-    await prepareManagedCodexHome({
+  const effectiveCodexHome =
+    configuredCodexHome ??
+    (await prepareManagedCodexHome({
       companyId: input.companyId,
       sourceHome: sourceCodexHome,
       targetHome: managedCodexHome,
       apiKey,
       onLog: input.onLog,
-    });
-  const { allSkills, selectedSkills, desiredSkillNames } = await resolveSelectedRuntimeSkills(input.config, input.moduleDir);
-  const skillSetKey = await buildSkillSetKey({ skills: selectedSkills, label: "codex" });
+    }));
+  const { allSkills, selectedSkills, desiredSkillNames } =
+    await resolveSelectedRuntimeSkills(input.config, input.moduleDir);
+  const skillSetKey = await buildSkillSetKey({
+    skills: selectedSkills,
+    label: "codex",
+  });
   const skillsHome = path.join(effectiveCodexHome, "skills");
   await fs.mkdir(skillsHome, { recursive: true });
   // Step 3 — skills.reconcile: nested inside the codex-home seed (step 2), so it
@@ -1351,13 +1521,17 @@ async function prepareCodexSkillRuntime(input: {
     ...(input.stepMetrics ?? {}),
     onWallMs: undefined,
   };
-  await measureStartupStep({ onEvent: input.onEvent }, now, "skills.reconcile", () =>
-    reconcileManagedCodexSkills({
-      skillsHome,
-      allSkills,
-      selectedSkills,
-      onLog: input.onLog,
-    }),
+  await measureStartupStep(
+    { onEvent: input.onEvent },
+    now,
+    "skills.reconcile",
+    () =>
+      reconcileManagedCodexSkills({
+        skillsHome,
+        allSkills,
+        selectedSkills,
+        onLog: input.onLog,
+      }),
     nestedStepMetrics,
   );
 
@@ -1378,7 +1552,10 @@ async function prepareCodexSkillRuntime(input: {
       );
     }
   }
-  await writeManagedCodexSkillsManifest(skillsHome, selectedSkills.map((entry) => entry.runtimeName));
+  await writeManagedCodexSkillsManifest(
+    skillsHome,
+    selectedSkills.map((entry) => entry.runtimeName),
+  );
 
   input.env.CODEX_HOME = effectiveCodexHome;
 
@@ -1409,15 +1586,25 @@ async function prepareGeminiSkillRuntime(input: {
   moduleDir: string;
   onLog: AdapterExecutionContext["onLog"];
 }): Promise<{ identity: Record<string, unknown>; commandNotes: string[] }> {
-  const { selectedSkills, desiredSkillNames } = await resolveSelectedRuntimeSkills(input.config, input.moduleDir);
-  const skillSetKey = await buildSkillSetKey({ skills: selectedSkills, label: "gemini" });
+  const { selectedSkills, desiredSkillNames } =
+    await resolveSelectedRuntimeSkills(input.config, input.moduleDir);
+  const skillSetKey = await buildSkillSetKey({
+    skills: selectedSkills,
+    label: "gemini",
+  });
   const skillsHome = resolveGeminiSkillsHome(input.config);
   await fs.mkdir(skillsHome, { recursive: true });
 
   const allowedSkillNames = selectedSkills.map((entry) => entry.runtimeName);
-  const removedSkills = await removeMaintainerOnlySkillSymlinks(skillsHome, allowedSkillNames);
+  const removedSkills = await removeMaintainerOnlySkillSymlinks(
+    skillsHome,
+    allowedSkillNames,
+  );
   for (const skillName of removedSkills) {
-    await input.onLog("stdout", `[taskcore] Removed maintainer-only ACPX Gemini skill "${skillName}" from ${skillsHome}\n`);
+    await input.onLog(
+      "stdout",
+      `[taskcore] Removed maintainer-only ACPX Gemini skill "${skillName}" from ${skillsHome}\n`,
+    );
   }
 
   for (const entry of selectedSkills) {
@@ -1454,30 +1641,49 @@ async function prepareGeminiSkillRuntime(input: {
       selectedSkills: selectedSkills.map((entry) => entry.runtimeName).sort(),
       skillsHome,
     },
-    commandNotes: selectedSkills.length > 0
-      ? [`Prepared ${selectedSkills.length} ACPX Gemini skill(s) at ${skillsHome}.`]
-      : [],
+    commandNotes:
+      selectedSkills.length > 0
+        ? [
+            `Prepared ${selectedSkills.length} ACPX Gemini skill(s) at ${skillsHome}.`,
+          ]
+        : [],
   };
 }
 
-function normalizeMode(config: Record<string, unknown>): "persistent" | "oneshot" {
-  return asString(config.mode, DEFAULT_ACP_ENGINE_MODE) === "oneshot" ? "oneshot" : "persistent";
+function normalizeMode(
+  config: Record<string, unknown>,
+): "persistent" | "oneshot" {
+  return asString(config.mode, DEFAULT_ACP_ENGINE_MODE) === "oneshot"
+    ? "oneshot"
+    : "persistent";
 }
 
-function normalizePermissionMode(config: Record<string, unknown>): "approve-all" | "approve-reads" | "deny-all" {
-  const value = asString(config.permissionMode, DEFAULT_ACP_ENGINE_PERMISSION_MODE).trim();
+function normalizePermissionMode(
+  config: Record<string, unknown>,
+): "approve-all" | "approve-reads" | "deny-all" {
+  const value = asString(
+    config.permissionMode,
+    DEFAULT_ACP_ENGINE_PERMISSION_MODE,
+  ).trim();
   if (value === "approve-reads" || value === "deny-all") return value;
   if (value === "default") return DEFAULT_ACP_ENGINE_PERMISSION_MODE;
   return "approve-all";
 }
 
-function normalizeNonInteractivePermissions(config: Record<string, unknown>): "deny" | "fail" {
-  return asString(config.nonInteractivePermissions, DEFAULT_ACP_ENGINE_NON_INTERACTIVE_PERMISSIONS) === "fail"
+function normalizeNonInteractivePermissions(
+  config: Record<string, unknown>,
+): "deny" | "fail" {
+  return asString(
+    config.nonInteractivePermissions,
+    DEFAULT_ACP_ENGINE_NON_INTERACTIVE_PERMISSIONS,
+  ) === "fail"
     ? "fail"
     : "deny";
 }
 
-function normalizeRequestedThinkingEffort(config: Record<string, unknown>): string {
+function normalizeRequestedThinkingEffort(
+  config: Record<string, unknown>,
+): string {
   return (
     asString(config.modelReasoningEffort, "") ||
     asString(config.reasoningEffort, "") ||
@@ -1494,7 +1700,10 @@ function buildCodexStartupConfig(input: {
   identityEnvironmentKeys?: string[];
 }): { value: string | null; invalidExistingConfig: boolean } {
   const hasRuntimeConfig = Boolean(
-    input.requestedModel || input.requestedThinkingEffort || input.fastMode || input.identityEnvironmentKeys,
+    input.requestedModel ||
+    input.requestedThinkingEffort ||
+    input.fastMode ||
+    input.identityEnvironmentKeys,
   );
   if (!hasRuntimeConfig) return { value: null, invalidExistingConfig: false };
 
@@ -1525,11 +1734,21 @@ function buildCodexStartupConfig(input: {
             },
           }
         : {}),
-      ...(input.identityEnvironmentKeys ? {
-        features: { ...parseObject(existing.features), ...(input.fastMode ? { fast_mode: true } : {}), shell_snapshot: false },
-        shell_environment_policy: { ...parseObject(existing.shell_environment_policy),
-          inherit: "all", ignore_default_excludes: true, include_only: input.identityEnvironmentKeys },
-      } : {}),
+      ...(input.identityEnvironmentKeys
+        ? {
+            features: {
+              ...parseObject(existing.features),
+              ...(input.fastMode ? { fast_mode: true } : {}),
+              shell_snapshot: false,
+            },
+            shell_environment_policy: {
+              ...parseObject(existing.shell_environment_policy),
+              inherit: "all",
+              ignore_default_excludes: true,
+              include_only: input.identityEnvironmentKeys,
+            },
+          }
+        : {}),
     }),
     invalidExistingConfig,
   };
@@ -1537,16 +1756,29 @@ function buildCodexStartupConfig(input: {
 
 function isCompatibleSession(
   params: Record<string, unknown>,
-  runtime: Pick<AcpxPreparedRuntime, "fingerprint" | "sessionKey" | "cwd" | "mode" | "acpxAgent" | "remoteExecutionIdentity">,
+  runtime: Pick<
+    AcpxPreparedRuntime,
+    | "fingerprint"
+    | "sessionKey"
+    | "cwd"
+    | "mode"
+    | "acpxAgent"
+    | "remoteExecutionIdentity"
+  >,
 ): boolean {
-  if (asString(params.configFingerprint, "") !== runtime.fingerprint) return false;
+  if (asString(params.configFingerprint, "") !== runtime.fingerprint)
+    return false;
   if (asString(params.sessionKey, "") !== runtime.sessionKey) return false;
   if (asString(params.agent, "") !== runtime.acpxAgent) return false;
   if (asString(params.mode, "") !== runtime.mode) return false;
   const savedCwd = asString(params.cwd, "");
-  if (!savedCwd || path.resolve(savedCwd) !== path.resolve(runtime.cwd)) return false;
+  if (!savedCwd || path.resolve(savedCwd) !== path.resolve(runtime.cwd))
+    return false;
   const savedRemote = parseObject(params.remoteExecution);
-  return stableJson(savedRemote) === stableJson(runtime.remoteExecutionIdentity ?? {});
+  return (
+    stableJson(savedRemote) ===
+    stableJson(runtime.remoteExecutionIdentity ?? {})
+  );
 }
 
 function buildSessionParams(input: {
@@ -1567,14 +1799,22 @@ function buildSessionParams(input: {
     configFingerprint: prepared.fingerprint,
     mcpFingerprint: shortHash(prepared.mcpIdentity),
     ...(prepared.requestedModel ? { model: prepared.requestedModel } : {}),
-    ...(prepared.requestedThinkingEffort ? { thinkingEffort: prepared.requestedThinkingEffort } : {}),
+    ...(prepared.requestedThinkingEffort
+      ? { thinkingEffort: prepared.requestedThinkingEffort }
+      : {}),
     ...(prepared.fastMode ? { fastMode: true } : {}),
     skills: prepared.skillsIdentity,
     mcpServers: prepared.mcpIdentity,
     ...(prepared.workspaceId ? { workspaceId: prepared.workspaceId } : {}),
-    ...(prepared.workspaceRepoUrl ? { repoUrl: prepared.workspaceRepoUrl } : {}),
-    ...(prepared.workspaceRepoRef ? { repoRef: prepared.workspaceRepoRef } : {}),
-    ...(prepared.remoteExecutionIdentity ? { remoteExecution: prepared.remoteExecutionIdentity } : {}),
+    ...(prepared.workspaceRepoUrl
+      ? { repoUrl: prepared.workspaceRepoUrl }
+      : {}),
+    ...(prepared.workspaceRepoRef
+      ? { repoRef: prepared.workspaceRepoRef }
+      : {}),
+    ...(prepared.remoteExecutionIdentity
+      ? { remoteExecution: prepared.remoteExecutionIdentity }
+      : {}),
   };
 }
 
@@ -1587,7 +1827,14 @@ interface TaskcoreClaudeSettingsResult {
 }
 
 function uniqueSorted(values: Array<string | null | undefined>): string[] {
-  return [...new Set(values.filter((value): value is string => typeof value === "string" && value.length > 0))].sort();
+  return [
+    ...new Set(
+      values.filter(
+        (value): value is string =>
+          typeof value === "string" && value.length > 0,
+      ),
+    ),
+  ].sort();
 }
 
 // The Claude Code SDK that `claude-agent-acp` runs uses
@@ -1624,20 +1871,29 @@ async function writeTaskcoreClaudeSettings(input: {
   if (existingRaw) {
     try {
       const parsed = JSON.parse(existingRaw);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) existing = parsed as Record<string, unknown>;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+        existing = parsed as Record<string, unknown>;
     } catch {
       // Malformed settings file — leave it alone in `existing` and our merge will replace it with a valid one.
     }
   }
   const existingPerms =
-    existing.permissions && typeof existing.permissions === "object" && !Array.isArray(existing.permissions)
+    existing.permissions &&
+    typeof existing.permissions === "object" &&
+    !Array.isArray(existing.permissions)
       ? (existing.permissions as Record<string, unknown>)
       : {};
   const existingAllow = Array.isArray(existingPerms.allow)
-    ? (existingPerms.allow as unknown[]).filter((value): value is string => typeof value === "string")
+    ? (existingPerms.allow as unknown[]).filter(
+        (value): value is string => typeof value === "string",
+      )
     : [];
-  const existingAdditionalDirectories = Array.isArray(existingPerms.additionalDirectories)
-    ? (existingPerms.additionalDirectories as unknown[]).filter((value): value is string => typeof value === "string")
+  const existingAdditionalDirectories = Array.isArray(
+    existingPerms.additionalDirectories,
+  )
+    ? (existingPerms.additionalDirectories as unknown[]).filter(
+        (value): value is string => typeof value === "string",
+      )
     : [];
   const mergedAllow = uniqueSorted([...existingAllow, ...taskcoreAllow]);
   const mergedAdditionalDirectories = uniqueSorted([
@@ -1645,9 +1901,13 @@ async function writeTaskcoreClaudeSettings(input: {
     ...taskcoreAdditionalDirectories,
   ]);
   const existingDefaultMode =
-    typeof existingPerms.defaultMode === "string" ? (existingPerms.defaultMode as string) : "";
+    typeof existingPerms.defaultMode === "string"
+      ? (existingPerms.defaultMode as string)
+      : "";
   const defaultMode =
-    existingDefaultMode && existingDefaultMode !== "dontAsk" ? existingDefaultMode : "default";
+    existingDefaultMode && existingDefaultMode !== "dontAsk"
+      ? existingDefaultMode
+      : "default";
   const overrodeDontAsk = existingDefaultMode === "dontAsk";
 
   const nextPermissions: Record<string, unknown> = {
@@ -1656,7 +1916,10 @@ async function writeTaskcoreClaudeSettings(input: {
     additionalDirectories: mergedAdditionalDirectories,
     defaultMode,
   };
-  const next: Record<string, unknown> = { ...existing, permissions: nextPermissions };
+  const next: Record<string, unknown> = {
+    ...existing,
+    permissions: nextPermissions,
+  };
   await writeFileAtomically({
     target: filePath,
     contents: `${JSON.stringify(next, null, 2)}\n`,
@@ -1715,8 +1978,12 @@ async function stageAcpRemoteRuntime(input: {
     adapterKey: input.adapterKey,
     timeoutSec: input.timeoutSec,
     workspaceLocalDir: input.workspaceLocalDir,
-    ...(input.workspaceRemoteDir ? { workspaceRemoteDir: input.workspaceRemoteDir } : {}),
-    ...(input.assets && input.assets.length > 0 ? { assets: input.assets } : {}),
+    ...(input.workspaceRemoteDir
+      ? { workspaceRemoteDir: input.workspaceRemoteDir }
+      : {}),
+    ...(input.assets && input.assets.length > 0
+      ? { assets: input.assets }
+      : {}),
     ...(input.additionalSources && input.additionalSources.length > 0
       ? { additionalSources: input.additionalSources }
       : {}),
@@ -1783,7 +2050,10 @@ async function buildRuntime(input: {
   // boundary span parents to the one root span (`sandbox.startup`) that the
   // executor opens, and each step publishes its own child context for an inner
   // exec span to parent to.
-  spanParent: Pick<StartupStepMeasureOptions, "tracer" | "parentContext" | "contextWithSpan">;
+  spanParent: Pick<
+    StartupStepMeasureOptions,
+    "tracer" | "parentContext" | "contextWithSpan"
+  >;
   // Return the current-run parent-context token. `buildRuntime` threads it into
   // the two remote bridge factories, so a run-time exec from a bridge parents to
   // the live run span (`agent.turn` during the turn, `task.run` otherwise). The
@@ -1810,7 +2080,9 @@ async function buildRuntime(input: {
   const nowMs = input.deps.now ?? (() => Date.now());
   const workspaceContext = parseObject(context.taskcoreWorkspace);
   const secretsContext = parseObject(context.taskcoreSecrets);
-  const secretManifest = Array.isArray(secretsContext.manifest) ? secretsContext.manifest : [];
+  const secretManifest = Array.isArray(secretsContext.manifest)
+    ? secretsContext.manifest
+    : [];
   const workspaceCwd = asString(workspaceContext.cwd, "");
   const workspaceSource = asString(workspaceContext.source, "");
   const workspaceStrategy = asString(workspaceContext.strategy, "");
@@ -1821,8 +2093,11 @@ async function buildRuntime(input: {
   const workspaceWorktreePath = asString(workspaceContext.worktreePath, "");
   const agentHome = asString(workspaceContext.agentHome, "");
   const configuredCwd = asString(config.cwd, "");
-  const useConfiguredInsteadOfAgentHome = workspaceSource === "agent_home" && configuredCwd.length > 0;
-  const effectiveWorkspaceCwd = useConfiguredInsteadOfAgentHome ? "" : workspaceCwd;
+  const useConfiguredInsteadOfAgentHome =
+    workspaceSource === "agent_home" && configuredCwd.length > 0;
+  const effectiveWorkspaceCwd = useConfiguredInsteadOfAgentHome
+    ? ""
+    : workspaceCwd;
   const cwd = effectiveWorkspaceCwd || configuredCwd || process.cwd();
   // Referenced (additional) projects to stage into the sandbox alongside the
   // anchor workspace, read from the workspace realization record. The list is
@@ -1831,7 +2106,9 @@ async function buildRuntime(input: {
   // unchanged.
   const realizationContext = parseObject(workspaceContext.realization);
   const additionalSourceRecords = (
-    Array.isArray(realizationContext.additional) ? realizationContext.additional : []
+    Array.isArray(realizationContext.additional)
+      ? realizationContext.additional
+      : []
   ).map((entry) => parseObject(entry));
   const additionalSourceCandidates = additionalSourceRecords
     .map((entry) => ({
@@ -1841,7 +2118,9 @@ async function buildRuntime(input: {
       repoUrl: asString(entry.repoUrl, ""),
       repoRef: asString(entry.repoRef, ""),
     }))
-    .filter((entry) => entry.localPath.length > 0 && entry.projectId.length > 0);
+    .filter(
+      (entry) => entry.localPath.length > 0 && entry.projectId.length > 0,
+    );
   // Resolve each referenced project's Git-ignored paths ONCE, here, before any
   // staging site runs. The sandbox lane, the SSH lane, and the content signature
   // below all consume this SAME resolution per project, so they can never apply
@@ -1853,11 +2132,12 @@ async function buildRuntime(input: {
       ignoreResolution: await resolveReferencedSourceIgnore(entry.localPath),
     })),
   );
-  const additionalSources: SandboxAdditionalSource[] = additionalSourcesWithIgnore.map((entry) => ({
-    localPath: entry.localPath,
-    projectId: entry.projectId,
-    ignoreResolution: entry.ignoreResolution,
-  }));
+  const additionalSources: SandboxAdditionalSource[] =
+    additionalSourcesWithIgnore.map((entry) => ({
+      localPath: entry.localPath,
+      projectId: entry.projectId,
+      ignoreResolution: entry.ignoreResolution,
+    }));
   // Stable identity of the referenced-project set for the session fingerprint.
   // The staged-runtime cache reuses already-staged referenced-project trees on a
   // compatible resume, so the fingerprint must change when the set OR a project's
@@ -1873,17 +2153,24 @@ async function buildRuntime(input: {
       repoRef: entry.repoRef,
       ignoreResolution: entry.ignoreResolution,
     }))
-    .sort((a, b) => (a.projectId < b.projectId ? -1 : a.projectId > b.projectId ? 1 : 0));
+    .sort((a, b) =>
+      a.projectId < b.projectId ? -1 : a.projectId > b.projectId ? 1 : 0,
+    );
   // Metadata alone does not change on a content-only checkout change (same host
   // path and pinned ref, new file bytes). Fold in each tree's content signature so
   // a file add, remove, or edit busts the fingerprint and the resume re-stages.
   // The signature reads the same `ignoreResolution` the staging sites above use,
   // so it never disagrees with what was actually shipped.
   const additionalSourcesIdentity = await Promise.all(
-    additionalSourcesIdentityBase.map(async ({ ignoreResolution, ...entry }) => ({
-      ...entry,
-      contentSignature: await referencedSourceContentSignature(entry.localPath, ignoreResolution),
-    })),
+    additionalSourcesIdentityBase.map(
+      async ({ ignoreResolution, ...entry }) => ({
+        ...entry,
+        contentSignature: await referencedSourceContentSignature(
+          entry.localPath,
+          ignoreResolution,
+        ),
+      }),
+    ),
   );
   // Referenced-project workspace hints exposed to the agent through TASKCORE_WORKSPACES_JSON. The
   // list joins the anchor project's alternative workspaces with the referenced (mentioned) projects.
@@ -1891,16 +2178,19 @@ async function buildRuntime(input: {
   // staging below. Empty unless run prep resolved referenced projects or alternative workspaces.
   const workspaceHints = Array.isArray(context.taskcoreWorkspaces)
     ? context.taskcoreWorkspaces.filter(
-        (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
+        (value): value is Record<string, unknown> =>
+          typeof value === "object" && value !== null,
       )
     : [];
   const executionTarget = readAdapterExecutionTarget({
     executionTarget: input.ctx.executionTarget,
     legacyRemoteExecution: input.ctx.executionTransport?.remoteExecution,
   });
-  const remoteExecutionIdentity = adapterExecutionTargetSessionIdentity(executionTarget);
+  const remoteExecutionIdentity =
+    adapterExecutionTargetSessionIdentity(executionTarget);
   const effectiveExecutionCwd =
-    remoteExecutionIdentity && typeof remoteExecutionIdentity.remoteCwd === "string"
+    remoteExecutionIdentity &&
+    typeof remoteExecutionIdentity.remoteCwd === "string"
       ? remoteExecutionIdentity.remoteCwd
       : cwd;
   const executionTargetIsRemote = remoteExecutionIdentity !== null;
@@ -1926,15 +2216,19 @@ async function buildRuntime(input: {
   });
   // Step 1 — workspace.resolve: the workspace resolution/fallback chain closes
   // here on the awaited directory materialization.
-  await measureStartupStep(input.ctx, nowMs, "workspace.resolve", () =>
-    ensureAbsoluteDirectory(cwd, { createIfMissing: true }),
+  await measureStartupStep(
+    input.ctx,
+    nowMs,
+    "workspace.resolve",
+    () => ensureAbsoluteDirectory(cwd, { createIfMissing: true }),
     stepMetrics,
   );
 
   const acpxAgent = normalizeAgent(config);
   // Run summaries always fail closed to the final output segment so internal
   // thought text and intermediate narration cannot become issue comments.
-  const coalescePlaceholderToolUpdates = config.coalescePlaceholderToolUpdates === true;
+  const coalescePlaceholderToolUpdates =
+    config.coalescePlaceholderToolUpdates === true;
   const mode = normalizeMode(config);
   const permissionMode = normalizePermissionMode(config);
   const nonInteractivePermissions = normalizeNonInteractivePermissions(config);
@@ -1947,12 +2241,13 @@ async function buildRuntime(input: {
     url,
     connectionId,
   }));
-  const mcpServers: NonNullable<AcpRuntimeOptions["mcpServers"]> = runtimeMcpServers.map((server) => ({
-    type: "http",
-    name: server.name,
-    url: server.url,
-    headers: [{ name: "Authorization", value: `Bearer ${server.token}` }],
-  }));
+  const mcpServers: NonNullable<AcpRuntimeOptions["mcpServers"]> =
+    runtimeMcpServers.map((server) => ({
+      type: "http",
+      name: server.name,
+      url: server.url,
+      headers: [{ name: "Authorization", value: `Bearer ${server.token}` }],
+    }));
   // Resolve the wall-clock timeout through the shared execution-target
   // resolver so sandbox-backed runs pick up the 4h backstop default while
   // local/SSH runs keep the historical "0 = no adapter timeout" behavior.
@@ -1961,24 +2256,38 @@ async function buildRuntime(input: {
     asNumber(config.timeoutSec, DEFAULT_ACP_ENGINE_TIMEOUT_SEC),
   );
   const timeoutSec = timeoutResolution.timeoutSec;
-  const stateDir = path.resolve(asString(config.stateDir, "") || defaultStateDir(agent.companyId, agent.id));
+  const stateDir = path.resolve(
+    asString(config.stateDir, "") || defaultStateDir(agent.companyId, agent.id),
+  );
   await fs.mkdir(stateDir, { recursive: true });
 
   const envConfig = parseObject(config.env);
-  const env: Record<string, string> = { ...buildTaskcoreEnv(agent, input.ctx.agentIdentity), TASKCORE_RUN_ID: runId };
+  const env: Record<string, string> = {
+    ...buildTaskcoreEnv(agent, input.ctx.agentIdentity),
+    TASKCORE_RUN_ID: runId,
+  };
   const wakeTaskId =
     (typeof context.taskId === "string" && context.taskId.trim()) ||
     (typeof context.issueId === "string" && context.issueId.trim()) ||
     "";
-  const wakeReason = typeof context.wakeReason === "string" ? context.wakeReason.trim() : "";
+  const wakeReason =
+    typeof context.wakeReason === "string" ? context.wakeReason.trim() : "";
   const wakeCommentId =
-    (typeof context.wakeCommentId === "string" && context.wakeCommentId.trim()) ||
+    (typeof context.wakeCommentId === "string" &&
+      context.wakeCommentId.trim()) ||
     (typeof context.commentId === "string" && context.commentId.trim()) ||
     "";
-  const approvalId = typeof context.approvalId === "string" ? context.approvalId.trim() : "";
-  const approvalStatus = typeof context.approvalStatus === "string" ? context.approvalStatus.trim() : "";
+  const approvalId =
+    typeof context.approvalId === "string" ? context.approvalId.trim() : "";
+  const approvalStatus =
+    typeof context.approvalStatus === "string"
+      ? context.approvalStatus.trim()
+      : "";
   const linkedIssueIds = Array.isArray(context.issueIds)
-    ? context.issueIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    ? context.issueIds.filter(
+        (value): value is string =>
+          typeof value === "string" && value.trim().length > 0,
+      )
     : [];
   const issueWorkMode = readTaskcoreIssueWorkModeFromContext(context);
   if (wakeTaskId) env.TASKCORE_TASK_ID = wakeTaskId;
@@ -1987,7 +2296,8 @@ async function buildRuntime(input: {
   if (wakeCommentId) env.TASKCORE_WAKE_COMMENT_ID = wakeCommentId;
   if (approvalId) env.TASKCORE_APPROVAL_ID = approvalId;
   if (approvalStatus) env.TASKCORE_APPROVAL_STATUS = approvalStatus;
-  if (linkedIssueIds.length > 0) env.TASKCORE_LINKED_ISSUE_IDS = linkedIssueIds.join(",");
+  if (linkedIssueIds.length > 0)
+    env.TASKCORE_LINKED_ISSUE_IDS = linkedIssueIds.join(",");
   applyTaskcoreWorkspaceEnv(env, {
     workspaceCwd: shapedWorkspaceEnv.workspaceCwd,
     workspaceSource,
@@ -2015,11 +2325,22 @@ async function buildRuntime(input: {
   // stay out of the hash and don't reset the session every heartbeat.
   const resolvedAdapterEnv: Record<string, string> = {};
   const scratch = parseObject(context.taskcoreScratch);
-  const scratchKeys = scratch.type === "heartbeat_run" && typeof scratch.dir === "string"
-    ? new Set(["TASKCORE_RUN_SCRATCH_DIR", "TASKCORE_TASK_SCRATCH_DIR", "TASKCORE_SCRATCH_DIR", "TASKCORE_TMPDIR",
-      ...(Array.isArray(scratch.tempKeysApplied) ? scratch.tempKeysApplied.filter((key): key is string =>
-        typeof key === "string" && ["TMPDIR", "TEMP", "TMP"].includes(key)) : [])])
-    : new Set<string>();
+  const scratchKeys =
+    scratch.type === "heartbeat_run" && typeof scratch.dir === "string"
+      ? new Set([
+          "TASKCORE_RUN_SCRATCH_DIR",
+          "TASKCORE_TASK_SCRATCH_DIR",
+          "TASKCORE_SCRATCH_DIR",
+          "TASKCORE_TMPDIR",
+          ...(Array.isArray(scratch.tempKeysApplied)
+            ? scratch.tempKeysApplied.filter(
+                (key): key is string =>
+                  typeof key === "string" &&
+                  ["TMPDIR", "TEMP", "TMP"].includes(key),
+              )
+            : []),
+        ])
+      : new Set<string>();
   for (const [key, value] of Object.entries(shapedEnvConfig)) {
     if (typeof value !== "string") continue;
     // Runtime TASKCORE_* always wins over config: skip a TASKCORE_* key that
@@ -2033,7 +2354,8 @@ async function buildRuntime(input: {
     // The server rotates run-owned scratch paths on every wake. Still forward
     // them, but only hash actual adapter settings. User-supplied temp overrides
     // are absent from tempKeysApplied and keep their compatibility protection.
-    if (!scratchKeys.has(key) || value !== scratch.dir) resolvedAdapterEnv[key] = value;
+    if (!scratchKeys.has(key) || value !== scratch.dir)
+      resolvedAdapterEnv[key] = value;
   }
   if (authToken) env.TASKCORE_API_KEY = authToken;
   // For the claude agent, set model via ANTHROPIC_MODEL at startup rather than
@@ -2054,13 +2376,29 @@ async function buildRuntime(input: {
   if (acpxAgent === "codex") {
     const codexStartupConfig = buildCodexStartupConfig({
       existingConfig: env.CODEX_CONFIG,
-      ...(input.ctx.agentIdentity ? { identityEnvironmentKeys: [...new Set([
-        "PATH", "HOME", "LANG", "TMPDIR", "CODEX_HOME",
-        "TASKCORE_AGENT_KEY_ID", "TASKCORE_AGENT_PUBLIC_KEY", "TASKCORE_AGENT_PRIVATE_KEY",
-        // Preserve Codex's default secret-name exclusions. The short-lived
-        // Taskcore API token is required by the agent skill's Bash/curl calls.
-        ...Object.keys(env).filter(key => key === "TASKCORE_API_KEY" || !/key|secret|token/i.test(key)),
-      ])] } : {}),
+      ...(input.ctx.agentIdentity
+        ? {
+            identityEnvironmentKeys: [
+              ...new Set([
+                "PATH",
+                "HOME",
+                "LANG",
+                "TMPDIR",
+                "CODEX_HOME",
+                "TASKCORE_AGENT_KEY_ID",
+                "TASKCORE_AGENT_PUBLIC_KEY",
+                "TASKCORE_AGENT_PRIVATE_KEY",
+                // Preserve Codex's default secret-name exclusions. The short-lived
+                // Taskcore API token is required by the agent skill's Bash/curl calls.
+                ...Object.keys(env).filter(
+                  (key) =>
+                    key === "TASKCORE_API_KEY" ||
+                    !/key|secret|token/i.test(key),
+                ),
+              ]),
+            ],
+          }
+        : {}),
       requestedModel,
       requestedThinkingEffort,
       fastMode,
@@ -2114,18 +2452,22 @@ async function buildRuntime(input: {
     // Step 2 — codex-home.seed: the codex managed-home + skills preparation.
     // The nested skills.reconcile boundary (step 3) is timed inside via the
     // threaded onEvent/now seam.
-    const preparedSkills = await measureStartupStep(input.ctx, nowMs, "codex-home.seed", () =>
-      prepareCodexSkillRuntime({
-        companyId: agent.companyId,
-        agentId: agent.id,
-        config,
-        env,
-        moduleDir: input.engine.moduleDir,
-        onLog: input.ctx.onLog,
-        onEvent: input.ctx.onEvent,
-        now: nowMs,
-        stepMetrics,
-      }),
+    const preparedSkills = await measureStartupStep(
+      input.ctx,
+      nowMs,
+      "codex-home.seed",
+      () =>
+        prepareCodexSkillRuntime({
+          companyId: agent.companyId,
+          agentId: agent.id,
+          config,
+          env,
+          moduleDir: input.engine.moduleDir,
+          onLog: input.ctx.onLog,
+          onEvent: input.ctx.onEvent,
+          now: nowMs,
+          stepMetrics,
+        }),
       stepMetrics,
     );
     skillsIdentity = preparedSkills.identity;
@@ -2153,7 +2495,9 @@ async function buildRuntime(input: {
     );
     skillsIdentity = { mode: "custom_unsupported", desiredSkillNames: desired };
     if (desired.length > 0) {
-      skillCommandNotes.push("Selected Taskcore skills are tracked only; ACPX custom commands do not expose a runtime skill contract yet.");
+      skillCommandNotes.push(
+        "Selected Taskcore skills are tracked only; ACPX custom commands do not expose a runtime skill contract yet.",
+      );
     }
   }
 
@@ -2164,7 +2508,8 @@ async function buildRuntime(input: {
     executionTargetIsRemote,
   });
   let agentCommand = configuredCommand || builtInCommand?.command || null;
-  let agentCommandShell = configuredCommand || builtInCommand?.shellCommand || "";
+  let agentCommandShell =
+    configuredCommand || builtInCommand?.shellCommand || "";
   // A runner-backed remote sandbox is the only lane that crosses the staging
   // and serialized-launch-env seam. Runner-less ACP→CLI fallback, SSH, and
   // local runs keep their historical host-provider compatibility behavior.
@@ -2186,7 +2531,9 @@ async function buildRuntime(input: {
     }
   }
   const childStderrDir = path.join(stateDir, "run-stderr");
-  const childStderrLogPath = agentCommand ? path.join(childStderrDir, `${runId}.log`) : null;
+  const childStderrLogPath = agentCommand
+    ? path.join(childStderrDir, `${runId}.log`)
+    : null;
   // Stream the agent output through the persistent session log stream instead of
   // the host output-file poll. The decision comes from the effective capability
   // snapshot alone: the provider must declare and verify incremental session
@@ -2225,7 +2572,9 @@ async function buildRuntime(input: {
   // identifiers are NOT here; they scope the outer session key only (see
   // `keyIdentity`). The fingerprint builder accepts only this identity.
   const fingerprintIdentity: SessionFingerprintIdentity = {
-    ...(input.ctx.agentIdentity ? { agentIdentityKeyId: input.ctx.agentIdentity.keyId } : {}),
+    ...(input.ctx.agentIdentity
+      ? { agentIdentityKeyId: input.ctx.agentIdentity.keyId }
+      : {}),
     acpxAgent,
     agentCommand: agentCommand ?? acpxAgent,
     cwd: path.resolve(sessionCwd),
@@ -2240,7 +2589,10 @@ async function buildRuntime(input: {
     // added, removed, or re-pinned) invalidates a warm/resumable session so the
     // next launch stages the current referenced-project trees instead of reusing
     // a stale staged tree.
-    additionalSourcesIdentity: additionalSourcesIdentity as unknown as Record<string, unknown>,
+    additionalSourcesIdentity: additionalSourcesIdentity as unknown as Record<
+      string,
+      unknown
+    >,
     skillsIdentity,
     skillPromptInstructions,
     taskcoreClaudeSettings: taskcoreClaudeSettings
@@ -2252,7 +2604,11 @@ async function buildRuntime(input: {
       : null,
     // Qualified built-in ACP harnesses reconnect to the supplied MCP servers
     // on session/load. Keep their conversation identity independent of tools.
-    mcpServers: ["claude", "codex", "grok", "gemini", "kimi"].includes(acpxAgent) ? [] : mcpIdentity,
+    mcpServers: ["claude", "codex", "grok", "gemini", "kimi"].includes(
+      acpxAgent,
+    )
+      ? []
+      : mcpIdentity,
     secretManifestHash: shortHash(secretManifest),
     // Fold the resolved adapter env (all applied user-configured values —
     // plain, secret_ref, and stable TASKCORE_* config such as an explicit
@@ -2264,7 +2620,11 @@ async function buildRuntime(input: {
     adapterEnvHash: shortHash(resolvedAdapterEnv),
   };
   const fingerprint = buildSessionFingerprint(fingerprintIdentity);
-  const taskKey = asString(input.ctx.runtime.taskKey, "") || wakeTaskId || workspaceId || "default";
+  const taskKey =
+    asString(input.ctx.runtime.taskKey, "") ||
+    wakeTaskId ||
+    workspaceId ||
+    "default";
   // Company, agent, and task identity for the outer session key. These parts
   // stay out of the fingerprint hash.
   const keyIdentity: SessionKeyIdentity = {
@@ -2320,7 +2680,8 @@ async function buildRuntime(input: {
     remoteExecutionIdentity,
   });
   let stagedRuntime: PreparedAdapterExecutionTargetRuntime | null = null;
-  let remoteManagedHomeTeardown: (() => Promise<WorkspaceRestoreOutcome>) | null = null;
+  let remoteManagedHomeTeardown:
+    (() => Promise<WorkspaceRestoreOutcome>) | null = null;
   let remoteStagingDispose: (() => Promise<void>) | null = null;
   let remoteStagingEnvDelta: Record<string, string> | null = null;
   let sessionStagingLeaseRelease: (() => void) | null = null;
@@ -2390,7 +2751,8 @@ async function buildRuntime(input: {
           timeoutSec,
           onLog: input.ctx.onLog,
         }),
-      measureStageStep: (run) => measureStartupStep(input.ctx, nowMs, "stage.sync", run, stepMetrics),
+      measureStageStep: (run) =>
+        measureStartupStep(input.ctx, nowMs, "stage.sync", run, stepMetrics),
       publishStagedProjectHints: (stagedProjectDirs) => {
         const shapedHints = shapeTaskcoreWorkspaceEnvForExecution({
           workspaceCwd: effectiveWorkspaceCwd,
@@ -2417,8 +2779,10 @@ async function buildRuntime(input: {
           adapterKey: input.engine.adapterType,
           timeoutSec,
           hostApiToken: env.TASKCORE_API_KEY,
-          enableSandboxDuplexBridge: adapterExecutionTargetEnablesSandboxDuplexBridge(remoteTarget),
-          duplexObservabilityRecorder: adapterExecutionTargetDuplexObservabilityRecorder(remoteTarget),
+          enableSandboxDuplexBridge:
+            adapterExecutionTargetEnablesSandboxDuplexBridge(remoteTarget),
+          duplexObservabilityRecorder:
+            adapterExecutionTargetDuplexObservabilityRecorder(remoteTarget),
           onLog: input.ctx.onLog,
           getRuntimeParentContext: input.getRuntimeParentContext,
           runtimeSpan: input.runtimeSpan,
@@ -2440,14 +2804,23 @@ async function buildRuntime(input: {
           streamOutputViaSession: streamAgentSessionOutput,
         }),
       measureBridgeStep: (step, run) =>
-        measureStartupStep(input.ctx, nowMs, step, run, concurrentBridgeStepMetrics),
+        measureStartupStep(
+          input.ctx,
+          nowMs,
+          step,
+          run,
+          concurrentBridgeStepMetrics,
+        ),
       finalizeLaunchEnv: (contributions) =>
         finalizeLaunchEnvironment(env, contributions, {
           acpxAgent,
           inheritHostEnvironment: !useRemoteProcessSession,
         }).env,
       onTaskcoreBridgeLog: () =>
-        input.ctx.onLog("stdout", "[taskcore] Sandbox ACP API callback bridge enabled for this run.\n"),
+        input.ctx.onLog(
+          "stdout",
+          "[taskcore] Sandbox ACP API callback bridge enabled for this run.\n",
+        ),
       stopBridges: async ({ controlBridge, agentBridge }) => {
         await Promise.allSettled([agentBridge?.stop(), controlBridge?.stop()]);
         if (remoteManagedHomeTeardown) {
@@ -2459,8 +2832,15 @@ async function buildRuntime(input: {
     // the per-session staging lease, then read the staged result back onto the
     // prepared-runtime fields the settlement path consumes.
     const placeWorkspaceStart = nowMs();
-    await sandboxSite.placeWorkspace({ sessionKey } as unknown as AcpRunContext);
-    await emitRunPhaseTiming(input.ctx, "place_workspace", nowMs() - placeWorkspaceStart, "ok");
+    await sandboxSite.placeWorkspace({
+      sessionKey,
+    } as unknown as AcpRunContext);
+    await emitRunPhaseTiming(
+      input.ctx,
+      "place_workspace",
+      nowMs() - placeWorkspaceStart,
+      "ok",
+    );
     const placedStaged = sandboxSite.staged;
     stagedRuntime = placedStaged?.stagedRuntime ?? null;
     remoteManagedHomeTeardown = placedStaged?.teardown ?? null;
@@ -2483,16 +2863,22 @@ async function buildRuntime(input: {
       stagedRuntime.assetDirs.skills ??
       path.posix.join(
         stagedRuntime.runtimeRootDir ??
-          path.posix.join(stagedRuntime.workspaceRemoteDir ?? cwd, ".taskcore-runtime", acpxAgent),
+          path.posix.join(
+            stagedRuntime.workspaceRemoteDir ?? cwd,
+            ".taskcore-runtime",
+            acpxAgent,
+          ),
         "skills",
       );
-    const rebaseToSandbox = (value: string) => value.split(claudeSkillsBundleDir!).join(inSandboxSkillsRoot);
+    const rebaseToSandbox = (value: string) =>
+      value.split(claudeSkillsBundleDir!).join(inSandboxSkillsRoot);
     skillPromptInstructions = rebaseToSandbox(skillPromptInstructions);
     skillsIdentity = {
       ...skillsIdentity,
-      skillRoot: typeof skillsIdentity.skillRoot === "string"
-        ? rebaseToSandbox(skillsIdentity.skillRoot)
-        : skillsIdentity.skillRoot,
+      skillRoot:
+        typeof skillsIdentity.skillRoot === "string"
+          ? rebaseToSandbox(skillsIdentity.skillRoot)
+          : skillsIdentity.skillRoot,
     };
     for (let i = 0; i < skillCommandNotes.length; i += 1) {
       skillCommandNotes[i] = rebaseToSandbox(skillCommandNotes[i]!);
@@ -2505,7 +2891,8 @@ async function buildRuntime(input: {
   // outside the catch would strand the lease (and the staged temp) on a
   // start failure and deadlock the next run of this session.
   let taskcoreBridge: AdapterExecutionTargetTaskcoreBridgeHandle | null = null;
-  let processSessionBridge: AdapterExecutionTargetProcessSessionBridgeHandle | null = null;
+  let processSessionBridge: AdapterExecutionTargetProcessSessionBridgeHandle | null =
+    null;
   let runtimeEnv: Record<string, string> = {};
   const startTransportStart = nowMs();
   try {
@@ -2515,11 +2902,18 @@ async function buildRuntime(input: {
       // sequencing point, settles both starts, and returns the started handles
       // plus the finalized launch env. On a partial failure it stops nothing and
       // rethrows; the catch below stops whichever bridge the site started.
-      const transport = await sandboxSite.startTransport({ sessionKey } as unknown as AcpRunContext);
+      const transport = await sandboxSite.startTransport({
+        sessionKey,
+      } as unknown as AcpRunContext);
       taskcoreBridge = transport.controlBridge;
       processSessionBridge = transport.agentBridge;
       runtimeEnv = transport.launchEnv;
-      await emitRunPhaseTiming(input.ctx, "start_transport", nowMs() - startTransportStart, "ok");
+      await emitRunPhaseTiming(
+        input.ctx,
+        "start_transport",
+        nowMs() - startTransportStart,
+        "ok",
+      );
     } else {
       // Local / runner-less lanes never start a bridge, so they add no
       // contribution. `finalizeLaunchEnvironment` still produces the one branded
@@ -2562,15 +2956,27 @@ async function buildRuntime(input: {
       dispose: remoteStagingDispose,
     });
     sessionStagingLeaseRelease?.();
-    await emitRunPhaseTiming(input.ctx, "start_transport", nowMs() - startTransportStart, "failed");
+    await emitRunPhaseTiming(
+      input.ctx,
+      "start_transport",
+      nowMs() - startTransportStart,
+      "failed",
+    );
     throw err;
   }
-  const currentSkillRoot = acpxAgent === "codex" && runtimeEnv.CODEX_HOME
-    ? path.join(runtimeEnv.CODEX_HOME, "skills")
-    : acpxAgent === "gemini" && !executionTargetIsRemote && typeof skillsIdentity.skillsHome === "string"
-      ? skillsIdentity.skillsHome
-      : null;
-  if (currentSkillRoot && Array.isArray(skillsIdentity.selectedSkills) && skillsIdentity.selectedSkills.length > 0) {
+  const currentSkillRoot =
+    acpxAgent === "codex" && runtimeEnv.CODEX_HOME
+      ? path.join(runtimeEnv.CODEX_HOME, "skills")
+      : acpxAgent === "gemini" &&
+          !executionTargetIsRemote &&
+          typeof skillsIdentity.skillsHome === "string"
+        ? skillsIdentity.skillsHome
+        : null;
+  if (
+    currentSkillRoot &&
+    Array.isArray(skillsIdentity.selectedSkills) &&
+    skillsIdentity.selectedSkills.length > 0
+  ) {
     // Managed connection homes are disposable. A resumed conversation may
     // remember a previous home's skill paths; supply the current root on every
     // turn, after the remote launch environment has rebased CODEX_HOME.
@@ -2579,11 +2985,12 @@ async function buildRuntime(input: {
       `Skill root for this run: ${currentSkillRoot}`,
       `Selected skills: ${skillsIdentity.selectedSkills.join(", ")}`,
       "When a task calls for one of these skills, read its SKILL.md from this root and follow it. Resolve referenced scripts and files relative to that skill. Use this run's root even when an earlier turn used a different path.",
-      ...(acpxAgent === "gemini" && skillsIdentity.selectedSkills.includes("taskcore")
+      ...(acpxAgent === "gemini" &&
+      skillsIdentity.selectedSkills.includes("taskcore")
         ? [
-          "Before calling Taskcore APIs or delivering task artifacts, read the selected taskcore skill's SKILL.md and its referenced artifact workflow. A completion comment does not upload an artifact or change task status.",
-          "Gemini's shell tool rejects command substitution. Write JSON request bodies to a workspace file and use curl --data-binary @file, or use the selected skill's helpers, instead of constructing a body with command substitution.",
-        ]
+            "Before calling Taskcore APIs or delivering task artifacts, read the selected taskcore skill's SKILL.md and its referenced artifact workflow. A completion comment does not upload an artifact or change task status.",
+            "Gemini's shell tool rejects command substitution. Write JSON request bodies to a workspace file and use curl --data-binary @file, or use the selected skill's helpers, instead of constructing a body with command substitution.",
+          ]
         : []),
     ].join("\n");
   }
@@ -2591,9 +2998,12 @@ async function buildRuntime(input: {
   // Its /usr/bin/env node shebang cannot rely on that environment's PATH.
   const overrideCommand = processSessionBridge?.agentCommand
     ? [process.execPath, processSessionBridge.agentCommand]
-      .map((part) => JSON.stringify(part.replaceAll("\\", "/"))).join(" ")
+        .map((part) => JSON.stringify(part.replaceAll("\\", "/")))
+        .join(" ")
     : agentCommand;
-  const overrides = overrideCommand ? { [acpxAgent]: overrideCommand } : undefined;
+  const overrides = overrideCommand
+    ? { [acpxAgent]: overrideCommand }
+    : undefined;
   const agentRegistry = createAgentRegistry({ overrides });
   const loggedEnv = buildInvocationEnvForLogs(env, {
     runtimeEnv,
@@ -2652,7 +3062,9 @@ async function buildRuntime(input: {
   };
 }
 
-function sessionConfigOptions(prepared: AcpxPreparedRuntime): Array<{ key: string; value: string }> {
+function sessionConfigOptions(
+  prepared: AcpxPreparedRuntime,
+): Array<{ key: string; value: string }> {
   const options: Array<{ key: string; value: string }> = [];
   // Claude, Codex and Gemini runtime config is pre-set via startup env vars; skip
   // set_config_option to avoid ACP-server picker validation rejecting valid
@@ -2810,7 +3222,9 @@ async function stopRunTransport(prepared: AcpxPreparedRuntime): Promise<void> {
 // The per-session staging lease does NOT release here. The settlement releases
 // it last, in its own `finally`, so a same-session second run cannot re-stage
 // until this run fully settles and the caller observes the result.
-async function syncBackManagedHome(prepared: AcpxPreparedRuntime): Promise<WorkspaceRestoreOutcome> {
+async function syncBackManagedHome(
+  prepared: AcpxPreparedRuntime,
+): Promise<WorkspaceRestoreOutcome> {
   if (!prepared.remoteManagedHomeTeardown) {
     return { ok: true };
   }
@@ -2819,7 +3233,10 @@ async function syncBackManagedHome(prepared: AcpxPreparedRuntime): Promise<Works
   // a teardown fault can never propagate out of settlement.
   return await prepared
     .remoteManagedHomeTeardown()
-    .catch((): WorkspaceRestoreOutcome => ({ ok: false, code: "restore_failed" }));
+    .catch((): WorkspaceRestoreOutcome => ({
+      ok: false,
+      code: "restore_failed",
+    }));
 }
 
 /** How the settlement `endSession` step releases the runtime a run acquired. */
@@ -2867,7 +3284,9 @@ interface RuntimeSettlementPlan {
 class AcpxHandshakeTimeoutError extends Error {
   readonly acpxHandshakeGuardKind = "timeout" as const;
   constructor() {
-    super("The ACP startup handshake did not finish before the startup deadline.");
+    super(
+      "The ACP startup handshake did not finish before the startup deadline.",
+    );
     this.name = "AcpxHandshakeTimeoutError";
   }
 }
@@ -2875,16 +3294,22 @@ class AcpxHandshakeTimeoutError extends Error {
 class AcpxHandshakeTransportLostError extends Error {
   readonly acpxHandshakeGuardKind = "transport_lost" as const;
   constructor() {
-    super("The sandbox duplex control channel was lost during the ACP startup handshake.");
+    super(
+      "The sandbox duplex control channel was lost during the ACP startup handshake.",
+    );
     this.name = "AcpxHandshakeTransportLostError";
   }
 }
 
-function isAcpxHandshakeTimeoutError(err: unknown): err is AcpxHandshakeTimeoutError {
+function isAcpxHandshakeTimeoutError(
+  err: unknown,
+): err is AcpxHandshakeTimeoutError {
   return err instanceof AcpxHandshakeTimeoutError;
 }
 
-function isAcpxHandshakeTransportLostError(err: unknown): err is AcpxHandshakeTransportLostError {
+function isAcpxHandshakeTransportLostError(
+  err: unknown,
+): err is AcpxHandshakeTransportLostError {
   return err instanceof AcpxHandshakeTransportLostError;
 }
 
@@ -3031,12 +3456,18 @@ function renderApiAccessNote(env: Record<string, string>): string {
       `  curl -s -X POST -H "Authorization: Bearer $TASKCORE_API_KEY" -H "Content-Type: application/json" -H "X-Taskcore-Run-Id: $TASKCORE_RUN_ID" -d '{"body":"Status update from agent."}' "$TASKCORE_API_BASE/api/issues/$TASKCORE_TASK_ID/comments"`,
     );
   } else {
-    lines.push("Use a real issue id from the current context before making issue write requests.");
+    lines.push(
+      "Use a real issue id from the current context before making issue write requests.",
+    );
   }
   return lines.join("\n");
 }
 
-async function buildPrompt(ctx: AdapterExecutionContext, resumedSession: boolean, env: Record<string, string>): Promise<{
+async function buildPrompt(
+  ctx: AdapterExecutionContext,
+  resumedSession: boolean,
+  env: Record<string, string>,
+): Promise<{
   prompt: string;
   promptMetrics: Record<string, number>;
   commandNotes: string[];
@@ -3050,12 +3481,17 @@ async function buildPrompt(ctx: AdapterExecutionContext, resumedSession: boolean
       ? DEFAULT_TASKCORE_CONVERSATION_PROMPT_TEMPLATE
       : DEFAULT_TASKCORE_AGENT_PROMPT_TEMPLATE;
   const instructionsFilePath = asString(config.instructionsFilePath, "").trim();
-  const instructionsDir = instructionsFilePath ? `${path.dirname(instructionsFilePath)}/` : "";
+  const instructionsDir = instructionsFilePath
+    ? `${path.dirname(instructionsFilePath)}/`
+    : "";
   let instructionsPrefix = "";
   const commandNotes: string[] = [];
   if (instructionsFilePath) {
     try {
-      const instructionsContents = await fs.readFile(instructionsFilePath, "utf8");
+      const instructionsContents = await fs.readFile(
+        instructionsFilePath,
+        "utf8",
+      );
       instructionsPrefix =
         `${instructionsContents}\n\n` +
         `The above agent instructions were loaded from ${instructionsFilePath}. ` +
@@ -3070,7 +3506,9 @@ async function buildPrompt(ctx: AdapterExecutionContext, resumedSession: boolean
         "stderr",
         `[taskcore] Warning: could not read agent instructions file "${instructionsFilePath}": ${reason}\n`,
       );
-      commandNotes.push(`Configured instructionsFilePath ${instructionsFilePath}, but file could not be read.`);
+      commandNotes.push(
+        `Configured instructionsFilePath ${instructionsFilePath}, but file could not be read.`,
+      );
     }
   }
 
@@ -3089,15 +3527,23 @@ async function buildPrompt(ctx: AdapterExecutionContext, resumedSession: boolean
       ? renderTemplate(bootstrapPromptTemplate, templateData).trim()
       : "";
   await hydrateFreshSessionHandoff(ctx, { resumedSession });
-  const { taskContextNote, wakePrompt } = selectTaskcorePromptSections(context, { resumedSession, includeCommunicationGuidance: false });
+  const { taskContextNote, wakePrompt } = selectTaskcorePromptSections(
+    context,
+    { resumedSession, includeCommunicationGuidance: false },
+  );
   const externalChatTurn = isTaskcoreExternalChatTurn(context.taskcoreWake);
   const shouldUseResumeDeltaPrompt = resumedSession && wakePrompt.length > 0;
-  const promptInstructionsPrefix = shouldUseResumeDeltaPrompt ? "" : instructionsPrefix;
+  const promptInstructionsPrefix = shouldUseResumeDeltaPrompt
+    ? ""
+    : instructionsPrefix;
   const renderedPrompt =
     shouldUseResumeDeltaPrompt || (externalChatTurn && !hasCustomPromptTemplate)
       ? ""
       : renderTemplate(promptTemplate, templateData);
-  const sessionHandoffNote = asString(context.taskcoreSessionHandoffMarkdown, "").trim();
+  const sessionHandoffNote = asString(
+    context.taskcoreSessionHandoffMarkdown,
+    "",
+  ).trim();
   const taskcoreEnvNote = externalChatTurn ? "" : renderTaskcoreEnvNote(env);
   const apiAccessNote = externalChatTurn ? "" : renderApiAccessNote(env);
   const prompt = joinPromptSections([
@@ -3128,7 +3574,10 @@ async function buildPrompt(ctx: AdapterExecutionContext, resumedSession: boolean
   };
 }
 
-async function emitAcpxLog(ctx: AdapterExecutionContext, payload: Record<string, unknown>) {
+async function emitAcpxLog(
+  ctx: AdapterExecutionContext,
+  payload: Record<string, unknown>,
+) {
   await ctx.onLog("stdout", `${JSON.stringify(payload)}\n`);
 }
 
@@ -3196,13 +3645,15 @@ async function emitRuntimeEvent(
     const eventRecord = event as Record<string, unknown>;
     const toolInput = eventRecord.input;
     let name = event.title ?? "acp_tool";
-    const toolCallId = typeof event.toolCallId === "string" ? event.toolCallId : "";
+    const toolCallId =
+      typeof event.toolCallId === "string" ? event.toolCallId : "";
     if (toolTitles && toolCallId) {
       if (event.title && event.title !== GENERIC_ACP_TOOL_TITLE) {
         // First real title is the call's identity; later retitles (ACP swaps
         // in the invocation, e.g. "Terminal" → "ls -la") keep their own line
         // but don't become the remembered name.
-        if (!toolTitles.has(toolCallId)) toolTitles.set(toolCallId, event.title);
+        if (!toolTitles.has(toolCallId))
+          toolTitles.set(toolCallId, event.title);
       } else {
         name = toolTitles.get(toolCallId) ?? name;
       }
@@ -3260,16 +3711,22 @@ function usageBreakdownsEqual(
   return (
     asNumber(left.inputTokens, 0) === asNumber(right.inputTokens, 0) &&
     asNumber(left.outputTokens, 0) === asNumber(right.outputTokens, 0) &&
-    asNumber(left.cachedReadTokens, 0) === asNumber(right.cachedReadTokens, 0) &&
-    asNumber(left.cachedWriteTokens, 0) === asNumber(right.cachedWriteTokens, 0) &&
+    asNumber(left.cachedReadTokens, 0) ===
+      asNumber(right.cachedReadTokens, 0) &&
+    asNumber(left.cachedWriteTokens, 0) ===
+      asNumber(right.cachedWriteTokens, 0) &&
     asNumber(left.thoughtTokens, 0) === asNumber(right.thoughtTokens, 0) &&
     asNumber(left.totalTokens, 0) === asNumber(right.totalTokens, 0)
   );
 }
 
-function usdCostAmount(cost: AcpRuntimeUsageCost | null | undefined): number | null {
-  if (!cost || typeof cost.amount !== "number" || !Number.isFinite(cost.amount)) return null;
-  if (cost.currency && cost.currency.trim().toUpperCase() !== "USD") return null;
+function usdCostAmount(
+  cost: AcpRuntimeUsageCost | null | undefined,
+): number | null {
+  if (!cost || typeof cost.amount !== "number" || !Number.isFinite(cost.amount))
+    return null;
+  if (cost.currency && cost.currency.trim().toUpperCase() !== "USD")
+    return null;
   return cost.amount;
 }
 
@@ -3316,12 +3773,28 @@ export function summarizeAcpxTurnUsage(input: {
     usageBreakdownsEqual(preBreakdown, postBreakdown);
   const breakdown = postBreakdownIsStale
     ? input.eventBreakdown
-    : postBreakdown ?? input.eventBreakdown ?? null;
-  const inputTokens = Math.max(0, Math.floor(asNumber(breakdown?.inputTokens, 0)));
-  const outputTokens = Math.max(0, Math.floor(asNumber(breakdown?.outputTokens, 0)));
-  const cachedReadTokens = Math.max(0, Math.floor(asNumber(breakdown?.cachedReadTokens, 0)));
-  const cachedWriteTokens = Math.max(0, Math.floor(asNumber(breakdown?.cachedWriteTokens, 0)));
-  const hasTokens = inputTokens > 0 || outputTokens > 0 || cachedReadTokens > 0 || cachedWriteTokens > 0;
+    : (postBreakdown ?? input.eventBreakdown ?? null);
+  const inputTokens = Math.max(
+    0,
+    Math.floor(asNumber(breakdown?.inputTokens, 0)),
+  );
+  const outputTokens = Math.max(
+    0,
+    Math.floor(asNumber(breakdown?.outputTokens, 0)),
+  );
+  const cachedReadTokens = Math.max(
+    0,
+    Math.floor(asNumber(breakdown?.cachedReadTokens, 0)),
+  );
+  const cachedWriteTokens = Math.max(
+    0,
+    Math.floor(asNumber(breakdown?.cachedWriteTokens, 0)),
+  );
+  const hasTokens =
+    inputTokens > 0 ||
+    outputTokens > 0 ||
+    cachedReadTokens > 0 ||
+    cachedWriteTokens > 0;
   // Cache-write tokens are prompt tokens the provider billed to create cache
   // entries; UsageSummary has no dedicated field, so count them as input.
   const usage: UsageSummary | null = hasTokens
@@ -3340,7 +3813,9 @@ export function summarizeAcpxTurnUsage(input: {
           cachedWriteTokens: breakdown.cachedWriteTokens,
           thoughtTokens: breakdown.thoughtTokens,
           totalTokens: breakdown.totalTokens,
-        }).filter((entry): entry is [string, number] => typeof entry[1] === "number"),
+        }).filter(
+          (entry): entry is [string, number] => typeof entry[1] === "number",
+        ),
       )
     : null;
 
@@ -3351,7 +3826,9 @@ export function summarizeAcpxTurnUsage(input: {
     previousCostUsd != null &&
     postCostUsd != null &&
     postCostUsd === previousCostUsd;
-  const cumulativeCostUsd = postCostIsStale ? input.eventCostUsd : postCostUsd ?? input.eventCostUsd;
+  const cumulativeCostUsd = postCostIsStale
+    ? input.eventCostUsd
+    : (postCostUsd ?? input.eventCostUsd);
   let costUsd: number | null = null;
   if (cumulativeCostUsd != null) {
     costUsd =
@@ -3380,13 +3857,19 @@ function describeErrorDiagnostics(err: unknown): {
   const errorName =
     err instanceof Error ? err.name || err.constructor.name : typeof err;
   const maybeCode =
-    err && typeof err === "object" && typeof (err as { code?: unknown }).code === "string"
+    err &&
+    typeof err === "object" &&
+    typeof (err as { code?: unknown }).code === "string"
       ? (err as { code: string }).code
       : null;
   const acpCode =
-    isAcpRuntimeError(err) || (maybeCode?.startsWith("ACP_") ?? false) ? maybeCode : null;
+    isAcpRuntimeError(err) || (maybeCode?.startsWith("ACP_") ?? false)
+      ? maybeCode
+      : null;
   const cause =
-    err && typeof err === "object" && (err as { cause?: unknown }).cause !== undefined
+    err &&
+    typeof err === "object" &&
+    (err as { cause?: unknown }).cause !== undefined
       ? (err as { cause?: unknown }).cause
       : undefined;
   const causeMessage =
@@ -3396,10 +3879,13 @@ function describeErrorDiagnostics(err: unknown): {
         ? cause
         : null;
   const retryable =
-    err && typeof err === "object" && typeof (err as { retryable?: unknown }).retryable === "boolean"
+    err &&
+    typeof err === "object" &&
+    typeof (err as { retryable?: unknown }).retryable === "boolean"
       ? (err as { retryable: boolean }).retryable
       : null;
-  const stack = err instanceof Error && typeof err.stack === "string" ? err.stack : "";
+  const stack =
+    err instanceof Error && typeof err.stack === "string" ? err.stack : "";
   const stackPreview = stack ? stack.split("\n").slice(0, 6).join("\n") : null;
   return { errorName, acpCode, causeMessage, retryable, stackPreview };
 }
@@ -3410,7 +3896,8 @@ function classifyError(
 ): Pick<AdapterExecutionResult, "errorCode" | "errorMeta"> {
   const message = err instanceof Error ? err.message : String(err);
   const diagnostics = describeErrorDiagnostics(err);
-  const { acpCode, errorName, causeMessage, retryable, stackPreview } = diagnostics;
+  const { acpCode, errorName, causeMessage, retryable, stackPreview } =
+    diagnostics;
   const baseMeta: Record<string, unknown> = {
     errorName,
     ...(acpCode ? { acpCode } : {}),
@@ -3437,7 +3924,10 @@ function classifyError(
     };
   }
   const lower = message.toLowerCase();
-  const authLike = lower.includes("auth") || lower.includes("login") || lower.includes("credential");
+  const authLike =
+    lower.includes("auth") ||
+    lower.includes("login") ||
+    lower.includes("credential");
   if (authLike) {
     return {
       errorCode: "acpx_auth_required",
@@ -3445,10 +3935,12 @@ function classifyError(
     };
   }
   const phaseCode = (() => {
-    if (acpCode === "ACP_SESSION_INIT_FAILED") return "acpx_session_init_failed";
+    if (acpCode === "ACP_SESSION_INIT_FAILED")
+      return "acpx_session_init_failed";
     if (acpCode === "ACP_TURN_FAILED") return "acpx_turn_failed";
     if (acpCode === "ACP_BACKEND_MISSING") return "acpx_backend_missing";
-    if (acpCode === "ACP_BACKEND_UNAVAILABLE") return "acpx_backend_unavailable";
+    if (acpCode === "ACP_BACKEND_UNAVAILABLE")
+      return "acpx_backend_unavailable";
     if (phase === "ensure_session") return "acpx_session_init_failed";
     if (phase === "configure_session") return "acpx_session_config_failed";
     if (phase === "turn") return "acpx_turn_failed";
@@ -3516,7 +4008,14 @@ async function emitAcpxFailure(input: {
   message: string;
   childStderrTail: string | null;
 }> {
-  const { ctx, prepared, err, phase, messageOverride, suppressChildStderrTail } = input;
+  const {
+    ctx,
+    prepared,
+    err,
+    phase,
+    messageOverride,
+    suppressChildStderrTail,
+  } = input;
   const rawMessage = err instanceof Error ? err.message : String(err);
   const message = messageOverride ?? rawMessage;
   const classified = classifyError(err, phase);
@@ -3541,7 +4040,9 @@ async function emitAcpxFailure(input: {
 
 function isResumeFailure(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err);
-  return /resume|load|not found|no session|unknown session|conversation/i.test(message);
+  return /resume|load|not found|no session|unknown session|conversation/i.test(
+    message,
+  );
 }
 
 // Drop staged-runtime entries the session has not touched within the warm-idle
@@ -3585,7 +4086,8 @@ function saveStagedRuntimeAfterCleanTurn(input: {
   now: number;
 }) {
   const { prepared } = input;
-  if (!prepared.stagedRuntime || prepared.remoteStagingEnvDelta === null) return;
+  if (!prepared.stagedRuntime || prepared.remoteStagingEnvDelta === null)
+    return;
   input.handles.set(prepared.sessionKey, {
     stagedRuntime: prepared.stagedRuntime,
     envDelta: prepared.remoteStagingEnvDelta,
@@ -3695,11 +4197,16 @@ async function closeWarmHandle(input: {
     input.handles.delete(input.key);
   }
   clearWarmHandleTimer(input.entry);
-  const stopped = await input.entry.runtime.close({
-    handle: input.entry.handle,
-    reason: input.reason,
-    discardPersistentState: input.discardPersistentState ?? false,
-  }).then(() => true, () => false);
+  const stopped = await input.entry.runtime
+    .close({
+      handle: input.entry.handle,
+      reason: input.reason,
+      discardPersistentState: input.discardPersistentState ?? false,
+    })
+    .then(
+      () => true,
+      () => false,
+    );
   flushChildStderr(input.entry.childStderrState);
   return stopped;
 }
@@ -3709,7 +4216,9 @@ function warmHandleMatches(
   runtime: AcpRuntime,
   handle: AcpRuntimeHandle,
 ): boolean {
-  return entry !== undefined && entry.runtime === runtime && entry.handle === handle;
+  return (
+    entry !== undefined && entry.runtime === runtime && entry.handle === handle
+  );
 }
 
 /** The stable name of the one root span for a sandbox bring-up. It is a fixed
@@ -3747,7 +4256,11 @@ function openStartupRootSpan(
 } {
   let span: StartupSpan;
   try {
-    span = tracing.tracer.startSpan(STARTUP_ROOT_SPAN_NAME, undefined, runParentContext);
+    span = tracing.tracer.startSpan(
+      STARTUP_ROOT_SPAN_NAME,
+      undefined,
+      runParentContext,
+    );
   } catch {
     span = NOOP_STARTUP_SPAN;
   }
@@ -3769,7 +4282,11 @@ function openStartupRootSpan(
         // bounded context. `setSandboxRootSpanAttributes` sets only the closed
         // allowlist, so no raw id or image reference rides the span.
         const { workMs, context } = finalize();
-        setSandboxRootSpanAttributes(span, { wallMs: nowMs() - startedAtMs, workMs }, context);
+        setSandboxRootSpanAttributes(
+          span,
+          { wallMs: nowMs() - startedAtMs, workMs },
+          context,
+        );
         // `2` is `SpanStatusCode.ERROR`. `adapter-utils` stays OTel-free, so it
         // uses the numeric value that a real injected span reads as the error
         // status.
@@ -3851,8 +4368,14 @@ function openRunRootSpan(
       try {
         // The run id rides only as a non-reversible short hash, never as the raw
         // id. The wall time is a plain duration. No raw run text rides the span.
-        span.setAttribute(`${RUN_ROOT_SPAN_ATTR_PREFIX}run_id`, hashRunId(runId));
-        span.setAttribute(`${RUN_ROOT_SPAN_ATTR_PREFIX}wall_ms`, nowMs() - startedAtMs);
+        span.setAttribute(
+          `${RUN_ROOT_SPAN_ATTR_PREFIX}run_id`,
+          hashRunId(runId),
+        );
+        span.setAttribute(
+          `${RUN_ROOT_SPAN_ATTR_PREFIX}wall_ms`,
+          nowMs() - startedAtMs,
+        );
         // `2` is `SpanStatusCode.ERROR`. `adapter-utils` stays OTel-free, so it
         // uses the numeric value that a real injected span reads as the error
         // status.
@@ -3890,7 +4413,11 @@ function openTurnSpan(
 } {
   let span: StartupSpan;
   try {
-    span = tracing.tracer.startSpan(TURN_SPAN_NAME, undefined, runParentContext);
+    span = tracing.tracer.startSpan(
+      TURN_SPAN_NAME,
+      undefined,
+      runParentContext,
+    );
   } catch {
     span = NOOP_STARTUP_SPAN;
   }
@@ -3909,7 +4436,10 @@ function openTurnSpan(
       ended = true;
       try {
         // The wall time is a plain duration. No raw run text rides the span.
-        span.setAttribute(`${TURN_SPAN_ATTR_PREFIX}wall_ms`, nowMs() - startedAtMs);
+        span.setAttribute(
+          `${TURN_SPAN_ATTR_PREFIX}wall_ms`,
+          nowMs() - startedAtMs,
+        );
         // `2` is `SpanStatusCode.ERROR`. `adapter-utils` stays OTel-free, so it
         // uses the numeric value that a real injected span reads as the error
         // status.
@@ -3925,13 +4455,16 @@ function openTurnSpan(
 export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
   const createRuntime = deps.createRuntime ?? createAcpRuntime;
   const now = deps.now ?? (() => Date.now());
-  const duplexLossCancelDeadlineMs = deps.duplexLossCancelDeadlineMs ?? ACPX_DUPLEX_LOSS_CANCEL_DEADLINE_MS;
+  const duplexLossCancelDeadlineMs =
+    deps.duplexLossCancelDeadlineMs ?? ACPX_DUPLEX_LOSS_CANCEL_DEADLINE_MS;
   const warmHandles = deps.warmHandles ?? defaultWarmHandles;
   const stagedRuntimes = deps.stagedRuntimes ?? defaultStagedRuntimes;
   const stagingLocks = deps.stagingLocks ?? defaultStagingLocks;
   const engine = resolveEngineSettings(deps);
 
-  return async function executeAcpxEngine(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult> {
+  return async function executeAcpxEngine(
+    ctx: AdapterExecutionContext,
+  ): Promise<AdapterExecutionResult> {
     let billingIdentity: AcpxEngineBillingIdentity | null = null;
     try {
       billingIdentity = (await deps.resolveBillingIdentity?.(ctx)) ?? null;
@@ -3944,7 +4477,10 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       billingType: billingIdentity?.billingType ?? ("unknown" as const),
       pricingContext: undefined as AdapterExecutionResult["pricingContext"],
     };
-    const warmIdleMs = asNumber(ctx.config.warmHandleIdleMs, DEFAULT_ACP_ENGINE_WARM_HANDLE_IDLE_MS);
+    const warmIdleMs = asNumber(
+      ctx.config.warmHandleIdleMs,
+      DEFAULT_ACP_ENGINE_WARM_HANDLE_IDLE_MS,
+    );
     // The host run site owns the warm-handle store on this run. It operates over
     // the engine's persistent `warmHandles` map, so a warm runtime stays live for
     // the next compatible resume. The store arms the per-entry idle timer on a
@@ -3957,7 +4493,11 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       idleMs: warmIdleMs,
       closeWarmEntry: async (entry) => {
         await entry.runtime
-          .close({ handle: entry.handle, reason: "taskcore idle cleanup", discardPersistentState: false })
+          .close({
+            handle: entry.handle,
+            reason: "taskcore idle cleanup",
+            discardPersistentState: false,
+          })
           .catch(() => {});
         flushChildStderr(entry.childStderrState);
       },
@@ -3973,7 +4513,8 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       legacyRemoteExecution: ctx.executionTransport?.remoteExecution,
     });
     const sandboxTarget =
-      startupExecutionTarget?.kind === "remote" && startupExecutionTarget.transport === "sandbox"
+      startupExecutionTarget?.kind === "remote" &&
+      startupExecutionTarget.transport === "sandbox"
         ? startupExecutionTarget
         : null;
     const targetsRemoteSandbox = sandboxTarget !== null;
@@ -3993,14 +4534,19 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
     // `undefined` while the run is live. The holder is a run-scoped local, so two
     // concurrent runs in one host process keep separate tokens. A detached exec
     // reads it through `getRuntimeParentContext` to parent to the live span.
-    let currentRunParentContext: StartupSpanContext | undefined = runRootSpan.parentContext;
-    const getRuntimeParentContext = (): StartupSpanContext | undefined => currentRunParentContext;
+    let currentRunParentContext: StartupSpanContext | undefined =
+      runRootSpan.parentContext;
+    const getRuntimeParentContext = (): StartupSpanContext | undefined =>
+      currentRunParentContext;
     // Wrap each unit of bridge run-time work (one outbound ACP message, one poll
     // tick, one callback request) in its own named span, parented to the live run
     // span. The runner reads the run parent per call through
     // `getRuntimeParentContext`, so a wrapper span always parents to the current
     // run span. On a no-op trace context the runner opens no real span.
-    const runRuntimeSpan = createRuntimeSpanRunner(tracing, getRuntimeParentContext);
+    const runRuntimeSpan = createRuntimeSpanRunner(
+      tracing,
+      getRuntimeParentContext,
+    );
     // Wrap the host workspace tarball build in one `pack` span. This runner
     // parents each span to the ACTIVE startup step (not the run span), so the
     // `pack` span nests under the `stage.sync` step that runs the staging seam.
@@ -4045,16 +4591,29 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
     let runtimeStopConfirmed = false;
     let safeInterruptedSession = false;
     let preserveInterruptedSession = false;
-    const interruptionTools = new Map<string, { kind?: string; status?: string }>();
+    const interruptionTools = new Map<
+      string,
+      { kind?: string; status?: string }
+    >();
     let incompleteToolInventory = false;
     try {
       await ctx.onCancellationReady?.();
-      if (ctx.signal?.aborted) return {
-        exitCode: null, signal: null, timedOut: false,
-        errorCode: "cancelled", errorMessage: "Stopped before provider startup",
-        executionRecovery: { kind: "bootstrap", providerWorkStarted: false },
-        resultJson: { executionCancellation: { state: "acknowledged", acknowledgedAt: new Date().toISOString(), forced: false } },
-      };
+      if (ctx.signal?.aborted)
+        return {
+          exitCode: null,
+          signal: null,
+          timedOut: false,
+          errorCode: "cancelled",
+          errorMessage: "Stopped before provider startup",
+          executionRecovery: { kind: "bootstrap", providerWorkStarted: false },
+          resultJson: {
+            executionCancellation: {
+              state: "acknowledged",
+              acknowledgedAt: new Date().toISOString(),
+              forced: false,
+            },
+          },
+        };
       // Evict idle staged runtimes BEFORE building the runtime, since buildRuntime
       // consults the staged cache to decide whether a compatible resume may reuse
       // an already-staged runtime — an expired entry must not be reused.
@@ -4073,18 +4632,23 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       // handle lookup runs below; it stays undefined on an early build failure, so
       // the root span omits the attribute (fail open).
       let coldStart: boolean | undefined;
-      const rootSpan = openStartupRootSpan(tracing, now, runRootSpan.parentContext, () => ({
-        workMs: stepWallSumMs,
-        context: {
-          coldStart,
-          // The provider key and the lease id are the only low-cardinality
-          // context values this provider-agnostic layer holds. The region, the
-          // image id, and the sandbox id are not threaded here, so the root span
-          // omits them (fail open). The lease id rides only as a hash.
-          provider: sandboxTarget?.providerKey ?? undefined,
-          leaseId: sandboxTarget?.leaseId ?? undefined,
-        },
-      }));
+      const rootSpan = openStartupRootSpan(
+        tracing,
+        now,
+        runRootSpan.parentContext,
+        () => ({
+          workMs: stepWallSumMs,
+          context: {
+            coldStart,
+            // The provider key and the lease id are the only low-cardinality
+            // context values this provider-agnostic layer holds. The region, the
+            // image id, and the sandbox id are not threaded here, so the root span
+            // omits them (fail open). The lease id rides only as a hash.
+            provider: sandboxTarget?.providerKey ?? undefined,
+            leaseId: sandboxTarget?.leaseId ?? undefined,
+          },
+        }),
+      );
       const spanParent: Pick<
         StartupStepMeasureOptions,
         "tracer" | "parentContext" | "contextWithSpan" | "onWallMs"
@@ -4117,7 +4681,12 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       let resumedSession = false;
       let clearSession = false;
       let referencedProjectStagingFailuresField:
-        | { referencedProjectStagingFailures: Array<{ projectId: string; error: string }> }
+        | {
+            referencedProjectStagingFailures: Array<{
+              projectId: string;
+              error: string;
+            }>;
+          }
         | Record<string, never> = {};
       // Set only when the settlement sync-back reports a failed workspace
       // restore. `reproduceResult` merges this into the returned result's
@@ -4125,7 +4694,10 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       // status stay exactly what the turn produced — this is a signal, not an
       // outcome change.
       let workspaceRestoreFailureField:
-        | { workspaceRestoreFailure: WorkspaceRestoreFailureCode; workspaceRestoreDiagnostic?: WorkspaceRestoreDiagnostic }
+        | {
+            workspaceRestoreFailure: WorkspaceRestoreFailureCode;
+            workspaceRestoreDiagnostic?: WorkspaceRestoreDiagnostic;
+          }
         | Record<string, never> = {};
       // The one settlement step name whose error can be the same workspace-
       // restore failure the adapter teardown closure already classifies (a
@@ -4135,42 +4707,65 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       // sanitize) still cannot put a raw `Error.message` — and the host path
       // or process id it can carry — on the run log.
       const SYNC_BACK_SETTLEMENT_STEP = "settlement-sync_back";
-      const recordTeardownError = async (step: string, teardownErr: unknown) => {
+      const recordTeardownError = async (
+        step: string,
+        teardownErr: unknown,
+      ) => {
         const reason =
           step === SYNC_BACK_SETTLEMENT_STEP
-            ? describeWorkspaceRestoreFailure(classifyWorkspaceRestoreFailure(teardownErr))
+            ? describeWorkspaceRestoreFailure(
+                classifyWorkspaceRestoreFailure(teardownErr),
+              )
             : teardownErr instanceof Error
               ? teardownErr.message
               : String(teardownErr);
-        await withAdapterExecutionPhase(ctx, "phase_reporting", () => ctx
-          .onLog("stderr", `[taskcore] ACPX teardown step "${step}" failed: ${reason}\n`)
-          .catch(() => {}));
+        await withAdapterExecutionPhase(ctx, "phase_reporting", () =>
+          ctx
+            .onLog(
+              "stderr",
+              `[taskcore] ACPX teardown step "${step}" failed: ${reason}\n`,
+            )
+            .catch(() => {}),
+        );
       };
       // Emit one per-phase timing run-log event. It is not an OpenTelemetry
       // export and it is not a Telemetry event: it carries the phase name
       // (from the closed allowlist), the wall time, and the outcome, and
       // never a command, a path, an environment value, or an identifier. A
       // failure to emit this event never fails the run.
-      const emitPhase = (phase: string, startMs: number, outcome: "ok" | "failed"): Promise<void> =>
+      const emitPhase = (
+        phase: string,
+        startMs: number,
+        outcome: "ok" | "failed",
+      ): Promise<void> =>
         emitRunPhaseTiming(ctx, phase, now() - startMs, outcome);
       // Time a settlement step and emit its phase timing on every path. A step
       // error still emits `failed` before it re-throws to the Phase 3 error policy.
-      const timedPhase = async (phase: AdapterExecutionPhase, run: () => Promise<void> | void): Promise<void> => {
+      const timedPhase = async (
+        phase: AdapterExecutionPhase,
+        run: () => Promise<void> | void,
+      ): Promise<void> => {
         const start = now();
         try {
           await withAdapterExecutionPhase(ctx, phase, run);
         } catch (error) {
-          await withAdapterExecutionPhase(ctx, "phase_reporting", () => emitPhase(phase, start, "failed"));
+          await withAdapterExecutionPhase(ctx, "phase_reporting", () =>
+            emitPhase(phase, start, "failed"),
+          );
           throw error;
         }
-        await withAdapterExecutionPhase(ctx, "phase_reporting", () => emitPhase(phase, start, "ok"));
+        await withAdapterExecutionPhase(ctx, "phase_reporting", () =>
+          emitPhase(phase, start, "ok"),
+        );
       };
       // The turn the run started. It is hoisted to the run scope so the settlement
       // `endSession` step can cancel a running turn before it closes the runtime
       // (the cancel-before-close order). The turn wrapper assigns it in `turnStart`.
       let activeTurn: AcpRuntimeTurn | null = null;
-      let terminalFailureClassification: AcpxTerminalFailureClassification | null = null;
-      let terminalSessionFailure: AcpxTerminalSessionFailureDiagnostic | null = null;
+      let terminalFailureClassification: AcpxTerminalFailureClassification | null =
+        null;
+      let terminalSessionFailure: AcpxTerminalSessionFailureDiagnostic | null =
+        null;
       // How the settlement `endSession` step must release the runtime for the path
       // this run took. Each exit path that acquired the runtime records it before it
       // returns; a build or create-runtime failure never registers the runtime, so
@@ -4209,7 +4804,10 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       // Build the `settle` startup result for a pre-turn failure. The step wrapper
       // already recorded the external result and ran the inline teardown; this
       // carries only the routing kind and the cause for the coordinator.
-      const settleFor = (phase: PreTurnFailedCause["phase"], error: unknown): StartupResult => ({
+      const settleFor = (
+        phase: PreTurnFailedCause["phase"],
+        error: unknown,
+      ): StartupResult => ({
         kind: "settle",
         cause: {
           kind: "pre_turn_failed",
@@ -4223,366 +4821,503 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       // failure after the ledger acquired resources, and throws on a build failure
       // or a partial-bridge failure (the coordinator owns that rollback).
       const startup = async (): Promise<StartupResult> => {
-       try {
-        // Publish the `sandbox.startup` context to the runtime-parent store for
-        // the whole bring-up. A startup-body exec that runs outside a measured
-        // step reads this token and parents its span to `sandbox.startup`, not to
-        // a detached root. A measured step nests its own `activeStepContextStorage`
-        // run inside this wrap and overrides the store, so an in-step exec still
-        // parents to its step span. On a local or SSH target
-        // `spanParent.parentContext` is a no-op token, so the wrap is inert.
-        const startupCancellation = cancellableSandboxStartup(ctx);
         try {
-          prepared = await runWithRuntimeParent(spanParent.parentContext, () =>
-            buildRuntime({
-              ctx: startupCancellation.context,
-              engine,
-              deps,
-              ledger: runResourceLedger,
-              stagedIdleMs: warmIdleMs,
-              spanParent,
-              getRuntimeParentContext,
-              runtimeSpan: runRuntimeSpan,
-              stageRuntimeSpan: runStageSpan,
-            }),
-          );
-          buildRuntimeSettled = true;
-          billingFields.pricingContext = prepared.fastMode ? { serviceTier: "fast" } : undefined;
-          // Capture acquired resources before the cancellation boundary so the
-          // normal settlement path also releases a just-completed build.
-          releaseStagingLease = prepared.sessionStagingLeaseRelease;
-        } finally {
-          await startupCancellation.finish();
-        }
-        // Per-project staging outcomes for the referenced (mentioned) projects, surfaced back to the
-        // server on the run result. A referenced project that failed to stage into the sandbox is a
-        // first-class, counted failure in the requested-vs-synced observability, not only a warning. The
-        // list is empty on a local target, on a transport that does not stage referenced projects, or
-        // when every staged referenced project succeeded, so the spread adds the field only when there
-        // is a failure to report.
-        const referencedProjectStagingFailures = (
-          prepared.stagedRuntime?.additionalSourceFailures ?? []
-        ).map((failure) => ({ projectId: failure.projectId, error: failure.error }));
-        referencedProjectStagingFailuresField =
-          referencedProjectStagingFailures.length > 0 ? { referencedProjectStagingFailures } : {};
-        // Write one run-log line per failure, so a reader of the run log alone sees
-        // each dropped referenced project and its reason. The run continues without
-        // the failed project (per-project failure isolation). Goes to stderr: the
-        // acpx stdout log stream carries machine-parseable JSON event payloads.
-        for (const failure of referencedProjectStagingFailures) {
+          // Publish the `sandbox.startup` context to the runtime-parent store for
+          // the whole bring-up. A startup-body exec that runs outside a measured
+          // step reads this token and parents its span to `sandbox.startup`, not to
+          // a detached root. A measured step nests its own `activeStepContextStorage`
+          // run inside this wrap and overrides the store, so an in-step exec still
+          // parents to its step span. On a local or SSH target
+          // `spanParent.parentContext` is a no-op token, so the wrap is inert.
+          const startupCancellation = cancellableSandboxStartup(ctx);
+          try {
+            prepared = await runWithRuntimeParent(
+              spanParent.parentContext,
+              () =>
+                buildRuntime({
+                  ctx: startupCancellation.context,
+                  engine,
+                  deps,
+                  ledger: runResourceLedger,
+                  stagedIdleMs: warmIdleMs,
+                  spanParent,
+                  getRuntimeParentContext,
+                  runtimeSpan: runRuntimeSpan,
+                  stageRuntimeSpan: runStageSpan,
+                }),
+            );
+            buildRuntimeSettled = true;
+            billingFields.pricingContext = prepared.fastMode
+              ? { serviceTier: "fast" }
+              : undefined;
+            // Capture acquired resources before the cancellation boundary so the
+            // normal settlement path also releases a just-completed build.
+            releaseStagingLease = prepared.sessionStagingLeaseRelease;
+          } finally {
+            await startupCancellation.finish();
+          }
+          // Per-project staging outcomes for the referenced (mentioned) projects, surfaced back to the
+          // server on the run result. A referenced project that failed to stage into the sandbox is a
+          // first-class, counted failure in the requested-vs-synced observability, not only a warning. The
+          // list is empty on a local target, on a transport that does not stage referenced projects, or
+          // when every staged referenced project succeeded, so the spread adds the field only when there
+          // is a failure to report.
+          const referencedProjectStagingFailures = (
+            prepared.stagedRuntime?.additionalSourceFailures ?? []
+          ).map((failure) => ({
+            projectId: failure.projectId,
+            error: failure.error,
+          }));
+          referencedProjectStagingFailuresField =
+            referencedProjectStagingFailures.length > 0
+              ? { referencedProjectStagingFailures }
+              : {};
+          // Write one run-log line per failure, so a reader of the run log alone sees
+          // each dropped referenced project and its reason. The run continues without
+          // the failed project (per-project failure isolation). Goes to stderr: the
+          // acpx stdout log stream carries machine-parseable JSON event payloads.
+          for (const failure of referencedProjectStagingFailures) {
+            await ctx.onLog(
+              "stderr",
+              `[taskcore] Referenced project ${failure.projectId} failed to stage; the run continues without it: ${failure.error}\n`,
+            );
+          }
+          // State the effective wall-clock timeout and its source up front so a
+          // later timeout is diagnosable from the run log alone. Goes to stderr:
+          // the acpx stdout log stream carries JSON acpx.* event payloads and must
+          // stay machine-parseable line by line.
           await ctx.onLog(
             "stderr",
-            `[taskcore] Referenced project ${failure.projectId} failed to stage; the run continues without it: ${failure.error}\n`,
+            `[taskcore] ${formatAdapterExecutionTimeoutStartLogLine(prepared.timeoutResolution)}\n`,
           );
-        }
-        // State the effective wall-clock timeout and its source up front so a
-        // later timeout is diagnosable from the run log alone. Goes to stderr:
-        // the acpx stdout log stream carries JSON acpx.* event payloads and must
-        // stay machine-parseable line by line.
-        await ctx.onLog(
-          "stderr",
-          `[taskcore] ${formatAdapterExecutionTimeoutStartLogLine(prepared.timeoutResolution)}\n`,
-        );
-        await hostStore.evictIdle(now());
+          await hostStore.evictIdle(now());
 
-        const previousParams = parseObject(ctx.runtime.sessionParams);
-        const canResume = isCompatibleSession(previousParams, prepared);
-        const resumeSessionId = canResume ? asString(previousParams.acpSessionId, "") || undefined : undefined;
-        // Borrow the warm entry without removing it, so an overlapping run of the
-        // same session still sees it. The borrow clears the entry's idle timer, so
-        // the reused runtime cannot expire under its own timer while this run uses
-        // it (today's `clearWarmHandleTimer(cached)` after the reuse decision).
-        let cached = canResume ? hostStore.borrow(prepared.sessionKey) : undefined;
-        if (cached && (ctx.context.refreshTools === true
-          || asString(previousParams.mcpFingerprint, "") !== shortHash(prepared.mcpIdentity)
-          // MCP bearer credentials are run-scoped, even for an unchanged catalog.
-          || prepared.mcpServers.length > 0)) {
-          await hostStore.discard(prepared.sessionKey);
-          cached = undefined;
-        }
-        childStderrState = cached?.childStderrState ?? { logPath: null, pendingLiveLine: "" };
-        processIdentitySink = cached?.processIdentitySink ?? {
-          current: ctx.onSpawn,
-          latest: null,
-        };
-        // ACPX runtimes can stay warm across heartbeat runs. Keep the callback
-        // target mutable so a later agent respawn records identity on the current
-        // heartbeat instead of the run that originally created the runtime.
-        processIdentitySink.current = ctx.onSpawn;
-        flushChildStderr(childStderrState);
-        childStderrState.logPath = prepared.childStderrLogPath;
-        const persistedRuntimeStore = createRuntimeStore({ stateDir: prepared.stateDir });
-        // Resume with this run's launch environment; keep it out of the saved
-        // conversation record without mutating the live runtime's options.
-        const runtimeStore = createEphemeralSessionEnvironmentStore(persistedRuntimeStore, prepared.env);
-        const runtimeOptions: TaskcoreAcpRuntimeOptions = {
-          cwd: prepared.cwd,
-          // Host-only spawn cwd for the relay proxy on the remote process-session
-          // lane; `undefined` elsewhere so acpx falls back to `cwd` (byte-identical).
-          // The advertised `session/new` cwd (`prepared.cwd` = `remoteCwd`) and the
-          // fingerprint / compat key are unaffected — this redirects ONLY the host
-          // `spawn()` `chdir`, not the in-sandbox data path.
-          spawnCwd: prepared.hostSpawnCwd,
-          sessionStore: runtimeStore,
-          agentRegistry: prepared.agentRegistry,
-          permissionMode: prepared.permissionMode,
-          nonInteractivePermissions: prepared.nonInteractivePermissions,
-          mcpServers: prepared.mcpServers,
-          timeoutMs: prepared.timeoutSec > 0 ? prepared.timeoutSec * 1000 : undefined,
-          // Scope ACPX runtime verbose logs to the claude agent only. Codex
-          // and custom agents already emit their own per-tool output and don't
-          // benefit from doubling the log volume.
-          verbose: prepared.acpxAgent === "claude",
-          // The engine passes a complete, sanitized launch environment. ACPX
-          // must not merge the Taskcore server's ambient environment back in
-          // when it spawns the provider child.
-          inheritProcessEnv: false,
-          onAgentStderr: prepared.childStderrLogPath
-            ? (chunk) => routeChildStderr(childStderrState, chunk)
-            : undefined,
-          onAgentSpawn: async (meta) => {
-            processIdentitySink.latest = meta;
-            processIdentitySink.localProcess = prepared.processSessionBridge ? undefined : captureLocalProcess(meta.pid);
-            await processIdentitySink.current?.({
-              pid: meta.pid,
-              processGroupId: null,
-              startedAt: meta.startedAt,
-            });
-          },
-          getRuntimeParentContext,
-        };
-        // Open Q2: split the ~7s `acp.handshake` into the two in-repo-observable
-        // sub-phases — the ACP runtime construction (`createRuntime`) vs the session
-        // establishment envelope (`ensureSession`). The patched spawn lifecycle
-        // hook records process identity, but the finer spawn/`initialize`/
-        // `session/new` timing split still lives inside external `acpx`.
-        // `createRuntime` runs once and only on a cold start; a warm-handle hit
-        // reuses `cached.runtime`, so `createRuntimeMs` stays undefined and the
-        // split reports nothing for it.
-        let createRuntimeMs: number | undefined;
-        // A warm handle reuses the running ACP runtime; a miss constructs one. The
-        // root span records this as `cold_start`.
-        coldStart = !cached?.runtime;
-        if (cached?.runtime) {
-          runtime = cached.runtime;
-        } else {
-          const createRuntimeStart = now();
-          runtime = createRuntime(runtimeOptions);
-          createRuntimeMs = now() - createRuntimeStart;
-          // The create_runtime phase runs only on a cold start.
-          await emitRunPhaseTiming(ctx, "create_runtime", createRuntimeMs, "ok");
-        }
-        // Register the runtime composite in the ledger now that it exists. The
-        // settlement `endSession` step closes it on every path the reuse decision
-        // does not transfer. Registration here (before `ensureSession`) closes the
-        // cold-handshake leak: a cold `ensureSession` throw before a handle exists
-        // still leaves the runtime in the ledger for `endSession` to close. A
-        // create-runtime failure throws before this line, so the runtime never
-        // enters the ledger and the settlement no-ops on the empty slot. The
-        // session handle fills in below; the payload carries the best-known handle
-        // for the composite (`runtime.close` is the one release boundary).
-        runResourceLedger.register({
-          id: "acp_runtime",
-          payload: {
-            runtime,
-            sessionHandle: cached?.handle ?? syntheticCloseHandle(),
-            childProcessPid: processIdentitySink.latest?.pid ?? null,
-          },
-          scope: "per_run",
-        });
-        if (!canResume && asString(previousParams.runtimeSessionName, "")) {
-          await ctx.onLog(
-            "stdout",
-            `[taskcore] ACPX session "${asString(previousParams.runtimeSessionName, "")}" does not match the current agent/cwd/mode/runtime identity; starting fresh in "${prepared.cwd}".\n`,
+          const previousParams = parseObject(ctx.runtime.sessionParams);
+          const canResume = isCompatibleSession(previousParams, prepared);
+          const resumeSessionId = canResume
+            ? asString(previousParams.acpSessionId, "") || undefined
+            : undefined;
+          // Borrow the warm entry without removing it, so an overlapping run of the
+          // same session still sees it. The borrow clears the entry's idle timer, so
+          // the reused runtime cannot expire under its own timer while this run uses
+          // it (today's `clearWarmHandleTimer(cached)` after the reuse decision).
+          let cached = canResume
+            ? hostStore.borrow(prepared.sessionKey)
+            : undefined;
+          if (
+            cached &&
+            (ctx.context.refreshTools === true ||
+              asString(previousParams.mcpFingerprint, "") !==
+                shortHash(prepared.mcpIdentity) ||
+              // MCP bearer credentials are run-scoped, even for an unchanged catalog.
+              prepared.mcpServers.length > 0)
+          ) {
+            await hostStore.discard(prepared.sessionKey);
+            cached = undefined;
+          }
+          childStderrState = cached?.childStderrState ?? {
+            logPath: null,
+            pendingLiveLine: "",
+          };
+          processIdentitySink = cached?.processIdentitySink ?? {
+            current: ctx.onSpawn,
+            latest: null,
+          };
+          // ACPX runtimes can stay warm across heartbeat runs. Keep the callback
+          // target mutable so a later agent respawn records identity on the current
+          // heartbeat instead of the run that originally created the runtime.
+          processIdentitySink.current = ctx.onSpawn;
+          flushChildStderr(childStderrState);
+          childStderrState.logPath = prepared.childStderrLogPath;
+          const persistedRuntimeStore = createRuntimeStore({
+            stateDir: prepared.stateDir,
+          });
+          // Resume with this run's launch environment; keep it out of the saved
+          // conversation record without mutating the live runtime's options.
+          const runtimeStore = createEphemeralSessionEnvironmentStore(
+            persistedRuntimeStore,
+            prepared.env,
           );
-        }
-
-        let handle = cached?.handle ?? null;
-        // The ensure_session phase covers the handshake (session establishment or
-        // resume) up to the established handle.
-        const ensureSessionPhaseStart = now();
-        resumedSession = Boolean(handle ?? resumeSessionId);
-        const isHandshakeTransportLost = (): boolean =>
-          prepared.taskcoreBridge?.readRunDisposition?.().failed ?? false;
-        // The fence's own close, for a real handle that resolves after
-        // `endSession` already sealed. `endSession` closed the synthetic
-        // placeholder by then (or skipped closing because the channel was
-        // already known lost), so this is the one close for this real handle,
-        // not a second one.
-        // A rejected close comes from inside the sandbox (a forged late handle
-        // can make `runtime.close` reject with chosen bytes). It crosses the
-        // sandbox-to-host trust boundary, so it must never reach the run log,
-        // the result, or a classification: log the fixed closed code only.
-        // The catch stays attached so the promise stays observed and no
-        // unhandled rejection can occur.
-        const closeLateHandshakeHandle = (lateHandle: AcpRuntimeHandle): void => {
-          if (isHandshakeTransportLost()) return;
-          void runtime
-            .close({
-              handle: lateHandle,
-              reason: "taskcore late handshake cleanup",
-              discardPersistentState: false,
-            })
-            .catch(() =>
-              ctx
-                .onLog(
-                  "stderr",
-                  "[taskcore] ACPX handshake late close failed: acpx_handshake_late_close_failed\n",
-                )
-                .catch(() => {}),
-            );
-        };
-        // The late rejection comes from inside the sandbox. It crosses the
-        // sandbox-to-host trust boundary, so it must never reach the run log,
-        // the result, or a classification: log the fixed closed code only.
-        const recordLateHandshakeRejection = (): void => {
-          void ctx
-            .onLog("stderr", "[taskcore] ACPX handshake late rejection: acpx_handshake_late_rejection\n")
-            .catch(() => {});
-        };
-
-        try {
-          if (!handle) {
-            try {
-              // Step 7 — acp.handshake: ACP session establishment (session/new or
-              // resume). A throwing handshake still reports its duration before the
-              // resume-retry path below runs. The createRuntime/ensureSession
-              // sub-split rides the step span as fixed, closed keys (Open Q2).
-              let ensureSessionMs: number | undefined;
-              handle = await measureStartupStep(ctx, now, "acp.handshake", async () => {
-                const ensureSessionStart = now();
-                const established = await guardEnsureSession({
-                  call: () =>
-                    runtime.ensureSession({
-                      sessionKey: prepared.sessionKey,
-                      agent: prepared.acpxAgent,
-                      mode: prepared.mode,
-                      cwd: prepared.cwd,
-                      resumeSessionId,
-                      sessionOptions: { env: prepared.env },
-                    }),
-                  fence: handshakeFence,
-                  isTransportLost: isHandshakeTransportLost,
-                  onLateHandleAfterSeal: closeLateHandshakeHandle,
-                  onLateRejection: recordLateHandshakeRejection,
-                });
-                ensureSessionMs = now() - ensureSessionStart;
-                return established;
-              }, {
-                ...prepared.stepMetrics,
-                // The two sub-times ride the span as fixed, closed keys.
-                spanWallTimes: () => ({
-                  createRuntime: createRuntimeMs,
-                  ensureSession: ensureSessionMs,
-                }),
+          const runtimeOptions: TaskcoreAcpRuntimeOptions = {
+            cwd: prepared.cwd,
+            // Host-only spawn cwd for the relay proxy on the remote process-session
+            // lane; `undefined` elsewhere so acpx falls back to `cwd` (byte-identical).
+            // The advertised `session/new` cwd (`prepared.cwd` = `remoteCwd`) and the
+            // fingerprint / compat key are unaffected — this redirects ONLY the host
+            // `spawn()` `chdir`, not the in-sandbox data path.
+            spawnCwd: prepared.hostSpawnCwd,
+            sessionStore: runtimeStore,
+            agentRegistry: prepared.agentRegistry,
+            permissionMode: prepared.permissionMode,
+            nonInteractivePermissions: prepared.nonInteractivePermissions,
+            mcpServers: prepared.mcpServers,
+            timeoutMs:
+              prepared.timeoutSec > 0 ? prepared.timeoutSec * 1000 : undefined,
+            // Scope ACPX runtime verbose logs to the claude agent only. Codex
+            // and custom agents already emit their own per-tool output and don't
+            // benefit from doubling the log volume.
+            verbose: prepared.acpxAgent === "claude",
+            // The engine passes a complete, sanitized launch environment. ACPX
+            // must not merge the Taskcore server's ambient environment back in
+            // when it spawns the provider child.
+            inheritProcessEnv: false,
+            onAgentStderr: prepared.childStderrLogPath
+              ? (chunk) => routeChildStderr(childStderrState, chunk)
+              : undefined,
+            onAgentSpawn: async (meta) => {
+              processIdentitySink.latest = meta;
+              processIdentitySink.localProcess = prepared.processSessionBridge
+                ? undefined
+                : captureLocalProcess(meta.pid);
+              await processIdentitySink.current?.({
+                pid: meta.pid,
+                processGroupId: null,
+                startedAt: meta.startedAt,
               });
-            } catch (err) {
-              if (!resumeSessionId || !isResumeFailure(err)) throw err;
-              clearSession = true;
-              resumedSession = false;
-              await ctx.onLog(
-                "stdout",
-                `[taskcore] ACPX resume session "${resumeSessionId}" is unavailable; retrying with a fresh session.\n`,
+            },
+            getRuntimeParentContext,
+          };
+          // Open Q2: split the ~7s `acp.handshake` into the two in-repo-observable
+          // sub-phases — the ACP runtime construction (`createRuntime`) vs the session
+          // establishment envelope (`ensureSession`). The patched spawn lifecycle
+          // hook records process identity, but the finer spawn/`initialize`/
+          // `session/new` timing split still lives inside external `acpx`.
+          // `createRuntime` runs once and only on a cold start; a warm-handle hit
+          // reuses `cached.runtime`, so `createRuntimeMs` stays undefined and the
+          // split reports nothing for it.
+          let createRuntimeMs: number | undefined;
+          // A warm handle reuses the running ACP runtime; a miss constructs one. The
+          // root span records this as `cold_start`.
+          coldStart = !cached?.runtime;
+          if (cached?.runtime) {
+            runtime = cached.runtime;
+          } else {
+            const createRuntimeStart = now();
+            runtime = createRuntime(runtimeOptions);
+            createRuntimeMs = now() - createRuntimeStart;
+            // The create_runtime phase runs only on a cold start.
+            await emitRunPhaseTiming(
+              ctx,
+              "create_runtime",
+              createRuntimeMs,
+              "ok",
+            );
+          }
+          // Register the runtime composite in the ledger now that it exists. The
+          // settlement `endSession` step closes it on every path the reuse decision
+          // does not transfer. Registration here (before `ensureSession`) closes the
+          // cold-handshake leak: a cold `ensureSession` throw before a handle exists
+          // still leaves the runtime in the ledger for `endSession` to close. A
+          // create-runtime failure throws before this line, so the runtime never
+          // enters the ledger and the settlement no-ops on the empty slot. The
+          // session handle fills in below; the payload carries the best-known handle
+          // for the composite (`runtime.close` is the one release boundary).
+          runResourceLedger.register({
+            id: "acp_runtime",
+            payload: {
+              runtime,
+              sessionHandle: cached?.handle ?? syntheticCloseHandle(),
+              childProcessPid: processIdentitySink.latest?.pid ?? null,
+            },
+            scope: "per_run",
+          });
+          if (!canResume && asString(previousParams.runtimeSessionName, "")) {
+            await ctx.onLog(
+              "stdout",
+              `[taskcore] ACPX session "${asString(previousParams.runtimeSessionName, "")}" does not match the current agent/cwd/mode/runtime identity; starting fresh in "${prepared.cwd}".\n`,
+            );
+          }
+
+          let handle = cached?.handle ?? null;
+          // The ensure_session phase covers the handshake (session establishment or
+          // resume) up to the established handle.
+          const ensureSessionPhaseStart = now();
+          resumedSession = Boolean(handle ?? resumeSessionId);
+          const isHandshakeTransportLost = (): boolean =>
+            prepared.taskcoreBridge?.readRunDisposition?.().failed ?? false;
+          // The fence's own close, for a real handle that resolves after
+          // `endSession` already sealed. `endSession` closed the synthetic
+          // placeholder by then (or skipped closing because the channel was
+          // already known lost), so this is the one close for this real handle,
+          // not a second one.
+          // A rejected close comes from inside the sandbox (a forged late handle
+          // can make `runtime.close` reject with chosen bytes). It crosses the
+          // sandbox-to-host trust boundary, so it must never reach the run log,
+          // the result, or a classification: log the fixed closed code only.
+          // The catch stays attached so the promise stays observed and no
+          // unhandled rejection can occur.
+          const closeLateHandshakeHandle = (
+            lateHandle: AcpRuntimeHandle,
+          ): void => {
+            if (isHandshakeTransportLost()) return;
+            void runtime
+              .close({
+                handle: lateHandle,
+                reason: "taskcore late handshake cleanup",
+                discardPersistentState: false,
+              })
+              .catch(() =>
+                ctx
+                  .onLog(
+                    "stderr",
+                    "[taskcore] ACPX handshake late close failed: acpx_handshake_late_close_failed\n",
+                  )
+                  .catch(() => {}),
               );
-              // Fresh-session retry: the runtime was already constructed on the
-              // first attempt (never re-created), so this event reports only its
-              // own `ensureSessionMs` — no `createRuntimeMs`.
-              let retryEnsureSessionMs: number | undefined;
-              handle = await measureStartupStep(ctx, now, "acp.handshake", async () => {
-                const ensureSessionStart = now();
-                const established = await guardEnsureSession({
-                  call: () =>
-                    runtime.ensureSession({
-                      sessionKey: prepared.sessionKey,
-                      agent: prepared.acpxAgent,
-                      mode: prepared.mode,
-                      cwd: prepared.cwd,
-                      sessionOptions: { env: prepared.env },
+          };
+          // The late rejection comes from inside the sandbox. It crosses the
+          // sandbox-to-host trust boundary, so it must never reach the run log,
+          // the result, or a classification: log the fixed closed code only.
+          const recordLateHandshakeRejection = (): void => {
+            void ctx
+              .onLog(
+                "stderr",
+                "[taskcore] ACPX handshake late rejection: acpx_handshake_late_rejection\n",
+              )
+              .catch(() => {});
+          };
+
+          try {
+            if (!handle) {
+              try {
+                // Step 7 — acp.handshake: ACP session establishment (session/new or
+                // resume). A throwing handshake still reports its duration before the
+                // resume-retry path below runs. The createRuntime/ensureSession
+                // sub-split rides the step span as fixed, closed keys (Open Q2).
+                let ensureSessionMs: number | undefined;
+                handle = await measureStartupStep(
+                  ctx,
+                  now,
+                  "acp.handshake",
+                  async () => {
+                    const ensureSessionStart = now();
+                    const established = await guardEnsureSession({
+                      call: () =>
+                        runtime.ensureSession({
+                          sessionKey: prepared.sessionKey,
+                          agent: prepared.acpxAgent,
+                          mode: prepared.mode,
+                          cwd: prepared.cwd,
+                          resumeSessionId,
+                          sessionOptions: { env: prepared.env },
+                        }),
+                      fence: handshakeFence,
+                      isTransportLost: isHandshakeTransportLost,
+                      onLateHandleAfterSeal: closeLateHandshakeHandle,
+                      onLateRejection: recordLateHandshakeRejection,
+                    });
+                    ensureSessionMs = now() - ensureSessionStart;
+                    return established;
+                  },
+                  {
+                    ...prepared.stepMetrics,
+                    // The two sub-times ride the span as fixed, closed keys.
+                    spanWallTimes: () => ({
+                      createRuntime: createRuntimeMs,
+                      ensureSession: ensureSessionMs,
                     }),
-                  fence: handshakeFence,
-                  isTransportLost: isHandshakeTransportLost,
-                  onLateHandleAfterSeal: closeLateHandshakeHandle,
-                  onLateRejection: recordLateHandshakeRejection,
-                });
-                retryEnsureSessionMs = now() - ensureSessionStart;
-                return established;
-              }, {
-                ...prepared.stepMetrics,
-                // The retry reuses the runtime from the first attempt, so it reports
-                // only its own ensure-session sub-time on the span.
-                spanWallTimes: () => ({ ensureSession: retryEnsureSessionMs }),
+                  },
+                );
+              } catch (err) {
+                if (!resumeSessionId || !isResumeFailure(err)) throw err;
+                clearSession = true;
+                resumedSession = false;
+                await ctx.onLog(
+                  "stdout",
+                  `[taskcore] ACPX resume session "${resumeSessionId}" is unavailable; retrying with a fresh session.\n`,
+                );
+                // Fresh-session retry: the runtime was already constructed on the
+                // first attempt (never re-created), so this event reports only its
+                // own `ensureSessionMs` — no `createRuntimeMs`.
+                let retryEnsureSessionMs: number | undefined;
+                handle = await measureStartupStep(
+                  ctx,
+                  now,
+                  "acp.handshake",
+                  async () => {
+                    const ensureSessionStart = now();
+                    const established = await guardEnsureSession({
+                      call: () =>
+                        runtime.ensureSession({
+                          sessionKey: prepared.sessionKey,
+                          agent: prepared.acpxAgent,
+                          mode: prepared.mode,
+                          cwd: prepared.cwd,
+                          sessionOptions: { env: prepared.env },
+                        }),
+                      fence: handshakeFence,
+                      isTransportLost: isHandshakeTransportLost,
+                      onLateHandleAfterSeal: closeLateHandshakeHandle,
+                      onLateRejection: recordLateHandshakeRejection,
+                    });
+                    retryEnsureSessionMs = now() - ensureSessionStart;
+                    return established;
+                  },
+                  {
+                    ...prepared.stepMetrics,
+                    // The retry reuses the runtime from the first attempt, so it reports
+                    // only its own ensure-session sub-time on the span.
+                    spanWallTimes: () => ({
+                      ensureSession: retryEnsureSessionMs,
+                    }),
+                  },
+                );
+              }
+            } else {
+              // Warm-handle hit: a compatible cached handle reuses the running ACP
+              // agent, so the `acp.handshake` step does no work. Emit a step span and
+              // event with `outcome = skipped` and a zero wall time, so the trace and
+              // the run log show the skip as a distinct outcome, never a misleading
+              // zero-work `ok` step.
+              await emitSkippedStartupStep(ctx, "acp.handshake", {
+                tracer: prepared.stepMetrics.tracer,
+                parentContext: prepared.stepMetrics.parentContext,
               });
             }
-          } else {
-            // Warm-handle hit: a compatible cached handle reuses the running ACP
-            // agent, so the `acp.handshake` step does no work. Emit a step span and
-            // event with `outcome = skipped` and a zero wall time, so the trace and
-            // the run log show the skip as a distinct outcome, never a misleading
-            // zero-work `ok` step.
-            await emitSkippedStartupStep(ctx, "acp.handshake", {
-              tracer: prepared.stepMetrics.tracer,
-              parentContext: prepared.stepMetrics.parentContext,
+            if (
+              resumeSessionId &&
+              handle?.backendSessionId !== resumeSessionId
+            ) {
+              resumedSession = false;
+              clearSession = true;
+            }
+            // A compatible warm handle reuses the already-running ACP agent and does
+            // not emit another spawn event. Persist its known identity on this run
+            // before the next prompt starts so every running heartbeat is adoptable.
+            if (handle && cached && processIdentitySink.latest && ctx.onSpawn) {
+              await ctx.onSpawn({
+                pid: processIdentitySink.latest.pid,
+                processGroupId: null,
+                startedAt: processIdentitySink.latest.startedAt,
+              });
+            }
+          } catch (err) {
+            // Record how the settlement closes the runtime on a pre-turn handshake
+            // failure: a direct close that drops a matching warm entry, the same as
+            // the configuration-failure path. A warm-hit reuse already cleared the
+            // idle timer before the handshake ran, so the failure must close and
+            // remove the entry, never re-arm it. A cold `ensureSession` throw has no
+            // established handle, so the settlement closes the synthetic handle — the
+            // ledger now holds the runtime, so `endSession` closes it and the former
+            // cold-handshake leak is gone. The settlement stops the bridges, releases
+            // the staging lease, and flushes the child stderr on every exit path.
+            //
+            // A handshake-guard rejection is the one exception: `handle` stays
+            // null, but the abandoned `ensureSession` call can still resolve
+            // into a real handle later. `handshakeAbandoned` tells `endSession`
+            // to defer that placeholder close to `handshakeFence` when no late
+            // handle has arrived yet, instead of closing it here and possibly
+            // again later.
+            const guardTripped =
+              isAcpxHandshakeTimeoutError(err) ||
+              isAcpxHandshakeTransportLostError(err);
+            handshakeAbandoned = guardTripped;
+            runtimeSettlement = {
+              mode: "direct",
+              handle: handle ?? syntheticCloseHandle(),
+              reason: "taskcore handshake cleanup",
+              discardPersistentState: false,
+              dropWarmEntry: true,
+              recordCloseError: true,
+              cancelTurnReason: null,
+              skipRemoteClose: false,
+            };
+            await emitPhase(
+              "ensure_session",
+              ensureSessionPhaseStart,
+              "failed",
+            );
+            const { classified, message } = await emitAcpxFailure({
+              ctx,
+              prepared,
+              err,
+              phase: "ensure_session",
+              // The guard's own message is already generic and host-authored, so
+              // this replaces the underlying error text with the same closed
+              // message `classifyError` classified — the ensure_session phase
+              // never gets a chance to summarize it differently.
+              ...(guardTripped && err instanceof Error
+                ? { messageOverride: err.message }
+                : {}),
+              // A compromised child can hold ensureSession open until the guard
+              // fires, then write chosen bytes to its own stderr. Suppress the
+              // child stderr tail on this route only, so those sandbox-provided
+              // bytes never reach the run log or the acpx.error payload.
+              ...(guardTripped ? { suppressChildStderrTail: true } : {}),
             });
+            capturedResult = {
+              exitCode: 1,
+              signal: null,
+              timedOut: false,
+              errorMessage: message,
+              ...classified,
+              ...billingFields,
+              ...referencedProjectStagingFailuresField,
+              model: prepared.requestedModel || null,
+              clearSession,
+              resultJson: { phase: "ensure_session" },
+              summary: message,
+            };
+            return settleFor("handshake", err);
           }
-          if (resumeSessionId && handle?.backendSessionId !== resumeSessionId) {
-            resumedSession = false;
-            clearSession = true;
+
+          if (!handle) {
+            // ensureSession returned no session handle. The ledger holds the runtime
+            // the run constructed, so record a direct close of the synthetic handle
+            // for the settlement `endSession` step (the child process cannot leak).
+            runtimeSettlement = {
+              mode: "direct",
+              handle: syntheticCloseHandle(),
+              reason: "taskcore missing-handle cleanup",
+              discardPersistentState: false,
+              dropWarmEntry: false,
+              recordCloseError: true,
+              cancelTurnReason: null,
+              skipRemoteClose: false,
+            };
+            await emitPhase(
+              "ensure_session",
+              ensureSessionPhaseStart,
+              "failed",
+            );
+            capturedResult = {
+              exitCode: 1,
+              signal: null,
+              timedOut: false,
+              errorMessage: "ACPX did not return a runtime session handle.",
+              errorCode: "acpx_runtime_error",
+              ...billingFields,
+              ...referencedProjectStagingFailuresField,
+              model: prepared.requestedModel || null,
+              resultJson: { phase: "ensure_session" },
+              summary: "ACPX did not return a runtime session handle.",
+            };
+            return settleFor(
+              "session_handle_missing",
+              new Error("ACPX did not return a runtime session handle."),
+            );
           }
-          // A compatible warm handle reuses the already-running ACP agent and does
-          // not emit another spawn event. Persist its known identity on this run
-          // before the next prompt starts so every running heartbeat is adoptable.
-          if (handle && cached && processIdentitySink.latest && ctx.onSpawn) {
-            await ctx.onSpawn({
-              pid: processIdentitySink.latest.pid,
-              processGroupId: null,
-              startedAt: processIdentitySink.latest.startedAt,
-            });
-          }
+          sessionHandle = handle;
+          startupFailed = false;
+          await emitPhase("ensure_session", ensureSessionPhaseStart, "ok");
         } catch (err) {
-          // Record how the settlement closes the runtime on a pre-turn handshake
-          // failure: a direct close that drops a matching warm entry, the same as
-          // the configuration-failure path. A warm-hit reuse already cleared the
-          // idle timer before the handshake ran, so the failure must close and
-          // remove the entry, never re-arm it. A cold `ensureSession` throw has no
-          // established handle, so the settlement closes the synthetic handle — the
-          // ledger now holds the runtime, so `endSession` closes it and the former
-          // cold-handshake leak is gone. The settlement stops the bridges, releases
-          // the staging lease, and flushes the child stderr on every exit path.
-          //
-          // A handshake-guard rejection is the one exception: `handle` stays
-          // null, but the abandoned `ensureSession` call can still resolve
-          // into a real handle later. `handshakeAbandoned` tells `endSession`
-          // to defer that placeholder close to `handshakeFence` when no late
-          // handle has arrived yet, instead of closing it here and possibly
-          // again later.
-          const guardTripped = isAcpxHandshakeTimeoutError(err) || isAcpxHandshakeTransportLostError(err);
-          handshakeAbandoned = guardTripped;
-          runtimeSettlement = {
-            mode: "direct",
-            handle: handle ?? syntheticCloseHandle(),
-            reason: "taskcore handshake cleanup",
-            discardPersistentState: false,
-            dropWarmEntry: true,
-            recordCloseError: true,
-            cancelTurnReason: null,
-            skipRemoteClose: false,
-          };
-          await emitPhase("ensure_session", ensureSessionPhaseStart, "failed");
+          if (!buildRuntimeSettled) {
+            // buildRuntime failed before it staged or bridged anything, so there is
+            // nothing to settle here. The finally below ends the sandbox.startup
+            // span; let the failure propagate.
+            throw err;
+          }
+          // The post-build runtime-creation window failed after buildRuntime returned
+          // live bridges and a held staging lease. `createRuntime` throws before the
+          // ledger registers the runtime, so the settlement `endSession` step no-ops
+          // on the empty slot (create_runtime never closes a runtime). The settlement
+          // still stops the bridges, discards the staged runtime, releases the staging
+          // lease, and flushes the child stderr.
           const { classified, message } = await emitAcpxFailure({
             ctx,
             prepared,
             err,
-            phase: "ensure_session",
-            // The guard's own message is already generic and host-authored, so
-            // this replaces the underlying error text with the same closed
-            // message `classifyError` classified — the ensure_session phase
-            // never gets a chance to summarize it differently.
-            ...(guardTripped && err instanceof Error ? { messageOverride: err.message } : {}),
-            // A compromised child can hold ensureSession open until the guard
-            // fires, then write chosen bytes to its own stderr. Suppress the
-            // child stderr tail on this route only, so those sandbox-provided
-            // bytes never reach the run log or the acpx.error payload.
-            ...(guardTripped ? { suppressChildStderrTail: true } : {}),
+            phase: "create_runtime",
           });
           capturedResult = {
             exitCode: 1,
@@ -4594,727 +5329,856 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
             ...referencedProjectStagingFailuresField,
             model: prepared.requestedModel || null,
             clearSession,
-            resultJson: { phase: "ensure_session" },
+            resultJson: { phase: "create_runtime" },
             summary: message,
           };
-          return settleFor("handshake", err);
+          return settleFor("runtime_create", err);
+        } finally {
+          // End the sandbox.startup span exactly once, on every return and on every
+          // throw. It covers buildRuntime through acp.handshake and no further; the
+          // agent turn runs after and is out of the span's scope.
+          rootSpan.end(startupFailed);
         }
-
-        if (!handle) {
-          // ensureSession returned no session handle. The ledger holds the runtime
-          // the run constructed, so record a direct close of the synthetic handle
-          // for the settlement `endSession` step (the child process cannot leak).
+        const configureSessionStart = now();
+        try {
+          await applySessionConfigOptions({
+            runtime,
+            handle: sessionHandle,
+            prepared,
+            onLog: ctx.onLog,
+          });
+          await emitPhase("configure_session", configureSessionStart, "ok");
+        } catch (err) {
+          // Record a direct close that drops the matching warm entry for the
+          // settlement `endSession` step. The settlement stops the bridges, discards
+          // the staged runtime, releases the staging lease, and flushes the child
+          // stderr on this exit path too.
           runtimeSettlement = {
             mode: "direct",
-            handle: syntheticCloseHandle(),
-            reason: "taskcore missing-handle cleanup",
+            handle: sessionHandle,
+            reason: "taskcore config cleanup",
             discardPersistentState: false,
-            dropWarmEntry: false,
+            dropWarmEntry: true,
             recordCloseError: true,
             cancelTurnReason: null,
             skipRemoteClose: false,
           };
-          await emitPhase("ensure_session", ensureSessionPhaseStart, "failed");
+          await emitPhase("configure_session", configureSessionStart, "failed");
+          const { classified, message } = await emitAcpxFailure({
+            ctx,
+            prepared,
+            err,
+            phase: "configure_session",
+          });
           capturedResult = {
             exitCode: 1,
             signal: null,
             timedOut: false,
-            errorMessage: "ACPX did not return a runtime session handle.",
-            errorCode: "acpx_runtime_error",
+            errorMessage: message,
+            ...classified,
             ...billingFields,
             ...referencedProjectStagingFailuresField,
             model: prepared.requestedModel || null,
-            resultJson: { phase: "ensure_session" },
-            summary: "ACPX did not return a runtime session handle.",
+            clearSession,
+            resultJson: {
+              phase: "configure_session",
+              agent: prepared.acpxAgent,
+              requestedModel: prepared.requestedModel || null,
+              requestedThinkingEffort: prepared.requestedThinkingEffort || null,
+              fastMode: prepared.fastMode,
+            },
+            summary: message,
           };
-          return settleFor(
-            "session_handle_missing",
-            new Error("ACPX did not return a runtime session handle."),
-          );
+          return settleFor("session_configuration", err);
         }
-        sessionHandle = handle;
-        startupFailed = false;
-        await emitPhase("ensure_session", ensureSessionPhaseStart, "ok");
-      } catch (err) {
-        if (!buildRuntimeSettled) {
-          // buildRuntime failed before it staged or bridged anything, so there is
-          // nothing to settle here. The finally below ends the sandbox.startup
-          // span; let the failure propagate.
-          throw err;
-        }
-        // The post-build runtime-creation window failed after buildRuntime returned
-        // live bridges and a held staging lease. `createRuntime` throws before the
-        // ledger registers the runtime, so the settlement `endSession` step no-ops
-        // on the empty slot (create_runtime never closes a runtime). The settlement
-        // still stops the bridges, discards the staged runtime, releases the staging
-        // lease, and flushes the child stderr.
-        const { classified, message } = await emitAcpxFailure({
-          ctx,
-          prepared,
-          err,
-          phase: "create_runtime",
-        });
-        capturedResult = {
-          exitCode: 1,
-          signal: null,
-          timedOut: false,
-          errorMessage: message,
-          ...classified,
-          ...billingFields,
-          ...referencedProjectStagingFailuresField,
-          model: prepared.requestedModel || null,
-          clearSession,
-          resultJson: { phase: "create_runtime" },
-          summary: message,
+        // Startup succeeded: seal the ledger (promotes the startup_rollback entries
+        // that survived to `per_run`) and hand the ready resources to the turn. The
+        // turn wrapper reads the run state through the shared closure locals in this
+        // phase, so the sealed view and the context are the contract carriers only.
+        return {
+          kind: "ready",
+          resources: runResourceLedger.seal([]),
+          context: {
+            sessionKey: prepared.sessionKey,
+          } as unknown as AcpRunContext,
         };
-        return settleFor("runtime_create", err);
-      } finally {
-        // End the sandbox.startup span exactly once, on every return and on every
-        // throw. It covers buildRuntime through acp.handshake and no further; the
-        // agent turn runs after and is out of the span's scope.
-        rootSpan.end(startupFailed);
-      }
-      const configureSessionStart = now();
-      try {
-        await applySessionConfigOptions({
-          runtime,
-          handle: sessionHandle,
-          prepared,
-          onLog: ctx.onLog,
-        });
-        await emitPhase("configure_session", configureSessionStart, "ok");
-      } catch (err) {
-        // Record a direct close that drops the matching warm entry for the
-        // settlement `endSession` step. The settlement stops the bridges, discards
-        // the staged runtime, releases the staging lease, and flushes the child
-        // stderr on this exit path too.
-        runtimeSettlement = {
-          mode: "direct",
-          handle: sessionHandle,
-          reason: "taskcore config cleanup",
-          discardPersistentState: false,
-          dropWarmEntry: true,
-          recordCloseError: true,
-          cancelTurnReason: null,
-          skipRemoteClose: false,
-        };
-        await emitPhase("configure_session", configureSessionStart, "failed");
-        const { classified, message } = await emitAcpxFailure({
-          ctx,
-          prepared,
-          err,
-          phase: "configure_session",
-        });
-        capturedResult = {
-          exitCode: 1,
-          signal: null,
-          timedOut: false,
-          errorMessage: message,
-          ...classified,
-          ...billingFields,
-          ...referencedProjectStagingFailuresField,
-          model: prepared.requestedModel || null,
-          clearSession,
-          resultJson: {
-            phase: "configure_session",
-            agent: prepared.acpxAgent,
-            requestedModel: prepared.requestedModel || null,
-            requestedThinkingEffort: prepared.requestedThinkingEffort || null,
-            fastMode: prepared.fastMode,
-          },
-          summary: message,
-        };
-        return settleFor("session_configuration", err);
-      }
-      // Startup succeeded: seal the ledger (promotes the startup_rollback entries
-      // that survived to `per_run`) and hand the ready resources to the turn. The
-      // turn wrapper reads the run state through the shared closure locals in this
-      // phase, so the sealed view and the context are the contract carriers only.
-      return {
-        kind: "ready",
-        resources: runResourceLedger.seal([]),
-        context: { sessionKey: prepared.sessionKey } as unknown as AcpRunContext,
-      };
       };
       // The turn step: run the turn sequence and settle the runtime inline
       // (today's behavior). The sequence owns the wall-clock timer and the abort
       // controller and never rejects; it returns a `TurnCompletion`. The step
       // bodies below record the external result for the coordinator to reproduce.
       const runTurn = async (_ready: StartupReady): Promise<TurnCompletion> => {
-      // Summary accumulation collects output text only (never thought stream),
-      // segmented on tool starts so multi-step narration is not glued into one
-      // automatic comment dump.
-      const outputSegments: string[] = [];
-      let currentOutputChunk: string[] = [];
-      const flushOutputSegment = () => {
-        if (currentOutputChunk.length === 0) return;
-        outputSegments.push(currentOutputChunk.join(""));
-        currentOutputChunk = [];
-      };
-      let eventBreakdown: AcpRuntimeUsageBreakdown | null = null;
-      let eventCostUsd: number | null = null;
-      // Receipt persistence is fallible; retain the provider evidence before
-      // calling the sink so the failure result can still return it to the host.
-      let observedUsage: Pick<AdapterExecutionResult, "usage" | "usageBasis" | "costUsd" | "usageComplete"> = { usageComplete: false };
-      let lastRuntimeEventAt: number | null = null;
-      let observedRuntimeEvents = 0;
-      let turnDispatchAttempted = false;
-      // The turn-local state the sequence steps share. `promptBuild` sets the
-      // prompt, `preTurnUsage` sets the pre-turn status, `turnStart` sets the
-      // active turn, and `turnFinalize` reads all three. `activeTurn` is the run-
-      // scoped hoisted local, so the settlement `endSession` step can cancel it.
-      let runPrompt = "";
-      let preTurnStatus: AcpRuntimeStatus | null = null;
-      // Phase-timing markers for the prepare_turn and turn phases. The prepare
-      // phase covers the prompt build and the pre-turn usage snapshot; the turn
-      // phase covers the started turn and the event relay.
-      let preparePhaseStart = now();
-      let turnPhaseStart = now();
-      // Open the agent turn span as a child of the run root span. It wraps the
-      // whole turn: the executor holds `turnSpan.parentContext` for later exec
-      // parenting, and the `finally` below ends the span once on every path. The
-      // span is declared before the `try` so the `finally` can reach it.
-      const turnSpan = openTurnSpan(tracing, now, runRootSpan.parentContext);
-      // Switch the current-run holder to the `agent.turn` token for the turn, so
-      // a detached exec during the turn parents to `agent.turn`. The turn
-      // `finally` resets the holder to the `task.run` token.
-      currentRunParentContext = turnSpan.parentContext;
-      const stepPromptBuild = async (_signal: AbortSignal): Promise<void> => {
-        // Build the prompt and emit the run metadata inside the turn failure
-        // boundary. A failure here returns an error result with phase
-        // `prepare_turn`.
-        preparePhaseStart = now();
-        const { prompt, promptMetrics, commandNotes } = await buildPrompt(ctx, resumedSession, prepared.env);
-        runPrompt = joinPromptSections([prepared.skillPromptInstructions, prompt]);
-        await emitAcpxLog(ctx, {
-          type: "acpx.session",
-          agent: prepared.acpxAgent,
-          sessionId: sessionHandle.backendSessionId,
-          acpSessionId: sessionHandle.backendSessionId,
-          agentSessionId: sessionHandle.agentSessionId,
-          runtimeSessionName: sessionHandle.runtimeSessionName,
-          mode: prepared.mode,
-          permissionMode: prepared.permissionMode,
-          model: prepared.requestedModel || null,
-          thinkingEffort: prepared.requestedThinkingEffort || null,
-          fastMode: prepared.fastMode,
-        });
-        if (ctx.onMeta) {
-          await ctx.onMeta({
-            adapterType: engine.adapterType,
-            command: prepared.agentCommand ?? prepared.acpxAgent,
-            cwd: prepared.cwd,
-            commandNotes: [
-              `ACPX runtime embedded in Taskcore with ${prepared.mode} session mode.`,
-              `Effective ACPX permission mode: ${prepared.permissionMode}.`,
-              ...(prepared.requestedModel
-                ? [
-                    prepared.acpxAgent === "claude"
-                      ? `Requested ACPX model: ${prepared.requestedModel} (set via ANTHROPIC_MODEL env at startup).`
-                      : prepared.acpxAgent === "codex"
-                        ? `Requested ACPX model: ${prepared.requestedModel} (set via CODEX_CONFIG at startup).`
-                      : prepared.acpxAgent === "gemini"
-                        ? `Requested ACPX model: ${prepared.requestedModel} (set via GEMINI_MODEL at startup).`
-                      : `Requested ACPX model: ${prepared.requestedModel}.`,
-                  ]
-                : []),
-              ...(prepared.requestedThinkingEffort ? [`Requested ACPX thinking effort: ${prepared.requestedThinkingEffort}.`] : []),
-              ...(prepared.fastMode ? ["Requested ACPX Codex fast mode."] : []),
-              ...(Array.isArray(prepared.skillsIdentity.commandNotes)
-                ? prepared.skillsIdentity.commandNotes.filter((note): note is string => typeof note === "string")
-                : []),
-              ...commandNotes,
-            ],
-            env: prepared.loggedEnv,
-            prompt: runPrompt,
-            promptMetrics,
-            context: ctx.context,
+        // Summary accumulation collects output text only (never thought stream),
+        // segmented on tool starts so multi-step narration is not glued into one
+        // automatic comment dump.
+        const outputSegments: string[] = [];
+        let currentOutputChunk: string[] = [];
+        const flushOutputSegment = () => {
+          if (currentOutputChunk.length === 0) return;
+          outputSegments.push(currentOutputChunk.join(""));
+          currentOutputChunk = [];
+        };
+        let eventBreakdown: AcpRuntimeUsageBreakdown | null = null;
+        let eventCostUsd: number | null = null;
+        // Receipt persistence is fallible; retain the provider evidence before
+        // calling the sink so the failure result can still return it to the host.
+        let observedUsage: Pick<
+          AdapterExecutionResult,
+          "usage" | "usageBasis" | "costUsd" | "usageComplete"
+        > = { usageComplete: false };
+        let lastRuntimeEventAt: number | null = null;
+        let observedRuntimeEvents = 0;
+        let turnDispatchAttempted = false;
+        // The turn-local state the sequence steps share. `promptBuild` sets the
+        // prompt, `preTurnUsage` sets the pre-turn status, `turnStart` sets the
+        // active turn, and `turnFinalize` reads all three. `activeTurn` is the run-
+        // scoped hoisted local, so the settlement `endSession` step can cancel it.
+        let runPrompt = "";
+        let preTurnStatus: AcpRuntimeStatus | null = null;
+        // Phase-timing markers for the prepare_turn and turn phases. The prepare
+        // phase covers the prompt build and the pre-turn usage snapshot; the turn
+        // phase covers the started turn and the event relay.
+        let preparePhaseStart = now();
+        let turnPhaseStart = now();
+        // Open the agent turn span as a child of the run root span. It wraps the
+        // whole turn: the executor holds `turnSpan.parentContext` for later exec
+        // parenting, and the `finally` below ends the span once on every path. The
+        // span is declared before the `try` so the `finally` can reach it.
+        const turnSpan = openTurnSpan(tracing, now, runRootSpan.parentContext);
+        // Switch the current-run holder to the `agent.turn` token for the turn, so
+        // a detached exec during the turn parents to `agent.turn`. The turn
+        // `finally` resets the holder to the `task.run` token.
+        currentRunParentContext = turnSpan.parentContext;
+        const stepPromptBuild = async (_signal: AbortSignal): Promise<void> => {
+          // Build the prompt and emit the run metadata inside the turn failure
+          // boundary. A failure here returns an error result with phase
+          // `prepare_turn`.
+          preparePhaseStart = now();
+          const { prompt, promptMetrics, commandNotes } = await buildPrompt(
+            ctx,
+            resumedSession,
+            prepared.env,
+          );
+          runPrompt = joinPromptSections([
+            prepared.skillPromptInstructions,
+            prompt,
+          ]);
+          await emitAcpxLog(ctx, {
+            type: "acpx.session",
+            agent: prepared.acpxAgent,
+            sessionId: sessionHandle.backendSessionId,
+            acpSessionId: sessionHandle.backendSessionId,
+            agentSessionId: sessionHandle.agentSessionId,
+            runtimeSessionName: sessionHandle.runtimeSessionName,
+            mode: prepared.mode,
+            permissionMode: prepared.permissionMode,
+            model: prepared.requestedModel || null,
+            thinkingEffort: prepared.requestedThinkingEffort || null,
+            fastMode: prepared.fastMode,
           });
-        }
-      };
-      const stepPreTurnUsage = async (): Promise<void> => {
-        // Snapshot pre-turn usage so cumulative agent-reported cost can be
-        // attributed to this run alone.
-        preTurnStatus = await readRuntimeStatus(runtime, sessionHandle);
-        // The prepare phase (prompt build + usage snapshot) finished; the turn
-        // phase starts next.
-        await emitPhase("prepare_turn", preparePhaseStart, "ok");
-        turnPhaseStart = now();
-      };
-      const stepTurnStart = (signal: AbortSignal, startTimeoutMs: number | undefined): StartedTurn => {
-        ctx.signal?.throwIfAborted();
-        // After entering startTurn, a thrown error cannot prove the provider
-        // received no work. Only failures before this boundary are free to settle.
-        turnDispatchAttempted = true;
-        const turn = runtime.startTurn({
-          handle: sessionHandle,
-          text: runPrompt,
-          mode: "prompt",
-          requestId: ctx.runId,
-          timeoutMs: startTimeoutMs,
-          signal,
-          // The callback belongs to this turn, including when a runtime is reused.
-          // Diagnostics are retained even when an adapter has no recovery
-          // classifier. Redact before bounding so partial secrets cannot leak.
-          onTerminalSessionFailure: (failure: AcpxTerminalSessionFailure) => {
-            terminalFailureClassification = classifyToolDefinitionFailure(failure)
-              ?? deps.classifyTerminalSessionFailure?.(failure, new Date(now())) ?? null;
-            terminalSessionFailure = sanitizeTerminalSessionFailure(
-              failure, prepared.env, ctx.authToken, parseObject(ctx.config.env),
-            );
-          },
-        });
-        activeTurn = turn;
-        // A latched sandbox duplex-channel loss otherwise has no way to reach
-        // this turn: the bridge only exposes a pull read, and the engine
-        // pulls it at the terminal-finalization boundary, which runs only
-        // after the turn already returned a terminal result. A channel that
-        // dies mid-turn then leaves the turn with no terminal result to
-        // return, so it waits for the wall-clock adapter execution timeout
-        // instead of failing fast. Cancel the turn the moment a terminal loss
-        // latches — whether it latches from here on, or already latched
-        // before this turn started — so the turn returns a terminal result
-        // right away. `turnFinalize` reads the same latch and builds the
-        // failure from the typed loss reason alone.
-        const bridge = prepared.taskcoreBridge;
-        if (bridge?.onLoss) {
-          const cancelForLoss = (reason: DuplexLossReason) => {
-            void turn.cancel({ reason: `taskcore sandbox duplex channel lost (${reason})` }).catch(() => {});
-            // `cancel()` only asks the agent to end the turn; it does not end
-            // the turn by itself. Start the fail-fast deadline the moment the
-            // loss latches, so the run does not wait past this bound for an
-            // agent that stopped answering.
-            if (!lossDeadlineTimer && !lossDeadlineTripped) {
-              lossDeadlineTimer = setTimeout(() => {
-                lossDeadlineTripped = true;
-                resolveLossDeadline?.();
-              }, duplexLossCancelDeadlineMs);
-            }
-          };
-          removeLossListener = bridge.onLoss(cancelForLoss);
-          const alreadyLatched = bridge.readRunDisposition?.();
-          if (alreadyLatched?.failed) cancelForLoss(alreadyLatched.lossReason ?? "other");
-        }
-        // ACP can resolve the turn before its provider exits. Keep the Stop
-        // deadline armed through settlement, including provider cleanup.
-        const armStopDeadline = () => {
-          stopTimer = setTimeout(() => {
-            forcedStop = true;
-            const providerPid = processIdentitySink.latest?.pid;
-            if (providerPid && !prepared.processSessionBridge) {
-              // Escalate the owned local process directly. A second ACP close
-              // can wait behind the same hung cleanup (or open a new client).
-              killCapturedLocalProcess(processIdentitySink.localProcess);
-            } else {
-              void runtime.close({ handle: sessionHandle, reason: "operator stop deadline", discardPersistentState: true })
+          if (ctx.onMeta) {
+            await ctx.onMeta({
+              adapterType: engine.adapterType,
+              command: prepared.agentCommand ?? prepared.acpxAgent,
+              cwd: prepared.cwd,
+              commandNotes: [
+                `ACPX runtime embedded in Taskcore with ${prepared.mode} session mode.`,
+                `Effective ACPX permission mode: ${prepared.permissionMode}.`,
+                ...(prepared.requestedModel
+                  ? [
+                      prepared.acpxAgent === "claude"
+                        ? `Requested ACPX model: ${prepared.requestedModel} (set via ANTHROPIC_MODEL env at startup).`
+                        : prepared.acpxAgent === "codex"
+                          ? `Requested ACPX model: ${prepared.requestedModel} (set via CODEX_CONFIG at startup).`
+                          : prepared.acpxAgent === "gemini"
+                            ? `Requested ACPX model: ${prepared.requestedModel} (set via GEMINI_MODEL at startup).`
+                            : `Requested ACPX model: ${prepared.requestedModel}.`,
+                    ]
+                  : []),
+                ...(prepared.requestedThinkingEffort
+                  ? [
+                      `Requested ACPX thinking effort: ${prepared.requestedThinkingEffort}.`,
+                    ]
+                  : []),
+                ...(prepared.fastMode
+                  ? ["Requested ACPX Codex fast mode."]
+                  : []),
+                ...(Array.isArray(prepared.skillsIdentity.commandNotes)
+                  ? prepared.skillsIdentity.commandNotes.filter(
+                      (note): note is string => typeof note === "string",
+                    )
+                  : []),
+                ...commandNotes,
+              ],
+              env: prepared.loggedEnv,
+              prompt: runPrompt,
+              promptMetrics,
+              context: ctx.context,
+            });
+          }
+        };
+        const stepPreTurnUsage = async (): Promise<void> => {
+          // Snapshot pre-turn usage so cumulative agent-reported cost can be
+          // attributed to this run alone.
+          preTurnStatus = await readRuntimeStatus(runtime, sessionHandle);
+          // The prepare phase (prompt build + usage snapshot) finished; the turn
+          // phase starts next.
+          await emitPhase("prepare_turn", preparePhaseStart, "ok");
+          turnPhaseStart = now();
+        };
+        const stepTurnStart = (
+          signal: AbortSignal,
+          startTimeoutMs: number | undefined,
+        ): StartedTurn => {
+          ctx.signal?.throwIfAborted();
+          // After entering startTurn, a thrown error cannot prove the provider
+          // received no work. Only failures before this boundary are free to settle.
+          turnDispatchAttempted = true;
+          const turn = runtime.startTurn({
+            handle: sessionHandle,
+            text: runPrompt,
+            mode: "prompt",
+            requestId: ctx.runId,
+            timeoutMs: startTimeoutMs,
+            signal,
+            // The callback belongs to this turn, including when a runtime is reused.
+            // Diagnostics are retained even when an adapter has no recovery
+            // classifier. Redact before bounding so partial secrets cannot leak.
+            onTerminalSessionFailure: (failure: AcpxTerminalSessionFailure) => {
+              terminalFailureClassification =
+                classifyToolDefinitionFailure(failure) ??
+                deps.classifyTerminalSessionFailure?.(
+                  failure,
+                  new Date(now()),
+                ) ??
+                null;
+              terminalSessionFailure = sanitizeTerminalSessionFailure(
+                failure,
+                prepared.env,
+                ctx.authToken,
+                parseObject(ctx.config.env),
+              );
+            },
+          });
+          activeTurn = turn;
+          // A latched sandbox duplex-channel loss otherwise has no way to reach
+          // this turn: the bridge only exposes a pull read, and the engine
+          // pulls it at the terminal-finalization boundary, which runs only
+          // after the turn already returned a terminal result. A channel that
+          // dies mid-turn then leaves the turn with no terminal result to
+          // return, so it waits for the wall-clock adapter execution timeout
+          // instead of failing fast. Cancel the turn the moment a terminal loss
+          // latches — whether it latches from here on, or already latched
+          // before this turn started — so the turn returns a terminal result
+          // right away. `turnFinalize` reads the same latch and builds the
+          // failure from the typed loss reason alone.
+          const bridge = prepared.taskcoreBridge;
+          if (bridge?.onLoss) {
+            const cancelForLoss = (reason: DuplexLossReason) => {
+              void turn
+                .cancel({
+                  reason: `taskcore sandbox duplex channel lost (${reason})`,
+                })
                 .catch(() => {});
-            }
-          }, Math.max(1, asNumber(ctx.config.graceSec, 15)) * 1000);
+              // `cancel()` only asks the agent to end the turn; it does not end
+              // the turn by itself. Start the fail-fast deadline the moment the
+              // loss latches, so the run does not wait past this bound for an
+              // agent that stopped answering.
+              if (!lossDeadlineTimer && !lossDeadlineTripped) {
+                lossDeadlineTimer = setTimeout(() => {
+                  lossDeadlineTripped = true;
+                  resolveLossDeadline?.();
+                }, duplexLossCancelDeadlineMs);
+              }
+            };
+            removeLossListener = bridge.onLoss(cancelForLoss);
+            const alreadyLatched = bridge.readRunDisposition?.();
+            if (alreadyLatched?.failed)
+              cancelForLoss(alreadyLatched.lossReason ?? "other");
+          }
+          // ACP can resolve the turn before its provider exits. Keep the Stop
+          // deadline armed through settlement, including provider cleanup.
+          const armStopDeadline = () => {
+            stopTimer = setTimeout(
+              () => {
+                forcedStop = true;
+                const providerPid = processIdentitySink.latest?.pid;
+                if (providerPid && !prepared.processSessionBridge) {
+                  // Escalate the owned local process directly. A second ACP close
+                  // can wait behind the same hung cleanup (or open a new client).
+                  killCapturedLocalProcess(processIdentitySink.localProcess);
+                } else {
+                  void runtime
+                    .close({
+                      handle: sessionHandle,
+                      reason: "operator stop deadline",
+                      discardPersistentState: true,
+                    })
+                    .catch(() => {});
+                }
+              },
+              Math.max(1, asNumber(ctx.config.graceSec, 15)) * 1000,
+            );
+          };
+          ctx.signal?.addEventListener("abort", armStopDeadline, {
+            once: true,
+          });
+          removeStopListener = () =>
+            ctx.signal?.removeEventListener("abort", armStopDeadline);
+          if (ctx.signal?.aborted) armStopDeadline();
+          return {
+            cancel: async (reason: string) => {
+              await withAdapterExecutionPhase(ctx, "cancel_turn", () =>
+                turn.cancel({ reason }),
+              );
+            },
+          };
         };
-        ctx.signal?.addEventListener("abort", armStopDeadline, { once: true });
-        removeStopListener = () => ctx.signal?.removeEventListener("abort", armStopDeadline);
-        if (ctx.signal?.aborted) armStopDeadline();
-        return {
-          cancel: async (reason: string) => {
-            await withAdapterExecutionPhase(ctx, "cancel_turn", () => turn.cancel({ reason }));
-          },
+        // The host-built terminal `stepEventRelay` hands to `turnFinalize` once
+        // the fail-fast deadline fires with no agent-supplied terminal. Its
+        // `status` mirrors the shape a real cooperative cancel already
+        // produces, so `turnFinalize` needs no change: it reads the latched
+        // loss disposition, not this `stopReason`, to build the reported
+        // failure and its message.
+        const LOSS_DEADLINE_TERMINAL: AcpRuntimeTurnResult = {
+          status: "cancelled",
+          stopReason: "taskcore_duplex_loss_deadline",
         };
-      };
-      // The host-built terminal `stepEventRelay` hands to `turnFinalize` once
-      // the fail-fast deadline fires with no agent-supplied terminal. Its
-      // `status` mirrors the shape a real cooperative cancel already
-      // produces, so `turnFinalize` needs no change: it reads the latched
-      // loss disposition, not this `stopReason`, to build the reported
-      // failure and its message.
-      const LOSS_DEADLINE_TERMINAL: AcpRuntimeTurnResult = {
-        status: "cancelled",
-        stopReason: "taskcore_duplex_loss_deadline",
-      };
-      const stepEventRelay = async (): Promise<AcpRuntimeTurnResult> => {
-        const turn = activeTurn as AcpRuntimeTurn;
-        const toolTitles = new Map<string, string>();
-        const drainEvents = (async (): Promise<void> => {
-          for await (const event of turn.events) {
-            lastRuntimeEventAt = now();
-            observedRuntimeEvents += 1;
-            // ACPX currently flattens client-side filesystem/terminal receipts
-            // into status text. They cannot establish complete action outcomes.
-            if (event.type === "status" && /^(fs|terminal)\//.test(event.text)) incompleteToolInventory = true;
-            if (event.type === "tool_call") {
-              if (!event.toolCallId) incompleteToolInventory = true;
-              else {
-                const previous = interruptionTools.get(event.toolCallId);
-                interruptionTools.set(event.toolCallId, {
-                  kind: event.kind ?? previous?.kind,
-                  status: event.status ?? previous?.status,
+        const stepEventRelay = async (): Promise<AcpRuntimeTurnResult> => {
+          const turn = activeTurn as AcpRuntimeTurn;
+          const toolTitles = new Map<string, string>();
+          const drainEvents = (async (): Promise<void> => {
+            for await (const event of turn.events) {
+              lastRuntimeEventAt = now();
+              observedRuntimeEvents += 1;
+              // ACPX currently flattens client-side filesystem/terminal receipts
+              // into status text. They cannot establish complete action outcomes.
+              if (
+                event.type === "status" &&
+                /^(fs|terminal)\//.test(event.text)
+              )
+                incompleteToolInventory = true;
+              if (event.type === "tool_call") {
+                if (!event.toolCallId) incompleteToolInventory = true;
+                else {
+                  const previous = interruptionTools.get(event.toolCallId);
+                  interruptionTools.set(event.toolCallId, {
+                    kind: event.kind ?? previous?.kind,
+                    status: event.status ?? previous?.status,
+                  });
+                }
+              }
+              if (event.type === "text_delta" && event.stream !== "thought") {
+                currentOutputChunk.push(event.text);
+              } else if (
+                event.type === "tool_call" &&
+                event.tag !== "tool_call_update"
+              ) {
+                // ACP makes tool-call status optional. The normalized event tag is
+                // the reliable boundary between an initial call and its updates,
+                // so a statusless initial call must still end the preceding output
+                // segment while updates must not create extra boundaries.
+                flushOutputSegment();
+              }
+              if (event.type === "status" && event.tag === "usage_update") {
+                eventBreakdown = event.breakdown ?? eventBreakdown;
+                eventCostUsd = usdCostAmount(event.cost) ?? eventCostUsd;
+                const checkpoint = summarizeAcpxTurnUsage({
+                  preStatus: preTurnStatus,
+                  postStatus: null,
+                  eventBreakdown,
+                  eventCostUsd,
+                });
+                observedUsage = {
+                  usage: checkpoint.usage ?? undefined,
+                  costUsd: checkpoint.costUsd,
+                  usageBasis: "per_run",
+                  usageComplete: false,
+                };
+                await ctx.onUsage?.({
+                  ...billingFields,
+                  usage: checkpoint.usage ?? undefined,
+                  costUsd: checkpoint.costUsd,
+                  model: prepared.requestedModel,
+                  usageBasis: "per_run",
+                  complete: false,
                 });
               }
+              await emitRuntimeEvent(
+                ctx,
+                event,
+                toolTitles,
+                prepared.coalescePlaceholderToolUpdates,
+              );
             }
-            if (event.type === "text_delta" && event.stream !== "thought") {
-              currentOutputChunk.push(event.text);
-            } else if (event.type === "tool_call" && event.tag !== "tool_call_update") {
-              // ACP makes tool-call status optional. The normalized event tag is
-              // the reliable boundary between an initial call and its updates,
-              // so a statusless initial call must still end the preceding output
-              // segment while updates must not create extra boundaries.
-              flushOutputSegment();
-            }
-            if (event.type === "status" && event.tag === "usage_update") {
-              eventBreakdown = event.breakdown ?? eventBreakdown;
-              eventCostUsd = usdCostAmount(event.cost) ?? eventCostUsd;
-              const checkpoint = summarizeAcpxTurnUsage({ preStatus: preTurnStatus, postStatus: null, eventBreakdown, eventCostUsd });
-              observedUsage = { usage: checkpoint.usage ?? undefined, costUsd: checkpoint.costUsd, usageBasis: "per_run", usageComplete: false };
-              await ctx.onUsage?.({ ...billingFields, usage: checkpoint.usage ?? undefined, costUsd: checkpoint.costUsd,
-                model: prepared.requestedModel, usageBasis: "per_run", complete: false });
-            }
-            await emitRuntimeEvent(ctx, event, toolTitles, prepared.coalescePlaceholderToolUpdates);
+          })();
+          // A latched loss already asked the agent to cancel (above, in
+          // `cancelForLoss`); that request settles neither `turn.events` nor
+          // `turn.result` by itself. Race the event drain against the fail-fast
+          // deadline so a silent agent cannot hold this wait open.
+          const eventsEnded = await Promise.race([
+            drainEvents.then(() => true as const),
+            lossDeadline.then(() => false as const),
+          ]);
+          if (!eventsEnded) {
+            // The deadline won: stop waiting on the agent. `closeStream` ends
+            // the event drain locally, with no agent cooperation required. Await
+            // both the close call and the drain it unblocks before this step
+            // returns, so no late runtime event can still mutate shared state
+            // (output segments, tool inventory) after finalization reads it.
+            await turn
+              .closeStream({ reason: "taskcore duplex loss cancel deadline" })
+              .catch(() => {});
+            await drainEvents.catch(() => {});
+            flushOutputSegment();
+            return LOSS_DEADLINE_TERMINAL;
           }
-        })();
-        // A latched loss already asked the agent to cancel (above, in
-        // `cancelForLoss`); that request settles neither `turn.events` nor
-        // `turn.result` by itself. Race the event drain against the fail-fast
-        // deadline so a silent agent cannot hold this wait open.
-        const eventsEnded = await Promise.race([
-          drainEvents.then(() => true as const),
-          lossDeadline.then(() => false as const),
-        ]);
-        if (!eventsEnded) {
-          // The deadline won: stop waiting on the agent. `closeStream` ends
-          // the event drain locally, with no agent cooperation required. Await
-          // both the close call and the drain it unblocks before this step
-          // returns, so no late runtime event can still mutate shared state
-          // (output segments, tool inventory) after finalization reads it.
-          await turn.closeStream({ reason: "taskcore duplex loss cancel deadline" }).catch(() => {});
-          await drainEvents.catch(() => {});
           flushOutputSegment();
-          return LOSS_DEADLINE_TERMINAL;
-        }
-        flushOutputSegment();
-        // `turn.result` settles only when the agent's provider process
-        // returns or rejects; a latched loss that armed the deadline after
-        // the event drain already ended must still bound this wait.
-        return await Promise.race([turn.result, lossDeadline.then(() => LOSS_DEADLINE_TERMINAL)]);
-      };
-      const stepTurnFinalize = async (
-        input: TurnFinalizeInput<AcpRuntimeTurnResult>,
-      ): Promise<TurnCompletion> => {
-        // Capture runtime activity before usage reads, error logs, or cleanup
-        // make an otherwise silent turn look active at its execution deadline.
-        const lastEventAgeMs = lastRuntimeEventAt === null ? undefined : now() - lastRuntimeEventAt;
-        const activityDiagnostics = {
-          acpObservedEventCount: observedRuntimeEvents,
-          ...(lastEventAgeMs !== undefined && Number.isSafeInteger(lastEventAgeMs) && lastEventAgeMs >= 0
-            ? { acpLastEventAgeMs: lastEventAgeMs } : {}),
-          acpPendingToolCount: [...interruptionTools.values()].filter(
-            (tool) => tool.status !== "completed" && tool.status !== "failed" && tool.status !== "cancelled",
-          ).length,
-          acpToolInventoryComplete: !incompleteToolInventory,
+          // `turn.result` settles only when the agent's provider process
+          // returns or rejects; a latched loss that armed the deadline after
+          // the event drain already ended must still bound this wait.
+          return await Promise.race([
+            turn.result,
+            lossDeadline.then(() => LOSS_DEADLINE_TERMINAL),
+          ]);
         };
-        if (input.kind === "terminal") {
-        const terminal = input.terminal;
-        const timedOut = input.timedOut;
-        // Read the sandbox duplex control-channel disposition at the ACP
-        // terminal-finalization boundary, before the bridge teardown, on every
-        // terminal outcome. A control channel that died before this point
-        // latches a failure with a typed loss reason; a healthy channel or a
-        // normal-teardown loss reports a success. The read and the mark of the
-        // host-observed orderly completion happen atomically in one broker
-        // step, with no `await` between them, so a teardown loss cannot slip
-        // in between. This stops a later teardown `channel_exit` from latching
-        // a false loss. The mark no-ops once a loss already latched, so a real
-        // mid-turn loss still fails the run — including a loss that arrived
-        // through the in-flight-turn cancel this seam issues, which surfaces
-        // here as a `cancelled` (not `completed`) terminal, not just through a
-        // nominally completed terminal. The file bridge path never sets this
-        // method, so the optional call no-ops there.
-        let duplexLossReason: DuplexLossReason | null = null;
-        const disposition = prepared.taskcoreBridge?.settleRunDisposition?.() ?? null;
-        if (disposition?.failed) {
-          duplexLossReason = disposition.lossReason ?? "other";
-        }
-        // A terminal that reports "completed" but whose duplex control channel
-        // died before the completion is not a success. The seam fails it closed.
-        const channelLost = duplexLossReason !== null;
-        // Build the boundary failure message only from the closed loss-reason
-        // enum, so no raw provider text rides the message.
-        const channelLostMessage = duplexLossReason
-          ? `The sandbox duplex control channel was lost (${duplexLossReason}) before the run completed.`
-          : null;
-        // A completed, non-timed-out turn whose channel stayed live is the one
-        // success path. Every other outcome — a failed, cancelled, or timed-out
-        // terminal, or a completed terminal with a lost channel — is a failure.
-        const turnSucceeded = terminal.status === "completed" && !timedOut && !channelLost;
-        // Read usage before the settlement can discard runtime state.
-        const postTurnStatus = await readRuntimeStatus(runtime, sessionHandle);
-        const turnUsage = summarizeAcpxTurnUsage({
-          preStatus: preTurnStatus,
-          postStatus: postTurnStatus,
-          eventBreakdown,
-          eventCostUsd,
-        });
-        // An interrupted stream is provisional unless the runtime supplies its
-        // post-terminal receipt. An in-stream usage_update alone cannot close it.
-        const usageComplete = !channelLost && (turnSucceeded || postTurnStatus?.usage != null);
-        observedUsage = { usage: turnUsage.usage ?? undefined, costUsd: turnUsage.costUsd, usageBasis: "per_run", usageComplete };
-        await ctx.onUsage?.({ ...billingFields, usage: turnUsage.usage ?? undefined, costUsd: turnUsage.costUsd,
-          model: prepared.requestedModel, usageBasis: "per_run", complete: usageComplete });
-        const failedTurn = terminal.status === "failed" || terminal.status === "cancelled" || timedOut;
-        // ACPX can defer session/load until runTurn. Forget an unavailable
-        // session so the next bounded turn receives the full task conversation.
-        const sessionUnavailable = terminal.status === "failed" &&
-          terminal.error.detailCode === "SESSION_RESUME_REQUIRED";
-        if (sessionUnavailable) clearSession = true;
-        // Saving a conversation is independent from certifying tool outcomes.
-        // Its next turn receives history, not a replay of pending tool calls.
-        preserveInterruptedSession = ctx.signal?.aborted === true && !forcedStop && !timedOut && !channelLost
-          && (terminal.status === "cancelled" || terminal.status === "completed")
-          && prepared.mode === "persistent" && !prepared.processSessionBridge
-          && Boolean(sessionHandle.backendSessionId);
-        safeInterruptedSession = preserveInterruptedSession
-          && !incompleteToolInventory
-          && [...interruptionTools.values()].every((tool) => tool.kind === "read" && tool.status === "completed");
-        // Record how the settlement `endSession` step closes the runtime for this
-        // outcome. A clean persistent host turn is save-eligible, but the
-        // Amendment B credential gate fails on the host lane (the run API key is
-        // never revoked), so the reuse decision discards and `endSession` closes it
-        // (close-and-relaunch). The sandbox lane always closes the runtime; its
-        // staged files are the reuse. A matching warm entry closes through the warm
-        // store (which also flushes its stderr); otherwise the runtime closes
-        // directly. The settlement then stops the bridges, saves or discards the
-        // staged runtime, releases the staging lease, and flushes the child stderr.
-        runtimeSettlement = {
-          mode: "warm_or_close",
-          handle: sessionHandle,
-          reason: timedOut
-            ? "taskcore timeout cleanup"
-            : channelLost
-              ? "taskcore duplex channel lost cleanup"
-              : failedTurn
-                ? `taskcore turn ${terminal.status}`
-                : "taskcore completed turn cleanup",
-          discardPersistentState: sessionUnavailable || (terminal.status === "cancelled" && !preserveInterruptedSession) || timedOut || channelLost,
-          dropWarmEntry: false,
-          recordCloseError: false,
-          cancelTurnReason: null,
-          skipRemoteClose: channelLost,
-        };
+        const stepTurnFinalize = async (
+          input: TurnFinalizeInput<AcpRuntimeTurnResult>,
+        ): Promise<TurnCompletion> => {
+          // Capture runtime activity before usage reads, error logs, or cleanup
+          // make an otherwise silent turn look active at its execution deadline.
+          const lastEventAgeMs =
+            lastRuntimeEventAt === null
+              ? undefined
+              : now() - lastRuntimeEventAt;
+          const activityDiagnostics = {
+            acpObservedEventCount: observedRuntimeEvents,
+            ...(lastEventAgeMs !== undefined &&
+            Number.isSafeInteger(lastEventAgeMs) &&
+            lastEventAgeMs >= 0
+              ? { acpLastEventAgeMs: lastEventAgeMs }
+              : {}),
+            acpPendingToolCount: [...interruptionTools.values()].filter(
+              (tool) =>
+                tool.status !== "completed" &&
+                tool.status !== "failed" &&
+                tool.status !== "cancelled",
+            ).length,
+            acpToolInventoryComplete: !incompleteToolInventory,
+          };
+          if (input.kind === "terminal") {
+            const terminal = input.terminal;
+            const timedOut = input.timedOut;
+            // Read the sandbox duplex control-channel disposition at the ACP
+            // terminal-finalization boundary, before the bridge teardown, on every
+            // terminal outcome. A control channel that died before this point
+            // latches a failure with a typed loss reason; a healthy channel or a
+            // normal-teardown loss reports a success. The read and the mark of the
+            // host-observed orderly completion happen atomically in one broker
+            // step, with no `await` between them, so a teardown loss cannot slip
+            // in between. This stops a later teardown `channel_exit` from latching
+            // a false loss. The mark no-ops once a loss already latched, so a real
+            // mid-turn loss still fails the run — including a loss that arrived
+            // through the in-flight-turn cancel this seam issues, which surfaces
+            // here as a `cancelled` (not `completed`) terminal, not just through a
+            // nominally completed terminal. The file bridge path never sets this
+            // method, so the optional call no-ops there.
+            let duplexLossReason: DuplexLossReason | null = null;
+            const disposition =
+              prepared.taskcoreBridge?.settleRunDisposition?.() ?? null;
+            if (disposition?.failed) {
+              duplexLossReason = disposition.lossReason ?? "other";
+            }
+            // A terminal that reports "completed" but whose duplex control channel
+            // died before the completion is not a success. The seam fails it closed.
+            const channelLost = duplexLossReason !== null;
+            // Build the boundary failure message only from the closed loss-reason
+            // enum, so no raw provider text rides the message.
+            const channelLostMessage = duplexLossReason
+              ? `The sandbox duplex control channel was lost (${duplexLossReason}) before the run completed.`
+              : null;
+            // A completed, non-timed-out turn whose channel stayed live is the one
+            // success path. Every other outcome — a failed, cancelled, or timed-out
+            // terminal, or a completed terminal with a lost channel — is a failure.
+            const turnSucceeded =
+              terminal.status === "completed" && !timedOut && !channelLost;
+            // Read usage before the settlement can discard runtime state.
+            const postTurnStatus = await readRuntimeStatus(
+              runtime,
+              sessionHandle,
+            );
+            const turnUsage = summarizeAcpxTurnUsage({
+              preStatus: preTurnStatus,
+              postStatus: postTurnStatus,
+              eventBreakdown,
+              eventCostUsd,
+            });
+            // An interrupted stream is provisional unless the runtime supplies its
+            // post-terminal receipt. An in-stream usage_update alone cannot close it.
+            const usageComplete =
+              !channelLost && (turnSucceeded || postTurnStatus?.usage != null);
+            observedUsage = {
+              usage: turnUsage.usage ?? undefined,
+              costUsd: turnUsage.costUsd,
+              usageBasis: "per_run",
+              usageComplete,
+            };
+            await ctx.onUsage?.({
+              ...billingFields,
+              usage: turnUsage.usage ?? undefined,
+              costUsd: turnUsage.costUsd,
+              model: prepared.requestedModel,
+              usageBasis: "per_run",
+              complete: usageComplete,
+            });
+            const failedTurn =
+              terminal.status === "failed" ||
+              terminal.status === "cancelled" ||
+              timedOut;
+            // ACPX can defer session/load until runTurn. Forget an unavailable
+            // session so the next bounded turn receives the full task conversation.
+            const sessionUnavailable =
+              terminal.status === "failed" &&
+              terminal.error.detailCode === "SESSION_RESUME_REQUIRED";
+            if (sessionUnavailable) clearSession = true;
+            // Saving a conversation is independent from certifying tool outcomes.
+            // Its next turn receives history, not a replay of pending tool calls.
+            preserveInterruptedSession =
+              ctx.signal?.aborted === true &&
+              !forcedStop &&
+              !timedOut &&
+              !channelLost &&
+              (terminal.status === "cancelled" ||
+                terminal.status === "completed") &&
+              prepared.mode === "persistent" &&
+              !prepared.processSessionBridge &&
+              Boolean(sessionHandle.backendSessionId);
+            safeInterruptedSession =
+              preserveInterruptedSession &&
+              !incompleteToolInventory &&
+              [...interruptionTools.values()].every(
+                (tool) => tool.kind === "read" && tool.status === "completed",
+              );
+            // Record how the settlement `endSession` step closes the runtime for this
+            // outcome. A clean persistent host turn is save-eligible, but the
+            // Amendment B credential gate fails on the host lane (the run API key is
+            // never revoked), so the reuse decision discards and `endSession` closes it
+            // (close-and-relaunch). The sandbox lane always closes the runtime; its
+            // staged files are the reuse. A matching warm entry closes through the warm
+            // store (which also flushes its stderr); otherwise the runtime closes
+            // directly. The settlement then stops the bridges, saves or discards the
+            // staged runtime, releases the staging lease, and flushes the child stderr.
+            runtimeSettlement = {
+              mode: "warm_or_close",
+              handle: sessionHandle,
+              reason: timedOut
+                ? "taskcore timeout cleanup"
+                : channelLost
+                  ? "taskcore duplex channel lost cleanup"
+                  : failedTurn
+                    ? `taskcore turn ${terminal.status}`
+                    : "taskcore completed turn cleanup",
+              discardPersistentState:
+                sessionUnavailable ||
+                (terminal.status === "cancelled" &&
+                  !preserveInterruptedSession) ||
+                timedOut ||
+                channelLost,
+              dropWarmEntry: false,
+              recordCloseError: false,
+              cancelTurnReason: null,
+              skipRemoteClose: channelLost,
+            };
 
-        const failureDiagnostic = !timedOut && !channelLost && terminal.status === "failed"
-          ? terminalSessionFailure
-          : null;
-        const errorMessage = timedOut
-          ? formatAdapterExecutionTimeoutErrorMessage(prepared.timeoutResolution)
-          : channelLost
-            ? channelLostMessage
-            : formatTerminalSessionFailure(resultErrorMessage(terminal), failureDiagnostic);
-        const terminalStopReason = terminal.status === "failed" ? terminal.error.message : terminal.stopReason;
-        const classifiedFailure = !timedOut && !channelLost && terminal.status === "failed"
-          ? terminalFailureClassification
-          : null;
-        await emitAcpxLog(ctx, {
-          type: turnSucceeded ? "acpx.result" : "acpx.error",
-          summary: channelLost ? "duplex_channel_lost" : terminal.status,
-          stopReason: terminalStopReason,
-          message: errorMessage,
-        });
-        // The one clean-completion path clears the run failure flag; every other
-        // path keeps it set, so the run root span closes with error status. A
-        // completed terminal with a lost duplex channel keeps the flag set.
-        runFailed = turnSucceeded ? false : true;
-        capturedResult = {
-          exitCode: turnSucceeded ? 0 : 1,
-          signal: timedOut ? "SIGTERM" : null,
-          timedOut,
-          errorMessage,
-          errorCode: timedOut
-            ? "acpx_timeout"
-            : channelLost
-              ? DUPLEX_CHANNEL_LOST_ERROR_CODE
-              : terminal.status === "failed"
-                ? classifiedFailure?.errorCode ?? "acpx_turn_failed"
-                : null,
-          ...(classifiedFailure?.errorFamily ? { errorFamily: classifiedFailure.errorFamily } : {}),
-          ...(classifiedFailure?.retryNotBefore ? { retryNotBefore: classifiedFailure.retryNotBefore } : {}),
-          sessionId: sessionHandle.backendSessionId ?? sessionHandle.runtimeSessionName,
-          sessionParams: buildSessionParams({ prepared, handle: sessionHandle }),
-          sessionDisplayId: sessionHandle.agentSessionId ?? sessionHandle.backendSessionId ?? sessionHandle.runtimeSessionName,
-          ...billingFields,
-          ...referencedProjectStagingFailuresField,
-          model: prepared.requestedModel || null,
-          ...(turnUsage.usage ? { usage: turnUsage.usage, usageBasis: "per_run" as const } : {}),
-          costUsd: turnUsage.costUsd,
-          usageComplete,
-          resultJson: {
-            status: channelLost ? "failed" : terminal.status,
-            ...activityDiagnostics,
-            ...(failureDiagnostic ? { terminalSessionFailure: failureDiagnostic } : {}),
-            ...(classifiedFailure?.errorFamily ? { errorFamily: classifiedFailure.errorFamily } : {}),
-            ...(classifiedFailure?.retryNotBefore
+            const failureDiagnostic =
+              !timedOut && !channelLost && terminal.status === "failed"
+                ? terminalSessionFailure
+                : null;
+            const errorMessage = timedOut
+              ? formatAdapterExecutionTimeoutErrorMessage(
+                  prepared.timeoutResolution,
+                )
+              : channelLost
+                ? channelLostMessage
+                : formatTerminalSessionFailure(
+                    resultErrorMessage(terminal),
+                    failureDiagnostic,
+                  );
+            const terminalStopReason =
+              terminal.status === "failed"
+                ? terminal.error.message
+                : terminal.stopReason;
+            const classifiedFailure =
+              !timedOut && !channelLost && terminal.status === "failed"
+                ? terminalFailureClassification
+                : null;
+            await emitAcpxLog(ctx, {
+              type: turnSucceeded ? "acpx.result" : "acpx.error",
+              summary: channelLost ? "duplex_channel_lost" : terminal.status,
+              stopReason: terminalStopReason,
+              message: errorMessage,
+            });
+            // The one clean-completion path clears the run failure flag; every other
+            // path keeps it set, so the run root span closes with error status. A
+            // completed terminal with a lost duplex channel keeps the flag set.
+            runFailed = turnSucceeded ? false : true;
+            capturedResult = {
+              exitCode: turnSucceeded ? 0 : 1,
+              signal: timedOut ? "SIGTERM" : null,
+              timedOut,
+              errorMessage,
+              errorCode: timedOut
+                ? "acpx_timeout"
+                : channelLost
+                  ? DUPLEX_CHANNEL_LOST_ERROR_CODE
+                  : terminal.status === "failed"
+                    ? (classifiedFailure?.errorCode ?? "acpx_turn_failed")
+                    : null,
+              ...(classifiedFailure?.errorFamily
+                ? { errorFamily: classifiedFailure.errorFamily }
+                : {}),
+              ...(classifiedFailure?.retryNotBefore
+                ? { retryNotBefore: classifiedFailure.retryNotBefore }
+                : {}),
+              sessionId:
+                sessionHandle.backendSessionId ??
+                sessionHandle.runtimeSessionName,
+              sessionParams: buildSessionParams({
+                prepared,
+                handle: sessionHandle,
+              }),
+              sessionDisplayId:
+                sessionHandle.agentSessionId ??
+                sessionHandle.backendSessionId ??
+                sessionHandle.runtimeSessionName,
+              ...billingFields,
+              ...referencedProjectStagingFailuresField,
+              model: prepared.requestedModel || null,
+              ...(turnUsage.usage
+                ? { usage: turnUsage.usage, usageBasis: "per_run" as const }
+                : {}),
+              costUsd: turnUsage.costUsd,
+              usageComplete,
+              resultJson: {
+                status: channelLost ? "failed" : terminal.status,
+                ...activityDiagnostics,
+                ...(failureDiagnostic
+                  ? { terminalSessionFailure: failureDiagnostic }
+                  : {}),
+                ...(classifiedFailure?.errorFamily
+                  ? { errorFamily: classifiedFailure.errorFamily }
+                  : {}),
+                ...(classifiedFailure?.retryNotBefore
+                  ? {
+                      retryNotBefore: classifiedFailure.retryNotBefore,
+                      ...(classifiedFailure.errorFamily === "provider_quota"
+                        ? {
+                            providerQuotaRetryNotBefore:
+                              classifiedFailure.retryNotBefore,
+                          }
+                        : {}),
+                    }
+                  : {}),
+                stopReason: terminalStopReason,
+                permissionMode: prepared.permissionMode,
+                mode: prepared.mode,
+                requestedModel: prepared.requestedModel || null,
+                requestedThinkingEffort:
+                  prepared.requestedThinkingEffort || null,
+                fastMode: prepared.fastMode,
+                ...(turnUsage.usageDetail
+                  ? { usage: turnUsage.usageDetail }
+                  : {}),
+                ...(turnUsage.cumulativeCostUsd != null
+                  ? { cumulativeCostUsd: turnUsage.cumulativeCostUsd }
+                  : {}),
+              },
+              summary: buildAcpxRunSummary({
+                outputSegments,
+                fallback: terminalStopReason || terminal.status,
+              }),
+              clearSession,
+            };
+            // The turn phase finished. A completed, non-timed-out turn with a live
+            // duplex channel is `ok`; every other terminal outcome is `failed`.
+            await emitPhase(
+              "turn",
+              turnPhaseStart,
+              turnSucceeded ? "ok" : "failed",
+            );
+            // Return the typed turn completion so the coordinator settles for the right
+            // cause. The completion carries no live resources; the settlement claims the
+            // ledger and owns the release. A clean completed turn carries no cause, so
+            // the reuse decision can permit a save; a timed-out, failed, or cancelled
+            // turn carries its cause, which forbids the save.
+            if (timedOut) {
+              return {
+                kind: "timed_out",
+                cause: {
+                  kind: "turn_timed_out",
+                  timeoutSec: prepared.timeoutSec,
+                },
+                resources: emptyConsumed,
+              };
+            }
+            if (terminal.status === "cancelled") {
+              return {
+                kind: "cancelled",
+                cause: {
+                  kind: "turn_cancelled",
+                  reason: terminal.stopReason ?? "cancelled",
+                },
+                resources: emptyConsumed,
+              };
+            }
+            // A duplex control-channel loss outranks a provider-reported failure or
+            // completion: the loss reason explains why the provider terminal reads
+            // the way it does, not the other way round. This also covers a
+            // "completed" terminal whose channel died mid-turn. The message carries
+            // only the typed loss reason, so no raw provider text rides the cause,
+            // even when the provider terminal itself reports `failed`.
+            if (channelLost) {
+              return {
+                kind: "failed",
+                cause: {
+                  kind: "turn_failed",
+                  error: new Error(
+                    channelLostMessage ??
+                      "The sandbox duplex control channel was lost.",
+                  ),
+                },
+                resources: emptyConsumed,
+              };
+            }
+            if (terminal.status === "failed") {
+              return {
+                kind: "failed",
+                cause: {
+                  kind: "turn_failed",
+                  error:
+                    terminal.error instanceof Error
+                      ? terminal.error
+                      : new Error(String(terminal.error)),
+                },
+                resources: emptyConsumed,
+              };
+            }
+            return { kind: "finalized" };
+          }
+          const err = input.error;
+          const timedOut = input.timedOut;
+          // The failure phase comes from the sequence: a failure before the turn
+          // started is `prepare_turn`; a failure after it is `turn`. The teardown is
+          // the same; only the reported phase differs.
+          const phase: AcpxExecutionPhase = input.phase;
+          // Emit the failed phase timing for the phase the sequence reported.
+          if (phase === "prepare_turn") {
+            await emitPhase("prepare_turn", preparePhaseStart, "failed");
+          } else {
+            await emitPhase("turn", turnPhaseStart, "failed");
+          }
+          const messageOverride = timedOut
+            ? formatAdapterExecutionTimeoutErrorMessage(
+                prepared.timeoutResolution,
+              )
+            : undefined;
+          const preEmitMessage =
+            messageOverride ??
+            (err instanceof Error ? err.message : String(err));
+          // Record a direct close for the settlement `endSession` step: cancel the
+          // running turn first (cancel-before-close), then close the runtime and drop
+          // a matching warm entry. The settlement discards the staged runtime, stops
+          // the bridges, releases the staging lease, and flushes the child stderr.
+          runtimeSettlement = {
+            mode: "direct",
+            handle: sessionHandle,
+            reason: timedOut
+              ? "taskcore timeout cleanup"
+              : "taskcore error cleanup",
+            discardPersistentState: timedOut,
+            dropWarmEntry: true,
+            recordCloseError: true,
+            cancelTurnReason: preEmitMessage,
+            skipRemoteClose: false,
+          };
+          // Emit the failure best-effort. `turnFinalize` must not reject, so a
+          // failing emission never propagates: the settlement owns the teardown, and
+          // it runs only after this returns a completion. On an emission failure the
+          // run records a degraded result from the pre-emit message.
+          let emitted: Awaited<ReturnType<typeof emitAcpxFailure>> | null =
+            null;
+          try {
+            emitted = await emitAcpxFailure({
+              ctx,
+              prepared,
+              err,
+              phase,
+              messageOverride,
+            });
+          } catch {
+            emitted = null;
+          }
+          const message = emitted?.message ?? preEmitMessage;
+          capturedResult = {
+            exitCode: 1,
+            signal: timedOut ? "SIGTERM" : null,
+            timedOut,
+            errorMessage: message,
+            errorCode: timedOut
+              ? "acpx_timeout"
+              : (emitted?.classified.errorCode ?? null),
+            errorMeta: emitted?.classified.errorMeta,
+            ...observedUsage,
+            ...(!turnDispatchAttempted
               ? {
-                  retryNotBefore: classifiedFailure.retryNotBefore,
-                  ...(classifiedFailure.errorFamily === "provider_quota"
-                    ? { providerQuotaRetryNotBefore: classifiedFailure.retryNotBefore }
-                    : {}),
+                  executionRecovery: {
+                    kind: "bootstrap" as const,
+                    providerWorkStarted: false as const,
+                  },
                 }
               : {}),
-            stopReason: terminalStopReason,
-            permissionMode: prepared.permissionMode,
-            mode: prepared.mode,
-            requestedModel: prepared.requestedModel || null,
-            requestedThinkingEffort: prepared.requestedThinkingEffort || null,
-            fastMode: prepared.fastMode,
-            ...(turnUsage.usageDetail ? { usage: turnUsage.usageDetail } : {}),
-            ...(turnUsage.cumulativeCostUsd != null
-              ? { cumulativeCostUsd: turnUsage.cumulativeCostUsd }
-              : {}),
-          },
-          summary: buildAcpxRunSummary({
-            outputSegments,
-            fallback: terminalStopReason || terminal.status,
-          }),
-          clearSession,
-        };
-        // The turn phase finished. A completed, non-timed-out turn with a live
-        // duplex channel is `ok`; every other terminal outcome is `failed`.
-        await emitPhase(
-          "turn",
-          turnPhaseStart,
-          turnSucceeded ? "ok" : "failed",
-        );
-        // Return the typed turn completion so the coordinator settles for the right
-        // cause. The completion carries no live resources; the settlement claims the
-        // ledger and owns the release. A clean completed turn carries no cause, so
-        // the reuse decision can permit a save; a timed-out, failed, or cancelled
-        // turn carries its cause, which forbids the save.
-        if (timedOut) {
-          return {
-            kind: "timed_out",
-            cause: { kind: "turn_timed_out", timeoutSec: prepared.timeoutSec },
-            resources: emptyConsumed,
+            ...billingFields,
+            ...referencedProjectStagingFailuresField,
+            model: prepared.requestedModel || null,
+            clearSession: clearSession || timedOut,
+            resultJson: { phase, ...activityDiagnostics },
+            summary: message,
           };
-        }
-        if (terminal.status === "cancelled") {
-          return {
-            kind: "cancelled",
-            cause: { kind: "turn_cancelled", reason: terminal.stopReason ?? "cancelled" },
-            resources: emptyConsumed,
-          };
-        }
-        // A duplex control-channel loss outranks a provider-reported failure or
-        // completion: the loss reason explains why the provider terminal reads
-        // the way it does, not the other way round. This also covers a
-        // "completed" terminal whose channel died mid-turn. The message carries
-        // only the typed loss reason, so no raw provider text rides the cause,
-        // even when the provider terminal itself reports `failed`.
-        if (channelLost) {
+          // Return a typed failed completion so the coordinator settles for a cause
+          // that forbids the save. The reported phase lives on the recorded result.
           return {
             kind: "failed",
             cause: {
               kind: "turn_failed",
-              error: new Error(channelLostMessage ?? "The sandbox duplex control channel was lost."),
+              error: err instanceof Error ? err : new Error(String(err)),
             },
             resources: emptyConsumed,
           };
-        }
-        if (terminal.status === "failed") {
-          return {
-            kind: "failed",
-            cause: {
-              kind: "turn_failed",
-              error: terminal.error instanceof Error ? terminal.error : new Error(String(terminal.error)),
-            },
-            resources: emptyConsumed,
-          };
-        }
-        return { kind: "finalized" };
-        }
-        const err = input.error;
-        const timedOut = input.timedOut;
-        // The failure phase comes from the sequence: a failure before the turn
-        // started is `prepare_turn`; a failure after it is `turn`. The teardown is
-        // the same; only the reported phase differs.
-        const phase: AcpxExecutionPhase = input.phase;
-        // Emit the failed phase timing for the phase the sequence reported.
-        if (phase === "prepare_turn") {
-          await emitPhase("prepare_turn", preparePhaseStart, "failed");
-        } else {
-          await emitPhase("turn", turnPhaseStart, "failed");
-        }
-        const messageOverride = timedOut
-          ? formatAdapterExecutionTimeoutErrorMessage(prepared.timeoutResolution)
-          : undefined;
-        const preEmitMessage =
-          messageOverride ?? (err instanceof Error ? err.message : String(err));
-        // Record a direct close for the settlement `endSession` step: cancel the
-        // running turn first (cancel-before-close), then close the runtime and drop
-        // a matching warm entry. The settlement discards the staged runtime, stops
-        // the bridges, releases the staging lease, and flushes the child stderr.
-        runtimeSettlement = {
-          mode: "direct",
-          handle: sessionHandle,
-          reason: timedOut ? "taskcore timeout cleanup" : "taskcore error cleanup",
-          discardPersistentState: timedOut,
-          dropWarmEntry: true,
-          recordCloseError: true,
-          cancelTurnReason: preEmitMessage,
-          skipRemoteClose: false,
         };
-        // Emit the failure best-effort. `turnFinalize` must not reject, so a
-        // failing emission never propagates: the settlement owns the teardown, and
-        // it runs only after this returns a completion. On an emission failure the
-        // run records a degraded result from the pre-emit message.
-        let emitted: Awaited<ReturnType<typeof emitAcpxFailure>> | null = null;
         try {
-          emitted = await emitAcpxFailure({ ctx, prepared, err, phase, messageOverride });
-        } catch {
-          emitted = null;
+          return await runTurnSequence<AcpRuntimeTurnResult>({
+            signal: ctx.signal,
+            timeoutMs:
+              prepared.timeoutSec > 0 ? prepared.timeoutSec * 1000 : undefined,
+            timeoutMessage: formatAdapterExecutionTimeoutErrorMessage(
+              prepared.timeoutResolution,
+            ),
+            promptBuild: stepPromptBuild,
+            preTurnUsage: stepPreTurnUsage,
+            turnStart: stepTurnStart,
+            eventRelay: stepEventRelay,
+            turnFinalize: stepTurnFinalize,
+          });
+        } finally {
+          // End the agent turn span exactly once, on every return and on a throw.
+          // `runFailed` is `false` only on a completed, non-timed-out turn, so the
+          // span status is correct for success, error, and timeout.
+          turnSpan.end(runFailed);
+          // Reset the current-run holder to the `task.run` token after the turn.
+          // The run stays live here, so the holder is never `undefined`. A detached
+          // exec after the turn parents to `task.run`.
+          currentRunParentContext = runRootSpan.parentContext;
         }
-        const message = emitted?.message ?? preEmitMessage;
-        capturedResult = {
-          exitCode: 1,
-          signal: timedOut ? "SIGTERM" : null,
-          timedOut,
-          errorMessage: message,
-          errorCode: timedOut ? "acpx_timeout" : (emitted?.classified.errorCode ?? null),
-          errorMeta: emitted?.classified.errorMeta,
-          ...observedUsage,
-          ...(!turnDispatchAttempted ? { executionRecovery: { kind: "bootstrap" as const, providerWorkStarted: false as const } } : {}),
-          ...billingFields,
-          ...referencedProjectStagingFailuresField,
-          model: prepared.requestedModel || null,
-          clearSession: clearSession || timedOut,
-          resultJson: { phase, ...activityDiagnostics },
-          summary: message,
-        };
-        // Return a typed failed completion so the coordinator settles for a cause
-        // that forbids the save. The reported phase lives on the recorded result.
-        return {
-          kind: "failed",
-          cause: { kind: "turn_failed", error: err instanceof Error ? err : new Error(String(err)) },
-          resources: emptyConsumed,
-        };
-      };
-      try {
-        return await runTurnSequence<AcpRuntimeTurnResult>({
-          signal: ctx.signal,
-          timeoutMs: prepared.timeoutSec > 0 ? prepared.timeoutSec * 1000 : undefined,
-          timeoutMessage: formatAdapterExecutionTimeoutErrorMessage(prepared.timeoutResolution),
-          promptBuild: stepPromptBuild,
-          preTurnUsage: stepPreTurnUsage,
-          turnStart: stepTurnStart,
-          eventRelay: stepEventRelay,
-          turnFinalize: stepTurnFinalize,
-        });
-      } finally {
-        // End the agent turn span exactly once, on every return and on a throw.
-        // `runFailed` is `false` only on a completed, non-timed-out turn, so the
-        // span status is correct for success, error, and timeout.
-        turnSpan.end(runFailed);
-        // Reset the current-run holder to the `task.run` token after the turn.
-        // The run stays live here, so the holder is never `undefined`. A detached
-        // exec after the turn parents to `task.run`.
-        currentRunParentContext = runRootSpan.parentContext;
-      }
       };
       // A live run-scoped credential marker. The host-lane reuse candidate carries
       // it, so the Amendment B credential gate blocks the host warm save: the
@@ -5324,7 +6188,9 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
       const LIVE_RUN_SCOPED_API_KEY = "taskcore-run-scoped-api-key";
       // Record the final per-resource disposition report where a test can observe
       // it. The engine never reads it back.
-      const recordDispositionReport = (report: SettlementDispositionReport): void => {
+      const recordDispositionReport = (
+        report: SettlementDispositionReport,
+      ): void => {
         deps.onSettlementDisposition?.(report);
       };
       // The settlement sequence is the one live cleanup owner for every settled path
@@ -5346,149 +6212,213 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
             // Sandbox lane: the staged files are the reuse. Save only after a clean
             // turn and only when the run holds a staged runtime.
             if (!clean || !slots.has("staged_runtime")) return null;
-            return { kind: "sandbox", causePermitsSave: true, liveRunScopedCredentials: [] };
+            return {
+              kind: "sandbox",
+              causePermitsSave: true,
+              liveRunScopedCredentials: [],
+            };
           }
           // Host lane: save a clean persistent warm-eligible turn, but carry the
           // live run-scoped credential so the gate blocks the transfer.
           if (!slots.has("acp_runtime")) return null;
-          const permits = clean && prepared.mode === "persistent" && warmIdleMs > 0;
+          const permits =
+            clean && prepared.mode === "persistent" && warmIdleMs > 0;
           if (!permits) return null;
-          return { kind: "host", causePermitsSave: true, liveRunScopedCredentials: [LIVE_RUN_SCOPED_API_KEY] };
+          return {
+            kind: "host",
+            causePermitsSave: true,
+            liveRunScopedCredentials: [LIVE_RUN_SCOPED_API_KEY],
+          };
         },
         // Close every runtime the decision did not transfer, and drop the warm entry
         // on close.
-        endSession: (slots, decision) => timedPhase("end_session", async () => {
-          // The fence is the one idempotent owner of the abandoned promise's
-          // eventual handle. Seal it first, before every other decision
-          // below, including the empty-slot and save early returns: a late
-          // handle that already arrived must never race this step.
-          const lateHandle = handshakeFence.seal();
-          if (!slots.has("acp_runtime")) return;
-          if (decision.kind === "save" && decision.savedId === "acp_runtime") return;
-          const baseSettlement: RuntimeSettlementPlan = runtimeSettlement ?? {
-            mode: "direct",
-            handle: syntheticCloseHandle(),
-            reason: "taskcore cleanup",
-            discardPersistentState: false,
-            dropWarmEntry: false,
-            recordCloseError: true,
-            cancelTurnReason: null,
-            skipRemoteClose: false,
-          };
-          // A late handle that arrived before this seal replaces the synthetic
-          // placeholder, so the one close call below uses the real identity
-          // `ensureSession` eventually returned.
-          const settlement: RuntimeSettlementPlan = lateHandle
-            ? { ...baseSettlement, handle: lateHandle }
-            : baseSettlement;
-          // Cancel a running turn before the close (the turn-error path).
-          if (settlement.cancelTurnReason && activeTurn) {
-            await withAdapterExecutionPhase(ctx, "cancel_turn", () => activeTurn!.cancel({ reason: settlement.cancelTurnReason! }).catch(() => {}));
-          }
-          const existing = warmHandles.get(prepared.sessionKey);
-          // Re-read the duplex control-channel disposition here, at the
-          // boundary that places the remote call. The settlement snapshot
-          // above can predate a channel loss the bridge latches during the
-          // awaited finalization work between the snapshot and this point, so
-          // a stale `false` on the snapshot must not force a call onto a
-          // channel that is dead by now. The read is non-mutating and only
-          // adds a later-observed loss; it never clears the snapshot's `true`.
-          const remoteChannelLost =
-            settlement.skipRemoteClose || (prepared.taskcoreBridge?.readRunDisposition?.().failed ?? false);
-          // The control channel is already known lost, so no remote call can
-          // reach the backend. Release the local bookkeeping only and place no
-          // `runtime.close(...)` call — that call has no deadline of its own
-          // and would block on the dead channel.
-          if (remoteChannelLost) {
-            if (warmHandleMatches(existing, runtime, settlement.handle) && existing) {
+        endSession: (slots, decision) =>
+          timedPhase("end_session", async () => {
+            // The fence is the one idempotent owner of the abandoned promise's
+            // eventual handle. Seal it first, before every other decision
+            // below, including the empty-slot and save early returns: a late
+            // handle that already arrived must never race this step.
+            const lateHandle = handshakeFence.seal();
+            if (!slots.has("acp_runtime")) return;
+            if (decision.kind === "save" && decision.savedId === "acp_runtime")
+              return;
+            const baseSettlement: RuntimeSettlementPlan = runtimeSettlement ?? {
+              mode: "direct",
+              handle: syntheticCloseHandle(),
+              reason: "taskcore cleanup",
+              discardPersistentState: false,
+              dropWarmEntry: false,
+              recordCloseError: true,
+              cancelTurnReason: null,
+              skipRemoteClose: false,
+            };
+            // A late handle that arrived before this seal replaces the synthetic
+            // placeholder, so the one close call below uses the real identity
+            // `ensureSession` eventually returned.
+            const settlement: RuntimeSettlementPlan = lateHandle
+              ? { ...baseSettlement, handle: lateHandle }
+              : baseSettlement;
+            // Cancel a running turn before the close (the turn-error path).
+            if (settlement.cancelTurnReason && activeTurn) {
+              await withAdapterExecutionPhase(ctx, "cancel_turn", () =>
+                activeTurn!
+                  .cancel({ reason: settlement.cancelTurnReason! })
+                  .catch(() => {}),
+              );
+            }
+            const existing = warmHandles.get(prepared.sessionKey);
+            // Re-read the duplex control-channel disposition here, at the
+            // boundary that places the remote call. The settlement snapshot
+            // above can predate a channel loss the bridge latches during the
+            // awaited finalization work between the snapshot and this point, so
+            // a stale `false` on the snapshot must not force a call onto a
+            // channel that is dead by now. The read is non-mutating and only
+            // adds a later-observed loss; it never clears the snapshot's `true`.
+            const remoteChannelLost =
+              settlement.skipRemoteClose ||
+              (prepared.taskcoreBridge?.readRunDisposition?.().failed ?? false);
+            // The control channel is already known lost, so no remote call can
+            // reach the backend. Release the local bookkeeping only and place no
+            // `runtime.close(...)` call — that call has no deadline of its own
+            // and would block on the dead channel.
+            if (remoteChannelLost) {
+              if (
+                warmHandleMatches(existing, runtime, settlement.handle) &&
+                existing
+              ) {
+                clearWarmHandleTimer(existing);
+                warmHandles.delete(prepared.sessionKey);
+                flushChildStderr(existing.childStderrState);
+              }
+              return;
+            }
+            // The handshake guard abandoned this `ensureSession` call and no late
+            // handle has arrived yet. Do not close the synthetic placeholder now:
+            // the real handle can still resolve later, and closing it too would
+            // close the same session twice. `handshakeFence`'s own late-arrival
+            // hook (armed at the `ensureSession` call site) closes it once,
+            // whenever it shows up. A guarded call only ever runs on a cold
+            // start, so there is no matching warm entry here to drop.
+            if (handshakeAbandoned && !lateHandle) return;
+            if (
+              settlement.mode === "warm_or_close" &&
+              warmHandleMatches(existing, runtime, settlement.handle) &&
+              existing
+            ) {
+              // A matching warm entry closes through the warm store, which also
+              // clears its idle timer and flushes its child stderr.
+              runtimeStopConfirmed = await withAdapterExecutionPhase(
+                ctx,
+                "close_session",
+                () =>
+                  closeWarmHandle({
+                    handles: warmHandles,
+                    key: prepared.sessionKey,
+                    entry: existing,
+                    reason: settlement.reason,
+                    discardPersistentState: settlement.discardPersistentState,
+                  }),
+              );
+              return;
+            }
+            const onCloseError =
+              settlement.recordCloseError || ctx.signal?.aborted
+                ? (closeErr: unknown) =>
+                    recordTeardownError("runtime-close", closeErr)
+                : () => {};
+            await withAdapterExecutionPhase(ctx, "close_session", () =>
+              runtime
+                .close({
+                  handle: settlement.handle,
+                  reason: settlement.reason,
+                  discardPersistentState: settlement.discardPersistentState,
+                })
+                .then(() => {
+                  runtimeStopConfirmed = true;
+                })
+                .catch(onCloseError),
+            );
+            if (
+              settlement.dropWarmEntry &&
+              warmHandleMatches(existing, runtime, settlement.handle) &&
+              existing
+            ) {
               clearWarmHandleTimer(existing);
               warmHandles.delete(prepared.sessionKey);
-              flushChildStderr(existing.childStderrState);
             }
-            return;
-          }
-          // The handshake guard abandoned this `ensureSession` call and no late
-          // handle has arrived yet. Do not close the synthetic placeholder now:
-          // the real handle can still resolve later, and closing it too would
-          // close the same session twice. `handshakeFence`'s own late-arrival
-          // hook (armed at the `ensureSession` call site) closes it once,
-          // whenever it shows up. A guarded call only ever runs on a cold
-          // start, so there is no matching warm entry here to drop.
-          if (handshakeAbandoned && !lateHandle) return;
-          if (
-            settlement.mode === "warm_or_close" &&
-            warmHandleMatches(existing, runtime, settlement.handle) &&
-            existing
-          ) {
-            // A matching warm entry closes through the warm store, which also
-            // clears its idle timer and flushes its child stderr.
-            runtimeStopConfirmed = await withAdapterExecutionPhase(ctx, "close_session", () => closeWarmHandle({
-              handles: warmHandles,
-              key: prepared.sessionKey,
-              entry: existing,
-              reason: settlement.reason,
-              discardPersistentState: settlement.discardPersistentState,
-            }));
-            return;
-          }
-          const onCloseError = settlement.recordCloseError || ctx.signal?.aborted
-            ? (closeErr: unknown) => recordTeardownError("runtime-close", closeErr)
-            : () => {};
-          await withAdapterExecutionPhase(ctx, "close_session", () => runtime
-            .close({
-              handle: settlement.handle,
-              reason: settlement.reason,
-              discardPersistentState: settlement.discardPersistentState,
-            })
-            .then(() => { runtimeStopConfirmed = true; })
-            .catch(onCloseError));
-          if (settlement.dropWarmEntry && warmHandleMatches(existing, runtime, settlement.handle) && existing) {
-            clearWarmHandleTimer(existing);
-            warmHandles.delete(prepared.sessionKey);
-          }
-        }),
+          }),
         // Perform the reuse decision. A save transfers the staged files to the site
         // store (which arms the idle policy); every other case discards the staged
         // runtime. The host warm save is closed in `endSession`.
-        settleReuse: (slots, decision) => timedPhase("settle_reuse", async () => {
-          if (!slots.has("staged_runtime")) return;
-          if (decision.kind === "save" && decision.savedId === "staged_runtime") {
-            saveStagedRuntimeAfterCleanTurn({ handles: stagedRuntimes, prepared, now: now() });
-            return;
-          }
-          await discardStagedRuntime({ handles: stagedRuntimes, prepared });
-        }),
+        settleReuse: (slots, decision) =>
+          timedPhase("settle_reuse", async () => {
+            if (!slots.has("staged_runtime")) return;
+            if (
+              decision.kind === "save" &&
+              decision.savedId === "staged_runtime"
+            ) {
+              saveStagedRuntimeAfterCleanTurn({
+                handles: stagedRuntimes,
+                prepared,
+                now: now(),
+              });
+              return;
+            }
+            await discardStagedRuntime({ handles: stagedRuntimes, prepared });
+          }),
         // Stop both bridges in one allSettled.
-        stopTransport: () => timedPhase("stop_transport", async () => {
-          await stopRunTransport(prepared);
-        }),
+        stopTransport: () =>
+          timedPhase("stop_transport", async () => {
+            await stopRunTransport(prepared);
+          }),
         // The site sync-back (the managed-home copy-back). The run-parented span
         // runner wraps the restore in a `sandbox.syncBack` span. The runner also
         // publishes the run parent into the runtime-parent store while the restore
         // runs, so the host mints a `traceparent` for the provider spans, and the
         // per-task restore spans parent to `sandbox.syncBack`.
-        syncBack: () => timedPhase("sync_back", async () => {
-          // A transport error or terminal narrative cannot authorize collecting
-          // mutable provider files. Require the owned close or local OS handle.
-          const stopped = runtimeStopConfirmed || (!prepared.processSessionBridge && capturedProcessExited(processIdentitySink?.localProcess));
-          try {
-            if (stopped) await withAdapterExecutionPhase(ctx, "instruction_collection", () => ctx.onProviderStopped?.());
-          } catch {
-            // Match ACP's fail-soft teardown policy without describing this as
-            // a workspace restore failure or exposing paths from a raw error.
-            await recordTeardownError("instruction-collection", new Error("Instruction collection failed after provider stop. No instruction save is claimed."));
-          } finally {
-            await withAdapterExecutionPhase(ctx, "workspace_restore", () => runRuntimeSpan("sandbox.syncBack", async () => {
-              const restoreOutcome = await syncBackManagedHome(prepared);
-              if (!restoreOutcome.ok) {
-                workspaceRestoreFailureField = {
-                  workspaceRestoreFailure: restoreOutcome.code,
-                  ...(restoreOutcome.diagnostic ? { workspaceRestoreDiagnostic: restoreOutcome.diagnostic } : {}),
-                };
-              }
-            }));
-          }
-        }),
+        syncBack: () =>
+          timedPhase("sync_back", async () => {
+            // A transport error or terminal narrative cannot authorize collecting
+            // mutable provider files. Require the owned close or local OS handle.
+            const stopped =
+              runtimeStopConfirmed ||
+              (!prepared.processSessionBridge &&
+                capturedProcessExited(processIdentitySink?.localProcess));
+            try {
+              if (stopped)
+                await withAdapterExecutionPhase(
+                  ctx,
+                  "instruction_collection",
+                  () => ctx.onProviderStopped?.(),
+                );
+            } catch {
+              // Match ACP's fail-soft teardown policy without describing this as
+              // a workspace restore failure or exposing paths from a raw error.
+              await recordTeardownError(
+                "instruction-collection",
+                new Error(
+                  "Instruction collection failed after provider stop. No instruction save is claimed.",
+                ),
+              );
+            } finally {
+              await withAdapterExecutionPhase(ctx, "workspace_restore", () =>
+                runRuntimeSpan("sandbox.syncBack", async () => {
+                  const restoreOutcome = await syncBackManagedHome(prepared);
+                  if (!restoreOutcome.ok) {
+                    workspaceRestoreFailureField = {
+                      workspaceRestoreFailure: restoreOutcome.code,
+                      ...(restoreOutcome.diagnostic
+                        ? {
+                            workspaceRestoreDiagnostic:
+                              restoreOutcome.diagnostic,
+                          }
+                        : {}),
+                    };
+                  }
+                }),
+              );
+            }
+          }),
         // The staging lease releases as the run's final act, AFTER the coordinator
         // reproduces the result, in the run root `finally` below. This step stays a
         // no-op in the live engine: a same-session second run must stay blocked on
@@ -5523,36 +6453,69 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
               : reason.completion.kind === "finalized"
                 ? null
                 : reason.completion.cause;
-          const report = await settleAcpRun(runResourceLedger, cause, settlementSteps);
+          const report = await settleAcpRun(
+            runResourceLedger,
+            cause,
+            settlementSteps,
+          );
           recordDispositionReport(report);
           if (childStderrState) flushChildStderr(childStderrState);
         },
         reproduceResult: async (): Promise<AdapterExecutionResult> => {
           if (!capturedResult) {
-            throw new Error("run coordinator reproduced a result before the run recorded one");
+            throw new Error(
+              "run coordinator reproduced a result before the run recorded one",
+            );
           }
           clearTimeout(stopTimer);
           let providerExited = false;
           const providerPid = processIdentitySink?.latest?.pid;
-          if (ctx.signal?.aborted && providerPid && !prepared.processSessionBridge) {
+          if (
+            ctx.signal?.aborted &&
+            providerPid &&
+            !prepared.processSessionBridge
+          ) {
             for (let attempt = 0; attempt < 40; attempt += 1) {
-              providerExited = capturedProcessExited(processIdentitySink.localProcess);
+              providerExited = capturedProcessExited(
+                processIdentitySink.localProcess,
+              );
               if (providerExited || !forcedStop) break;
               await new Promise((resolve) => setTimeout(resolve, 25));
             }
           }
           // A forced process exit can reject ACP close after the OS has already
           // confirmed termination. Acknowledge Stop, but never grant replay.
-          if (ctx.signal?.aborted && providerExited && (runtimeStopConfirmed || forcedStop)) {
+          if (
+            ctx.signal?.aborted &&
+            providerExited &&
+            (runtimeStopConfirmed || forcedStop)
+          ) {
             capturedResult = {
               ...capturedResult,
-              ...(safeInterruptedSession && !forcedStop && !("workspaceRestoreFailure" in workspaceRestoreFailureField)
-                ? { executionRecovery: { kind: "interrupted", providerStopped: true, sessionPreserved: true, actionOutcomes: "settled" },
-                    sessionParams: { ...capturedResult.sessionParams, interruptedCheckpoint: true } }
+              ...(safeInterruptedSession &&
+              !forcedStop &&
+              !("workspaceRestoreFailure" in workspaceRestoreFailureField)
+                ? {
+                    executionRecovery: {
+                      kind: "interrupted",
+                      providerStopped: true,
+                      sessionPreserved: true,
+                      actionOutcomes: "settled",
+                    },
+                    sessionParams: {
+                      ...capturedResult.sessionParams,
+                      interruptedCheckpoint: true,
+                    },
+                  }
                 : {}),
-              resultJson: { ...capturedResult.resultJson, executionCancellation: {
-                state: "acknowledged", acknowledgedAt: new Date().toISOString(), forced: forcedStop,
-              } },
+              resultJson: {
+                ...capturedResult.resultJson,
+                executionCancellation: {
+                  state: "acknowledged",
+                  acknowledgedAt: new Date().toISOString(),
+                  forced: forcedStop,
+                },
+              },
             };
           }
           // Preserve the policy resolved for this execution target. The server
@@ -5604,11 +6567,15 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
         // Fire-and-forget the phase timing: the release is the run's final act, so
         // the run must not await telemetry here. `emitRunPhaseTiming` swallows a
         // sink failure, so this never rejects.
-        void emitRunPhaseTiming(ctx, "release_staging_lease", now() - leaseStart, "ok");
+        void emitRunPhaseTiming(
+          ctx,
+          "release_staging_lease",
+          now() - leaseStart,
+          "ok",
+        );
       }
     }
   };
 }
-
 
 export const execute = createAcpxEngineExecutor();

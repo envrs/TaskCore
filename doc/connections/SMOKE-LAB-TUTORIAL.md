@@ -25,10 +25,10 @@ The Smoke Lab **fail-closes** on public deployments. It runs anywhere else — y
 **not** need a special `local_trusted` box or any extra environment variables.
 Turning on the flag is all the setup there is.
 
-| Requirement | Where |
-|---|---|
-| `Smoke Lab` experimental flag ON | Instance settings → Experimental |
-| deployment exposure **not** `public` (i.e. not internet-facing) | how the instance was started |
+| Requirement                                                     | Where                            |
+| --------------------------------------------------------------- | -------------------------------- |
+| `Smoke Lab` experimental flag ON                                | Instance settings → Experimental |
+| deployment exposure **not** `public` (i.e. not internet-facing) | how the instance was started     |
 
 That's it. The everyday dev server works as-is: a `local_trusted` localhost box, an
 **`authenticated` instance behind Tailscale + login** (e.g.
@@ -38,7 +38,7 @@ available. The auth mode and the Node build target no longer matter; only public
 exposure is disallowed (the fake OAuth provider and fixture sidecars must never be
 reachable from the open internet).
 
-If the flag is off you'll see the tab say *"Smoke Lab is turned off"*. If you're on a
+If the flag is off you'll see the tab say _"Smoke Lab is turned off"_. If you're on a
 `public` instance, API calls return `403 "Smoke lab is only available on private
 (non-public) deployments"` — move to a private instance.
 
@@ -60,12 +60,12 @@ the URL bar, e.g. `PAP`). Replace it in the example paths.
 1. In the left sidebar open **Apps**, then under the **Developer** section
    ("Advanced setup for developers.") click
    **Smoke Lab** (`/{PREFIX}/apps/advanced/smoke-lab`). The breadcrumb reads
-   *Apps → Advanced setup → Smoke Lab*.
-2. **You should see:** a *Developer tools* page header, then the **Smoke Lab**
+   _Apps → Advanced setup → Smoke Lab_.
+2. **You should see:** a _Developer tools_ page header, then the **Smoke Lab**
    section with an **Experimental** badge and a **Hands-on tutorial** link, a
-   *Fixture services* row with four buttons — **Start services**, **Stop**,
-   **Install fixture apps**, **Reset** — an *Integration matrix* (all cells
-   "not run" at first), and a *Runs* panel ("no runs yet"). A card shows the
+   _Fixture services_ row with four buttons — **Start services**, **Stop**,
+   **Install fixture apps**, **Reset** — an _Integration matrix_ (all cells
+   "not run" at first), and a _Runs_ panel ("no runs yet"). A card shows the
    **Fake OAuth demo credentials**:
    - email: `smoke@taskcore.test`
    - password: `smoke-password`
@@ -77,8 +77,8 @@ the URL bar, e.g. `PAP`). Replace it in the example paths.
    - **HTTP MCP fixture** — a loopback sidecar with a `http://127.0.0.1:<port>/mcp`
      URL.
 4. Click **Install fixture apps**.
-   **You should see:** a toast — *"Fixture apps installed"* the first time,
-   *"Fixture apps already present"* on a re-run (installing again is safe; it's
+   **You should see:** a toast — _"Fixture apps installed"_ the first time,
+   _"Fixture apps already present"_ on a re-run (installing again is safe; it's
    idempotent). Two connections now exist under **Apps → Connections**:
    - **Smoke Lab HTTP MCP fixture** — remote HTTP transport, used by P1, P2, P5,
      P6, P7. This is the one with the OAuth walkthrough.
@@ -115,27 +115,27 @@ Two things to know before you start:
   "Block policy" means set it to **Off**. New connections start Allowed; narrow
   an action before testing when the scenario requires another decision.
 
-| Step | What you do | What you should see |
-|---|---|---|
-| **connect** | Open the fixture connection (for P1, complete the fake OAuth consent). | Connection shows **Connected**, with the action count. |
-| **discover-catalog** | Open **Permissions**. | The action list includes the path's tools (e.g. **List synthetic todos**). |
-| **allowed-read** | Set the read action to **Allowed**, then use its **Test** button on **Permissions**. | Decision badge **Allowed**; the call returns without error. |
-| **ask-first-write** | Set the write action to **Ask first**, then use its **Test** button. | Decision **Ask first**; a pending request appears in **Review**. |
-| **approve** | **Review** tab → approve the pending write. | The request clears; the call completes. |
-| **denied-call** | Set the blocked action to **Off**, then use its **Test** button on **Permissions**. | Decision **Off**; the call is refused with a reason. |
-| **schema-change / quarantine** | Trigger the fixture schema flip (HTTP paths), then **Refresh actions** on Permissions. | A **quarantine** pill with the changed entries held back. |
-| **revoke** | From **Connectors**, choose **Remove connection** from the connection's management menu. In the classic table, use the trash button labeled **Delete _app_ connection**. (For P6, revoke the gateway session instead.) | Agent access is removed immediately; a revoked token is cut off (401). |
-| **audit-evidence** | Open company **Audit** and choose **Apps & tools** in the Action filter. | Audit rows for the allowed, approved, denied, quarantine, and revoke decisions. |
+| Step                           | What you do                                                                                                                                                                                                            | What you should see                                                             |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **connect**                    | Open the fixture connection (for P1, complete the fake OAuth consent).                                                                                                                                                 | Connection shows **Connected**, with the action count.                          |
+| **discover-catalog**           | Open **Permissions**.                                                                                                                                                                                                  | The action list includes the path's tools (e.g. **List synthetic todos**).      |
+| **allowed-read**               | Set the read action to **Allowed**, then use its **Test** button on **Permissions**.                                                                                                                                   | Decision badge **Allowed**; the call returns without error.                     |
+| **ask-first-write**            | Set the write action to **Ask first**, then use its **Test** button.                                                                                                                                                   | Decision **Ask first**; a pending request appears in **Review**.                |
+| **approve**                    | **Review** tab → approve the pending write.                                                                                                                                                                            | The request clears; the call completes.                                         |
+| **denied-call**                | Set the blocked action to **Off**, then use its **Test** button on **Permissions**.                                                                                                                                    | Decision **Off**; the call is refused with a reason.                            |
+| **schema-change / quarantine** | Trigger the fixture schema flip (HTTP paths), then **Refresh actions** on Permissions.                                                                                                                                 | A **quarantine** pill with the changed entries held back.                       |
+| **revoke**                     | From **Connectors**, choose **Remove connection** from the connection's management menu. In the classic table, use the trash button labeled **Delete _app_ connection**. (For P6, revoke the gateway session instead.) | Agent access is removed immediately; a revoked token is cut off (401).          |
+| **audit-evidence**             | Open company **Audit** and choose **Apps & tools** in the Action filter.                                                                                                                                               | Audit rows for the allowed, approved, denied, quarantine, and revoke decisions. |
 
-(The results matrix in §6 folds **approve** into its *Ask-first write* column, so
+(The results matrix in §6 folds **approve** into its _Ask-first write_ column, so
 the matrix shows 8 columns for these 9 steps.)
 
 The per-path tools are:
 
-| | read (allowed) | write (ask-first) | denied | schema-flip (quarantine) |
-|---|---|---|---|---|
-| **HTTP** (P1, P2, P5, P6, P7) | `todo.list` — *List synthetic todos* | `todo.add` — *Add synthetic todo* | `email.send` — *Send outbox email* | `fixture.schemaFlip` — *Fixture schema mutation* |
-| **stdio** (P3, P4) | `time.now` — *Deterministic time* | `slow.ping` — *Slow stdio fixture* | `crash.now` — *Crashing stdio fixture* | `malicious.metadata` — *Malicious metadata fixture* |
+|                               | read (allowed)                       | write (ask-first)                  | denied                                 | schema-flip (quarantine)                            |
+| ----------------------------- | ------------------------------------ | ---------------------------------- | -------------------------------------- | --------------------------------------------------- |
+| **HTTP** (P1, P2, P5, P6, P7) | `todo.list` — _List synthetic todos_ | `todo.add` — _Add synthetic todo_  | `email.send` — _Send outbox email_     | `fixture.schemaFlip` — _Fixture schema mutation_    |
+| **stdio** (P3, P4)            | `time.now` — _Deterministic time_    | `slow.ping` — _Slow stdio fixture_ | `crash.now` — _Crashing stdio fixture_ | `malicious.metadata` — _Malicious metadata fixture_ |
 
 ---
 
@@ -151,8 +151,8 @@ This is the richest path — do it by hand once and the rest are variations.
      needs authorization and offers **Connect with Smoke OAuth**. If the fixture
      is already healthy, no reconnect card is shown.
    - Click it. The fake provider's **real consent page** opens: a brown banner
-     *"SMOKE TEST - not a real provider"*, headed *"Taskcore Smoke OAuth login +
-     consent"*.
+     _"SMOKE TEST - not a real provider"_, headed _"Taskcore Smoke OAuth login +
+     consent"_.
    - The **email is pre-filled** (`smoke@taskcore.test`). Type the password
      `smoke-password` and click **Authorize smoke test app**.
    - **You should see:** the provider accepts the credentials and returns you to
@@ -160,7 +160,7 @@ This is the richest path — do it by hand once and the rest are variations.
      credentials are rejected with a `403`.
 2. **Discover the catalog.** Open **Permissions** and confirm **List synthetic
    todos** (`todo.list`) and **Add synthetic todo** (`todo.add`) appear under
-   *Actions*.
+   _Actions_.
 3. **Allowed read.** Make sure **List synthetic todos** is set to **Allowed** in
    Permissions. Click its **Test** button, pick an agent in the **Act as** picker,
    and run it. **You should see:** an **Allowed** badge and a result with no error.
@@ -230,8 +230,8 @@ tools change.
 ## 6. Read the results matrix
 
 1. Back on **Apps → Developer → Smoke Lab**, look at the **Integration matrix**.
-2. **You should see:** a row per path (*P1 Remote HTTP · OAuth* … *P7 Governance
-   surfaces*) and a column per lifecycle stage — **Connect**, **Discover
+2. **You should see:** a row per path (_P1 Remote HTTP · OAuth_ … _P7 Governance
+   surfaces_) and a column per lifecycle stage — **Connect**, **Discover
    catalog**, **Allowed read**, **Ask-first write**, **Denied call**,
    **Schema-change quarantine**, **Revoke**, **Audit evidence** — with a glyph
    per cell: **✓ pass** (green), **✗ fail** (red), **– skipped** (amber), and a
@@ -281,8 +281,8 @@ routine's own description for the runbook.
 
 1. Open the **Dashboard** (`/{PREFIX}/dashboard`).
 2. **You should see:** an **Integration smoke** card summarizing the latest run —
-   *"All paths passing"* when green, the failing paths when not, or *"No runs
-   yet — Run one from the Smoke Lab tab"* before the first run. It's the
+   _"All paths passing"_ when green, the failing paths when not, or _"No runs
+   yet — Run one from the Smoke Lab tab"_ before the first run. It's the
    at-a-glance health signal; the Smoke Lab tab is the drill-down. Clicking the
    card takes you to the Smoke Lab.
 

@@ -89,11 +89,20 @@ export interface SettlementSteps {
    * Derive the reuse candidate from the settled slots and the cause, or null
    * when the run holds nothing to save.
    */
-  reuseCandidate(slots: SettlementSlots, cause: SettlementCause | null): ReuseCandidateInput | null;
+  reuseCandidate(
+    slots: SettlementSlots,
+    cause: SettlementCause | null,
+  ): ReuseCandidateInput | null;
   /** Close every runtime the decision did not transfer; drop the warm entry on close. */
-  endSession(slots: SettlementSlots, decision: ReuseDecision): Promise<void> | void;
+  endSession(
+    slots: SettlementSlots,
+    decision: ReuseDecision,
+  ): Promise<void> | void;
   /** Perform the decision: a save transfers to the site store; everything else discards. */
-  settleReuse(slots: SettlementSlots, decision: ReuseDecision): Promise<void> | void;
+  settleReuse(
+    slots: SettlementSlots,
+    decision: ReuseDecision,
+  ): Promise<void> | void;
   /** Stop both bridges in one `allSettled`. */
   stopTransport(slots: SettlementSlots): Promise<void> | void;
   /** The site sync-back. */
@@ -109,7 +118,9 @@ export interface SettlementSteps {
  * cause permits a save, and Amendment B holds: no run-scoped credential issued
  * to the candidate remains valid. Everything else discards, with a reason.
  */
-export function decideReuse(candidate: ReuseCandidateInput | null): ReuseDecision {
+export function decideReuse(
+  candidate: ReuseCandidateInput | null,
+): ReuseDecision {
   if (!candidate) {
     return { kind: "discard", reason: "no reuse candidate" };
   }
@@ -120,7 +131,8 @@ export function decideReuse(candidate: ReuseCandidateInput | null): ReuseDecisio
     // Amendment B credential gate: a live run-scoped credential blocks the save.
     return { kind: "discard", reason: "run-scoped credential still valid" };
   }
-  const savedId: ResourceId = candidate.kind === "host" ? "acp_runtime" : "staged_runtime";
+  const savedId: ResourceId =
+    candidate.kind === "host" ? "acp_runtime" : "staged_runtime";
   return { kind: "save", savedId };
 }
 
@@ -143,7 +155,10 @@ export async function settleAcpRun(
   const candidate = steps.reuseCandidate(slots, cause);
   const decision = decideReuse(candidate);
 
-  const runStep = async (name: string, run: () => Promise<void> | void): Promise<void> => {
+  const runStep = async (
+    name: string,
+    run: () => Promise<void> | void,
+  ): Promise<void> => {
     try {
       await run();
     } catch (error) {
@@ -198,7 +213,10 @@ function buildReport(
   return {
     records: entries.map((entry) => ({
       id: entry.id,
-      disposition: entry.id === savedId ? ("transferred" as const) : ("finalized" as const),
+      disposition:
+        entry.id === savedId
+          ? ("transferred" as const)
+          : ("finalized" as const),
     })),
   };
 }

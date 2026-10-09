@@ -17,7 +17,10 @@ import {
 } from "@taskcore/adapter-utils/execution-target";
 import { resolveTaskcoreInstanceRootForAdapter } from "@taskcore/adapter-utils/server-utils";
 import { shellQuote } from "@taskcore/adapter-utils/ssh";
-import { classifyThrownErrorClass, logSandboxProbeDiagnostic } from "./probe-diagnostics.js";
+import {
+  classifyThrownErrorClass,
+  logSandboxProbeDiagnostic,
+} from "./probe-diagnostics.js";
 
 const SEEDED_SHARED_FILES = ["settings.json", "CLAUDE.md"] as const;
 
@@ -28,11 +31,16 @@ interface SeedFile {
 }
 
 function nonEmpty(value: string | undefined): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 async function pathExists(candidate: string): Promise<boolean> {
-  return fs.access(candidate).then(() => true).catch(() => false);
+  return fs
+    .access(candidate)
+    .then(() => true)
+    .catch(() => false);
 }
 
 function isAlreadyExistsError(error: unknown): boolean {
@@ -68,9 +76,13 @@ async function collectSeedFiles(sourceDir: string): Promise<SeedFile[]> {
     const sourcePath = path.join(sourceDir, name);
     if (!(await pathExists(sourcePath))) continue;
     const rawContents = await fs.readFile(sourcePath);
-    const contents = name === "settings.json"
-      ? Buffer.from(sanitizeRemoteClaudeSettings(rawContents.toString("utf8")), "utf8")
-      : rawContents;
+    const contents =
+      name === "settings.json"
+        ? Buffer.from(
+            sanitizeRemoteClaudeSettings(rawContents.toString("utf8")),
+            "utf8",
+          )
+        : rawContents;
     files.push({ name, sourcePath, contents });
   }
   return files;
@@ -113,7 +125,9 @@ async function materializeSeedSnapshot(input: {
       await fs.rm(stagingDir, { recursive: true, force: true });
     }
   } catch (error) {
-    await fs.rm(stagingDir, { recursive: true, force: true }).catch(() => undefined);
+    await fs
+      .rm(stagingDir, { recursive: true, force: true })
+      .catch(() => undefined);
     throw error;
   }
 
@@ -151,7 +165,14 @@ export function resolveManagedClaudeRuntimeStateDir(
     instanceId: nonEmpty(env.TASKCORE_INSTANCE_ID) ?? undefined,
     env,
   });
-  return path.join(instanceRoot, "companies", companyId, "agents", agentId, "claude-runtime");
+  return path.join(
+    instanceRoot,
+    "companies",
+    companyId,
+    "agents",
+    agentId,
+    "claude-runtime",
+  );
 }
 
 export async function writeTaskcoreClaudeMcpConfig(input: {
@@ -165,7 +186,8 @@ export async function writeTaskcoreClaudeMcpConfig(input: {
   const mcpServers: Record<string, unknown> = {};
   for (const server of input.servers) {
     let name = server.name;
-    if (usedNames.has(name)) name = `${name}-${server.connectionId.slice(0, 8)}`;
+    if (usedNames.has(name))
+      name = `${name}-${server.connectionId.slice(0, 8)}`;
     let suffix = 2;
     while (usedNames.has(name)) {
       name = `${server.name}-${server.connectionId.slice(0, 8)}-${suffix}`;
@@ -179,7 +201,9 @@ export async function writeTaskcoreClaudeMcpConfig(input: {
     };
   }
   await fs.mkdir(configDir, { recursive: true });
-  await fs.writeFile(configPath, JSON.stringify({ mcpServers }), { mode: 0o600 });
+  await fs.writeFile(configPath, JSON.stringify({ mcpServers }), {
+    mode: 0o600,
+  });
   return configPath;
 }
 
@@ -222,7 +246,8 @@ export function buildRemoteClaudeConfigMaterializationCommand(input: {
   remoteClaudeConfigDir: string;
   remoteClaudeConfigSeedDir: string;
 }): string {
-  return `mkdir -p ${shellQuote(input.remoteClaudeConfigDir)} && ` +
+  return (
+    `mkdir -p ${shellQuote(input.remoteClaudeConfigDir)} && ` +
     `if [ -d ${shellQuote(input.remoteClaudeConfigSeedDir)} ]; then ` +
     `cp -R ${shellQuote(`${input.remoteClaudeConfigSeedDir}/.`)} ${shellQuote(input.remoteClaudeConfigDir)}/; ` +
     `fi; ` +
@@ -230,7 +255,8 @@ export function buildRemoteClaudeConfigMaterializationCommand(input: {
     `if [ -n "\${HOME:-}" ] && [ -f "\${HOME}/.claude/\${file}" ] && [ ! -f ${shellQuote(input.remoteClaudeConfigDir)}/"\${file}" ]; then ` +
     `cp "\${HOME}/.claude/\${file}" ${shellQuote(input.remoteClaudeConfigDir)}/"\${file}"; ` +
     `fi; ` +
-    `done`;
+    `done`
+  );
 }
 
 export async function materializeRemoteClaudeConfig(input: {
@@ -292,16 +318,26 @@ export async function prepareSandboxClaudeProbeRuntime(input: {
   });
   if (installCheck) checks.push(installCheck);
 
-  const hasExplicitClaudeConfigDir = isNonEmptyString(input.env.CLAUDE_CONFIG_DIR);
+  const hasExplicitClaudeConfigDir = isNonEmptyString(
+    input.env.CLAUDE_CONFIG_DIR,
+  );
   if (
     input.targetIsRemote &&
     adapterExecutionTargetUsesManagedHome(input.target) &&
     (!hasExplicitClaudeConfigDir || input.managedAiConnection)
   ) {
     let tempWorkspaceDir: string | null = null;
-    let preparedRuntime: Awaited<ReturnType<typeof prepareAdapterExecutionTargetRuntime>> | null = null;
+    let preparedRuntime: Awaited<
+      ReturnType<typeof prepareAdapterExecutionTargetRuntime>
+    > | null = null;
     try {
-      const seedDir = input.managedAiConnection ? input.env.CLAUDE_CONFIG_DIR : await prepareClaudeConfigSeed(process.env, async () => {}, input.companyId);
+      const seedDir = input.managedAiConnection
+        ? input.env.CLAUDE_CONFIG_DIR
+        : await prepareClaudeConfigSeed(
+            process.env,
+            async () => {},
+            input.companyId,
+          );
       const managedRemoteCwd =
         input.target?.kind === "remote" ? input.target.remoteCwd : input.cwd;
       tempWorkspaceDir = await fs.mkdtemp(
@@ -346,7 +382,8 @@ export async function prepareSandboxClaudeProbeRuntime(input: {
       checks.push({
         code: "claude_managed_config_dir",
         level: "info",
-        message: "The environment probe is using Taskcore-managed Claude config materialization.",
+        message:
+          "The environment probe is using Taskcore-managed Claude config materialization.",
         detail: remoteClaudeConfigDir,
       });
     } catch (err) {
@@ -361,13 +398,16 @@ export async function prepareSandboxClaudeProbeRuntime(input: {
       checks.push({
         code: "claude_managed_config_dir_failed",
         level: "error",
-        message: "Could not materialize Taskcore-managed Claude config for the environment probe.",
+        message:
+          "Could not materialize Taskcore-managed Claude config for the environment probe.",
         hint: "Retry the Test. If the failure repeats, check the server log for the redacted diagnostic.",
       });
     } finally {
       await preparedRuntime?.restoreWorkspace().catch(() => undefined);
       if (tempWorkspaceDir) {
-        await fs.rm(tempWorkspaceDir, { recursive: true, force: true }).catch(() => undefined);
+        await fs
+          .rm(tempWorkspaceDir, { recursive: true, force: true })
+          .catch(() => undefined);
       }
     }
   }

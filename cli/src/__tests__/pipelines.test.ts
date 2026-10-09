@@ -20,15 +20,18 @@ function createProgram(): Command {
 }
 
 async function run(args: string[]): Promise<void> {
-  await createProgram().parseAsync([
-    ...args,
-    "--api-base",
-    "http://localhost:3100",
-    "--api-key",
-    "board-token",
-    "--company-id",
-    COMPANY_ID,
-  ], { from: "user" });
+  await createProgram().parseAsync(
+    [
+      ...args,
+      "--api-base",
+      "http://localhost:3100",
+      "--api-key",
+      "board-token",
+      "--company-id",
+      COMPANY_ID,
+    ],
+    { from: "user" },
+  );
 }
 
 describe("pipeline CLI commands", () => {
@@ -44,7 +47,9 @@ describe("pipeline CLI commands", () => {
   });
 
   it("sends request-changes review decisions", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ case: { id: CASE_ID } }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ case: { id: CASE_ID } }));
     vi.stubGlobal("fetch", fetchMock);
 
     await run([
@@ -60,8 +65,12 @@ describe("pipeline CLI commands", () => {
     ]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(`http://localhost:3100/api/cases/${CASE_ID}/review`);
-    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      `http://localhost:3100/api/cases/${CASE_ID}/review`,
+    );
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)),
+    ).toMatchObject({
       decision: "request_changes",
       reason: "Needs edits",
       expectedVersion: 2,
@@ -71,9 +80,17 @@ describe("pipeline CLI commands", () => {
   it("passes request_changes rows through review-bulk", async () => {
     const dir = await mkdtemp(join(tmpdir(), "taskcore-pipeline-cli-"));
     const file = join(dir, "review-bulk.json");
-    await writeFile(file, JSON.stringify([
-      { caseId: CASE_ID, decision: "request_changes", reason: "Needs edits", expectedVersion: 2 },
-    ]));
+    await writeFile(
+      file,
+      JSON.stringify([
+        {
+          caseId: CASE_ID,
+          decision: "request_changes",
+          reason: "Needs edits",
+          expectedVersion: 2,
+        },
+      ]),
+    );
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ results: [] }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -84,22 +101,47 @@ describe("pipeline CLI commands", () => {
     }
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(`http://localhost:3100/api/companies/${COMPANY_ID}/review-cases/bulk`);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      `http://localhost:3100/api/companies/${COMPANY_ID}/review-cases/bulk`,
+    );
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
-      items: [{ caseId: CASE_ID, decision: "request_changes", reason: "Needs edits", expectedVersion: 2 }],
+      items: [
+        {
+          caseId: CASE_ID,
+          decision: "request_changes",
+          reason: "Needs edits",
+          expectedVersion: 2,
+        },
+      ],
     });
   });
 
   it("passes blockedByCaseKeys rows through ingest-batch", async () => {
     const dir = await mkdtemp(join(tmpdir(), "taskcore-pipeline-cli-"));
     const file = join(dir, "ingest-batch.json");
-    await writeFile(file, JSON.stringify([
-      { caseKey: "tweet", title: "Tweet", blockedByCaseKeys: ["image", "post"] },
-      { caseKey: "image", title: "Image" },
-      { caseKey: "post", title: "Post" },
-    ]));
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(jsonResponse([{ id: "33333333-3333-4333-8333-333333333333", key: "content", name: "Content" }]))
+    await writeFile(
+      file,
+      JSON.stringify([
+        {
+          caseKey: "tweet",
+          title: "Tweet",
+          blockedByCaseKeys: ["image", "post"],
+        },
+        { caseKey: "image", title: "Image" },
+        { caseKey: "post", title: "Post" },
+      ]),
+    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: "33333333-3333-4333-8333-333333333333",
+            key: "content",
+            name: "Content",
+          },
+        ]),
+      )
       .mockResolvedValueOnce(jsonResponse([]));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -110,10 +152,16 @@ describe("pipeline CLI commands", () => {
     }
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[1]?.[0]).toBe("http://localhost:3100/api/pipelines/33333333-3333-4333-8333-333333333333/cases/batch");
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      "http://localhost:3100/api/pipelines/33333333-3333-4333-8333-333333333333/cases/batch",
+    );
     expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({
       items: [
-        { caseKey: "tweet", title: "Tweet", blockedByCaseKeys: ["image", "post"] },
+        {
+          caseKey: "tweet",
+          title: "Tweet",
+          blockedByCaseKeys: ["image", "post"],
+        },
         { caseKey: "image", title: "Image" },
         { caseKey: "post", title: "Post" },
       ],
@@ -121,6 +169,9 @@ describe("pipeline CLI commands", () => {
   });
 });
 
-function jsonResponse(body: unknown = { ok: true }, init: ResponseInit = { status: 200 }): Response {
+function jsonResponse(
+  body: unknown = { ok: true },
+  init: ResponseInit = { status: 200 },
+): Response {
   return new Response(JSON.stringify(body), init);
 }

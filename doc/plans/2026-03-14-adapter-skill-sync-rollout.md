@@ -4,6 +4,7 @@ Status: Implemented for local adapters; gateway remains unsupported
 Date: 2026-03-14
 Audience: Product and engineering
 Related:
+
 - `doc/plans/2026-03-14-skills-ui-product-plan.md`
 - `doc/plans/2026-03-13-company-import-export-v2.md`
 - `docs/companies/companies-spec.md`

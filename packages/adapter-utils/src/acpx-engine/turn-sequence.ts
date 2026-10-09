@@ -28,7 +28,11 @@ export interface StartedTurn {
  * error and the phase it failed in. Both carry the wall-clock timeout flag.
  */
 export type TurnFinalizeInput<TTerminal> =
-  | { readonly kind: "terminal"; readonly terminal: TTerminal; readonly timedOut: boolean }
+  | {
+      readonly kind: "terminal";
+      readonly terminal: TTerminal;
+      readonly timedOut: boolean;
+    }
   | {
       readonly kind: "error";
       readonly error: unknown;
@@ -65,7 +69,9 @@ export interface TurnSteps<TTerminal> {
  * rejects. A failure before `turnStart` returns is a `prepare_turn` failure; a
  * failure after it is a `turn` failure. Only the reported phase differs.
  */
-export async function runTurn<TTerminal>(steps: TurnSteps<TTerminal>): Promise<TurnCompletion> {
+export async function runTurn<TTerminal>(
+  steps: TurnSteps<TTerminal>,
+): Promise<TurnCompletion> {
   const controller = new AbortController();
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let timedOut = false;
@@ -110,7 +116,9 @@ export async function runTurn<TTerminal>(steps: TurnSteps<TTerminal>): Promise<T
     return await steps.turnFinalize({ kind: "terminal", terminal, timedOut });
   } catch (error) {
     if (timeout) clearTimeout(timeout);
-    const phase: "prepare_turn" | "turn" = turnStarted ? "turn" : "prepare_turn";
+    const phase: "prepare_turn" | "turn" = turnStarted
+      ? "turn"
+      : "prepare_turn";
     return await steps.turnFinalize({ kind: "error", error, phase, timedOut });
   } finally {
     steps.signal?.removeEventListener("abort", cancel);

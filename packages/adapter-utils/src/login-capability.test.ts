@@ -18,7 +18,9 @@ function validCapability(): AdapterLoginCapability {
 
 describe("assertValidAdapterLoginCapability", () => {
   it("accepts a well-formed capability with only the required fields", () => {
-    expect(() => assertValidAdapterLoginCapability(validCapability(), "vendor")).not.toThrow();
+    expect(() =>
+      assertValidAdapterLoginCapability(validCapability(), "vendor"),
+    ).not.toThrow();
   });
 
   it("accepts a well-formed capability with every optional member set", () => {
@@ -31,72 +33,100 @@ describe("assertValidAdapterLoginCapability", () => {
       onComplete: async () => {},
       completionClaim: "storedSessionId",
     };
-    expect(() => assertValidAdapterLoginCapability(capability, "vendor")).not.toThrow();
+    expect(() =>
+      assertValidAdapterLoginCapability(capability, "vendor"),
+    ).not.toThrow();
   });
 
   it("rejects a non-object capability", () => {
-    expect(() => assertValidAdapterLoginCapability(null, "vendor")).toThrow(/must be an object/);
-    expect(() => assertValidAdapterLoginCapability("displayed_code", "vendor")).toThrow(
+    expect(() => assertValidAdapterLoginCapability(null, "vendor")).toThrow(
       /must be an object/,
     );
+    expect(() =>
+      assertValidAdapterLoginCapability("displayed_code", "vendor"),
+    ).toThrow(/must be an object/);
   });
 
   it("rejects an unknown panelMode", () => {
     const bad = { ...validCapability(), panelMode: "hidden_code" };
-    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(/panelMode/);
+    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(
+      /panelMode/,
+    );
   });
 
   it("rejects an unknown timeoutPolicy", () => {
     const bad = { ...validCapability(), timeoutPolicy: "unbounded" };
-    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(/timeoutPolicy/);
+    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(
+      /timeoutPolicy/,
+    );
   });
 
   it("rejects a missing getCommand", () => {
     const bad = { ...validCapability(), getCommand: "vendor login" };
-    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(/getCommand/);
+    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(
+      /getCommand/,
+    );
   });
 
   it("rejects a missing parsePrompt", () => {
     const bad = { ...validCapability(), parsePrompt: undefined };
-    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(/parsePrompt/);
+    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(
+      /parsePrompt/,
+    );
   });
 
   it("rejects a non-function captureCredential", () => {
     const bad = { ...validCapability(), captureCredential: "token" };
-    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(/captureCredential/);
+    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(
+      /captureCredential/,
+    );
   });
 
   it("rejects a non-function onComplete", () => {
     const bad = { ...validCapability(), onComplete: true };
-    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(/onComplete/);
+    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(
+      /onComplete/,
+    );
   });
 
   it("rejects an unknown completionClaim", () => {
     const bad = { ...validCapability(), completionClaim: "storedToken" };
-    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(/completionClaim/);
+    expect(() => assertValidAdapterLoginCapability(bad, "vendor")).toThrow(
+      /completionClaim/,
+    );
   });
 
   it("names the adapter in the error text", () => {
     const bad = { ...validCapability(), panelMode: "hidden_code" };
-    expect(() => assertValidAdapterLoginCapability(bad, "codex_local")).toThrow(/codex_local/);
+    expect(() => assertValidAdapterLoginCapability(bad, "codex_local")).toThrow(
+      /codex_local/,
+    );
   });
 });
 
 describe("validateAdapterLoginCapability", () => {
   it("accepts a module with no login capability", () => {
-    expect(() => validateAdapterLoginCapability({ type: "vendor_local" })).not.toThrow();
+    expect(() =>
+      validateAdapterLoginCapability({ type: "vendor_local" }),
+    ).not.toThrow();
   });
 
   it("accepts a module with a well-formed login capability", () => {
     expect(() =>
-      validateAdapterLoginCapability({ type: "vendor_local", loginCapability: validCapability() }),
+      validateAdapterLoginCapability({
+        type: "vendor_local",
+        loginCapability: validCapability(),
+      }),
     ).not.toThrow();
   });
 
   it("rejects a module with a malformed login capability", () => {
     const bad = { ...validCapability(), panelMode: "hidden_code" };
     expect(() =>
-      validateAdapterLoginCapability({ type: "vendor_local", loginCapability: bad }),
+      validateAdapterLoginCapability({
+        type: "vendor_local",
+        loginCapability: bad,
+      }),
     ).toThrow(/vendor_local/);
   });
 });

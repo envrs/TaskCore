@@ -62,7 +62,8 @@ const SETUP_TOKEN_AUTH_URL_PREFIXES = [
 // userinfo, no port, no query, and no fragment. The 2.1.226 live capture grounds
 // this host; the contract keeps a single pin until sanitized 2.1.19 evidence
 // proves another real callback.
-export const SETUP_TOKEN_REDIRECT_URI = "https://platform.claude.com/oauth/code/callback";
+export const SETUP_TOKEN_REDIRECT_URI =
+  "https://platform.claude.com/oauth/code/callback";
 
 // The required query keys of the authorization URL. The parser requires each key
 // one time with a valid decoded value. It rejects a missing key, a duplicate
@@ -289,7 +290,9 @@ function hasValidQuery(parsed: URL): boolean {
   }
 
   // Bound the added keys and validate each one.
-  const addedKeys = [...byKey.keys()].filter((key) => !SETUP_TOKEN_CORE_KEY_SET.has(key));
+  const addedKeys = [...byKey.keys()].filter(
+    (key) => !SETUP_TOKEN_CORE_KEY_SET.has(key),
+  );
   if (addedKeys.length > MAX_ADDED_KEYS) return false;
   for (const key of addedKeys) {
     if (!ADDED_KEY_NAME_RE.test(key)) return false;
@@ -318,7 +321,12 @@ function hasValidQuery(parsed: URL): boolean {
  */
 function validateAuthUrl(candidate: string): string | null {
   if (candidate.length > MAX_URL_LENGTH) return null;
-  if (!SETUP_TOKEN_AUTH_URL_PREFIXES.some((prefix) => candidate.startsWith(prefix))) return null;
+  if (
+    !SETUP_TOKEN_AUTH_URL_PREFIXES.some((prefix) =>
+      candidate.startsWith(prefix),
+    )
+  )
+    return null;
   if (API_KEY_RE.test(candidate)) return null;
   let parsed: URL;
   try {
@@ -330,7 +338,12 @@ function validateAuthUrl(candidate: string): string | null {
   if (parsed.username !== "" || parsed.password !== "") return null;
   if (parsed.port !== "" || parsed.hash !== "") return null;
   const pair = `${parsed.origin}${parsed.pathname}`;
-  if (!SETUP_TOKEN_AUTH_URLS.includes(pair as (typeof SETUP_TOKEN_AUTH_URLS)[number])) return null;
+  if (
+    !SETUP_TOKEN_AUTH_URLS.includes(
+      pair as (typeof SETUP_TOKEN_AUTH_URLS)[number],
+    )
+  )
+    return null;
   if (!hasValidQuery(parsed)) return null;
   return candidate;
 }
@@ -345,9 +358,16 @@ function validateAuthUrl(candidate: string): string | null {
  * URL passes once the parser joins the last fragment. Returns null when no bounded
  * join validates.
  */
-function reassembleUrl(lines: string[], startLine: number): SetupTokenUrlMatch | null {
+function reassembleUrl(
+  lines: string[],
+  startLine: number,
+): SetupTokenUrlMatch | null {
   let joined = "";
-  for (let offset = 0; offset < MAX_URL_LINES && startLine + offset < lines.length; offset += 1) {
+  for (
+    let offset = 0;
+    offset < MAX_URL_LINES && startLine + offset < lines.length;
+    offset += 1
+  ) {
     const trimmed = lines[startLine + offset].trim();
     if (trimmed.length === 0 || !URL_CHARS_ONLY_RE.test(trimmed)) break;
     joined += trimmed;
@@ -367,7 +387,11 @@ function reassembleUrl(lines: string[], startLine: number): SetupTokenUrlMatch |
  * non-blank, non-repeat line. That line must match the exact prompt shape.
  * Returns null when the first non-blank, non-repeat line is not the prompt.
  */
-function findBrowserCodePrompt(lines: string[], endLine: number, url: string): string | null {
+function findBrowserCodePrompt(
+  lines: string[],
+  endLine: number,
+  url: string,
+): string | null {
   for (let i = endLine + 1; i < lines.length; i += 1) {
     const trimmed = lines[i].trim();
     if (trimmed.length === 0) continue;
@@ -412,7 +436,12 @@ export function parseSetupTokenPrompt(text: string): SetupTokenPrompt | null {
     offset += lines[i].length + 1;
     if (lineStart > MAX_PREAMBLE_TO_URL_GAP) break;
     const trimmed = lines[i].trim();
-    if (!SETUP_TOKEN_AUTH_URL_PREFIXES.some((prefix) => trimmed.startsWith(prefix))) continue;
+    if (
+      !SETUP_TOKEN_AUTH_URL_PREFIXES.some((prefix) =>
+        trimmed.startsWith(prefix),
+      )
+    )
+      continue;
     const match = reassembleUrl(lines, i);
     if (!match) continue;
     const prompt = findBrowserCodePrompt(lines, match.endLine, match.url);

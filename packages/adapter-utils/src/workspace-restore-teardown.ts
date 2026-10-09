@@ -1,5 +1,8 @@
 import type { RuntimeProgressSink } from "./runtime-progress.js";
-import { getWorkspaceRestoreDiagnostic, withWorkspaceRestoreDiagnosticCapture } from "./workspace-restore-diagnostics.js";
+import {
+  getWorkspaceRestoreDiagnostic,
+  withWorkspaceRestoreDiagnosticCapture,
+} from "./workspace-restore-diagnostics.js";
 import {
   classifyWorkspaceRestoreFailure,
   describeWorkspaceRestoreFailure,
@@ -34,20 +37,24 @@ export function createWorkspaceRestoreTeardown(input: {
   failurePrefix: string;
 }): () => Promise<WorkspaceRestoreOutcome> {
   const { stagedRuntime, onLog, startMessage, failurePrefix } = input;
-  return () => withWorkspaceRestoreDiagnosticCapture(async () => {
-    try {
-      await onLog("stdout", startMessage);
-      await stagedRuntime.restoreWorkspace((line) => onLog("stdout", line));
-      return { ok: true };
-    } catch (err) {
-      // The run log is readable by any same-company actor, so it must never
-      // carry the caught error's own message: that message can hold a host
-      // filesystem path or a process id. Log only the fixed, allowlisted
-      // diagnostic for the classified code.
-      const code = classifyWorkspaceRestoreFailure(err);
-      const diagnostic = getWorkspaceRestoreDiagnostic(err);
-      await onLog("stderr", `${failurePrefix}: ${describeWorkspaceRestoreFailure(code)}\n`);
-      return { ok: false, code, ...(diagnostic ? { diagnostic } : {}) };
-    }
-  });
+  return () =>
+    withWorkspaceRestoreDiagnosticCapture(async () => {
+      try {
+        await onLog("stdout", startMessage);
+        await stagedRuntime.restoreWorkspace((line) => onLog("stdout", line));
+        return { ok: true };
+      } catch (err) {
+        // The run log is readable by any same-company actor, so it must never
+        // carry the caught error's own message: that message can hold a host
+        // filesystem path or a process id. Log only the fixed, allowlisted
+        // diagnostic for the classified code.
+        const code = classifyWorkspaceRestoreFailure(err);
+        const diagnostic = getWorkspaceRestoreDiagnostic(err);
+        await onLog(
+          "stderr",
+          `${failurePrefix}: ${describeWorkspaceRestoreFailure(code)}\n`,
+        );
+        return { ok: false, code, ...(diagnostic ? { diagnostic } : {}) };
+      }
+    });
 }

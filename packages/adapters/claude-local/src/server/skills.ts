@@ -15,12 +15,16 @@ import {
 const __moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 function asString(value: unknown): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 function resolveClaudeSkillsHome(config: Record<string, unknown>) {
   const env =
-    typeof config.env === "object" && config.env !== null && !Array.isArray(config.env)
+    typeof config.env === "object" &&
+    config.env !== null &&
+    !Array.isArray(config.env)
       ? (config.env as Record<string, unknown>)
       : {};
   const configuredHome = asString(env.HOME);
@@ -28,24 +32,36 @@ function resolveClaudeSkillsHome(config: Record<string, unknown>) {
   return path.join(home, ".claude", "skills");
 }
 
-async function buildClaudeSkillSnapshot(config: Record<string, unknown>): Promise<AdapterSkillSnapshot> {
-  const availableEntries = await readTaskcoreRuntimeSkillEntries(config, __moduleDir);
-  const desiredSkills = resolveLegacyTaskcoreDesiredSkillNames(config, availableEntries);
+async function buildClaudeSkillSnapshot(
+  config: Record<string, unknown>,
+): Promise<AdapterSkillSnapshot> {
+  const availableEntries = await readTaskcoreRuntimeSkillEntries(
+    config,
+    __moduleDir,
+  );
+  const desiredSkills = resolveLegacyTaskcoreDesiredSkillNames(
+    config,
+    availableEntries,
+  );
   const skillsHome = resolveClaudeSkillsHome(config);
   const installed = await readInstalledSkillTargets(skillsHome);
   return buildRuntimeMountedSkillSnapshot({
     adapterType: "claude_local",
     availableEntries,
     desiredSkills,
-    configuredDetail: "Will be materialized into the stable Taskcore-managed Claude prompt bundle on the next run.",
+    configuredDetail:
+      "Will be materialized into the stable Taskcore-managed Claude prompt bundle on the next run.",
     externalInstalled: installed,
     externalLocationLabel: "~/.claude/skills",
-    externalDetail: "Installed outside Taskcore management in the Claude skills home.",
+    externalDetail:
+      "Installed outside Taskcore management in the Claude skills home.",
     skillsHome,
   });
 }
 
-export async function listClaudeSkills(ctx: AdapterSkillContext): Promise<AdapterSkillSnapshot> {
+export async function listClaudeSkills(
+  ctx: AdapterSkillContext,
+): Promise<AdapterSkillSnapshot> {
   return buildClaudeSkillSnapshot(ctx.config);
 }
 

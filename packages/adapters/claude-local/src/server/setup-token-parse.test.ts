@@ -14,7 +14,10 @@ import {
   parseSetupTokenPrompt,
 } from "./setup-token-parse.js";
 
-const fixturesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "__fixtures__");
+const fixturesDir = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "__fixtures__",
+);
 
 function readFixture(name: string): string {
   return readFileSync(path.join(fixturesDir, name), "utf8");
@@ -52,7 +55,8 @@ const VALID_URL = CLAUDE_COM_URL;
 
 // The URL preamble line and the browser-code prompt line, exactly as the
 // fixture records them.
-const PREAMBLE_LINE = "Browser didn’t open? Use the url below to sign in (c to copy)";
+const PREAMBLE_LINE =
+  "Browser didn’t open? Use the url below to sign in (c to copy)";
 const PROMPT_LINE = "Paste code here if prompted >";
 
 // Builds a complete, plain-text login output around a URL.
@@ -126,9 +130,11 @@ describe("parseSetupTokenPrompt", () => {
     // The streaming caller accumulates chunks and re-parses the whole buffer. The
     // chunk boundary falls inside the URL token with no line break, so the joined
     // buffer holds the whole URL on one line.
-    const chunkA = ["Opening browser to sign in…", PREAMBLE_LINE, CLAUDE_COM_URL.slice(0, 40)].join(
-      "\n",
-    );
+    const chunkA = [
+      "Opening browser to sign in…",
+      PREAMBLE_LINE,
+      CLAUDE_COM_URL.slice(0, 40),
+    ].join("\n");
     const chunkB = [`${CLAUDE_COM_URL.slice(40)}`, PROMPT_LINE, ""].join("\n");
     expect(parseSetupTokenPrompt(chunkA)).toBeNull();
     const joined = parseSetupTokenPrompt(chunkA + chunkB);
@@ -142,7 +148,8 @@ describe("parseSetupTokenPrompt", () => {
     const reset = "\x1b[0m";
     // The display text wraps across two lines and truncates the URL. The parser
     // must ignore it and read the URI field of the hyperlink.
-    const wrappedDisplay = "https://claude.com/cai/oauth/aut\nhorize?client_id=…";
+    const wrappedDisplay =
+      "https://claude.com/cai/oauth/aut\nhorize?client_id=…";
     const text = [
       `${cyan}Opening browser to sign in…${reset}`,
       PREAMBLE_LINE,
@@ -156,24 +163,36 @@ describe("parseSetupTokenPrompt", () => {
   });
 
   it("returns null for a wrong host", () => {
-    const badHost = CLAUDE_COM_URL.replace("https://claude.com", "https://claude.example.com");
+    const badHost = CLAUDE_COM_URL.replace(
+      "https://claude.com",
+      "https://claude.example.com",
+    );
     expect(parseSetupTokenPrompt(completeOutput(badHost))).toBeNull();
   });
 
   it("returns null for a mixed-case host spelling", () => {
     // The raw candidate must start with the exact lowercase host prefix, so a
     // mixed-case host cannot bind even though the URL class lowercases the host.
-    const mixedCase = CLAUDE_AI_URL.replace("https://claude.ai", "https://Claude.AI");
+    const mixedCase = CLAUDE_AI_URL.replace(
+      "https://claude.ai",
+      "https://Claude.AI",
+    );
     expect(parseSetupTokenPrompt(completeOutput(mixedCase))).toBeNull();
   });
 
   it("returns null for an explicit default :443 port on the host", () => {
-    const withPort = CLAUDE_AI_URL.replace("https://claude.ai/", "https://claude.ai:443/");
+    const withPort = CLAUDE_AI_URL.replace(
+      "https://claude.ai/",
+      "https://claude.ai:443/",
+    );
     expect(parseSetupTokenPrompt(completeOutput(withPort))).toBeNull();
   });
 
   it("returns null for a userinfo prefix on the host", () => {
-    const withUserinfo = CLAUDE_AI_URL.replace("https://claude.ai/", "https://user@claude.ai/");
+    const withUserinfo = CLAUDE_AI_URL.replace(
+      "https://claude.ai/",
+      "https://user@claude.ai/",
+    );
     expect(parseSetupTokenPrompt(completeOutput(withUserinfo))).toBeNull();
   });
 
@@ -235,12 +254,18 @@ describe("parseSetupTokenPrompt", () => {
   });
 
   it("returns null for an invalid code_challenge_method", () => {
-    const badMethod = CLAUDE_COM_URL.replace("code_challenge_method=S256", "code_challenge_method=plain");
+    const badMethod = CLAUDE_COM_URL.replace(
+      "code_challenge_method=S256",
+      "code_challenge_method=plain",
+    );
     expect(parseSetupTokenPrompt(completeOutput(badMethod))).toBeNull();
   });
 
   it("returns null for an invalid response_type", () => {
-    const badType = CLAUDE_COM_URL.replace("response_type=code", "response_type=token");
+    const badType = CLAUDE_COM_URL.replace(
+      "response_type=code",
+      "response_type=token",
+    );
     expect(parseSetupTokenPrompt(completeOutput(badType))).toBeNull();
   });
 
@@ -259,7 +284,10 @@ describe("parseSetupTokenPrompt", () => {
   });
 
   it("returns null for a code_challenge that is too short", () => {
-    const shortChallenge = CLAUDE_COM_URL.replace(`code_challenge=${CODE_CHALLENGE}`, "code_challenge=tooshort");
+    const shortChallenge = CLAUDE_COM_URL.replace(
+      `code_challenge=${CODE_CHALLENGE}`,
+      "code_challenge=tooshort",
+    );
     expect(parseSetupTokenPrompt(completeOutput(shortChallenge))).toBeNull();
   });
 
@@ -269,24 +297,35 @@ describe("parseSetupTokenPrompt", () => {
   });
 
   it("returns null for a client_id with an invalid character", () => {
-    const badClientId = CLAUDE_COM_URL.replace(`client_id=${CLIENT_ID}`, "client_id=bad%2Fid");
+    const badClientId = CLAUDE_COM_URL.replace(
+      `client_id=${CLIENT_ID}`,
+      "client_id=bad%2Fid",
+    );
     expect(parseSetupTokenPrompt(completeOutput(badClientId))).toBeNull();
   });
 
   it("returns null for a scope with too many tokens", () => {
     const scope = encodeURIComponent("a b c d e f g h i");
-    const manyScope = CLAUDE_COM_URL.replace(`scope=${encodeURIComponent(SCOPE)}`, `scope=${scope}`);
+    const manyScope = CLAUDE_COM_URL.replace(
+      `scope=${encodeURIComponent(SCOPE)}`,
+      `scope=${scope}`,
+    );
     expect(parseSetupTokenPrompt(completeOutput(manyScope))).toBeNull();
   });
 
   it("returns null for a scope with an invalid token character", () => {
     const scope = encodeURIComponent("user:profile bad/token");
-    const badScope = CLAUDE_COM_URL.replace(`scope=${encodeURIComponent(SCOPE)}`, `scope=${scope}`);
+    const badScope = CLAUDE_COM_URL.replace(
+      `scope=${encodeURIComponent(SCOPE)}`,
+      `scope=${scope}`,
+    );
     expect(parseSetupTokenPrompt(completeOutput(badScope))).toBeNull();
   });
 
   it("returns null for a redirect_uri with a wrong host", () => {
-    const badRedirect = encodeURIComponent("https://evil.example.com/oauth/code/callback");
+    const badRedirect = encodeURIComponent(
+      "https://evil.example.com/oauth/code/callback",
+    );
     const url = CLAUDE_COM_URL.replace(
       `redirect_uri=${encodeURIComponent(SETUP_TOKEN_REDIRECT_URI)}`,
       `redirect_uri=${badRedirect}`,
@@ -295,7 +334,9 @@ describe("parseSetupTokenPrompt", () => {
   });
 
   it("returns null for a redirect_uri with a stray query", () => {
-    const badRedirect = encodeURIComponent(`${SETUP_TOKEN_REDIRECT_URI}?next=/`);
+    const badRedirect = encodeURIComponent(
+      `${SETUP_TOKEN_REDIRECT_URI}?next=/`,
+    );
     const url = CLAUDE_COM_URL.replace(
       `redirect_uri=${encodeURIComponent(SETUP_TOKEN_REDIRECT_URI)}`,
       `redirect_uri=${badRedirect}`,
@@ -309,14 +350,20 @@ describe("parseSetupTokenPrompt", () => {
   });
 
   it("returns null for a raw sk-ant- value in a query value", () => {
-    const withKey = CLAUDE_COM_URL.replace(`code=${CODE}`, "code=sk-ant-oat01-abc12345");
+    const withKey = CLAUDE_COM_URL.replace(
+      `code=${CODE}`,
+      "code=sk-ant-oat01-abc12345",
+    );
     expect(parseSetupTokenPrompt(completeOutput(withKey))).toBeNull();
   });
 
   it("returns null for a percent-encoded sk-ant- value in a query value", () => {
     // The raw candidate hides the prefix behind `%2D`, so only the decoded value
     // check catches it.
-    const withKey = CLAUDE_COM_URL.replace(`code=${CODE}`, "code=sk%2Dant%2Doat01%2Dabc12345");
+    const withKey = CLAUDE_COM_URL.replace(
+      `code=${CODE}`,
+      "code=sk%2Dant%2Doat01%2Dabc12345",
+    );
     expect(parseSetupTokenPrompt(completeOutput(withKey))).toBeNull();
   });
 
@@ -340,7 +387,12 @@ describe("parseSetupTokenPrompt", () => {
   it("returns null when a code-like value sits on the line after the URL", () => {
     // The line right after the URL must hold the browser-code prompt. A code-like
     // value on that line cannot bind, so the parser returns null.
-    const text = [PREAMBLE_LINE, CLAUDE_COM_URL, "ABCD-EFGHJ", PROMPT_LINE].join("\n");
+    const text = [
+      PREAMBLE_LINE,
+      CLAUDE_COM_URL,
+      "ABCD-EFGHJ",
+      PROMPT_LINE,
+    ].join("\n");
     expect(parseSetupTokenPrompt(text)).toBeNull();
   });
 
@@ -350,7 +402,9 @@ describe("parseSetupTokenPrompt", () => {
   });
 
   it("returns null when the login preamble is absent", () => {
-    const text = ["Some unrelated output", CLAUDE_COM_URL, PROMPT_LINE].join("\n");
+    const text = ["Some unrelated output", CLAUDE_COM_URL, PROMPT_LINE].join(
+      "\n",
+    );
     expect(parseSetupTokenPrompt(text)).toBeNull();
   });
 
@@ -383,8 +437,13 @@ describe("parseSetupTokenPrompt", () => {
   });
 
   it("returns null for a URL over the length cap", () => {
-    const added = ["a1", "b2", "c3", "d4"].map((k) => `${k}=${"a".repeat(256)}`).join("&");
-    const longCode = CLAUDE_AI_URL.replace(`code=${CODE}`, `code=${"a".repeat(1024)}`);
+    const added = ["a1", "b2", "c3", "d4"]
+      .map((k) => `${k}=${"a".repeat(256)}`)
+      .join("&");
+    const longCode = CLAUDE_AI_URL.replace(
+      `code=${CODE}`,
+      `code=${"a".repeat(1024)}`,
+    );
     const overLong = `${longCode}&${added}`;
     expect(overLong.length).toBeGreaterThan(2048);
     expect(parseSetupTokenPrompt(completeOutput(overLong))).toBeNull();
@@ -528,7 +587,10 @@ describe("parseSetupTokenCredential", () => {
     // The terminal wraps the token across two physical lines and joins every
     // line with a bare carriage return. The parser canonicalizes the delimiter,
     // then joins the two fragment lines into the full token.
-    const text = successScreenJoined([TOKEN_FRAGMENT_A, TOKEN_FRAGMENT_B], "\r");
+    const text = successScreenJoined(
+      [TOKEN_FRAGMENT_A, TOKEN_FRAGMENT_B],
+      "\r",
+    );
     expect(parseSetupTokenCredential(text)).toBe(FULL_TOKEN);
   });
 
@@ -543,12 +605,18 @@ describe("parseSetupTokenCredential", () => {
   it("returns null for junk between the anchors in a bare carriage-return record", () => {
     // A stray prose line between the anchors fails the fragment test, so the
     // parser fails closed after canonicalization.
-    const text = successScreenJoined([TOKEN_FRAGMENT_A, "a stray note", TOKEN_FRAGMENT_B], "\r");
+    const text = successScreenJoined(
+      [TOKEN_FRAGMENT_A, "a stray note", TOKEN_FRAGMENT_B],
+      "\r",
+    );
     expect(parseSetupTokenCredential(text)).toBeNull();
   });
 
   it("returns null for a wrong token prefix in a bare carriage-return record", () => {
-    const text = successScreenJoined(["sk-ant-api03-AAAABBBBCCCCDDDDEEEE1111"], "\r");
+    const text = successScreenJoined(
+      ["sk-ant-api03-AAAABBBBCCCCDDDDEEEE1111"],
+      "\r",
+    );
     expect(parseSetupTokenCredential(text)).toBeNull();
   });
 
@@ -562,7 +630,10 @@ describe("parseSetupTokenCredential", () => {
   it("reads the token through ANSI color sequences", () => {
     const cyan = "\x1b[36m";
     const reset = "\x1b[0m";
-    const text = successScreen([`${cyan}${TOKEN_FRAGMENT_A}`, `${TOKEN_FRAGMENT_B}${reset}`]);
+    const text = successScreen([
+      `${cyan}${TOKEN_FRAGMENT_A}`,
+      `${TOKEN_FRAGMENT_B}${reset}`,
+    ]);
     expect(parseSetupTokenCredential(text)).toBe(FULL_TOKEN);
   });
 
@@ -594,7 +665,14 @@ describe("parseSetupTokenCredential", () => {
       "it",
       "again.",
     ]);
-    const text = [beforeAnchor, "", TOKEN_FRAGMENT_A, TOKEN_FRAGMENT_B, "", afterAnchor].join("\n");
+    const text = [
+      beforeAnchor,
+      "",
+      TOKEN_FRAGMENT_A,
+      TOKEN_FRAGMENT_B,
+      "",
+      afterAnchor,
+    ].join("\n");
     expect(parseSetupTokenCredential(text)).toBe(FULL_TOKEN);
   });
 
@@ -632,7 +710,11 @@ describe("parseSetupTokenCredential", () => {
   });
 
   it("returns null when a prose line sits between the anchors", () => {
-    const text = successScreen([TOKEN_FRAGMENT_A, "a stray note", TOKEN_FRAGMENT_B]);
+    const text = successScreen([
+      TOKEN_FRAGMENT_A,
+      "a stray note",
+      TOKEN_FRAGMENT_B,
+    ]);
     expect(parseSetupTokenCredential(text)).toBeNull();
   });
 
@@ -673,7 +755,9 @@ describe("parseSetupTokenCredential", () => {
   });
 
   it("returns null for a non-string input", () => {
-    expect(parseSetupTokenCredential(undefined as unknown as string)).toBeNull();
+    expect(
+      parseSetupTokenCredential(undefined as unknown as string),
+    ).toBeNull();
     expect(parseSetupTokenCredential("")).toBeNull();
   });
 

@@ -137,7 +137,9 @@ export function createHostRunSite(options: HostRunSiteOptions): HostRunSite {
     reuseCandidate(resources: ReadyRunResources): HostReuseCandidate {
       const runtime = resources.get("acp_runtime");
       if (!runtime) {
-        throw new Error("host run site cannot name a reuse candidate without an acp_runtime resource");
+        throw new Error(
+          "host run site cannot name a reuse candidate without an acp_runtime resource",
+        );
       }
       return { runtime: runtime.runtime, sessionHandle: runtime.sessionHandle };
     },

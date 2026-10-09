@@ -44,7 +44,9 @@ function pressEnterOnEveryTextPrompt() {
     capturedText.push(options);
     const error = options.validate?.("");
     if (error) {
-      throw new Error(`"${options.message}" rejected pressing Enter on its default: ${String(error)}`);
+      throw new Error(
+        `"${options.message}" rejected pressing Enter on its default: ${String(error)}`,
+      );
     }
     return options.defaultValue ?? "";
   });
@@ -58,9 +60,12 @@ function queueSelects(values: unknown[]) {
   });
 }
 
-function validatorFor(message: string): NonNullable<CapturedTextOptions["validate"]> {
+function validatorFor(
+  message: string,
+): NonNullable<CapturedTextOptions["validate"]> {
   const call = capturedText.find((options) => options.message === message);
-  if (!call?.validate) throw new Error(`no validator captured for "${message}"`);
+  if (!call?.validate)
+    throw new Error(`no validator captured for "${message}"`);
   return call.validate;
 }
 
@@ -81,7 +86,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   capturedText.length = 0;
   vi.mocked(p.isCancel).mockReturnValue(false);
-  vi.mocked(p.confirm).mockImplementation(async (opts) => (opts.initialValue ?? false) as never);
+  vi.mocked(p.confirm).mockImplementation(
+    async (opts) => (opts.initialValue ?? false) as never,
+  );
   pressEnterOnEveryTextPrompt();
 });
 
@@ -139,10 +146,14 @@ describe("promptDatabase accepts defaults", () => {
   it("still requires a connection string when no saved default exists", async () => {
     queueSelects(["postgres"]);
 
-    await expect(promptDatabase()).rejects.toThrow(/Connection string is required/);
+    await expect(promptDatabase()).rejects.toThrow(
+      /Connection string is required/,
+    );
 
     const connection = validatorFor("PostgreSQL connection string");
-    expect(connection("postgres://user:pass@localhost:5432/taskcore")).toBeUndefined();
+    expect(
+      connection("postgres://user:pass@localhost:5432/taskcore"),
+    ).toBeUndefined();
     expect(connection("mysql://nope")).toBeTruthy();
   });
 });
@@ -181,7 +192,9 @@ describe("promptServer accepts defaults", () => {
   it("still rejects accepting a non-loopback saved host in local_trusted mode", async () => {
     queueSelects(["custom", "local_trusted"]);
 
-    await expect(promptServer({ currentServer: { host: "0.0.0.0" } })).rejects.toThrow(/loopback/);
+    await expect(
+      promptServer({ currentServer: { host: "0.0.0.0" } }),
+    ).rejects.toThrow(/loopback/);
   });
 
   it("accepts the saved public base URL default when reconfiguring a public deployment", async () => {
@@ -266,7 +279,11 @@ describe("invalid saved or derived defaults are still validated", () => {
     queueSelects(["embedded-postgres"]);
 
     await expect(
-      promptDatabase({ ...dbFixture, mode: "embedded-postgres", embeddedPostgresPort: 12.5 as never }),
+      promptDatabase({
+        ...dbFixture,
+        mode: "embedded-postgres",
+        embeddedPostgresPort: 12.5 as never,
+      }),
     ).rejects.toThrow(/Port must be an integer/);
   });
 
@@ -288,7 +305,12 @@ describe("invalid saved or derived defaults are still validated", () => {
       promptStorage({
         provider: "s3",
         localDisk: { baseDir: "" },
-        s3: { bucket: "   ", region: "us-east-1", endpoint: "", forcePathStyle: false },
+        s3: {
+          bucket: "   ",
+          region: "us-east-1",
+          endpoint: "",
+          forcePathStyle: false,
+        },
       } as never),
     ).rejects.toThrow(/Bucket is required/);
   });

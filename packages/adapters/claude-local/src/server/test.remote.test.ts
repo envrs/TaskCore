@@ -10,7 +10,9 @@ const {
   resolveAdapterExecutionTargetCwd,
   probeResult,
 } = vi.hoisted(() => {
-  const probeResult: { value: { exitCode: number; stdout: string; stderr: string } } = {
+  const probeResult: {
+    value: { exitCode: number; stdout: string; stderr: string };
+  } = {
     value: { exitCode: 1, stdout: "", stderr: "" },
   };
   return {
@@ -28,14 +30,16 @@ const {
       startedAt: new Date().toISOString(),
     })),
     describeAdapterExecutionTarget: vi.fn(() => "Daytona"),
-    resolveAdapterExecutionTargetCwd: vi.fn(() => "/home/daytona/taskcore-workspace"),
+    resolveAdapterExecutionTargetCwd: vi.fn(
+      () => "/home/daytona/taskcore-workspace",
+    ),
   };
 });
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     ensureAdapterExecutionTargetDirectory,
@@ -104,7 +108,11 @@ describe("claude sandbox auth-missing check", () => {
     // login-required result. The Test must emit the neutral canonical check
     // code. The user interface reads this code to decide login eligibility; it
     // does not parse the message text or the top-level status.
-    probeResult.value = { exitCode: 1, stdout: loginRequiredStdout, stderr: "" };
+    probeResult.value = {
+      exitCode: 1,
+      stdout: loginRequiredStdout,
+      stderr: "",
+    };
 
     const result = await testEnvironment({
       companyId: "company-1",
@@ -117,15 +125,27 @@ describe("claude sandbox auth-missing check", () => {
     // A missing-auth probe is a warning, not a failure, so the environment stays
     // testable and the user interface can offer login.
     expect(result.status).toBe("warn");
-    expect(result.checks.some((check) => check.code === ADAPTER_AUTH_MISSING_CHECK_CODE)).toBe(true);
+    expect(
+      result.checks.some(
+        (check) => check.code === ADAPTER_AUTH_MISSING_CHECK_CODE,
+      ),
+    ).toBe(true);
     // The descriptive probe check stays, so existing diagnostics keep working.
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_auth_required")).toBe(true);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_auth_required",
+      ),
+    ).toBe(true);
   });
 
   it("does not emit adapter_auth_missing when a non-sandbox remote probe reports missing auth", async () => {
     // Only a sandbox target can start login. A non-sandbox remote target keeps
     // the descriptive probe check but does not carry the neutral login code.
-    probeResult.value = { exitCode: 1, stdout: loginRequiredStdout, stderr: "" };
+    probeResult.value = {
+      exitCode: 1,
+      stdout: loginRequiredStdout,
+      stderr: "",
+    };
 
     const result = await testEnvironment({
       companyId: "company-1",
@@ -135,8 +155,16 @@ describe("claude sandbox auth-missing check", () => {
       environmentName: "Remote host",
     });
 
-    expect(result.checks.some((check) => check.code === "claude_hello_probe_auth_required")).toBe(true);
-    expect(result.checks.some((check) => check.code === ADAPTER_AUTH_MISSING_CHECK_CODE)).toBe(false);
+    expect(
+      result.checks.some(
+        (check) => check.code === "claude_hello_probe_auth_required",
+      ),
+    ).toBe(true);
+    expect(
+      result.checks.some(
+        (check) => check.code === ADAPTER_AUTH_MISSING_CHECK_CODE,
+      ),
+    ).toBe(false);
   });
 });
 
@@ -145,39 +173,45 @@ describe("claude CLI model compatibility check", () => {
     ["claude-fable-5-1", "2.1.251", "2.1.247"],
     ["claude-opus-5-5", "2.1.280", "2.1.279"],
     ["claude-sonnet-5-5", "2.1.284", "2.1.283"],
-  ])("fails before the hello probe for %s below CLI %s", async (model, minimumVersion, detectedVersion) => {
-    probeResult.value = {
-      exitCode: 0,
-      stdout: `${detectedVersion} (Claude Code)\n`,
-      stderr: "",
-    };
+  ])(
+    "fails before the hello probe for %s below CLI %s",
+    async (model, minimumVersion, detectedVersion) => {
+      probeResult.value = {
+        exitCode: 0,
+        stdout: `${detectedVersion} (Claude Code)\n`,
+        stderr: "",
+      };
 
-    const result = await testEnvironment({
-      companyId: "company-1",
-      adapterType: "claude_local",
-      config: {
-        engine: "cli",
-        command: "claude",
-        model,
-      },
-      executionTarget: sandboxTarget,
-      environmentName: "Daytona",
-    });
+      const result = await testEnvironment({
+        companyId: "company-1",
+        adapterType: "claude_local",
+        config: {
+          engine: "cli",
+          command: "claude",
+          model,
+        },
+        executionTarget: sandboxTarget,
+        environmentName: "Daytona",
+      });
 
-    expect(result.status).toBe("fail");
-    expect(result.checks).toContainEqual(expect.objectContaining({
-      code: "claude_cli_version_incompatible",
-      level: "error",
-      message: `${model} requires Claude Code ${minimumVersion} or newer on the CLI lane.`,
-      detail: `Detected Claude Code ${detectedVersion}.`,
-    }));
-    expect(runAdapterExecutionTargetProcess).toHaveBeenCalledTimes(1);
-    const versionCall = runAdapterExecutionTargetProcess.mock.calls[0] as unknown as [
-      string,
-      AdapterExecutionTarget,
-      string,
-      string[],
-    ];
-    expect(versionCall[3]).toEqual(["--version"]);
-  });
+      expect(result.status).toBe("fail");
+      expect(result.checks).toContainEqual(
+        expect.objectContaining({
+          code: "claude_cli_version_incompatible",
+          level: "error",
+          message: `${model} requires Claude Code ${minimumVersion} or newer on the CLI lane.`,
+          detail: `Detected Claude Code ${detectedVersion}.`,
+        }),
+      );
+      expect(runAdapterExecutionTargetProcess).toHaveBeenCalledTimes(1);
+      const versionCall = runAdapterExecutionTargetProcess.mock
+        .calls[0] as unknown as [
+        string,
+        AdapterExecutionTarget,
+        string,
+        string[],
+      ];
+      expect(versionCall[3]).toEqual(["--version"]);
+    },
+  );
 });

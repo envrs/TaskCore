@@ -80,7 +80,8 @@ describe("detectClaudeLoginRequired", () => {
       result: "Failed to authenticate. Your OAuth access token is expired.",
     };
     expect(
-      detectClaudeLoginRequired({ parsed, stdout: "", stderr: "" }).requiresLogin,
+      detectClaudeLoginRequired({ parsed, stdout: "", stderr: "" })
+        .requiresLogin,
     ).toBe(true);
   });
 
@@ -112,7 +113,8 @@ describe("detectClaudeLoginRequired", () => {
       result: "Sure. An invalid bearer token means authentication_failed.",
     };
     expect(
-      detectClaudeLoginRequired({ parsed, stdout: "", stderr: "" }).requiresLogin,
+      detectClaudeLoginRequired({ parsed, stdout: "", stderr: "" })
+        .requiresLogin,
     ).toBe(false);
   });
 
@@ -149,20 +151,26 @@ describe("detectClaudeLoginRequired", () => {
 
 describe("isClaudeModelNotFoundError", () => {
   it("detects model resolution failures from structured and fallback output", () => {
-    expect(isClaudeModelNotFoundError({
-      parsed: {
-        result: "API Error: 404 model not found: claude-haiku-4-6",
-      },
-    })).toBe(true);
-    expect(isClaudeModelNotFoundError({
-      stderr: "Unknown model claude-haiku-4-6",
-    })).toBe(true);
+    expect(
+      isClaudeModelNotFoundError({
+        parsed: {
+          result: "API Error: 404 model not found: claude-haiku-4-6",
+        },
+      }),
+    ).toBe(true);
+    expect(
+      isClaudeModelNotFoundError({
+        stderr: "Unknown model claude-haiku-4-6",
+      }),
+    ).toBe(true);
   });
 
   it("does not classify unrelated provider failures as model resolution errors", () => {
-    expect(isClaudeModelNotFoundError({
-      errorMessage: "API Error: 503 service unavailable",
-    })).toBe(false);
+    expect(
+      isClaudeModelNotFoundError({
+        errorMessage: "API Error: 503 service unavailable",
+      }),
+    ).toBe(false);
   });
 });
 
@@ -170,7 +178,8 @@ describe("isClaudeTransientUpstreamError", () => {
   it("classifies the 'out of extra usage' subscription window failure as provider quota", () => {
     expect(
       isClaudeProviderQuotaError({
-        errorMessage: "You're out of extra usage · resets 4pm (America/Chicago)",
+        errorMessage:
+          "You're out of extra usage · resets 4pm (America/Chicago)",
       }),
     ).toBe(true);
     expect(
@@ -183,20 +192,22 @@ describe("isClaudeTransientUpstreamError", () => {
     ).toBe(true);
     expect(
       isClaudeTransientUpstreamError({
-        errorMessage: "You're out of extra usage · resets 4pm (America/Chicago)",
+        errorMessage:
+          "You're out of extra usage · resets 4pm (America/Chicago)",
       }),
     ).toBe(false);
   });
 
   it("classifies Claude session-limit windows as provider quota and extracts the retry time", () => {
     const now = new Date("2026-04-22T15:15:00.000Z");
-    const errorMessage = "You've hit your session limit - resets at 4pm (America/Chicago).";
+    const errorMessage =
+      "You've hit your session limit - resets at 4pm (America/Chicago).";
 
     expect(isClaudeProviderQuotaError({ errorMessage })).toBe(true);
     expect(isClaudeTransientUpstreamError({ errorMessage })).toBe(false);
-    expect(extractClaudeRetryNotBefore({ errorMessage }, now)?.toISOString()).toBe(
-      "2026-04-22T21:00:00.000Z",
-    );
+    expect(
+      extractClaudeRetryNotBefore({ errorMessage }, now)?.toISOString(),
+    ).toBe("2026-04-22T21:00:00.000Z");
   });
 
   it("classifies the qualifier-less limit wording as provider quota and extracts the retry time", () => {
@@ -206,9 +217,9 @@ describe("isClaudeTransientUpstreamError", () => {
 
     expect(isClaudeProviderQuotaError({ errorMessage })).toBe(true);
     expect(isClaudeTransientUpstreamError({ errorMessage })).toBe(false);
-    expect(extractClaudeRetryNotBefore({ errorMessage }, now)?.toISOString()).toBe(
-      "2026-08-29T02:30:00.000Z",
-    );
+    expect(
+      extractClaudeRetryNotBefore({ errorMessage }, now)?.toISOString(),
+    ).toBe("2026-08-29T02:30:00.000Z");
   });
 
   it("classifies Anthropic API rate_limit_error and overloaded_error as transient", () => {
@@ -216,7 +227,12 @@ describe("isClaudeTransientUpstreamError", () => {
       isClaudeTransientUpstreamError({
         parsed: {
           is_error: true,
-          errors: [{ type: "rate_limit_error", message: "Rate limit reached for requests." }],
+          errors: [
+            {
+              type: "rate_limit_error",
+              message: "Rate limit reached for requests.",
+            },
+          ],
         },
       }),
     ).toBe(true);
@@ -243,7 +259,8 @@ describe("isClaudeTransientUpstreamError", () => {
   it("classifies the subscription 5-hour / weekly limit wording as provider quota", () => {
     expect(
       isClaudeProviderQuotaError({
-        errorMessage: "Claude usage limit reached — weekly limit reached. Try again in 2 days.",
+        errorMessage:
+          "Claude usage limit reached — weekly limit reached. Try again in 2 days.",
       }),
     ).toBe(true);
     expect(
@@ -264,14 +281,19 @@ describe("isClaudeTransientUpstreamError", () => {
   it("does not classify max-turns or unknown-session as transient", () => {
     expect(
       isClaudeTransientUpstreamError({
-        parsed: { subtype: "error_max_turns", result: "Maximum turns reached." },
+        parsed: {
+          subtype: "error_max_turns",
+          result: "Maximum turns reached.",
+        },
       }),
     ).toBe(false);
     expect(
       isClaudeTransientUpstreamError({
         parsed: {
           result: "No conversation found with session id abc-123",
-          errors: [{ message: "No conversation found with session id abc-123" }],
+          errors: [
+            { message: "No conversation found with session id abc-123" },
+          ],
         },
       }),
     ).toBe(false);
@@ -291,7 +313,8 @@ describe("isClaudeTransientUpstreamError", () => {
         parsed: {
           subtype: "success",
           is_error: true,
-          result: "API Error: 400 diagnostics.previous_message_id: must be the `id` from a prior /v1/messages response (starts with `msg_`)",
+          result:
+            "API Error: 400 diagnostics.previous_message_id: must be the `id` from a prior /v1/messages response (starts with `msg_`)",
         },
       }),
     ).toBe(false);
@@ -304,7 +327,8 @@ describe("isClaudePoisonedPreviousMessageIdError", () => {
       isClaudePoisonedPreviousMessageIdError({
         subtype: "success",
         is_error: true,
-        result: "API Error: 400 diagnostics.previous_message_id: must be the `id` from a prior /v1/messages response (starts with `msg_`)",
+        result:
+          "API Error: 400 diagnostics.previous_message_id: must be the `id` from a prior /v1/messages response (starts with `msg_`)",
       }),
     ).toBe(true);
   });
@@ -314,7 +338,12 @@ describe("isClaudePoisonedPreviousMessageIdError", () => {
       isClaudePoisonedPreviousMessageIdError({
         is_error: true,
         result: "",
-        errors: [{ message: "400 diagnostics.previous_message_id: must be the `id` from a prior /v1/messages response (starts with `msg_`)" }],
+        errors: [
+          {
+            message:
+              "400 diagnostics.previous_message_id: must be the `id` from a prior /v1/messages response (starts with `msg_`)",
+          },
+        ],
       }),
     ).toBe(true);
   });
@@ -428,7 +457,8 @@ describe("isClaudeImageProcessingError", () => {
       isClaudeImageProcessingError({
         subtype: "success",
         is_error: true,
-        result: "API Error: 400 Could not process image: image source URL has expired",
+        result:
+          "API Error: 400 Could not process image: image source URL has expired",
       }),
     ).toBe(true);
   });
@@ -470,7 +500,10 @@ describe("extractClaudeRetryNotBefore", () => {
   it("parses the 'resets 4pm' hint in its explicit timezone", () => {
     const now = new Date("2026-04-22T15:15:00.000Z");
     const extracted = extractClaudeRetryNotBefore(
-      { errorMessage: "You're out of extra usage · resets 4pm (America/Chicago)" },
+      {
+        errorMessage:
+          "You're out of extra usage · resets 4pm (America/Chicago)",
+      },
       now,
     );
     expect(extracted?.toISOString()).toBe("2026-04-22T21:00:00.000Z");
@@ -487,7 +520,10 @@ describe("extractClaudeRetryNotBefore", () => {
 
   it("returns null when no reset hint is present", () => {
     expect(
-      extractClaudeRetryNotBefore({ errorMessage: "Overloaded. Try again later." }, new Date()),
+      extractClaudeRetryNotBefore(
+        { errorMessage: "Overloaded. Try again later." },
+        new Date(),
+      ),
     ).toBeNull();
   });
 });
@@ -531,7 +567,11 @@ describe("parseClaudeStreamJson usage extraction", () => {
       session_id: "sess-1",
       result: "done",
       total_cost_usd: 1.25,
-      usage: { input_tokens: 10, output_tokens: 1_800, cache_read_input_tokens: 20 },
+      usage: {
+        input_tokens: 10,
+        output_tokens: 1_800,
+        cache_read_input_tokens: 20,
+      },
       ...extra,
     });
 
@@ -571,12 +611,43 @@ describe("parseClaudeStreamJson usage extraction", () => {
 describe("interrupted Claude accounting", () => {
   it("retains partial usage and replaces repeated message snapshots", () => {
     const events = [
-      { type: "assistant", message: { id: "m1", usage: { input_tokens: 10, cache_creation_input_tokens: 20, cache_read_input_tokens: 40, output_tokens: 3 } } },
-      { type: "assistant", message: { id: "m1", usage: { input_tokens: 10, cache_creation_input_tokens: 20, cache_read_input_tokens: 40, output_tokens: 7 } } },
-      { type: "assistant", message: { id: "m2", usage: { input_tokens: 5, output_tokens: 2 } } },
+      {
+        type: "assistant",
+        message: {
+          id: "m1",
+          usage: {
+            input_tokens: 10,
+            cache_creation_input_tokens: 20,
+            cache_read_input_tokens: 40,
+            output_tokens: 3,
+          },
+        },
+      },
+      {
+        type: "assistant",
+        message: {
+          id: "m1",
+          usage: {
+            input_tokens: 10,
+            cache_creation_input_tokens: 20,
+            cache_read_input_tokens: 40,
+            output_tokens: 7,
+          },
+        },
+      },
+      {
+        type: "assistant",
+        message: { id: "m2", usage: { input_tokens: 5, output_tokens: 2 } },
+      },
     ];
-    const parsed = parseClaudeStreamJson(events.map((event) => JSON.stringify(event)).join("\n"));
-    expect(parsed.usage).toEqual({ inputTokens: 35, cachedInputTokens: 40, outputTokens: 9 });
+    const parsed = parseClaudeStreamJson(
+      events.map((event) => JSON.stringify(event)).join("\n"),
+    );
+    expect(parsed.usage).toEqual({
+      inputTokens: 35,
+      cachedInputTokens: 40,
+      outputTokens: 9,
+    });
     expect(parsed.usageBasis).toBe("per_run");
     expect(parsed.costUsd).toBeNull();
   });

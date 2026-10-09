@@ -59,7 +59,7 @@ Plain prose version of the same graph:
 - A **Policy** is an orthogonal rule applied at call time: `allow`, `block`, `require_approval`, `rate_limit`, or `trust_rule`. Deny beats allow.
 - The **Gateway** is the runtime that an agent calls. It walks profiles + policies, returns a decision, records a **Call Event** in the audit log, and (if needed) opens an **Action Request** for human approval.
 
-If you remember one thing: **profile says *can this agent see the tool*; policy says *is this exact call allowed right now***.
+If you remember one thing: **profile says _can this agent see the tool_; policy says _is this exact call allowed right now_**.
 
 ## Canonical integration model
 
@@ -123,7 +123,7 @@ Taskcore plays two roles in the MCP graph, and confusing them is the most common
 
 **Gateway mode** — Taskcore proxies tool calls from a Taskcore agent to an upstream MCP server (GitHub, Linear, a local stdio fixture, etc.). Every call goes through profile selection, policy evaluation, optional human approval, rate limiting, redaction, and audit. This is what the rest of this document covers.
 
-Operators usually mean *gateway* when they say "MCP access governance". For Taskcore-managed local adapter runs, Taskcore writes adapter MCP config that points at named gateway endpoints with short-lived scoped bearer tokens. Policies, approvals, and the audit log only exist for calls that enter gateway mode.
+Operators usually mean _gateway_ when they say "MCP access governance". For Taskcore-managed local adapter runs, Taskcore writes adapter MCP config that points at named gateway endpoints with short-lived scoped bearer tokens. Policies, approvals, and the audit log only exist for calls that enter gateway mode.
 
 Connected tool names reserve the `mcp__taskcore-assigned__` provider prefix
 within the 128-character limit. Short existing names stay compatible. Longer
@@ -138,10 +138,10 @@ V1 does not claim host-wide MCP enforcement. If an unmanaged external client, ha
 
 A connection is an enabled, governed link to one MCP server. Two transports are supported:
 
-| Transport | When to use | Trust posture |
-| --- | --- | --- |
-| `remote_http` | Hosted SaaS MCP servers (GitHub, Linear, custom remote MCP). Default for cloud. | Taskcore authenticates with stored credential refs and proxies calls. Process supervision is upstream's problem. |
-| `local_stdio` | Local fixtures or approved stdio templates that must run as a child process. | Only allowed when the host is explicitly trusted; see [Local trusted deployment](#local-trusted-deployment). Cloud public deployments fail closed unless a trusted runtime host is configured. |
+| Transport     | When to use                                                                     | Trust posture                                                                                                                                                                                  |
+| ------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `remote_http` | Hosted SaaS MCP servers (GitHub, Linear, custom remote MCP). Default for cloud. | Taskcore authenticates with stored credential refs and proxies calls. Process supervision is upstream's problem.                                                                               |
+| `local_stdio` | Local fixtures or approved stdio templates that must run as a child process.    | Only allowed when the host is explicitly trusted; see [Local trusted deployment](#local-trusted-deployment). Cloud public deployments fail closed unless a trusted runtime host is configured. |
 
 Operators do not paste arbitrary `command` / `args` for stdio. Allowed stdio entries are limited to the approved template catalog (e.g. `taskcore.echo-calculator-time`, `taskcore.synthetic-todo-kv`). To add a new template, ship a code change.
 
@@ -199,11 +199,11 @@ Connection statuses: `draft`, `active`, `disabled`, `archived`. Health statuses:
 
 Each tool discovered on a connection becomes a **catalog entry** with a risk level Taskcore infers from MCP annotations:
 
-| Risk | Trigger | Default treatment |
-| --- | --- | --- |
-| `read` | `annotations.readOnlyHint: true` or schema implies read-only | Allowed by read-friendly profiles. |
-| `write` | `annotations.readOnlyHint: false` or `writeHint: true` | Requires approval by default unless the profile or a policy says otherwise. |
-| `destructive` | `annotations.destructiveHint: true` | Quarantined on first sight. Requires explicit operator action before any agent call can succeed. |
+| Risk          | Trigger                                                      | Default treatment                                                                                |
+| ------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `read`        | `annotations.readOnlyHint: true` or schema implies read-only | Allowed by read-friendly profiles.                                                               |
+| `write`       | `annotations.readOnlyHint: false` or `writeHint: true`       | Requires approval by default unless the profile or a policy says otherwise.                      |
+| `destructive` | `annotations.destructiveHint: true`                          | Quarantined on first sight. Requires explicit operator action before any agent call can succeed. |
 
 When a catalog refresh discovers a new write/destructive tool that did not exist on the prior schema, Taskcore sets `status: quarantined` and records the reason in `quarantineReason`. Quarantined entries are never returned to the agent's tool list until an operator reviews and re-enables them. This is the **changed-tool quarantine** rule and the primary defense against an upstream server silently adding a destructive verb.
 
@@ -235,6 +235,7 @@ curl -fsS -X POST -H "Authorization: Bearer $BOARD_API_KEY" -H "Content-Type: ap
 ```
 
 Selector types:
+
 - `application` — every catalog entry under an application
 - `connection` — every catalog entry under one connection
 - `catalog_entry` — one specific tool
@@ -275,17 +276,18 @@ cannot authorize a later call merely because discovery previously listed it.
 
 ## Policies
 
-Policies run after profile selection. A profile decides *can this agent see the tool*; a policy decides *is this exact call allowed right now*. Policy types:
+Policies run after profile selection. A profile decides _can this agent see the tool_; a policy decides _is this exact call allowed right now_. Policy types:
 
-| Type | Effect |
-| --- | --- |
-| `allow` | Explicit allow for matching selectors. Adds positive evidence; does not override a `block`. |
-| `block` | Deny matching calls. **Deny always beats allow.** |
-| `require_approval` | Force human approval for matching calls; opens an action request. |
-| `rate_limit` | Apply a sliding-window counter. Match → consume; over limit → `rate_limited`. |
-| `trust_rule` | Approval-derived allow rule scoped to specific argument shapes. See [Approval flow and trust rules](#approval-flow-and-trust-rules). |
+| Type               | Effect                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `allow`            | Explicit allow for matching selectors. Adds positive evidence; does not override a `block`.                                          |
+| `block`            | Deny matching calls. **Deny always beats allow.**                                                                                    |
+| `require_approval` | Force human approval for matching calls; opens an action request.                                                                    |
+| `rate_limit`       | Apply a sliding-window counter. Match → consume; over limit → `rate_limited`.                                                        |
+| `trust_rule`       | Approval-derived allow rule scoped to specific argument shapes. See [Approval flow and trust rules](#approval-flow-and-trust-rules). |
 
 Order of evaluation:
+
 1. Catalog status: `quarantined`/`disabled` → immediate deny.
 2. Profile: not in effective set → `deny`.
 3. Policies in priority order. `block` short-circuits. `require_approval` short-circuits to an action request. `rate_limit` evaluates the counter.
@@ -315,6 +317,7 @@ Decisions: `allow`, `deny`, `require_approval`, `rate_limited`, `defer_runtime`.
 ## Approval flow and trust rules
 
 When a call resolves to `require_approval`, the gateway opens an **Action Request** carrying:
+
 - the agent, run, and tool identity,
 - a canonical hash of the arguments (so we can match later trust rules),
 - a `signedArguments` payload the approver sees verbatim,
@@ -323,7 +326,7 @@ When a call resolves to `require_approval`, the gateway opens an **Action Reques
 
 The gateway responds to the agent's tool call with HTTP `409`, `reasonCode: "approval_required"`, and the new `actionRequestId` in the body. The agent's run is paused on this exact call until a decision lands. Once approved, the agent retries the same tool call with `approvedActionRequestId` set; the gateway re-validates that the canonical arguments hash matches and then executes the tool.
 
-After approval, the operator can promote that approval into a **trust rule**: a policy of `policyType: trust_rule` that allows the same tool with the same argument shape for the same actor scope, optionally for a limited number of approvals or until an expiry. This is how you avoid clicking *Approve* on every safe repetition of the same action.
+After approval, the operator can promote that approval into a **trust rule**: a policy of `policyType: trust_rule` that allows the same tool with the same argument shape for the same actor scope, optionally for a limited number of approvals or until an expiry. This is how you avoid clicking _Approve_ on every safe repetition of the same action.
 
 ```sh
 # Approve via API (UI does the same). Approval requires companyId — body or query.
@@ -407,11 +410,11 @@ Local stdio MCP connections introduce a different trust model from remote_http: 
 
 The decision matrix:
 
-| Deployment mode | Local stdio default | When to enable |
-| --- | --- | --- |
-| `local_trusted` | Available, used for fixtures and developer flows | Always; this mode exists for it. |
-| `authenticated/private` (Tailnet/VPN/LAN) | Available with explicit opt-in | When the operator has root on the host and trusts the template list. |
-| `authenticated/public` (internet-facing) | Fail closed | Only when one worker is designated trusted by setting `TASKCORE_TRUSTED_MCP_RUNTIME_HOST` and is isolated from the public-facing edge. |
+| Deployment mode                           | Local stdio default                              | When to enable                                                                                                                         |
+| ----------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `local_trusted`                           | Available, used for fixtures and developer flows | Always; this mode exists for it.                                                                                                       |
+| `authenticated/private` (Tailnet/VPN/LAN) | Available with explicit opt-in                   | When the operator has root on the host and trusts the template list.                                                                   |
+| `authenticated/public` (internet-facing)  | Fail closed                                      | Only when one worker is designated trusted by setting `TASKCORE_TRUSTED_MCP_RUNTIME_HOST` and is isolated from the public-facing edge. |
 
 In all modes:
 
@@ -431,31 +434,31 @@ These are intentional gaps as of the MCP Access Governance v1 launch. Track or w
 - **Trust rules match exact argument shapes only.** A trust rule built from one approval covers calls whose canonical argument hash matches and whose catalog schema hash is unchanged. Wildcards and structural filters across the rest of the schema are not supported in v1.
 - **Rate limits are per-policy.** Rate limit counters are scoped to the matching policy and counter key. There is no cross-policy aggregation (e.g. "300 requests/hour across all GitHub policies"). Operators who need that wire two `rate_limit` policies and accept the additive behavior.
 - **Action request expiry is fixed by policy.** The approval card carries a server-set expiry; the human approver cannot extend it from the UI. If a request expires before approval, the agent must retry the tool call.
-- **Endpoint mode (Taskcore as MCP server) is not policy-governed.** Tool access governance applies only to *gateway mode* — Taskcore's own MCP endpoint surface (`/mcp`) uses standard Taskcore auth and is not subject to the profile/policy stack.
+- **Endpoint mode (Taskcore as MCP server) is not policy-governed.** Tool access governance applies only to _gateway mode_ — Taskcore's own MCP endpoint surface (`/mcp`) uses standard Taskcore auth and is not subject to the profile/policy stack.
 - **No multi-region runtime supervisor.** Local stdio slots run on the worker that serves the request that started them. If you scale workers, slots do not migrate. Plan capacity per worker, not per cluster.
 
 ## Reference
 
-| Surface | Path / endpoint | Notes |
-| --- | --- | --- |
-| UI overview | `/<prefix>/companies/<companyId>/tools` | All tabs: Overview, Examples, Applications, Connections, Profiles, Policies, Runtime, Audit. |
-| Examples | `POST /api/companies/:companyId/tools/examples/:id/install` and `…/smoke` | Bundled fixtures for first-run validation. |
-| Applications | `GET\|POST /api/companies/:companyId/tools/applications`, `PATCH /api/tool-applications/:id` | Logical groupings. |
-| Connections | `GET\|POST /api/companies/:companyId/tools/connections`, `GET\|PATCH\|DELETE /api/tool-connections/:id` | `POST …/health-check`, `POST …/catalog/refresh`, `GET …/catalog` for lifecycle. |
-| Profiles | `GET\|POST /api/companies/:companyId/tools/profiles`, `PATCH /api/tool-profiles/:id` | Entries: `POST /api/tool-profiles/:id/entries`, `PATCH\|DELETE /api/tool-profile-entries/:id`. |
-| Bindings | `POST /api/companies/:companyId/tools/profiles/:id/bind` and `…/unbind` | Targets: `company`, `agent`, `project`, `routine`, `issue`. |
-| Effective profile | `GET /api/companies/:companyId/tools/profiles/effective/agents/:agentId` | Use for QA proofs and debugging selector misses. |
-| Policies | `GET\|POST /api/companies/:companyId/tools/policies`, `PATCH\|DELETE /api/companies/:companyId/tools/policies/:id` | Types: `allow`, `block`, `require_approval`, `rate_limit`, `trust_rule`. |
-| Policy dry-run | `POST /api/companies/:companyId/tools/policy/test` | Structured `{ companyId, actor, request, runContext? }` body; decision returned under `.decision`. |
-| Gateway sessions | `POST /api/tool-gateway/sessions`, `POST /api/tool-gateway/sessions/:sessionId/revoke` | Board callers must supply `companyId`, `agentId`, `runId` to create and `companyId` to revoke; agent JWTs auto-fill from the token. Revocation invalidates the session immediately and emits `tool_gateway.session_revoked` without logging the raw session token. |
-| Gateway calls | `POST /api/tool-gateway/tools/call` | `X-Taskcore-Tool-Gateway-Token` header; body uses `tool` + `parameters`. Approval-required calls respond `409` with `reasonCode: approval_required` and an `actionRequestId`; the agent retries with `approvedActionRequestId`. |
-| Action requests | `POST /api/tool-gateway/action-requests/:id/approve` | Requires `companyId` (body or query). Listing is via the audit log: filter for `tool_gateway.approval_requested`. |
-| Trust rules | `POST /api/companies/:companyId/tools/action-requests/:id/trust-rule`, `POST /api/companies/:companyId/tools/trust-rules/:id/revoke` | Approval-derived allow policies. |
-| Runtime health | `GET /api/companies/:companyId/tools/runtime-health` | Alerts and metrics. Pair with [MCP-RUNTIME-OPERATIONS.md](./MCP-RUNTIME-OPERATIONS.md). |
-| Runtime slots | `GET /api/companies/:companyId/tools/runtime-slots`, `POST /api/companies/:companyId/tools/runtime-slots/:id/stop\|restart` | Process supervision. |
-| Audit | `GET /api/tool-gateway/audit?companyId=…&limit=…`, `GET /api/companies/:companyId/tools/runs/:runId/decisions` | Call event log. |
-| Stdio templates | `GET /api/companies/:companyId/tools/stdio-templates` | Approved local stdio template IDs only. |
-| Bulk import preview | `POST /api/companies/:companyId/tools/mcp/import-json` | Inspect a discovery JSON without persisting anything. |
-| Demo script | [MCP-DEMO-SCRIPT.md](./MCP-DEMO-SCRIPT.md) | Walks read / approval-gated write / denied flows end-to-end. |
-| Runtime runbook | [MCP-RUNTIME-OPERATIONS.md](./MCP-RUNTIME-OPERATIONS.md) | Alerts, stuck slots, recovery. |
-| Deployment modes | [DEPLOYMENT-MODES.md](./DEPLOYMENT-MODES.md) | Auth, exposure, bind. |
+| Surface             | Path / endpoint                                                                                                                      | Notes                                                                                                                                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| UI overview         | `/<prefix>/companies/<companyId>/tools`                                                                                              | All tabs: Overview, Examples, Applications, Connections, Profiles, Policies, Runtime, Audit.                                                                                                                                                                       |
+| Examples            | `POST /api/companies/:companyId/tools/examples/:id/install` and `…/smoke`                                                            | Bundled fixtures for first-run validation.                                                                                                                                                                                                                         |
+| Applications        | `GET\|POST /api/companies/:companyId/tools/applications`, `PATCH /api/tool-applications/:id`                                         | Logical groupings.                                                                                                                                                                                                                                                 |
+| Connections         | `GET\|POST /api/companies/:companyId/tools/connections`, `GET\|PATCH\|DELETE /api/tool-connections/:id`                              | `POST …/health-check`, `POST …/catalog/refresh`, `GET …/catalog` for lifecycle.                                                                                                                                                                                    |
+| Profiles            | `GET\|POST /api/companies/:companyId/tools/profiles`, `PATCH /api/tool-profiles/:id`                                                 | Entries: `POST /api/tool-profiles/:id/entries`, `PATCH\|DELETE /api/tool-profile-entries/:id`.                                                                                                                                                                     |
+| Bindings            | `POST /api/companies/:companyId/tools/profiles/:id/bind` and `…/unbind`                                                              | Targets: `company`, `agent`, `project`, `routine`, `issue`.                                                                                                                                                                                                        |
+| Effective profile   | `GET /api/companies/:companyId/tools/profiles/effective/agents/:agentId`                                                             | Use for QA proofs and debugging selector misses.                                                                                                                                                                                                                   |
+| Policies            | `GET\|POST /api/companies/:companyId/tools/policies`, `PATCH\|DELETE /api/companies/:companyId/tools/policies/:id`                   | Types: `allow`, `block`, `require_approval`, `rate_limit`, `trust_rule`.                                                                                                                                                                                           |
+| Policy dry-run      | `POST /api/companies/:companyId/tools/policy/test`                                                                                   | Structured `{ companyId, actor, request, runContext? }` body; decision returned under `.decision`.                                                                                                                                                                 |
+| Gateway sessions    | `POST /api/tool-gateway/sessions`, `POST /api/tool-gateway/sessions/:sessionId/revoke`                                               | Board callers must supply `companyId`, `agentId`, `runId` to create and `companyId` to revoke; agent JWTs auto-fill from the token. Revocation invalidates the session immediately and emits `tool_gateway.session_revoked` without logging the raw session token. |
+| Gateway calls       | `POST /api/tool-gateway/tools/call`                                                                                                  | `X-Taskcore-Tool-Gateway-Token` header; body uses `tool` + `parameters`. Approval-required calls respond `409` with `reasonCode: approval_required` and an `actionRequestId`; the agent retries with `approvedActionRequestId`.                                    |
+| Action requests     | `POST /api/tool-gateway/action-requests/:id/approve`                                                                                 | Requires `companyId` (body or query). Listing is via the audit log: filter for `tool_gateway.approval_requested`.                                                                                                                                                  |
+| Trust rules         | `POST /api/companies/:companyId/tools/action-requests/:id/trust-rule`, `POST /api/companies/:companyId/tools/trust-rules/:id/revoke` | Approval-derived allow policies.                                                                                                                                                                                                                                   |
+| Runtime health      | `GET /api/companies/:companyId/tools/runtime-health`                                                                                 | Alerts and metrics. Pair with [MCP-RUNTIME-OPERATIONS.md](./MCP-RUNTIME-OPERATIONS.md).                                                                                                                                                                            |
+| Runtime slots       | `GET /api/companies/:companyId/tools/runtime-slots`, `POST /api/companies/:companyId/tools/runtime-slots/:id/stop\|restart`          | Process supervision.                                                                                                                                                                                                                                               |
+| Audit               | `GET /api/tool-gateway/audit?companyId=…&limit=…`, `GET /api/companies/:companyId/tools/runs/:runId/decisions`                       | Call event log.                                                                                                                                                                                                                                                    |
+| Stdio templates     | `GET /api/companies/:companyId/tools/stdio-templates`                                                                                | Approved local stdio template IDs only.                                                                                                                                                                                                                            |
+| Bulk import preview | `POST /api/companies/:companyId/tools/mcp/import-json`                                                                               | Inspect a discovery JSON without persisting anything.                                                                                                                                                                                                              |
+| Demo script         | [MCP-DEMO-SCRIPT.md](./MCP-DEMO-SCRIPT.md)                                                                                           | Walks read / approval-gated write / denied flows end-to-end.                                                                                                                                                                                                       |
+| Runtime runbook     | [MCP-RUNTIME-OPERATIONS.md](./MCP-RUNTIME-OPERATIONS.md)                                                                             | Alerts, stuck slots, recovery.                                                                                                                                                                                                                                     |
+| Deployment modes    | [DEPLOYMENT-MODES.md](./DEPLOYMENT-MODES.md)                                                                                         | Auth, exposure, bind.                                                                                                                                                                                                                                              |

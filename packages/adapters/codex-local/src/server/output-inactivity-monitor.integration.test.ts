@@ -43,14 +43,16 @@ describe("codex inactivity monitor (integration: real subprocess)", () => {
             timeoutSec: 5,
             graceSec: 1,
             onSpawn: async (meta) => {
-              processActivityMonitor.current = createCodexProcessActivityMonitor({
-                pid: meta.pid,
-                processGroupId: meta.processGroupId,
-                intervalMs: 50,
-                onActivity: () => monitor.noteProcessActivity(),
-              });
+              processActivityMonitor.current =
+                createCodexProcessActivityMonitor({
+                  pid: meta.pid,
+                  processGroupId: meta.processGroupId,
+                  intervalMs: 50,
+                  onActivity: () => monitor.noteProcessActivity(),
+                });
             },
-            onLog: async (stream, chunk) => monitor.noteOutputChunk(stream, chunk),
+            onLog: async (stream, chunk) =>
+              monitor.noteOutputChunk(stream, chunk),
           },
         );
 
@@ -66,57 +68,62 @@ describe("codex inactivity monitor (integration: real subprocess)", () => {
     10_000,
   );
 
-  it(
-    "kills a codex child that goes silent after one event and surfaces a monitor failure",
-    async () => {
-      const runId = `monitor-integration-${Date.now()}`;
-      const timeoutMs = 250;
-      const logs: Array<{ stream: string; chunk: string }> = [];
-      let killTarget: { pid: number | null; processGroupId: number | null } | null = null;
-      let monitorFired = false;
-      let terminationSignal: NodeJS.Signals | null = null;
-      let sigkillTimer: ReturnType<typeof setTimeout> | null = null;
-      const processActivityMonitor: {
-        current: ReturnType<typeof createCodexProcessActivityMonitor> | null;
-      } = { current: null };
-      let elapsedMs = 0;
+  it("kills a codex child that goes silent after one event and surfaces a monitor failure", async () => {
+    const runId = `monitor-integration-${Date.now()}`;
+    const timeoutMs = 250;
+    const logs: Array<{ stream: string; chunk: string }> = [];
+    let killTarget: {
+      pid: number | null;
+      processGroupId: number | null;
+    } | null = null;
+    let monitorFired = false;
+    let terminationSignal: NodeJS.Signals | null = null;
+    let sigkillTimer: ReturnType<typeof setTimeout> | null = null;
+    const processActivityMonitor: {
+      current: ReturnType<typeof createCodexProcessActivityMonitor> | null;
+    } = { current: null };
+    let elapsedMs = 0;
 
-      const kill = (signal: NodeJS.Signals) => {
-        const target = killTarget;
-        if (!target) return false;
-        if (target.processGroupId && target.processGroupId > 0) {
-          try {
-            process.kill(-target.processGroupId, signal);
-            return true;
-          } catch {
-            /* fall through */
-          }
+    const kill = (signal: NodeJS.Signals) => {
+      const target = killTarget;
+      if (!target) return false;
+      if (target.processGroupId && target.processGroupId > 0) {
+        try {
+          process.kill(-target.processGroupId, signal);
+          return true;
+        } catch {
+          /* fall through */
         }
-        if (target.pid && target.pid > 0) {
-          try {
-            process.kill(target.pid, signal);
-            return true;
-          } catch {
-            return false;
-          }
+      }
+      if (target.pid && target.pid > 0) {
+        try {
+          process.kill(target.pid, signal);
+          return true;
+        } catch {
+          return false;
         }
-        return false;
-      };
+      }
+      return false;
+    };
 
-      const monitor = createCodexOutputInactivityMonitor({
-        timeoutMs,
-        onFire: (state) => {
-          monitorFired = true;
-          elapsedMs = (state.firedAt ?? Date.now()) - state.lastEventAt;
-          if (kill("SIGTERM")) terminationSignal = "SIGTERM";
-          sigkillTimer = setTimeout(() => {
-            if (kill("SIGKILL")) terminationSignal = "SIGKILL";
-          }, CODEX_OUTPUT_INACTIVITY_MONITOR_SIGTERM_GRACE_MS);
-        },
-      });
+    const monitor = createCodexOutputInactivityMonitor({
+      timeoutMs,
+      onFire: (state) => {
+        monitorFired = true;
+        elapsedMs = (state.firedAt ?? Date.now()) - state.lastEventAt;
+        if (kill("SIGTERM")) terminationSignal = "SIGTERM";
+        sigkillTimer = setTimeout(() => {
+          if (kill("SIGKILL")) terminationSignal = "SIGKILL";
+        }, CODEX_OUTPUT_INACTIVITY_MONITOR_SIGTERM_GRACE_MS);
+      },
+    });
 
-      try {
-        const proc = await runChildProcess(runId, process.execPath, ["-e", FAKE_CODEX_SCRIPT], {
+    try {
+      const proc = await runChildProcess(
+        runId,
+        process.execPath,
+        ["-e", FAKE_CODEX_SCRIPT],
+        {
           cwd: process.cwd(),
           env: process.env as Record<string, string>,
           timeoutSec: 30,
@@ -134,26 +141,27 @@ describe("codex inactivity monitor (integration: real subprocess)", () => {
             logs.push({ stream, chunk });
             monitor.noteOutputChunk(stream, chunk);
           },
-        });
+        },
+      );
 
-        expect(monitorFired, "monitor should fire when codex goes silent").toBe(true);
-        // Process was killed by our signal, not by hitting timeoutSec.
-        expect(proc.timedOut).toBe(false);
-        expect(["SIGTERM", "SIGKILL"]).toContain(proc.signal);
-        expect(["SIGTERM", "SIGKILL"]).toContain(terminationSignal);
-        // The errorMessage shape mirrors the AdapterExecutionResult that
-        // execute.ts will produce for this case.
-        expect(formatOutputInactivityMonitorErrorMessage(elapsedMs)).toMatch(
-          /^monitor: no codex activity \(output or process\) for \d+m \d+s$/,
-        );
-        // We should have observed exactly one parsed JSONL event before silence.
-        expect(monitor.state().parsedEventCount).toBe(1);
-      } finally {
-        processActivityMonitor.current?.stop();
-        monitor.stop();
-        if (sigkillTimer) clearTimeout(sigkillTimer);
-      }
-    },
-    15_000,
-  );
+      expect(monitorFired, "monitor should fire when codex goes silent").toBe(
+        true,
+      );
+      // Process was killed by our signal, not by hitting timeoutSec.
+      expect(proc.timedOut).toBe(false);
+      expect(["SIGTERM", "SIGKILL"]).toContain(proc.signal);
+      expect(["SIGTERM", "SIGKILL"]).toContain(terminationSignal);
+      // The errorMessage shape mirrors the AdapterExecutionResult that
+      // execute.ts will produce for this case.
+      expect(formatOutputInactivityMonitorErrorMessage(elapsedMs)).toMatch(
+        /^monitor: no codex activity \(output or process\) for \d+m \d+s$/,
+      );
+      // We should have observed exactly one parsed JSONL event before silence.
+      expect(monitor.state().parsedEventCount).toBe(1);
+    } finally {
+      processActivityMonitor.current?.stop();
+      monitor.stop();
+      if (sigkillTimer) clearTimeout(sigkillTimer);
+    }
+  }, 15_000);
 });

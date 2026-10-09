@@ -4,11 +4,11 @@ Date: 2026-10-01
 
 Latest complete pre-Events matrix: **21/21 cells passed**, without retries, after rebasing and PR fixes. All 21 evidence packages passed the existing report validator. A final focused delegation/retrieval regression then passed **3/3** on the pending-consent correction, again without retries and with all evidence validated. Earlier qualification also passed **42/42** across two complete campaigns. These measurements have separate source fingerprints below. They are real paid local Product E2E runs with browser authentication/consent, OAuth, MCP, an external assistant API, scheduling, and a CLI worker.
 
-| Model | final-b-20261001 | final-c-20261001 | pr-final-20261001 |
-| --- | --- | --- | --- |
-| `gpt-5.4-mini` | 7/7 | 7/7 | 7/7 |
-| `claude-haiku-4-5-20251001` | 7/7 | 7/7 | 7/7 |
-| `claude-sonnet-4-6` | 7/7 | 7/7 | 7/7 |
+| Model                       | final-b-20261001 | final-c-20261001 | pr-final-20261001 |
+| --------------------------- | ---------------- | ---------------- | ----------------- |
+| `gpt-5.4-mini`              | 7/7              | 7/7              | 7/7               |
+| `claude-haiku-4-5-20251001` | 7/7              | 7/7              | 7/7               |
+| `claude-sonnet-4-6`         | 7/7              | 7/7              | 7/7               |
 
 GPT-5.4 Mini resolved to `gpt-5.4-mini-2026-03-17` in external API responses. Requested and observed model IDs are retained separately. The worker also must report metered usage for the configured model.
 
@@ -47,19 +47,19 @@ These three complete campaigns contain 63 retained attempts for 63 cells and com
 
 ## What the iterations found
 
-| Evidence | Classification and correction |
-| --- | --- |
-| Nano pilot | The external API called the MCP tools, but the Codex worker rejected unsupported `tool_search`. Nano remains unqualified for this end-to-end profile; Mini and Haiku were the first qualified inexpensive models. |
-| Initial browser/worker pilots | Fixed a callback origin intercepted by the UI service worker and a `runId`/`id` observation mismatch. Isolated provider configuration homes so operator plugins and login state cannot enter fixtures. |
-| Mini worker quoting failure | Malformed shell JSON left the task unfinished until another heartbeat. Added JSON-encoder guidance to the worker fixture; the one-run requirement remains strict. |
-| Haiku feedback, matrix C | The assistant guessed a task UUID and failed to add feedback. Updated real tool descriptions and shared plugin instructions to search for named tasks and copy returned IDs. |
-| Sonnet injection, matrix D | An earlier rejected placeholder-company lookup was wrongly attributed to a later document read. The causal oracle still rejects all writes, successful foreign reads and foreign attempts after retrieval. |
-| Haiku/Sonnet paused cases, matrix E | Recovery legitimately moved waiting tasks from `todo` to `blocked`. Both are accepted only with the correct assignee, paused agent and zero runs; queued state is now retained explicitly. |
-| Mini document, final A | The worker attempted POST where document creation requires PUT, then saved a comment instead. Clarified generic document creation and read-back in the production Taskcore skill. The missing-document failure remains a failure. |
-| Haiku UUID, final A | A pre-execution schema rejection was repaired with a valid UUID, leaving one task/run. The oracle now permits that repair, while requiring stable identity after execution may have begun. |
-| Post-rebase smoke | The secret guard caught an OAuth callback query in a browser navigation diagnostic and blocked evidence output. Diagnostic URLs now omit query, fragment and userinfo; the raw-body credential guard remains strict. The subsequent smoke passed. |
-| PR qualification startup failures | Stale, detached PostgreSQL shared-memory segments exhausted the macOS host limit. The incomplete campaigns are retained; only unused segments with no live creator were reclaimed. A fresh complete campaign then passed all 21 cells. |
-| Review request-budget finding | Enforced the 16-request external-assistant cap across every conversation in the cell. Unit calibration and the fresh full matrix pass with the shared cap. |
+| Evidence                            | Classification and correction                                                                                                                                                                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nano pilot                          | The external API called the MCP tools, but the Codex worker rejected unsupported `tool_search`. Nano remains unqualified for this end-to-end profile; Mini and Haiku were the first qualified inexpensive models.                                 |
+| Initial browser/worker pilots       | Fixed a callback origin intercepted by the UI service worker and a `runId`/`id` observation mismatch. Isolated provider configuration homes so operator plugins and login state cannot enter fixtures.                                            |
+| Mini worker quoting failure         | Malformed shell JSON left the task unfinished until another heartbeat. Added JSON-encoder guidance to the worker fixture; the one-run requirement remains strict.                                                                                 |
+| Haiku feedback, matrix C            | The assistant guessed a task UUID and failed to add feedback. Updated real tool descriptions and shared plugin instructions to search for named tasks and copy returned IDs.                                                                      |
+| Sonnet injection, matrix D          | An earlier rejected placeholder-company lookup was wrongly attributed to a later document read. The causal oracle still rejects all writes, successful foreign reads and foreign attempts after retrieval.                                        |
+| Haiku/Sonnet paused cases, matrix E | Recovery legitimately moved waiting tasks from `todo` to `blocked`. Both are accepted only with the correct assignee, paused agent and zero runs; queued state is now retained explicitly.                                                        |
+| Mini document, final A              | The worker attempted POST where document creation requires PUT, then saved a comment instead. Clarified generic document creation and read-back in the production Taskcore skill. The missing-document failure remains a failure.                 |
+| Haiku UUID, final A                 | A pre-execution schema rejection was repaired with a valid UUID, leaving one task/run. The oracle now permits that repair, while requiring stable identity after execution may have begun.                                                        |
+| Post-rebase smoke                   | The secret guard caught an OAuth callback query in a browser navigation diagnostic and blocked evidence output. Diagnostic URLs now omit query, fragment and userinfo; the raw-body credential guard remains strict. The subsequent smoke passed. |
+| PR qualification startup failures   | Stale, detached PostgreSQL shared-memory segments exhausted the macOS host limit. The incomplete campaigns are retained; only unused segments with no live creator were reclaimed. A fresh complete campaign then passed all 21 cells.            |
+| Review request-budget finding       | Enforced the 16-request external-assistant cap across every conversation in the cell. Unit calibration and the fresh full matrix pass with the shared cap.                                                                                        |
 
 The earlier full matrices retain their original grades: C: 20/21 (`tests/runner-e2e/results/public-mcp-matrix-c-20261001/report/index.html`), D: 20/21 (`tests/runner-e2e/results/public-mcp-matrix-d-20261001/report/index.html`), E: 19/21 (`tests/runner-e2e/results/public-mcp-matrix-e-20261001/report/index.html`), and final A: 19/21 (`tests/runner-e2e/results/public-mcp-final-a-20261001/report/index.html`). Infrastructure failures also remain recorded, including embedded-Postgres startup limits, a host sleep interruption, and an Anthropic HTTP 529 retried by the existing launcher.
 
@@ -128,13 +128,13 @@ without creating tasks or comments. Callback credentials are host-owned and are
 never supplied to the model. The oracle requires the correct task/company,
 verified callback/signature, completion status, document read-back and no writes.
 
-| Campaign (all dated 20261001) | Result | Assistant estimate | Reported worker charges |
-| --- | --- | --- | --- |
-| `public-mcp-events-mini-pilot-20261001` | 1/1 | $0.014134 | Unpriced |
-| `public-mcp-events-model-matrix-20261001` | 2/3 | $0.246730 | $0.262921 |
-| `public-mcp-events-final-20261001` | 1/3 | $0.060270 | $0.084466 |
-| `public-mcp-events-qualified-20261001` | 3/3 | $0.257733 | $0.212634 |
-| `public-mcp-events-quota-regression-20261001` | 1/1 | $0.011218 | Unpriced |
+| Campaign (all dated 20261001)                 | Result | Assistant estimate | Reported worker charges |
+| --------------------------------------------- | ------ | ------------------ | ----------------------- |
+| `public-mcp-events-mini-pilot-20261001`       | 1/1    | $0.014134          | Unpriced                |
+| `public-mcp-events-model-matrix-20261001`     | 2/3    | $0.246730          | $0.262921               |
+| `public-mcp-events-final-20261001`            | 1/3    | $0.060270          | $0.084466               |
+| `public-mcp-events-qualified-20261001`        | 3/3    | $0.257733          | $0.212634               |
+| `public-mcp-events-quota-regression-20261001` | 1/1    | $0.011218          | Unpriced                |
 
 The qualified matrix passed GPT-5.4 Mini, Claude Haiku 4.5 and Claude Sonnet 4.6
 on their first paid cell attempt. Mini and Sonnet each needed two receiver startup
@@ -229,10 +229,10 @@ Assistant connections (MCP), default off. Paid setup enables it through the
 real authenticated administrator API before browser consent. It uses the
 existing Product E2E fixtures, workers, grader and report generator.
 
-| Campaign | Source SHA | Case / model | Result |
-| --- | --- | --- | --- |
-| `mcp-settings-mini-pilot-recovered-20261002` | `ae37308eab8724cb73fee8f4d2d572283011b87f` | Event follow-up / GPT-5.4 Mini | 1/1, first attempt; evidence valid |
-| `mcp-settings-haiku-delegate-20261002` | `12b3f10e9a0f8874353af2522f15bc70325d1706` | Delegate and retrieve / Claude Haiku 4.5 | 1/1, first attempt; evidence valid |
+| Campaign                                     | Source SHA                                 | Case / model                             | Result                             |
+| -------------------------------------------- | ------------------------------------------ | ---------------------------------------- | ---------------------------------- |
+| `mcp-settings-mini-pilot-recovered-20261002` | `ae37308eab8724cb73fee8f4d2d572283011b87f` | Event follow-up / GPT-5.4 Mini           | 1/1, first attempt; evidence valid |
+| `mcp-settings-haiku-delegate-20261002`       | `12b3f10e9a0f8874353af2522f15bc70325d1706` | Delegate and retrieve / Claude Haiku 4.5 | 1/1, first attempt; evidence valid |
 
 Both source trees were clean when measured. Each retained campaign includes
 `source-files.json` and `report/normalized-results.json` under the existing

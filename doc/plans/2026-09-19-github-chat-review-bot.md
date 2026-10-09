@@ -110,6 +110,7 @@ is deferred; it must be a separate deliberate option with a sponsor and restrict
 guest policy, and must define removal/denial precedence before implementation.
 
 Implementation references:
+
 - `ui/src/pages/apps/app-detail/IdentitiesSection.tsx`: GitHub summary, refresh,
   management link, inventory and empty state.
 - `server/src/services/chat-provider-inventory.ts`: bot installation inventory.
@@ -162,15 +163,15 @@ connection selection, or the rating policy.
 
 Connection defaults have per-repository overrides in Taskcore UI:
 
-| Setting | Default / controls |
-| --- | --- |
-| Invocation | Linked-member PRs plus authorized mentions; optional mentions-only or sponsored all-author |
-| Events | Opened, reopened, ready-for-review, new commits; individually configurable |
-| Drafts and bot authors | Both off, independently configurable |
-| Filters | Include/exclude authors, target branches, labels; ignored file patterns |
-| Guidance | Event prompts, review instructions, categories, published severity |
-| Publication | Summary and inline findings on; formal reviews off |
-| Rating gate | Minimum 5/5; selectable 1–5 or report-only |
+| Setting                | Default / controls                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| Invocation             | Linked-member PRs plus authorized mentions; optional mentions-only or sponsored all-author |
+| Events                 | Opened, reopened, ready-for-review, new commits; individually configurable                 |
+| Drafts and bot authors | Both off, independently configurable                                                       |
+| Filters                | Include/exclude authors, target branches, labels; ignored file patterns                    |
+| Guidance               | Event prompts, review instructions, categories, published severity                         |
+| Publication            | Summary and inline findings on; formal reviews off                                         |
+| Rating gate            | Minimum 5/5; selectable 1–5 or report-only                                                 |
 
 Manual requests bypass scheduling filters, retaining repository restrictions,
 file exclusions, and requester authority. Comment visibility filters never remove
@@ -184,14 +185,14 @@ an arbitrary passing conclusion. Validate score, coverage, head SHA, findings,
 line locations, rationale, and execution identity. Incomplete analysis has no
 passing score regardless of threshold. The implementation uses this rubric:
 
-| Score | Meaning |
-| --- | --- |
-| 0 | Incomplete analysis or no reliable assessment; cannot pass |
-| 1 | Critical defects prevent safe use |
-| 2 | Major correctness/security defects remain |
-| 3 | Material actionable defects remain |
-| 4 | Only minor actionable defects remain |
-| 5 | No actionable defects found within explicitly reported coverage |
+| Score | Meaning                                                         |
+| ----- | --------------------------------------------------------------- |
+| 0     | Incomplete analysis or no reliable assessment; cannot pass      |
+| 1     | Critical defects prevent safe use                               |
+| 2     | Major correctness/security defects remain                       |
+| 3     | Material actionable defects remain                              |
+| 4     | Only minor actionable defects remain                            |
+| 5     | No actionable defects found within explicitly reported coverage |
 
 The score is an assessment, not proof of correctness. Coverage explicitly lists
 inspected and excluded areas and unavailable context. Deterministic evaluations
@@ -231,12 +232,12 @@ redirects. Never expose private keys through browser state or logs.
 
 ## Cloud gateway route plan
 
-| Surface | Gateway treatment |
-| --- | --- |
+| Surface                                    | Gateway treatment                                                                                                    |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | `POST /api/chat-webhooks/:publicId/github` | Exact public route; preserve raw body and GitHub event, delivery, and signature headers; instance verifies signature |
-| `GET /api/chat-github/manifest/callback` | Narrow callback exception; instance verifies registration state |
-| Installation return | Authenticated setup-resume page |
-| Configuration and identity confirmation | Existing authenticated company-scoped routes |
+| `GET /api/chat-github/manifest/callback`   | Narrow callback exception; instance verifies registration state                                                      |
+| Installation return                        | Authenticated setup-resume page                                                                                      |
+| Configuration and identity confirmation    | Existing authenticated company-scoped routes                                                                         |
 
 Use the trusted current vanity hostname when generating URLs; honor explicit
 webhook-ingress overrides. Cover warm-pool handoff and HTTPS proxy termination.
@@ -269,7 +270,6 @@ require browser login.
 Initial scope is GitHub.com, UI-managed configuration, and the selected agent's
 repository context. Cross-repository indexing, learned feedback, repository config
 files, and auto-fix are deferred.
-
 
 ## Implementation qualification log (2026-09-19)
 
@@ -335,7 +335,6 @@ has been claimed as successful. The local AWS staging profile is unavailable;
 the existing pre-merge staging deployment workflow is the next deployment path
 to qualify after the local GitHub workflow succeeds. No production rollout or
 merge has occurred.
-
 
 ### Embedded-browser continuation (2026-09-20)
 

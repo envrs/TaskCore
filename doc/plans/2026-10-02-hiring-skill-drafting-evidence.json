@@ -36,9 +36,7 @@
     {
       "request": "Backend engineer Ada; legacy Claude; repo-maintenance skill; CTO reporting line",
       "instructions": "You are agent Ada, a backend software engineer at Northstar. You own implementation of assigned backend service changes.",
-      "desiredSkills": [
-        "northstar/repo-maintenance"
-      ],
+      "desiredSkills": ["northstar/repo-maintenance"],
       "adapterType": "claude_local",
       "model": "claude-sonnet-4-6",
       "timerEnabled": false,
@@ -58,9 +56,7 @@
       "request": "Security Engineer Sam; legacy Claude; exact user instruction; confidential workflow installed",
       "instructions": "Review only the authentication service. Keep private findings in the incident-review workflow. Do not edit code.",
       "requestedInstructionsPreservedExactly": true,
-      "desiredSkills": [
-        "northstar/incident-review"
-      ],
+      "desiredSkills": ["northstar/incident-review"],
       "adapterType": "claude_local",
       "model": "claude-sonnet-4-6",
       "timerEnabled": false,

@@ -9,7 +9,9 @@ const REAL_SHAPED_URL = "https://auth.openai.com/codex/device";
 const REAL_SHAPED_CODE = "WXYZ-12345";
 const TOKEN_SENTINEL = "SENTINEL_TOKEN_ABC123";
 const AUTH_BYTES = Buffer.from(
-  JSON.stringify({ tokens: { account_id: "acc", refresh_token: TOKEN_SENTINEL } }),
+  JSON.stringify({
+    tokens: { account_id: "acc", refresh_token: TOKEN_SENTINEL },
+  }),
 );
 
 interface FakeDriverOptions {
@@ -69,7 +71,10 @@ describe("runDeviceLogin", () => {
     expect(result.exitCode).toBe(0);
     expect(result.promptSurfaced).toBe(true);
     expect(onPrompt).toHaveBeenCalledTimes(1);
-    expect(onPrompt).toHaveBeenCalledWith({ url: REAL_SHAPED_URL, code: REAL_SHAPED_CODE });
+    expect(onPrompt).toHaveBeenCalledWith({
+      url: REAL_SHAPED_URL,
+      code: REAL_SHAPED_CODE,
+    });
     expect(onCredential).toHaveBeenCalledTimes(1);
     expect(onCredential).toHaveBeenCalledWith(AUTH_BYTES);
     expect(disposeCalls.count).toBe(1);
@@ -93,7 +98,10 @@ describe("runDeviceLogin", () => {
     expect(result.outcome).toBe("success");
     expect(result.promptSurfaced).toBe(true);
     expect(onPrompt).toHaveBeenCalledTimes(1);
-    expect(onPrompt).toHaveBeenCalledWith({ url: REAL_SHAPED_URL, code: REAL_SHAPED_CODE });
+    expect(onPrompt).toHaveBeenCalledWith({
+      url: REAL_SHAPED_URL,
+      code: REAL_SHAPED_CODE,
+    });
   });
 
   it("runner_surfaces_prompt_at_the_start_of_one_large_chunk", async () => {
@@ -113,7 +121,10 @@ describe("runDeviceLogin", () => {
     expect(result.outcome).toBe("success");
     expect(result.promptSurfaced).toBe(true);
     expect(onPrompt).toHaveBeenCalledTimes(1);
-    expect(onPrompt).toHaveBeenCalledWith({ url: REAL_SHAPED_URL, code: REAL_SHAPED_CODE });
+    expect(onPrompt).toHaveBeenCalledWith({
+      url: REAL_SHAPED_URL,
+      code: REAL_SHAPED_CODE,
+    });
   });
 
   it("runner_disposes_sandbox_on_timeout", async () => {
@@ -174,7 +185,9 @@ describe("runDeviceLogin", () => {
     const { driver, disposeCalls } = createFakeDriver({
       // A driver error whose message embeds secret-bearing text. The runner must
       // never let that message reach its own thrown error.
-      execError: new Error(`network failure while streaming ${REAL_SHAPED_URL} ${REAL_SHAPED_CODE}`),
+      execError: new Error(
+        `network failure while streaming ${REAL_SHAPED_URL} ${REAL_SHAPED_CODE}`,
+      ),
     });
     let caught: unknown;
     try {
@@ -204,24 +217,38 @@ describe("runDeviceLogin", () => {
     });
     const onPrompt = vi.fn();
     const parsePrompt = vi.fn((output: string) =>
-      output.includes("marker") ? { url: "https://example.test/device", code: "AAAA-11111" } : null,
+      output.includes("marker")
+        ? { url: "https://example.test/device", code: "AAAA-11111" }
+        : null,
     );
-    const result = await runDeviceLogin(driver, { onPrompt, timeoutMs: 1000, parsePrompt });
+    const result = await runDeviceLogin(driver, {
+      onPrompt,
+      timeoutMs: 1000,
+      parsePrompt,
+    });
     expect(result.outcome).toBe("success");
     expect(result.promptSurfaced).toBe(true);
     expect(parsePrompt).toHaveBeenCalled();
-    expect(onPrompt).toHaveBeenCalledWith({ url: "https://example.test/device", code: "AAAA-11111" });
+    expect(onPrompt).toHaveBeenCalledWith({
+      url: "https://example.test/device",
+      code: "AAAA-11111",
+    });
   });
 
   it("uses the Codex parser when the caller supplies none", async () => {
     const { driver } = createFakeDriver({
-      chunks: [`1. Open this link\n${REAL_SHAPED_URL}\n2. Enter this one-time code (expires in 15 minutes)\n${REAL_SHAPED_CODE}\nDone.\n`],
+      chunks: [
+        `1. Open this link\n${REAL_SHAPED_URL}\n2. Enter this one-time code (expires in 15 minutes)\n${REAL_SHAPED_CODE}\nDone.\n`,
+      ],
       exitCode: 0,
     });
     const onPrompt = vi.fn();
     const result = await runDeviceLogin(driver, { onPrompt, timeoutMs: 1000 });
     expect(result.outcome).toBe("success");
     expect(result.promptSurfaced).toBe(true);
-    expect(onPrompt).toHaveBeenCalledWith({ url: REAL_SHAPED_URL, code: REAL_SHAPED_CODE });
+    expect(onPrompt).toHaveBeenCalledWith({
+      url: REAL_SHAPED_URL,
+      code: REAL_SHAPED_CODE,
+    });
   });
 });

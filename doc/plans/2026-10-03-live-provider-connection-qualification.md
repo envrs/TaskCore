@@ -26,15 +26,15 @@ Inventory harnesses separately from providers. Claude is a harness; Bedrock and 
 
 The initial inventory below comes from [managed connection capabilities](../../packages/shared/src/ai-connections.ts), [routing compatibility](../../packages/shared/src/ai-provider-routing.ts), and the [UI adapter registry](../../ui/src/adapters/registry.ts). It describes implementation eligibility, not proven live coverage.
 
-| Harness | Managed subscription | Direct API key | Advanced routes currently admitted |
-| --- | --- | --- | --- |
-| Claude Code | Yes | Anthropic | OpenRouter, Bedrock, Messages-compatible gateway |
-| Codex | Yes | OpenAI | OpenRouter, Responses-compatible gateway |
-| Grok | Yes; qualify its actual login UX separately | xAI | Not supported by the current routing compatibility table |
-| Gemini | Not in the managed connection capability table | Google | Not in the current routing compatibility table |
-| OpenCode | No managed subscription entry | OpenRouter | OpenRouter, Chat Completions-compatible gateway |
-| Hermes local | No managed subscription entry | Inventory harness-specific behavior | OpenRouter, Chat Completions-compatible gateway |
-| Cursor local, Kimi, Pi | Inventory required | Inventory required | Inventory required |
+| Harness                | Managed subscription                           | Direct API key                      | Advanced routes currently admitted                       |
+| ---------------------- | ---------------------------------------------- | ----------------------------------- | -------------------------------------------------------- |
+| Claude Code            | Yes                                            | Anthropic                           | OpenRouter, Bedrock, Messages-compatible gateway         |
+| Codex                  | Yes                                            | OpenAI                              | OpenRouter, Responses-compatible gateway                 |
+| Grok                   | Yes; qualify its actual login UX separately    | xAI                                 | Not supported by the current routing compatibility table |
+| Gemini                 | Not in the managed connection capability table | Google                              | Not in the current routing compatibility table           |
+| OpenCode               | No managed subscription entry                  | OpenRouter                          | OpenRouter, Chat Completions-compatible gateway          |
+| Hermes local           | No managed subscription entry                  | Inventory harness-specific behavior | OpenRouter, Chat Completions-compatible gateway          |
+| Cursor local, Kimi, Pi | Inventory required                             | Inventory required                  | Inventory required                                       |
 
 “Not in the table” is a Taskcore managed-connection limitation, not a claim about everything the upstream CLI can do. Inventory native runner providers and installed first-party adapters as well as legacy UI adapters; any additional local provider must receive a manifest entry before the full campaign can qualify.
 
@@ -54,11 +54,11 @@ A credential-free catalog check must flag newly added local harnesses or changed
 
 Use three lanes, with separate results:
 
-| Lane | Starting state | What it proves |
-| --- | --- | --- |
+| Lane                                       | Starting state                                                                                            | What it proves                                                                     |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | Fresh connection, existing browser sign-in | Saved provider website/Google browser session; no Taskcore connection or runtime credential for this cell | The current Taskcore subscription flow obtains and saves a fresh usable credential |
-| Fresh connection, signed-out browser | Empty provider browser state; no Taskcore connection or runtime credential | The complete first-time experience, including account selection and login |
-| Existing connection | A connection previously created by the live UI journey | Selection, reuse, continuation, and reconnect behavior |
+| Fresh connection, signed-out browser       | Empty provider browser state; no Taskcore connection or runtime credential                                | The complete first-time experience, including account selection and login          |
+| Existing connection                        | A connection previously created by the live UI journey                                                    | Selection, reuse, continuation, and reconnect behavior                             |
 
 Most developer campaigns use the first lane. The signed-out lane runs explicitly before releases or login changes. The existing-connection lane cannot substitute for either creation lane.
 
@@ -121,11 +121,11 @@ Keep first failures and all attempts. Permit only declared bounded infrastructur
 
 Example report shape (illustrative, not results):
 
-| Cell | Target | Login | Saved | Tool/artifact | Follow-up | Outcome |
-| --- | --- | --- | --- | --- | --- | --- |
-| Claude subscription/native | Local | Assisted | Pass | Pass | Pass | Pass, assisted |
-| Codex subscription/native | Staging | Needs reauthentication | — | — | — | Awaiting user |
-| Grok custom gateway | Local | — | — | — | — | Unsupported/product gap |
+| Cell                       | Target  | Login                  | Saved | Tool/artifact | Follow-up | Outcome                 |
+| -------------------------- | ------- | ---------------------- | ----- | ------------- | --------- | ----------------------- |
+| Claude subscription/native | Local   | Assisted               | Pass  | Pass          | Pass      | Pass, assisted          |
+| Codex subscription/native  | Staging | Needs reauthentication | —     | —             | —         | Awaiting user           |
+| Grok custom gateway        | Local   | —                      | —     | —             | —         | Unsupported/product gap |
 
 Disable automatic Playwright traces, HARs, screenshots, videos, request-body logging, and DOM dumps for the live authentication flow, including failure handlers. Masked password fields do not protect network traces, tokens, or callback URLs. Exception messages and reporters also need sanitized wrappers; do not serialize raw Playwright call logs containing filled values or navigated URLs. Calibrate redaction with synthetic sentinel credentials before using real accounts.
 
@@ -163,7 +163,6 @@ Each case declares a turn limit covering the setup probe and follow-up, a provid
 - [Playwright pages and popups](https://playwright.dev/docs/pages): popup/new-page events provide deterministic browser coordination.
 - [Playwright authentication](https://playwright.dev/docs/auth): authenticated browser state can be reused, is sensitive, and expires. Reusing website state does not require bypassing Taskcore's connection flow.
 - [Google OAuth policies](https://developers.google.com/identity/protocols/oauth2/policies): account authorization must use an appropriate browser flow. Google login restrictions and challenges are not something this harness should attempt to bypass.
-
 
 ## Verification update · 2026-10-05
 

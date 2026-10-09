@@ -13,18 +13,18 @@ Only these user-authorized inboxes exchanged test mail:
 
 ## Live browser results
 
-| Journey | Observed result |
-| --- | --- |
-| Connect from the Apps catalog | Saved personal human access, selected agent access, and a vaulted key through the real UI. |
-| Give an agent an address | Used Permissions → three-step wizard → existing scoped inbox. The selected agent, review warnings, and connection persisted. |
-| Trust controls | Saved Low-trust review with a root-task boundary, verified the missing-sandbox prerequisite, then explicitly restored Standard for this local QA agent. |
-| Live receiving | Inbound correspondence created AGE-6. The agent explicitly replied once; the reply appeared in AgentMail Console and Taskcore recorded Delivered. |
-| Signed webhook | Registered an inbox-scoped webhook. Actual signed POSTs returned 204. AGE-7 received its email, the agent replied once, and both consoles showed the exchange. |
-| Reply to a completed conversation | New mail reused the same task and reopened it. |
-| Restart catch-up | Sent another reply while the server health endpoint was unreachable. Startup imported it into AGE-7, woke the agent, and sent one acknowledgement in the same thread. |
-| Agent-initiated new conversation | A board request in AGE-7 caused the agent to create AGE-8 with `parentId` pointing to AGE-7. One email was sent and marked Delivered; it appeared as a separate thread in AgentMail Console. |
-| Internal publication boundary | Internal summaries and the outbound-only child task's “No reply sent” response produced no additional emails. |
-| Cleanup | Restored WebSocket mode, removed Taskcore's test webhook, stopped the webhook-only proxy/tunnel, and removed the temporary public URL from the isolated configuration. Inbox history and vaulted test credentials remain inspectable. |
+| Journey                           | Observed result                                                                                                                                                                                                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connect from the Apps catalog     | Saved personal human access, selected agent access, and a vaulted key through the real UI.                                                                                                                                            |
+| Give an agent an address          | Used Permissions → three-step wizard → existing scoped inbox. The selected agent, review warnings, and connection persisted.                                                                                                          |
+| Trust controls                    | Saved Low-trust review with a root-task boundary, verified the missing-sandbox prerequisite, then explicitly restored Standard for this local QA agent.                                                                               |
+| Live receiving                    | Inbound correspondence created AGE-6. The agent explicitly replied once; the reply appeared in AgentMail Console and Taskcore recorded Delivered.                                                                                     |
+| Signed webhook                    | Registered an inbox-scoped webhook. Actual signed POSTs returned 204. AGE-7 received its email, the agent replied once, and both consoles showed the exchange.                                                                        |
+| Reply to a completed conversation | New mail reused the same task and reopened it.                                                                                                                                                                                        |
+| Restart catch-up                  | Sent another reply while the server health endpoint was unreachable. Startup imported it into AGE-7, woke the agent, and sent one acknowledgement in the same thread.                                                                 |
+| Agent-initiated new conversation  | A board request in AGE-7 caused the agent to create AGE-8 with `parentId` pointing to AGE-7. One email was sent and marked Delivered; it appeared as a separate thread in AgentMail Console.                                          |
+| Internal publication boundary     | Internal summaries and the outbound-only child task's “No reply sent” response produced no additional emails.                                                                                                                         |
+| Cleanup                           | Restored WebSocket mode, removed Taskcore's test webhook, stopped the webhook-only proxy/tunnel, and removed the temporary public URL from the isolated configuration. Inbox history and vaulted test credentials remain inspectable. |
 
 Useful live pages:
 
@@ -41,11 +41,11 @@ load test or latency guarantee. Admission-to-wakeup includes durable processing
 and heartbeat admission; it excludes provider delivery and subsequent model
 startup/generation.
 
-| Check | Admission to wakeup |
-| --- | ---: |
-| Live inbound, AGE-6 | 409 ms |
-| Signed webhook, AGE-7 | 421 ms |
-| Startup catch-up, AGE-7 | 585 ms |
+| Check                   | Admission to wakeup |
+| ----------------------- | ------------------: |
+| Live inbound, AGE-6     |              409 ms |
+| Signed webhook, AGE-7   |              421 ms |
+| Startup catch-up, AGE-7 |              585 ms |
 
 The clean webhook run was created at `18:10:53.471Z`, started at
 `18:10:53.512Z`, sent its reply at approximately `18:11:40Z`, and finished at

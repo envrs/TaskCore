@@ -78,13 +78,13 @@ The resolved build-lock SHA-256 is
 `89e5164aa79945655d253f30540c86a620e9df434299af4f1325727dbf5edf47`.
 The tracked lockfile was not changed.
 
-| Packaged artifact | SHA-256 |
-| --- | --- |
-| macOS ARM64 daemon | `816c6603b4ef05ab29cc22a8b6cae9989469a8233bdedc3c97aae22a0c1c6abc` |
-| macOS x64 daemon | `372524b322f1200f1708288d0497195477ecf984e21dd32f3ddc2f2038465199` |
-| Linux x64 daemon | `d5a22554c922087f122ceeb0e7527529221c41af171b37315469c838dede0288` |
-| Public `taskcore` tarball | `14a96c7de0c20cde231782f54ce0df76c1d6a81512f0c5b38a08ec8e8786631a` |
-| Public server tarball | `6e66d37c3ee4d61b66bbc5f2515550a246d8afc8a10b5425c064f5ec3f661d66` |
+| Packaged artifact             | SHA-256                                                            |
+| ----------------------------- | ------------------------------------------------------------------ |
+| macOS ARM64 daemon            | `816c6603b4ef05ab29cc22a8b6cae9989469a8233bdedc3c97aae22a0c1c6abc` |
+| macOS x64 daemon              | `372524b322f1200f1708288d0497195477ecf984e21dd32f3ddc2f2038465199` |
+| Linux x64 daemon              | `d5a22554c922087f122ceeb0e7527529221c41af171b37315469c838dede0288` |
+| Public `taskcore` tarball     | `14a96c7de0c20cde231782f54ce0df76c1d6a81512f0c5b38a08ec8e8786631a` |
+| Public server tarball         | `6e66d37c3ee4d61b66bbc5f2515550a246d8afc8a10b5425c064f5ec3f661d66` |
 | Public Daytona plugin tarball | `a6cf4e9070503757be0505d6a1a8df219dca493f801831b3cc1ca83a185d07db` |
 
 The immutable qualification image is
@@ -135,17 +135,17 @@ There were 23 attempts; the five failed attempts remain recorded below.
 Campaign IDs have prefix `cursor-v11-final-d7-installed-`, followed by
 `<environment>-<case>-<attempt>`. The table gives the passing attempt number.
 
-| Case | Local | Daytona | Cleanup |
-| --- | --- | --- | --- |
-| `hello-complete` | Pass (02) | Pass (01) | Both passed |
-| `file-edit-validate` | Pass (01) | Pass (01) | Both passed |
+| Case                                 | Local     | Daytona   | Cleanup     |
+| ------------------------------------ | --------- | --------- | ----------- |
+| `hello-complete`                     | Pass (02) | Pass (01) | Both passed |
+| `file-edit-validate`                 | Pass (01) | Pass (01) | Both passed |
 | `structured-question-restart-resume` | Pass (01) | Pass (01) | Both passed |
-| `native-plan-reject-revise-accept` | Pass (01) | Pass (01) | Both passed |
-| `native-plan-cancel` | Pass (02) | Pass (01) | Both passed |
-| `native-write-deny-reconnect` | Pass (03) | Pass (01) | Both passed |
-| `pending-permission-stop` | Pass (01) | Pass (01) | Both passed |
-| `warm-three-turn` | Pass (01) | Pass (02) | Both passed |
-| `pending-permission-provider-loss` | Pass (01) | Pass (01) | Both passed |
+| `native-plan-reject-revise-accept`   | Pass (01) | Pass (01) | Both passed |
+| `native-plan-cancel`                 | Pass (02) | Pass (01) | Both passed |
+| `native-write-deny-reconnect`        | Pass (03) | Pass (01) | Both passed |
+| `pending-permission-stop`            | Pass (01) | Pass (01) | Both passed |
+| `warm-three-turn`                    | Pass (01) | Pass (02) | Both passed |
+| `pending-permission-provider-loss`   | Pass (01) | Pass (01) | Both passed |
 
 Questions survived controller restart and consumed the answer once. Native plans
 verified rejection, revision, acceptance and cancellation; accepted planning runs
@@ -220,31 +220,31 @@ Each result lives under `tests/runner-e2e/results/<campaign>/<suite>/runner-acpx
 The full campaign prefix is defined above. The SHA-256 identifies the original
 result file; later diagnoses do not rewrite its verdict.
 
-| Campaign suffix | Verdict / cleanup | Result SHA-256 |
-| --- | --- | --- |
-| `local-hello-complete-01` | failed / passed | `59d8dc9194ee74fe1cd9827103f2734abb5e14d81232280d80ffdb5f6dede9e7` |
-| `local-hello-complete-02` | passed / passed | `e4c0839d417ee7de3d79d5c5898d7ad05fbe1c66103979cdea470a422ec1a0d2` |
-| `local-file-edit-validate-01` | passed / passed | `d45f3b2975c9ac359e969940b2209f47096cfdcebd3302c6ab42d1933e1df351` |
-| `local-structured-question-restart-resume-01` | passed / passed | `0ad49f9833236998b597a245de05ca7c05208865c0c5f50d944607b07242b2f9` |
-| `local-native-plan-reject-revise-accept-01` | passed / passed | `07d83d372061894812e6751679fa4f3dfb1754989aaa63a4ca6828578504ca91` |
-| `local-native-plan-cancel-01` | failed / passed | `dd22d0cfd3366fbebf041807401d16ff327e92b05e08521b220613df68fc2b1e` |
-| `local-native-plan-cancel-02` | passed / passed | `a4b06aefec7570af8f818e2a2705f100e10f2e8bd26fa5a500e25a6f7dc85c11` |
-| `local-native-write-deny-reconnect-01` | failed / failed | `aa27b5df8b1220dfa936934666c708f899d663d2b1c3a15faf19de3842af4c4d` |
-| `local-native-write-deny-reconnect-02` | failed / failed | `066dbfef92e151b87c31a62f6a8f825af0bbcab8d791b4c0aa448e30e90e3066` |
-| `local-native-write-deny-reconnect-03` | passed / passed | `33f8fedad38789d37874e7622e7bcb15227fa2412b8aa2b6ef919a03d3903988` |
-| `local-pending-permission-stop-01` | passed / passed | `b8101e2155f4b6bce481ee0cddb6b1c34af71dbe20798081d8821eef2dc4fbe2` |
-| `local-warm-three-turn-01` | passed / passed | `65c64e282ef0cb667c89b329c4b0f22104fd0d12c811aa450638bd093d04f2b5` |
-| `local-pending-permission-provider-loss-01` | passed / passed | `f8e7dc15fa051081f38f5a08292eeec7c83713964b9fb26304a5a9d2dd6edfb5` |
-| `daytona-hello-complete-01` | passed / passed | `787dd287c2d29350b9ad8e48fee73bdaecbdd059342bed44bc9304e5965bbe01` |
-| `daytona-file-edit-validate-01` | passed / passed | `bdb575c04162a1a24fc6354a2a284fb156665ea02de2e69be7c250bd211a2bf5` |
-| `daytona-structured-question-restart-resume-01` | passed / passed | `d72536f01147e8b7b77c1e82ed34c0faf0c99176700f7c101c95b0b5665d01df` |
-| `daytona-native-plan-reject-revise-accept-01` | passed / passed | `3cdb6ef262788f949d44d7d1b84c258d0494968949fb6c010c4496cc07442e5e` |
-| `daytona-native-plan-cancel-01` | passed / passed | `48190c0c3338c741aac319cd356dacfe1af011f8bdcea6fbf10d571fe6110211` |
-| `daytona-native-write-deny-reconnect-01` | passed / passed | `d89dd8794c5866c3612ab9a60f023dd136740a8525fd0c93feacc7bd0e17f90a` |
-| `daytona-pending-permission-stop-01` | passed / passed | `fc7aae403d32d1a587c4caf711bf9cba61cb7206f8c24bfac02175293874ce07` |
-| `daytona-warm-three-turn-01` | failed / passed | `528145330b803d21dc25937d3ef768c6dda3bb6583ba35030d69112e8cefbe1a` |
-| `daytona-warm-three-turn-02` | passed / passed | `e3e3c295714679ee5e7040f52ebeaf95e9f860bde1b5698fbd2566588a0e161a` |
-| `daytona-pending-permission-provider-loss-01` | passed / passed | `e9d15896ae5fe72e239b4fff8dd4fc8743eb309fef084ad46275e681671f7821` |
+| Campaign suffix                                 | Verdict / cleanup | Result SHA-256                                                     |
+| ----------------------------------------------- | ----------------- | ------------------------------------------------------------------ |
+| `local-hello-complete-01`                       | failed / passed   | `59d8dc9194ee74fe1cd9827103f2734abb5e14d81232280d80ffdb5f6dede9e7` |
+| `local-hello-complete-02`                       | passed / passed   | `e4c0839d417ee7de3d79d5c5898d7ad05fbe1c66103979cdea470a422ec1a0d2` |
+| `local-file-edit-validate-01`                   | passed / passed   | `d45f3b2975c9ac359e969940b2209f47096cfdcebd3302c6ab42d1933e1df351` |
+| `local-structured-question-restart-resume-01`   | passed / passed   | `0ad49f9833236998b597a245de05ca7c05208865c0c5f50d944607b07242b2f9` |
+| `local-native-plan-reject-revise-accept-01`     | passed / passed   | `07d83d372061894812e6751679fa4f3dfb1754989aaa63a4ca6828578504ca91` |
+| `local-native-plan-cancel-01`                   | failed / passed   | `dd22d0cfd3366fbebf041807401d16ff327e92b05e08521b220613df68fc2b1e` |
+| `local-native-plan-cancel-02`                   | passed / passed   | `a4b06aefec7570af8f818e2a2705f100e10f2e8bd26fa5a500e25a6f7dc85c11` |
+| `local-native-write-deny-reconnect-01`          | failed / failed   | `aa27b5df8b1220dfa936934666c708f899d663d2b1c3a15faf19de3842af4c4d` |
+| `local-native-write-deny-reconnect-02`          | failed / failed   | `066dbfef92e151b87c31a62f6a8f825af0bbcab8d791b4c0aa448e30e90e3066` |
+| `local-native-write-deny-reconnect-03`          | passed / passed   | `33f8fedad38789d37874e7622e7bcb15227fa2412b8aa2b6ef919a03d3903988` |
+| `local-pending-permission-stop-01`              | passed / passed   | `b8101e2155f4b6bce481ee0cddb6b1c34af71dbe20798081d8821eef2dc4fbe2` |
+| `local-warm-three-turn-01`                      | passed / passed   | `65c64e282ef0cb667c89b329c4b0f22104fd0d12c811aa450638bd093d04f2b5` |
+| `local-pending-permission-provider-loss-01`     | passed / passed   | `f8e7dc15fa051081f38f5a08292eeec7c83713964b9fb26304a5a9d2dd6edfb5` |
+| `daytona-hello-complete-01`                     | passed / passed   | `787dd287c2d29350b9ad8e48fee73bdaecbdd059342bed44bc9304e5965bbe01` |
+| `daytona-file-edit-validate-01`                 | passed / passed   | `bdb575c04162a1a24fc6354a2a284fb156665ea02de2e69be7c250bd211a2bf5` |
+| `daytona-structured-question-restart-resume-01` | passed / passed   | `d72536f01147e8b7b77c1e82ed34c0faf0c99176700f7c101c95b0b5665d01df` |
+| `daytona-native-plan-reject-revise-accept-01`   | passed / passed   | `3cdb6ef262788f949d44d7d1b84c258d0494968949fb6c010c4496cc07442e5e` |
+| `daytona-native-plan-cancel-01`                 | passed / passed   | `48190c0c3338c741aac319cd356dacfe1af011f8bdcea6fbf10d571fe6110211` |
+| `daytona-native-write-deny-reconnect-01`        | passed / passed   | `d89dd8794c5866c3612ab9a60f023dd136740a8525fd0c93feacc7bd0e17f90a` |
+| `daytona-pending-permission-stop-01`            | passed / passed   | `fc7aae403d32d1a587c4caf711bf9cba61cb7206f8c24bfac02175293874ce07` |
+| `daytona-warm-three-turn-01`                    | failed / passed   | `528145330b803d21dc25937d3ef768c6dda3bb6583ba35030d69112e8cefbe1a` |
+| `daytona-warm-three-turn-02`                    | passed / passed   | `e3e3c295714679ee5e7040f52ebeaf95e9f860bde1b5698fbd2566588a0e161a` |
+| `daytona-pending-permission-provider-loss-01`   | passed / passed   | `e9d15896ae5fe72e239b4fff8dd4fc8743eb309fef084ad46275e681671f7821` |
 
 </details>
 
@@ -306,18 +306,18 @@ All three source daemons and all three Cursor native closures match the qualifie
 artifacts byte for byte. Release assembly re-signs copied macOS daemon inodes;
 the table below records the resulting packaged hashes. These source roles do not replace historical identities.
 
-| Required case | Local proof | Fresh Daytona proof |
-| --- | --- | --- |
-| Completion through authenticated tools | `hello-complete-01`: pass, cleanup pass | `hello-complete-01`: pass, cleanup pass |
-| File edit, validation and registered download | `file-edit-validate-02`: pass, cleanup pass | `file-edit-validate-01`: pass, cleanup pass |
-| Semantic question after controller restart | `structured-question-restart-resume-01`: pass, cleanup pass | `structured-question-restart-resume-01`: pass, cleanup pass |
-| Semantic plan approval and completion | `plan-approve-complete-01`: pass, cleanup pass | `plan-approve-complete-02`: pass, cleanup pass |
-| Native reject, revise and accept | `native-plan-reject-revise-accept-01`: pass, cleanup pass | `native-plan-reject-revise-accept-01`: pass, cleanup pass |
-| Native plan cancellation | `native-plan-cancel-01`: pass, cleanup pass | `native-plan-cancel-02`: pass, cleanup pass |
-| Denied write after reconnect | `native-write-deny-reconnect-01`: pass, cleanup pass | `native-write-deny-reconnect-01`: pass, cleanup pass |
-| Stop during pending permission | `pending-permission-stop-01`: pass, cleanup pass | `pending-permission-stop-01`: pass, cleanup pass |
-| Three warm turns | `warm-three-turn-01`: pass, cleanup pass | `warm-three-turn-01`: pass, cleanup pass |
-| Pending permission followed by provider loss | `pending-permission-provider-loss-01`: pass, cleanup pass | `pending-permission-provider-loss-01`: pass, cleanup pass |
+| Required case                                 | Local proof                                                 | Fresh Daytona proof                                         |
+| --------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| Completion through authenticated tools        | `hello-complete-01`: pass, cleanup pass                     | `hello-complete-01`: pass, cleanup pass                     |
+| File edit, validation and registered download | `file-edit-validate-02`: pass, cleanup pass                 | `file-edit-validate-01`: pass, cleanup pass                 |
+| Semantic question after controller restart    | `structured-question-restart-resume-01`: pass, cleanup pass | `structured-question-restart-resume-01`: pass, cleanup pass |
+| Semantic plan approval and completion         | `plan-approve-complete-01`: pass, cleanup pass              | `plan-approve-complete-02`: pass, cleanup pass              |
+| Native reject, revise and accept              | `native-plan-reject-revise-accept-01`: pass, cleanup pass   | `native-plan-reject-revise-accept-01`: pass, cleanup pass   |
+| Native plan cancellation                      | `native-plan-cancel-01`: pass, cleanup pass                 | `native-plan-cancel-02`: pass, cleanup pass                 |
+| Denied write after reconnect                  | `native-write-deny-reconnect-01`: pass, cleanup pass        | `native-write-deny-reconnect-01`: pass, cleanup pass        |
+| Stop during pending permission                | `pending-permission-stop-01`: pass, cleanup pass            | `pending-permission-stop-01`: pass, cleanup pass            |
+| Three warm turns                              | `warm-three-turn-01`: pass, cleanup pass                    | `warm-three-turn-01`: pass, cleanup pass                    |
+| Pending permission followed by provider loss  | `pending-permission-provider-loss-01`: pass, cleanup pass   | `pending-permission-provider-loss-01`: pass, cleanup pass   |
 
 Local identities start `cursor-v11-d0b907-local-`; remote identities start
 `cursor-v11-d0b907-daytona-`. Results are under
@@ -339,11 +339,11 @@ from certification.
 
 ### Exact final artifacts and ordinary installation
 
-| Platform | Final provider-pack manifest digest | Packaged daemon SHA-256 |
-| --- | --- | --- |
+| Platform    | Final provider-pack manifest digest                                | Packaged daemon SHA-256                                            |
+| ----------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
 | macOS ARM64 | `40377a1641a434785109a12895af74dbde4ff978a510b126059039306fdd2e6a` | `33bb9276b4d79be33f77c89a76ab71946808583500c6200a144b324479fbd9d8` |
-| macOS x64 | `a7ba83592a05546ca0aa327b188d8c6991b32d764dc02565b78a8102e7ea76d1` | `1bcd1bdc015f15a8321c9564d008284fd105da4f019632ff81ba0c9f75ae28d7` |
-| Linux x64 | `6a32a7955c56f7eec26272cde996faa20e678146480ffb95bc909abe25fd0adb` | `34d1b96550669613e91b3df75752164609ddfbeec70ea821e540558f8a96ddb6` |
+| macOS x64   | `a7ba83592a05546ca0aa327b188d8c6991b32d764dc02565b78a8102e7ea76d1` | `1bcd1bdc015f15a8321c9564d008284fd105da4f019632ff81ba0c9f75ae28d7` |
+| Linux x64   | `6a32a7955c56f7eec26272cde996faa20e678146480ffb95bc909abe25fd0adb` | `34d1b96550669613e91b3df75752164609ddfbeec70ea821e540558f8a96ddb6` |
 
 The final image is
 `ghcr.io/khulnasoft/taskcore-daytona-runner@sha256:681b56d2e2fcbde12f6677fbd54c617bfcc66df43a02c267bb355d46e16e7caf`.
@@ -374,10 +374,10 @@ Cursor configuration probe. Provider calls were zero. A fresh macOS consumer
 installed the same tarballs with normal lifecycle hooks and public setup; its
 installed configuration probe also passed without credentials.
 
-| Final ordinary installed smoke | Fixture source | Outcome | Result SHA-256 |
-| --- | --- | --- | --- |
+| Final ordinary installed smoke                            | Fixture source                             | Outcome                    | Result SHA-256                                                     |
+| --------------------------------------------------------- | ------------------------------------------ | -------------------------- | ------------------------------------------------------------------ |
 | `cursor-v11-268497-installed-local-file-edit-validate-01` | `b9a0180c1a96cf0fd0448cc69d6f47a5de8d258e` | 8/8 matchers, cleanup pass | `26cdd34a8b7c3dc19f0afd3cf94c22e1700bad217d2af92877aeb10dbe1f58bc` |
-| `cursor-v11-268497-installed-daytona-hello-complete-02` | `327f6df095d38f0e2213cb4572376e01d4629946` | 6/6 matchers, cleanup pass | `7f2f23d1c5dec8e030866781cc09e06990d5149758c0d467df49e63366b29dd1` |
+| `cursor-v11-268497-installed-daytona-hello-complete-02`   | `327f6df095d38f0e2213cb4572376e01d4629946` | 6/6 matchers, cleanup pass | `7f2f23d1c5dec8e030866781cc09e06990d5149758c0d467df49e63366b29dd1` |
 
 These launch the actual installed `taskcore/dist/index.js` from its consumer
 root. The server removes qualification admission, native binary paths, provider
@@ -447,16 +447,16 @@ measured spend. Per-run Cursor USD remains null.
 
 ## Source-to-port map
 
-| Source | Destination / decision |
-| --- | --- |
-| Mainline `dd868ed125cd709506dd9b29fca640a44d580501` | Branch `codex/cursor-production-readiness`; preserve its recovery, completion, and managed warm-directory ownership |
-| Combined snapshot `22c78242a4e0c2369fecf0c2dc4e7600fbad6706` | Cursor installation, native isolation/instructions/modes, extensions, tool evidence and partial usage |
-| Same snapshot, shared ACP transport | Permission identity, delivery acknowledgement, cancellation, canonical tool lifecycle and recovery-mode binding |
-| Same snapshot, controller | Accepted-plan wait proof, status arbitration/commit/recovery, durable cancellation request ownership |
-| Same snapshot, Product E2E | Cursor native interactions, active Stop, warm continuity, remote observers and owned cleanup |
-| Mainline warm agent-files work | Retained instead of importing the older competing warm-copy implementation; extend its ACP applicability when qualified |
-| New public installation work | CLI `runtime setup cursor`, bundled provisioner and default provider-pack assets |
-| Pi/Copilot source and campaign | Excluded; existing pending providers retain mainline identities and admission gates |
+| Source                                                       | Destination / decision                                                                                                  |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Mainline `dd868ed125cd709506dd9b29fca640a44d580501`          | Branch `codex/cursor-production-readiness`; preserve its recovery, completion, and managed warm-directory ownership     |
+| Combined snapshot `22c78242a4e0c2369fecf0c2dc4e7600fbad6706` | Cursor installation, native isolation/instructions/modes, extensions, tool evidence and partial usage                   |
+| Same snapshot, shared ACP transport                          | Permission identity, delivery acknowledgement, cancellation, canonical tool lifecycle and recovery-mode binding         |
+| Same snapshot, controller                                    | Accepted-plan wait proof, status arbitration/commit/recovery, durable cancellation request ownership                    |
+| Same snapshot, Product E2E                                   | Cursor native interactions, active Stop, warm continuity, remote observers and owned cleanup                            |
+| Mainline warm agent-files work                               | Retained instead of importing the older competing warm-copy implementation; extend its ACP applicability when qualified |
+| New public installation work                                 | CLI `runtime setup cursor`, bundled provisioner and default provider-pack assets                                        |
+| Pi/Copilot source and campaign                               | Excluded; existing pending providers retain mainline identities and admission gates                                     |
 
 Historical proofs retain their original profile/build identities. In particular,
 the v10 Stop result at source `22c78242` and the earlier plan/warm/Daytona completion
@@ -561,17 +561,17 @@ Both macOS targets were built with official standalone Node 24.21.0; the x64
 daemon also executes under Rosetta. Linux image preparation retains its own
 manifest identity; the remotely pulled digest must be recorded before a live cell.
 
-| Required behavior | Local candidate result | Daytona candidate result |
-| --- | --- | --- |
-| Ordinary installation and completion | Public setup/closure verified; final full verifier and normal product smoke pending | Pending |
-| File editing, validation, accessible artifacts | Earlier `9ba53f` preflight passed; assembled-candidate repeat pending | Pending |
-| Semantic question with controller restart | Passed `structured-question-restart-resume-01` on `ccae835` | Pending |
-| Semantic plan acceptance | Passed `plan-approve-complete-01` on `ccae835` | Pending |
-| Native reject, revise, accept | Passed `native-plan-reject-revise-accept-01` on `ccae835` | Pending |
-| Native plan cancellation | First attempt failed during fixture migration/startup before Cursor ran; affected repeat pending | Pending |
-| Denied write and pending-permission Stop | Pending | Pending |
-| Three warm turns | Pending | Pending |
-| Owned provider loss with pending permission | Passed `pending-permission-provider-loss-03` with clean retirement, stale-answer refusal, blocked open task, failed run, and no mutation | Pending |
+| Required behavior                              | Local candidate result                                                                                                                   | Daytona candidate result |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Ordinary installation and completion           | Public setup/closure verified; final full verifier and normal product smoke pending                                                      | Pending                  |
+| File editing, validation, accessible artifacts | Earlier `9ba53f` preflight passed; assembled-candidate repeat pending                                                                    | Pending                  |
+| Semantic question with controller restart      | Passed `structured-question-restart-resume-01` on `ccae835`                                                                              | Pending                  |
+| Semantic plan acceptance                       | Passed `plan-approve-complete-01` on `ccae835`                                                                                           | Pending                  |
+| Native reject, revise, accept                  | Passed `native-plan-reject-revise-accept-01` on `ccae835`                                                                                | Pending                  |
+| Native plan cancellation                       | First attempt failed during fixture migration/startup before Cursor ran; affected repeat pending                                         | Pending                  |
+| Denied write and pending-permission Stop       | Pending                                                                                                                                  | Pending                  |
+| Three warm turns                               | Pending                                                                                                                                  | Pending                  |
+| Owned provider loss with pending permission    | Passed `pending-permission-provider-loss-03` with clean retirement, stale-answer refusal, blocked open task, failed run, and no mutation | Pending                  |
 
 All attempts are serial and have zero automatic retries. The original campaign
 envelope has $52.919619376 remaining after its prior committed upper bound.
@@ -763,7 +763,6 @@ local IPC repeat passed. Runtime source changed, so the next affected live
 attempt requires refreshed platform packs and Linux image identities. Existing
 results retain their original runtime/controller identities.
 
-
 The rebuilt d0b907 runtime passed all ten local Product E2E workflows with confirmed cleanup. Controller/harness source for those results is 5e6c16. Its seven Runner cases also passed every semantic check with owned processes retired; all seven strict accounting results remain failures (`provider_budget_coverage_unknown`, per-run USD unknown). The exact attempt identities are `cursor-v11-d0b907-local-<case>-01` and `cursor-v11-d0b907-<runner-case>-01`. No automatic retries were used.
 
 Review then repaired the installed server's independent daemon lookup to use the Runner's verified platform selector. The public npm probe now verifies both selectors agree. Harness diagnostic retention follows the final verdict and preserves incomplete publication; remote-admission uncertainty is marked only for Daytona. The file gate now additionally downloads the registered run-attributed artifact and verifies its exact bytes and stored hash. The earlier local file result retains its original oracle and identity; an affected repeat is required for the new download proof. These repairs do not change the frozen Runner source.
@@ -775,7 +774,6 @@ The current public npm proof is `/tmp/cursor-public-npm-install-473206.log`; its
 At 473206, the explicit Runner protocol, Rust, conformance and replay stages passed. The final authority stage passed 1,851 of 1,852 checks; its single failing test could not start embedded PostgreSQL after five attempts and did not reach its stale-question assertion. That attempt is retained at `/tmp/cursor-runner-contract-replay-473206.log`. Repeat only the affected `runner-api.integration.test.ts` stale source-run question case after the full test run releases its databases.
 
 The default full local command stopped after its general-server group: 15,207 tests passed, four failed and 88 were skipped, with one additional suite setup failure. The failures were two embedded PostgreSQL startup errors, socket resets and a 500-request Git-scan join count of 497 instead of 498. All five affected files then passed in isolation (123 tests), including the authority-stage stale-question case. Original failures remain retained. The workspace and serialized groups skipped by the stopped command are being run separately; no passing general-server coverage is repeated. No unrelated source or test repair was made.
-
 
 ## Final local verification at code source 473206
 
@@ -814,7 +812,6 @@ production admission; assemble and verify the final package/image combination;
 run the real installed task smoke without qualification overrides; then prepare
 the PR for production review. Native AskQuestion and complete per-run dollar
 accounting remain excluded. Production merge/deployment remains a separate action.
-
 
 ## Provider-neutral mode boundary (2026-10-05)
 

@@ -40,26 +40,34 @@ function defaultConfig(): TaskcoreConfig {
 describe("config store", () => {
   it("preserves top-level and nested extension keys during a known-field update", () => {
     const configPath = createConfigPath();
-    fs.writeFileSync(configPath, JSON.stringify({
-      ...defaultConfig(),
-      topLevelExtension: { enabled: true },
-      server: {
-        ...defaultConfig().server,
-        serverExtension: "keep",
-      },
-      storage: {
-        ...defaultConfig().storage,
-        localDisk: {
-          ...defaultConfig().storage.localDisk,
-          driverExtension: "keep",
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify(
+        {
+          ...defaultConfig(),
+          topLevelExtension: { enabled: true },
+          server: {
+            ...defaultConfig().server,
+            serverExtension: "keep",
+          },
+          storage: {
+            ...defaultConfig().storage,
+            localDisk: {
+              ...defaultConfig().storage.localDisk,
+              driverExtension: "keep",
+            },
+          },
         },
-      },
-    }, null, 2));
+        null,
+        2,
+      ),
+    );
 
     const source = readConfig(configPath)!;
     const { topLevelExtension: _topLevelExtension, ...knownConfig } = source;
     const { serverExtension: _serverExtension, ...knownServer } = source.server;
-    const { driverExtension: _driverExtension, ...knownLocalDisk } = source.storage.localDisk;
+    const { driverExtension: _driverExtension, ...knownLocalDisk } =
+      source.storage.localDisk;
     const update: TaskcoreConfig = {
       ...knownConfig,
       server: {
@@ -122,18 +130,35 @@ describe("config store", () => {
     expect(open).toHaveBeenCalledWith(backupPath, "r");
     expect(open).toHaveBeenCalledWith(path.dirname(configPath), "r");
     expect(sync).toHaveBeenCalled();
-    expect(() => writeConfig(defaultConfig(), configPath)).toThrow(/Refusing to overwrite invalid config/);
+    expect(() => writeConfig(defaultConfig(), configPath)).toThrow(
+      /Refusing to overwrite invalid config/,
+    );
     expect(fs.readFileSync(configPath)).toEqual(invalidBytes);
 
     open.mockClear();
     sync.mockClear();
     const rename = vi.spyOn(fs, "renameSync");
-    expect(writeConfig(defaultConfig(), configPath, { invalidBackupPath: backupPath })).toBe(true);
-    expect(rename).toHaveBeenCalledWith(expect.stringMatching(/config\.json\.tmp-\d+-\d+$/), configPath);
+    expect(
+      writeConfig(defaultConfig(), configPath, {
+        invalidBackupPath: backupPath,
+      }),
+    ).toBe(true);
+    expect(rename).toHaveBeenCalledWith(
+      expect.stringMatching(/config\.json\.tmp-\d+-\d+$/),
+      configPath,
+    );
     expect(open).toHaveBeenCalledWith(path.dirname(configPath), "r");
-    expect(open.mock.invocationCallOrder.at(-1)!).toBeGreaterThan(rename.mock.invocationCallOrder.at(-1)!);
-    expect(sync.mock.invocationCallOrder.at(-1)!).toBeGreaterThan(open.mock.invocationCallOrder.at(-1)!);
+    expect(open.mock.invocationCallOrder.at(-1)!).toBeGreaterThan(
+      rename.mock.invocationCallOrder.at(-1)!,
+    );
+    expect(sync.mock.invocationCallOrder.at(-1)!).toBeGreaterThan(
+      open.mock.invocationCallOrder.at(-1)!,
+    );
     expect(readConfig(configPath)).not.toBeNull();
-    expect(fs.readdirSync(path.dirname(configPath)).some((entry) => entry.includes(".tmp-"))).toBe(false);
+    expect(
+      fs
+        .readdirSync(path.dirname(configPath))
+        .some((entry) => entry.includes(".tmp-")),
+    ).toBe(false);
   });
 });

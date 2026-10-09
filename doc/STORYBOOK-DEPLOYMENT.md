@@ -36,12 +36,12 @@ environment.
 
 Set repository variables:
 
-| Variable | Value |
-| --- | --- |
-| `STORYBOOK_AWS_ROLE_ARN` | `arn:aws:iam::078455283791:role/taskcore-storybook-github` |
-| `STORYBOOK_AWS_REGION` | `us-east-1` |
-| `STORYBOOK_S3_BUCKET` | `taskcore-runner-e2e-history-078455283791-us-east-1` |
-| `STORYBOOK_PUBLIC_BASE_URL` | `https://d1p6rlowie26tp.cloudfront.net` |
+| Variable                    | Value                                                      |
+| --------------------------- | ---------------------------------------------------------- |
+| `STORYBOOK_AWS_ROLE_ARN`    | `arn:aws:iam::078455283791:role/taskcore-storybook-github` |
+| `STORYBOOK_AWS_REGION`      | `us-east-1`                                                |
+| `STORYBOOK_S3_BUCKET`       | `taskcore-runner-e2e-history-078455283791-us-east-1`       |
+| `STORYBOOK_PUBLIC_BASE_URL` | `https://d1p6rlowie26tp.cloudfront.net`                    |
 
 No stored AWS access keys are needed. Leave the runner dashboard variables and
 GitHub Pages configuration unchanged.

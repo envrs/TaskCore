@@ -10,7 +10,10 @@ import {
   startSshEnvLabFixture,
   stopSshEnvLabFixture,
 } from "@taskcore/adapter-utils/ssh";
-import { resolveTaskcoreInstanceId, resolveTaskcoreInstanceRoot } from "../config/home.js";
+import {
+  resolveTaskcoreInstanceId,
+  resolveTaskcoreInstanceRoot,
+} from "../config/home.js";
 
 export function resolveEnvLabSshStatePath(instanceId?: string): string {
   const resolvedInstanceId = resolveTaskcoreInstanceId(instanceId);
@@ -45,7 +48,9 @@ export async function collectEnvLabDoctorStatus(opts: { instance?: string }) {
     getSshEnvLabSupport(),
     readSshEnvLabFixtureStatus(statePath),
   ]);
-  const environment = sshStatus.state ? await buildSshEnvLabFixtureConfig(sshStatus.state) : null;
+  const environment = sshStatus.state
+    ? await buildSshEnvLabFixtureConfig(sshStatus.state)
+    : null;
 
   return {
     statePath,
@@ -59,7 +64,10 @@ export async function collectEnvLabDoctorStatus(opts: { instance?: string }) {
   };
 }
 
-export async function envLabUpCommand(opts: { instance?: string; json?: boolean }) {
+export async function envLabUpCommand(opts: {
+  instance?: string;
+  json?: boolean;
+}) {
   const statePath = resolveEnvLabSshStatePath(opts.instance);
   const state = await startSshEnvLabFixture({ statePath });
   const environment = await buildSshEnvLabFixtureConfig(state);
@@ -74,10 +82,15 @@ export async function envLabUpCommand(opts: { instance?: string; json?: boolean 
   p.log.message(`State: ${pc.dim(statePath)}`);
 }
 
-export async function envLabStatusCommand(opts: { instance?: string; json?: boolean }) {
+export async function envLabStatusCommand(opts: {
+  instance?: string;
+  json?: boolean;
+}) {
   const statePath = resolveEnvLabSshStatePath(opts.instance);
   const status = await readSshEnvLabFixtureStatus(statePath);
-  const environment = status.state ? await buildSshEnvLabFixtureConfig(status.state) : null;
+  const environment = status.state
+    ? await buildSshEnvLabFixtureConfig(status.state)
+    : null;
 
   if (opts.json) {
     printJson({ ...status, environment, statePath });
@@ -94,7 +107,10 @@ export async function envLabStatusCommand(opts: { instance?: string; json?: bool
   p.log.message(`State: ${pc.dim(statePath)}`);
 }
 
-export async function envLabDownCommand(opts: { instance?: string; json?: boolean }) {
+export async function envLabDownCommand(opts: {
+  instance?: string;
+  json?: boolean;
+}) {
   const statePath = resolveEnvLabSshStatePath(opts.instance);
   const stopped = await stopSshEnvLabFixture(statePath);
 
@@ -148,7 +164,8 @@ export function resolveEnvLabCliInvocation(
 ): EnvLabCliInvocation {
   const moduleDir = path.dirname(modulePath);
   const isSourceCheckout =
-    path.basename(moduleDir) === "commands" && path.basename(path.dirname(moduleDir)) === "src";
+    path.basename(moduleDir) === "commands" &&
+    path.basename(path.dirname(moduleDir)) === "src";
   if (isSourceCheckout) {
     const cliRoot = path.resolve(moduleDir, "..", "..");
     return {
@@ -182,7 +199,10 @@ export function buildEnvLabCleanupCommand(
   return parts.join(" ");
 }
 
-export async function envLabDoctorCommand(opts: { instance?: string; json?: boolean }) {
+export async function envLabDoctorCommand(opts: {
+  instance?: string;
+  json?: boolean;
+}) {
   const status = await collectEnvLabDoctorStatus(opts);
 
   if (opts.json) {
@@ -193,16 +213,22 @@ export async function envLabDoctorCommand(opts: { instance?: string; json?: bool
   if (status.ssh.supported) {
     p.log.success("SSH fixture prerequisites are installed.");
   } else {
-    p.log.warn(`SSH fixture prerequisites are incomplete: ${status.ssh.reason ?? "unknown reason"}`);
+    p.log.warn(
+      `SSH fixture prerequisites are incomplete: ${status.ssh.reason ?? "unknown reason"}`,
+    );
   }
 
   if (status.ssh.state && status.ssh.running) {
     p.log.success("SSH env-lab fixture is running.");
     summarizeFixture(status.ssh.state);
-    p.log.message(`Private key: ${pc.dim(status.ssh.state.clientPrivateKeyPath)}`);
+    p.log.message(
+      `Private key: ${pc.dim(status.ssh.state.clientPrivateKeyPath)}`,
+    );
     p.log.message(`Known hosts: ${pc.dim(status.ssh.state.knownHostsPath)}`);
   } else if (status.ssh.state) {
-    p.log.warn("SSH env-lab fixture state exists, but the process is not running.");
+    p.log.warn(
+      "SSH env-lab fixture state exists, but the process is not running.",
+    );
     p.log.message(`State: ${pc.dim(status.statePath)}`);
   } else {
     p.log.info("SSH env-lab fixture is not running.");
@@ -221,37 +247,53 @@ export async function envLabDoctorCommand(opts: { instance?: string; json?: bool
   // in a shell without `TASKCORE_INSTANCE_ID` stops the diagnosed fixture, not
   // the default instance.
   const cleanupInstance = resolveTaskcoreInstanceId(opts.instance);
-  p.log.message(`Cleanup: ${pc.dim(buildEnvLabCleanupCommand({ instance: cleanupInstance }))}`);
+  p.log.message(
+    `Cleanup: ${pc.dim(buildEnvLabCleanupCommand({ instance: cleanupInstance }))}`,
+  );
 }
 
 export function registerEnvLabCommands(program: Command) {
-  const envLab = program.command("env-lab").description("Deterministic local environment fixtures");
+  const envLab = program
+    .command("env-lab")
+    .description("Deterministic local environment fixtures");
 
   envLab
     .command("up")
     .description("Start the default SSH env-lab fixture")
-    .option("-i, --instance <id>", "Taskcore instance id (default: current/default)")
+    .option(
+      "-i, --instance <id>",
+      "Taskcore instance id (default: current/default)",
+    )
     .option("--json", "Print machine-readable fixture details")
     .action(envLabUpCommand);
 
   envLab
     .command("status")
     .description("Show the current SSH env-lab fixture state")
-    .option("-i, --instance <id>", "Taskcore instance id (default: current/default)")
+    .option(
+      "-i, --instance <id>",
+      "Taskcore instance id (default: current/default)",
+    )
     .option("--json", "Print machine-readable fixture details")
     .action(envLabStatusCommand);
 
   envLab
     .command("down")
     .description("Stop the default SSH env-lab fixture")
-    .option("-i, --instance <id>", "Taskcore instance id (default: current/default)")
+    .option(
+      "-i, --instance <id>",
+      "Taskcore instance id (default: current/default)",
+    )
     .option("--json", "Print machine-readable stop details")
     .action(envLabDownCommand);
 
   envLab
     .command("doctor")
     .description("Check SSH fixture prerequisites and current status")
-    .option("-i, --instance <id>", "Taskcore instance id (default: current/default)")
+    .option(
+      "-i, --instance <id>",
+      "Taskcore instance id (default: current/default)",
+    )
     .option("--json", "Print machine-readable diagnostic details")
     .action(envLabDoctorCommand);
 }

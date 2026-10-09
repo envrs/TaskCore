@@ -3,7 +3,10 @@ import { randomUUID } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { AdapterExecutionContext, AdapterInvocationMeta } from "@taskcore/adapter-utils";
+import type {
+  AdapterExecutionContext,
+  AdapterInvocationMeta,
+} from "@taskcore/adapter-utils";
 import { runChildProcess } from "@taskcore/adapter-utils/server-utils";
 
 // Every test in this file needs a real teardown, so the mock below delegates
@@ -11,16 +14,19 @@ import { runChildProcess } from "@taskcore/adapter-utils/server-utils";
 // the call arguments; it does not change this behavior.
 const mockCreateWorkspaceRestoreTeardown = vi.hoisted(() => vi.fn());
 
-vi.mock("@taskcore/adapter-utils/workspace-restore-teardown", async (importOriginal) => {
-  const actual = await importOriginal<Record<string, unknown>>();
-  mockCreateWorkspaceRestoreTeardown.mockImplementation(
-    actual.createWorkspaceRestoreTeardown as (...args: unknown[]) => unknown,
-  );
-  return {
-    ...actual,
-    createWorkspaceRestoreTeardown: mockCreateWorkspaceRestoreTeardown,
-  };
-});
+vi.mock(
+  "@taskcore/adapter-utils/workspace-restore-teardown",
+  async (importOriginal) => {
+    const actual = await importOriginal<Record<string, unknown>>();
+    mockCreateWorkspaceRestoreTeardown.mockImplementation(
+      actual.createWorkspaceRestoreTeardown as (...args: unknown[]) => unknown,
+    );
+    return {
+      ...actual,
+      createWorkspaceRestoreTeardown: mockCreateWorkspaceRestoreTeardown,
+    };
+  },
+);
 
 import {
   buildCodexAcpConfig,
@@ -49,20 +55,33 @@ function createLocalSandboxRunner() {
     }) => {
       counter += 1;
       const command = input.command === "bash" ? "/bin/bash" : input.command;
-      return await runChildProcess(`codex-acp-sandbox-run-${counter}`, command, input.args ?? [], {
-        cwd: input.cwd ?? process.cwd(),
-        env: input.env ?? {},
-        stdin: input.stdin,
-        timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-        graceSec: 5,
-        onLog: input.onLog ?? (async () => {}),
-      });
+      return await runChildProcess(
+        `codex-acp-sandbox-run-${counter}`,
+        command,
+        input.args ?? [],
+        {
+          cwd: input.cwd ?? process.cwd(),
+          env: input.env ?? {},
+          stdin: input.stdin,
+          timeoutSec: Math.max(
+            1,
+            Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+          ),
+          graceSec: 5,
+          onLog: input.onLog ?? (async () => {}),
+        },
+      );
     },
   };
 }
 
 type FakeRuntimeOptions = Record<string, unknown>;
-type FakeRuntimeEvent = { type: string; text?: string; stream?: string; tag?: string };
+type FakeRuntimeEvent = {
+  type: string;
+  text?: string;
+  stream?: string;
+  tag?: string;
+};
 type FakeRuntimeHandle = {
   sessionKey: string;
   backend: string;
@@ -72,7 +91,10 @@ type FakeRuntimeHandle = {
   backendSessionId: string;
   agentSessionId: string;
 };
-type FakeRuntimeTurnResult = { status: "completed" | "failed" | "cancelled"; stopReason?: string };
+type FakeRuntimeTurnResult = {
+  status: "completed" | "failed" | "cancelled";
+  stopReason?: string;
+};
 type FakeRuntimeTurn = {
   requestId: string;
   events: AsyncIterable<FakeRuntimeEvent>;
@@ -95,7 +117,11 @@ const originalOpenAiApiKey = process.env.OPENAI_API_KEY;
 const OLDER_REFRESH = "2026-01-01T00:00:00.000Z";
 const NEWER_REFRESH = "2026-06-01T00:00:00.000Z";
 
-function subscriptionAuthJson(accountId: string, lastRefresh: string, marker: string): string {
+function subscriptionAuthJson(
+  accountId: string,
+  lastRefresh: string,
+  marker: string,
+): string {
   return JSON.stringify(
     {
       tokens: {
@@ -118,7 +144,9 @@ function subscriptionAuthJson(accountId: string, lastRefresh: string, marker: st
 async function listCodexHomeSyncDirs(runId: string): Promise<string[]> {
   const prefix = `taskcore-codex-home-sync-${runId}-`;
   const entries = await fs.readdir(os.tmpdir());
-  return entries.filter((name) => name.startsWith(prefix)).map((name) => path.join(os.tmpdir(), name));
+  return entries
+    .filter((name) => name.startsWith(prefix))
+    .map((name) => path.join(os.tmpdir(), name));
 }
 
 function setNodeVersion(version: string): void {
@@ -133,13 +161,18 @@ afterEach(async () => {
   setNodeVersion(originalNodeVersion);
   if (originalTaskcoreHome === undefined) delete process.env.TASKCORE_HOME;
   else process.env.TASKCORE_HOME = originalTaskcoreHome;
-  if (originalTaskcoreInstanceId === undefined) delete process.env.TASKCORE_INSTANCE_ID;
+  if (originalTaskcoreInstanceId === undefined)
+    delete process.env.TASKCORE_INSTANCE_ID;
   else process.env.TASKCORE_INSTANCE_ID = originalTaskcoreInstanceId;
   if (originalCodexHome === undefined) delete process.env.CODEX_HOME;
   else process.env.CODEX_HOME = originalCodexHome;
   if (originalOpenAiApiKey === undefined) delete process.env.OPENAI_API_KEY;
   else process.env.OPENAI_API_KEY = originalOpenAiApiKey;
-  await Promise.all(tempRoots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true })));
+  await Promise.all(
+    tempRoots
+      .splice(0)
+      .map((root) => fs.rm(root, { recursive: true, force: true })),
+  );
 });
 
 class FakeRuntime {
@@ -150,17 +183,38 @@ class FakeRuntime {
     cwd?: string;
     resumeSessionId?: string;
   }> = [];
-  startInputs: Array<{ handle: FakeRuntimeHandle; text: string; requestId: string; timeoutMs?: number }> = [];
-  closeInputs: Array<{ handle: FakeRuntimeHandle; reason: string; discardPersistentState?: boolean }> = [];
-  setConfigInputs: Array<{ handle: FakeRuntimeHandle; key: string; value: string }> = [];
+  startInputs: Array<{
+    handle: FakeRuntimeHandle;
+    text: string;
+    requestId: string;
+    timeoutMs?: number;
+  }> = [];
+  closeInputs: Array<{
+    handle: FakeRuntimeHandle;
+    reason: string;
+    discardPersistentState?: boolean;
+  }> = [];
+  setConfigInputs: Array<{
+    handle: FakeRuntimeHandle;
+    key: string;
+    value: string;
+  }> = [];
   ensureCount = 0;
 
   constructor(
     readonly options: FakeRuntimeOptions,
     readonly events: FakeRuntimeEvent[] = [
-      { type: "text_delta", text: "hello", stream: "output", tag: "agent_message_chunk" },
+      {
+        type: "text_delta",
+        text: "hello",
+        stream: "output",
+        tag: "agent_message_chunk",
+      },
     ],
-    readonly terminal: FakeRuntimeTurnResult = { status: "completed", stopReason: "end_turn" },
+    readonly terminal: FakeRuntimeTurnResult = {
+      status: "completed",
+      stopReason: "end_turn",
+    },
   ) {}
 
   async ensureSession(input: {
@@ -217,7 +271,11 @@ class FakeRuntime {
     return Promise.resolve({});
   }
 
-  async setConfigOption(input: { handle: FakeRuntimeHandle; key: string; value: string }) {
+  async setConfigOption(input: {
+    handle: FakeRuntimeHandle;
+    key: string;
+    value: string;
+  }) {
     this.setConfigInputs.push(input);
   }
 
@@ -225,7 +283,11 @@ class FakeRuntime {
 
   async cancel() {}
 
-  async close(input: { handle: FakeRuntimeHandle; reason: string; discardPersistentState?: boolean }) {
+  async close(input: {
+    handle: FakeRuntimeHandle;
+    reason: string;
+    discardPersistentState?: boolean;
+  }) {
     this.closeInputs.push(input);
   }
 }
@@ -241,7 +303,11 @@ async function makeTempRoot(prefix: string) {
 async function createRuntimeSkill(root: string) {
   const source = path.join(root, "skills", "review");
   await fs.mkdir(source, { recursive: true });
-  await fs.writeFile(path.join(source, "SKILL.md"), "---\n---\nUse the review skill.\n", "utf8");
+  await fs.writeFile(
+    path.join(source, "SKILL.md"),
+    "---\n---\nUse the review skill.\n",
+    "utf8",
+  );
   return {
     key: "company/review",
     runtimeName: "review",
@@ -249,7 +315,10 @@ async function createRuntimeSkill(root: string) {
   };
 }
 
-function buildContext(root: string, overrides: Partial<AdapterExecutionContext> = {}): AdapterExecutionContext {
+function buildContext(
+  root: string,
+  overrides: Partial<AdapterExecutionContext> = {},
+): AdapterExecutionContext {
   return {
     runId: "run-1",
     agent: {
@@ -296,7 +365,10 @@ describe("codex_local ACP lane", () => {
     await fs.writeFile(commandPath, "#!/usr/bin/env sh\n", "utf8");
     setNodeVersion("v24.11.0");
 
-    expect(resolveCodexExecutionEngine({})).toEqual({ engine: "acp", explicit: false });
+    expect(resolveCodexExecutionEngine({})).toEqual({
+      engine: "acp",
+      explicit: false,
+    });
     await expect(
       resolveCodexExecutionEngineForRun({
         config: { agentCommand: commandPath },
@@ -330,7 +402,11 @@ describe("codex_local ACP lane", () => {
         config: { engine: "acp", agentCommand: "/missing/codex-acp" },
         executionTarget: null,
       }),
-    ).resolves.toMatchObject({ engine: "acp", explicit: true, unavailableReason: expect.stringContaining("Node") });
+    ).resolves.toMatchObject({
+      engine: "acp",
+      explicit: true,
+      unavailableReason: expect.stringContaining("Node"),
+    });
   });
 
   it("requires explicit CLI selection for local filesystem or network scope", async () => {
@@ -349,7 +425,12 @@ describe("codex_local ACP lane", () => {
         config: { engine: "acp", filesystemScope: "workspace" },
         executionTarget: null,
       }),
-    ).resolves.toMatchObject({ engine: "acp", unavailableReason: expect.stringContaining("ACP confinement is not supported") });
+    ).resolves.toMatchObject({
+      engine: "acp",
+      unavailableReason: expect.stringContaining(
+        "ACP confinement is not supported",
+      ),
+    });
     await expect(
       resolveCodexExecutionEngineForRun({
         config: { networkScope: "allowlist" },
@@ -388,8 +469,16 @@ describe("codex_local ACP lane", () => {
       unavailableReason: expect.stringContaining("ACP archive staging"),
     });
     await expect(
-      resolveCodexExecutionEngineForRun({ config: { engine: "acp" }, executionTarget }),
-    ).resolves.toMatchObject({ engine: "acp", unavailableReason: expect.stringContaining("In-place workspace realization requires the Codex CLI engine") });
+      resolveCodexExecutionEngineForRun({
+        config: { engine: "acp" },
+        executionTarget,
+      }),
+    ).resolves.toMatchObject({
+      engine: "acp",
+      unavailableReason: expect.stringContaining(
+        "In-place workspace realization requires the Codex CLI engine",
+      ),
+    });
   });
 
   it("uses ACP for bridged sandbox auto runs when the ACP command is configured as a shell command", async () => {
@@ -433,7 +522,9 @@ describe("codex_local ACP lane", () => {
     ).resolves.toMatchObject({
       engine: "acp",
       explicit: false,
-      unavailableReason: expect.stringContaining("bidirectional remote process"),
+      unavailableReason: expect.stringContaining(
+        "bidirectional remote process",
+      ),
     });
   });
 
@@ -476,7 +567,14 @@ describe("codex_local ACP lane", () => {
     { extraArgs: ["-c", "sandbox_workspace_write.network_access=false"] },
     { extraArgs: ["--config=sandbox_workspace_write.network_access=false"] },
     { args: ["-csandbox_workspace_write.network_access=false"] },
-    { extraArgs: ["-c", "sandbox_workspace_write.network_access=true", "-c", "sandbox_workspace_write.network_access=false"] },
+    {
+      extraArgs: [
+        "-c",
+        "sandbox_workspace_write.network_access=true",
+        "-c",
+        "sandbox_workspace_write.network_access=false",
+      ],
+    },
   ])("preserves explicit ACP network denial %j", (config) => {
     expect(buildCodexAcpConfig(config)).toMatchObject({
       env: { TASKCORE_CODEX_ACP_NETWORK_ACCESS: "false" },
@@ -484,16 +582,18 @@ describe("codex_local ACP lane", () => {
   });
 
   it("maps Codex config to the ACPX Codex target", () => {
-    expect(buildCodexAcpConfig({
-      engine: "acp",
-      cwd: "/repo",
-      command: "codex",
-      model: "gpt-5.5",
-      modelReasoningEffort: "high",
-      fastMode: true,
-      agentCommand: "custom-codex-acp",
-      warmHandleIdleMs: 25,
-    })).toMatchObject({
+    expect(
+      buildCodexAcpConfig({
+        engine: "acp",
+        cwd: "/repo",
+        command: "codex",
+        model: "gpt-5.5",
+        modelReasoningEffort: "high",
+        fastMode: true,
+        agentCommand: "custom-codex-acp",
+        warmHandleIdleMs: 25,
+      }),
+    ).toMatchObject({
       agent: "codex",
       cwd: "/repo",
       command: "codex",
@@ -508,13 +608,23 @@ describe("codex_local ACP lane", () => {
     });
   });
 
-  it.each([["gpt-6-astra", "ultra"], ["gpt-6.1-sol", "ultra"], ["gpt-6-sol", "ultra"], ["gpt-6-luna", "max"], ["gpt-5.6-sol", "ultra"], ["gpt-5.6-terra", "ultra"], ["gpt-5.6-luna", "max"]])("forwards %s controls to the ACPX Codex target", (model, effort) => {
-    expect(buildCodexAcpConfig({
-      engine: "acp",
-      model,
-      modelReasoningEffort: effort,
-      fastMode: true,
-    })).toMatchObject({
+  it.each([
+    ["gpt-6-astra", "ultra"],
+    ["gpt-6.1-sol", "ultra"],
+    ["gpt-6-sol", "ultra"],
+    ["gpt-6-luna", "max"],
+    ["gpt-5.6-sol", "ultra"],
+    ["gpt-5.6-terra", "ultra"],
+    ["gpt-5.6-luna", "max"],
+  ])("forwards %s controls to the ACPX Codex target", (model, effort) => {
+    expect(
+      buildCodexAcpConfig({
+        engine: "acp",
+        model,
+        modelReasoningEffort: effort,
+        fastMode: true,
+      }),
+    ).toMatchObject({
       model,
       modelReasoningEffort: effort,
       fastMode: true,
@@ -522,7 +632,9 @@ describe("codex_local ACP lane", () => {
   });
 
   it("normalizes the legacy bare gpt-5.6 alias to gpt-5.6-sol", () => {
-    expect(buildCodexAcpConfig({ engine: "acp", model: "gpt-5.6" })).toMatchObject({
+    expect(
+      buildCodexAcpConfig({ engine: "acp", model: "gpt-5.6" }),
+    ).toMatchObject({
       model: "gpt-5.6-sol",
     });
   });
@@ -591,7 +703,11 @@ describe("codex_local ACP lane", () => {
     await fs.mkdir(path.dirname(commandPath), { recursive: true });
     await fs.writeFile(commandPath, "#!/usr/bin/env sh\n", "utf8");
     await fs.mkdir(sharedCodexHome, { recursive: true });
-    await fs.writeFile(path.join(sharedCodexHome, "auth.json"), '{"OPENAI_API_KEY":"sk-shared"}', "utf8");
+    await fs.writeFile(
+      path.join(sharedCodexHome, "auth.json"),
+      '{"OPENAI_API_KEY":"sk-shared"}',
+      "utf8",
+    );
     setNodeVersion("v24.11.0");
     process.env.CODEX_HOME = sharedCodexHome;
     delete process.env.OPENAI_API_KEY;
@@ -738,25 +854,27 @@ describe("codex_local ACP lane", () => {
       },
     });
 
-    const result = await execute(buildContext(root, {
-      config: {
-        engine: "acp",
-        cwd: root,
-        stateDir: path.join(root, "state"),
-        env: {
-          CODEX_HOME: path.join(root, "codex-home"),
+    const result = await execute(
+      buildContext(root, {
+        config: {
+          engine: "acp",
+          cwd: root,
+          stateDir: path.join(root, "state"),
+          env: {
+            CODEX_HOME: path.join(root, "codex-home"),
+          },
+          model: "gpt-5.5",
+          modelReasoningEffort: "high",
+          fastMode: true,
+          promptTemplate: "Do the assigned work.",
+          taskcoreRuntimeSkills: [skill],
+          taskcoreSkillSync: { desiredSkills: [skill.key] },
         },
-        model: "gpt-5.5",
-        modelReasoningEffort: "high",
-        fastMode: true,
-        promptTemplate: "Do the assigned work.",
-        taskcoreRuntimeSkills: [skill],
-        taskcoreSkillSync: { desiredSkills: [skill.key] },
-      },
-      onMeta: async (payload: AdapterInvocationMeta) => {
-        meta.push(payload);
-      },
-    }));
+        onMeta: async (payload: AdapterInvocationMeta) => {
+          meta.push(payload);
+        },
+      }),
+    );
 
     expect(result.exitCode).toBe(0);
     expect(result.sessionParams).toMatchObject({
@@ -769,16 +887,21 @@ describe("codex_local ACP lane", () => {
       mode: "codex",
       selectedSkills: ["review"],
     });
-    const skillsHome = (result.sessionParams?.skills as { skillsHome?: string }).skillsHome;
+    const skillsHome = (result.sessionParams?.skills as { skillsHome?: string })
+      .skillsHome;
     expect(skillsHome).toBeTruthy();
-    await expect(fs.readFile(path.join(skillsHome!, "review", "SKILL.md"), "utf8")).resolves.toContain("review skill");
+    await expect(
+      fs.readFile(path.join(skillsHome!, "review", "SKILL.md"), "utf8"),
+    ).resolves.toContain("review skill");
     expect(runtimes[0]?.ensureInputs[0]).toMatchObject({
       agent: "codex",
       mode: "persistent",
       cwd: root,
     });
     expect(runtimes[0]?.setConfigInputs).toEqual([]);
-    expect(meta[0]?.commandNotes?.join("\n")).toContain("Prepared ACPX Codex skill home");
+    expect(meta[0]?.commandNotes?.join("\n")).toContain(
+      "Prepared ACPX Codex skill home",
+    );
     expect(meta[0]?.env?.CODEX_HOME).toBe(path.join(root, "codex-home"));
     expect(JSON.parse(String(meta[0]?.env?.CODEX_CONFIG))).toEqual({
       model: "gpt-5.5",
@@ -814,46 +937,62 @@ describe("codex_local ACP lane", () => {
       "Taskcore task context:",
       `- Issue: ${JSON.stringify(issue.identifier)}`,
       `- Title: ${JSON.stringify(issue.title)}`,
-      "", "Issue description:", "```text", issue.description, "```",
+      "",
+      "Issue description:",
+      "```text",
+      issue.description,
+      "```",
     ].join("\n");
     const historicalMarkdown = [
       assignmentMarkdown,
       ...comments.map((comment) => `${comment.id}: ${comment.body}`),
     ].join("\n");
-    const result = await execute(buildContext(root, {
-      context: {
-        issueId: issue.id,
-        taskcoreTaskMarkdown: historicalMarkdown,
-        taskcoreTaskMarkdownAssignment: assignmentMarkdown,
-        taskcoreWake: {
-          reason: "issue_commented",
-          issue: { ...issue, status: "in_progress" },
-          comments: comments.map((comment, index) => ({
-            ...comment,
-            issueId: issue.id,
-            createdAt: `2026-09-21T00:0${index}:00.000Z`,
-          })),
-          commentWindow: { requestedCount: 2, includedCount: 2, missingCount: 0 },
-          fallbackFetchNeeded: false,
-        },
-        taskcoreTurnContext: {
-          version: 1,
-          assignment: { owner: "task_markdown" },
-          events: {
-            owner: "wake_prompt",
-            comments: [
-              { id: "comment-a", revision: "a" },
-              { id: "comment-b", revision: "b" },
-            ],
+    const result = await execute(
+      buildContext(root, {
+        context: {
+          issueId: issue.id,
+          taskcoreTaskMarkdown: historicalMarkdown,
+          taskcoreTaskMarkdownAssignment: assignmentMarkdown,
+          taskcoreWake: {
+            reason: "issue_commented",
+            issue: { ...issue, status: "in_progress" },
+            comments: comments.map((comment, index) => ({
+              ...comment,
+              issueId: issue.id,
+              createdAt: `2026-09-21T00:0${index}:00.000Z`,
+            })),
+            commentWindow: {
+              requestedCount: 2,
+              includedCount: 2,
+              missingCount: 0,
+            },
+            fallbackFetchNeeded: false,
+          },
+          taskcoreTurnContext: {
+            version: 1,
+            assignment: { owner: "task_markdown" },
+            events: {
+              owner: "wake_prompt",
+              comments: [
+                { id: "comment-a", revision: "a" },
+                { id: "comment-b", revision: "b" },
+              ],
+            },
+          },
+          taskcoreWorkspace: {
+            cwd: root,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
           },
         },
-        taskcoreWorkspace: { cwd: root, source: "project_workspace", workspaceId: "workspace-1" },
-      },
-    }));
+      }),
+    );
     expect(result.exitCode).toBe(0);
     const prompt = String(runtimes[0]?.startInputs[0]?.text ?? "");
     expect(prompt.split("Same event body.")).toHaveLength(3);
-    expect(prompt.indexOf("comment comment-a")).toBeLessThan(prompt.indexOf("comment comment-b"));
+    expect(prompt.indexOf("comment comment-a")).toBeLessThan(
+      prompt.indexOf("comment comment-b"),
+    );
     expect(prompt).toContain("Repeat phrase Repeat phrase");
   });
 
@@ -889,7 +1028,11 @@ describe("codex_local ACP lane", () => {
         context: {
           issueId: "issue-1",
           taskcoreTaskMarkdown: "Task context",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -905,7 +1048,9 @@ describe("codex_local ACP lane", () => {
     expect(result.exitCode).toBe(0);
     // The workspace was shipped into the sandbox and session/new was created on
     // the in-sandbox workspace dir — not the HOST worktree path.
-    await expect(fs.readFile(path.join(remoteCwd, "hello.txt"), "utf8")).resolves.toBe("hi");
+    await expect(
+      fs.readFile(path.join(remoteCwd, "hello.txt"), "utf8"),
+    ).resolves.toBe("hi");
     expect(runtimes[0]?.ensureInputs[0]?.cwd).toBe(remoteCwd);
     expect(runtimes[0]?.ensureInputs[0]?.cwd).not.toBe(localCwd);
   });
@@ -931,7 +1076,8 @@ describe("codex_local ACP lane", () => {
 
     const meta: AdapterInvocationMeta[] = [];
     const execute = createCodexAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
 
     const result = await execute(
@@ -946,7 +1092,11 @@ describe("codex_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -971,11 +1121,13 @@ describe("codex_local ACP lane", () => {
     expect(remappedCodexHome).toContain(".taskcore-runtime");
     // Seeded: the credential materialized into the in-sandbox home (the local
     // runner uses the host FS, so the in-sandbox path is a real host path).
-    await expect(fs.readFile(path.join(remappedCodexHome, "auth.json"), "utf8")).resolves.toContain(
-      "account_id",
-    );
+    await expect(
+      fs.readFile(path.join(remappedCodexHome, "auth.json"), "utf8"),
+    ).resolves.toContain("account_id");
     // C4 — no XDG_* variable is introduced for in-sandbox credential discovery.
-    expect(Object.keys(meta[0]?.env ?? {}).filter((key) => key.startsWith("XDG_"))).toEqual([]);
+    expect(
+      Object.keys(meta[0]?.env ?? {}).filter((key) => key.startsWith("XDG_")),
+    ).toEqual([]);
   });
 
   it("copies a strictly-newer sandbox Codex auth back to the shared host on teardown", async () => {
@@ -1004,7 +1156,8 @@ describe("codex_local ACP lane", () => {
     process.env.CODEX_HOME = sharedHostHome;
 
     const execute = createCodexAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
     const result = await execute(
       buildContext(localCwd, {
@@ -1018,7 +1171,11 @@ describe("codex_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -1034,11 +1191,14 @@ describe("codex_local ACP lane", () => {
     expect(result.exitCode).toBe(0);
     // C5 — copy-back fired on teardown and installed the strictly-newer sandbox
     // credential onto the shared host under the merge-lock / monotonic guard.
-    const hostAuth = JSON.parse(await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"));
+    const hostAuth = JSON.parse(
+      await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"),
+    );
     expect(hostAuth.last_refresh).toBe(NEWER_REFRESH);
     expect(hostAuth.tokens.refresh_token).toBe("ref-sandbox-newer");
     // Mode preserved at 0600 by the atomic same-directory rename.
-    const mode = (await fs.stat(path.join(sharedHostHome, "auth.json"))).mode & 0o777;
+    const mode =
+      (await fs.stat(path.join(sharedHostHome, "auth.json"))).mode & 0o777;
     expect(mode).toBe(0o600);
   });
 
@@ -1048,9 +1208,19 @@ describe("codex_local ACP lane", () => {
     const remoteCwd = path.join(root, "remote-workspace");
     const keyHome = path.join(root, "api-key-home");
     const sharedHostHome = path.join(root, "shared-codex-home");
-    await Promise.all([localCwd, remoteCwd, keyHome, sharedHostHome].map((dir) => fs.mkdir(dir, { recursive: true })));
-    const sharedAuth = subscriptionAuthJson("acct-same", OLDER_REFRESH, "host-older");
-    await fs.writeFile(path.join(sharedHostHome, "auth.json"), sharedAuth, { mode: 0o600 });
+    await Promise.all(
+      [localCwd, remoteCwd, keyHome, sharedHostHome].map((dir) =>
+        fs.mkdir(dir, { recursive: true }),
+      ),
+    );
+    const sharedAuth = subscriptionAuthJson(
+      "acct-same",
+      OLDER_REFRESH,
+      "host-older",
+    );
+    await fs.writeFile(path.join(sharedHostHome, "auth.json"), sharedAuth, {
+      mode: 0o600,
+    });
     // A subscription-shaped sandbox credential must never be considered for
     // the shared home when this run explicitly authenticates with an API key.
     await fs.writeFile(
@@ -1061,33 +1231,42 @@ describe("codex_local ACP lane", () => {
     process.env.CODEX_HOME = sharedHostHome;
 
     const execute = createCodexAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
-    const result = await execute(buildContext(localCwd, {
-      config: {
-        engine: "acp",
-        cwd: localCwd,
-        agentCommand: "node ./fake-acp.js",
-        stateDir: path.join(root, "state"),
-        env: { CODEX_HOME: keyHome, OPENAI_API_KEY: "sk-test-key" },
-        promptTemplate: "Do the assigned work.",
-      },
-      context: {
-        issueId: "issue-1",
-        taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
-      },
-      executionTarget: {
-        kind: "remote",
-        transport: "sandbox",
-        providerKey: "fake-plugin",
-        remoteCwd,
-        runner: createLocalSandboxRunner(),
-      } as never,
-      authToken: "real-run-jwt",
-    }));
+    const result = await execute(
+      buildContext(localCwd, {
+        config: {
+          engine: "acp",
+          cwd: localCwd,
+          agentCommand: "node ./fake-acp.js",
+          stateDir: path.join(root, "state"),
+          env: { CODEX_HOME: keyHome, OPENAI_API_KEY: "sk-test-key" },
+          promptTemplate: "Do the assigned work.",
+        },
+        context: {
+          issueId: "issue-1",
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
+        },
+        executionTarget: {
+          kind: "remote",
+          transport: "sandbox",
+          providerKey: "fake-plugin",
+          remoteCwd,
+          runner: createLocalSandboxRunner(),
+        } as never,
+        authToken: "real-run-jwt",
+      }),
+    );
 
     expect(result.exitCode).toBe(0);
-    expect(await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8")).toBe(sharedAuth);
+    expect(
+      await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"),
+    ).toBe(sharedAuth);
   });
 
   it("keeps the shared host Codex auth when the sandbox copy is not strictly newer", async () => {
@@ -1116,7 +1295,8 @@ describe("codex_local ACP lane", () => {
     process.env.CODEX_HOME = sharedHostHome;
 
     const execute = createCodexAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
     });
     const result = await execute(
       buildContext(localCwd, {
@@ -1130,7 +1310,11 @@ describe("codex_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -1144,7 +1328,9 @@ describe("codex_local ACP lane", () => {
     );
 
     expect(result.exitCode).toBe(0);
-    const hostAuth = JSON.parse(await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"));
+    const hostAuth = JSON.parse(
+      await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"),
+    );
     expect(hostAuth.last_refresh).toBe(NEWER_REFRESH);
     expect(hostAuth.tokens.refresh_token).toBe("ref-host-newer");
   });
@@ -1181,7 +1367,8 @@ describe("codex_local ACP lane", () => {
     // Isolated staged-runtime cache so this test observes only its own entry.
     const stagedRuntimes = new Map();
     const execute = createCodexAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
       stagedRuntimes,
       stagingLocks: new Map(),
     });
@@ -1198,7 +1385,11 @@ describe("codex_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -1220,12 +1411,16 @@ describe("codex_local ACP lane", () => {
     expect(stagedRuntimes.size).toBe(1);
     // The per-run copy-back still fired: the strictly-newer sandbox credential
     // landed on the shared host under the monotonic guard.
-    const hostAuth = JSON.parse(await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"));
+    const hostAuth = JSON.parse(
+      await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"),
+    );
     expect(hostAuth.last_refresh).toBe(NEWER_REFRESH);
     expect(hostAuth.tokens.refresh_token).toBe("ref-sandbox-newer");
     // No `disposeStaged` fires while the entry stays warm, so remove the
     // intentionally-persisted staged temp ourselves to avoid leaking it.
-    await Promise.all(stagedDirs.map((dir) => fs.rm(dir, { recursive: true, force: true })));
+    await Promise.all(
+      stagedDirs.map((dir) => fs.rm(dir, { recursive: true, force: true })),
+    );
   });
 
   it("removes the host staged Codex home when a failed turn drops the staged runtime", async () => {
@@ -1259,7 +1454,10 @@ describe("codex_local ACP lane", () => {
     const execute = createCodexAcpExecutor({
       // A failed turn drives the drop path (discard staged runtime + dispose).
       createRuntime: (options: FakeRuntimeOptions) =>
-        new FakeRuntime(options, [], { status: "failed", stopReason: "error" }) as never,
+        new FakeRuntime(options, [], {
+          status: "failed",
+          stopReason: "error",
+        }) as never,
       stagedRuntimes,
       stagingLocks: new Map(),
     });
@@ -1276,7 +1474,11 @@ describe("codex_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -1296,7 +1498,9 @@ describe("codex_local ACP lane", () => {
     expect(stagedRuntimes.size).toBe(0);
     // ...yet the per-run copy-back still ran on the failure teardown path, so the
     // strictly-newer sandbox credential was not lost.
-    const hostAuth = JSON.parse(await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"));
+    const hostAuth = JSON.parse(
+      await fs.readFile(path.join(sharedHostHome, "auth.json"), "utf8"),
+    );
     expect(hostAuth.last_refresh).toBe(NEWER_REFRESH);
     expect(hostAuth.tokens.refresh_token).toBe("ref-sandbox-newer");
   });
@@ -1316,7 +1520,8 @@ describe("codex_local ACP lane", () => {
     await fs.mkdir(remoteCwd, { recursive: true });
 
     const execute = createCodexAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(options) as never,
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options) as never,
       stagedRuntimes: new Map(),
       stagingLocks: new Map(),
     });
@@ -1332,7 +1537,11 @@ describe("codex_local ACP lane", () => {
         },
         context: {
           issueId: "issue-1",
-          taskcoreWorkspace: { cwd: localCwd, source: "project_workspace", workspaceId: "workspace-1" },
+          taskcoreWorkspace: {
+            cwd: localCwd,
+            source: "project_workspace",
+            workspaceId: "workspace-1",
+          },
         },
         executionTarget: {
           kind: "remote",
@@ -1348,7 +1557,8 @@ describe("codex_local ACP lane", () => {
     expect(result.exitCode).toBe(0);
     expect(mockCreateWorkspaceRestoreTeardown).toHaveBeenCalledWith(
       expect.objectContaining({
-        startMessage: "[taskcore] Restoring workspace changes and Codex auth from the sandbox.\n",
+        startMessage:
+          "[taskcore] Restoring workspace changes and Codex auth from the sandbox.\n",
         failurePrefix: "[taskcore] Codex ACP teardown restore/copy-back failed",
       }),
     );
@@ -1372,21 +1582,20 @@ describe("codex_local ACP lane", () => {
     ).resolves.toMatchObject({
       engine: "acp",
       explicit: false,
-      unavailableReason: expect.stringContaining("bidirectional remote process"),
+      unavailableReason: expect.stringContaining(
+        "bidirectional remote process",
+      ),
     });
   });
 
   it("classifies ACP refresh-token auth failures", async () => {
     const root = await makeTempRoot("taskcore-codex-acp-refresh-token-");
     const execute = createCodexAcpExecutor({
-      createRuntime: (options: FakeRuntimeOptions) => new FakeRuntime(
-        options,
-        [],
-        {
+      createRuntime: (options: FakeRuntimeOptions) =>
+        new FakeRuntime(options, [], {
           status: "failed",
           error: { message: "OAuth failed: refresh_token_invalidated" },
-        } as unknown as FakeRuntimeTurnResult,
-      ) as never,
+        } as unknown as FakeRuntimeTurnResult) as never,
     });
 
     const result = await execute(buildContext(root));
@@ -1410,14 +1619,16 @@ describe("codex_local ACP lane", () => {
     });
 
     const first = await execute(buildContext(root));
-    const second = await execute(buildContext(root, {
-      runtime: {
-        sessionId: first.sessionId ?? null,
-        sessionParams: first.sessionParams ?? null,
-        sessionDisplayId: first.sessionDisplayId ?? null,
-        taskKey: "PAP-1",
-      },
-    }));
+    const second = await execute(
+      buildContext(root, {
+        runtime: {
+          sessionId: first.sessionId ?? null,
+          sessionParams: first.sessionParams ?? null,
+          sessionDisplayId: first.sessionDisplayId ?? null,
+          taskKey: "PAP-1",
+        },
+      }),
+    );
 
     expect(second.exitCode).toBe(0);
     expect(runtimes).toHaveLength(2);
@@ -1426,26 +1637,43 @@ describe("codex_local ACP lane", () => {
 });
 
 describe("resolveCodexAcpBillingIdentity", () => {
-  it.each([["openrouter", "api_key", "openrouter"], ["custom", "api_key", "unknown"], ["local", "none", "unknown"]])("classifies managed %s/%s independently of host authentication", (kind, auth, biller) => {
-    expect(resolveCodexAcpBillingIdentity({ config: {
-      managedAiRouting: { kind, auth },
-      env: { OPENAI_API_KEY: "", TASKCORE_AI_PROVIDER_KEY: auth === "none" ? "" : "fixture" },
-    } })).toEqual({ provider: "openai", biller, billingType: "api" });
-  });
+  it.each([
+    ["openrouter", "api_key", "openrouter"],
+    ["custom", "api_key", "unknown"],
+    ["local", "none", "unknown"],
+  ])(
+    "classifies managed %s/%s independently of host authentication",
+    (kind, auth, biller) => {
+      expect(
+        resolveCodexAcpBillingIdentity({
+          config: {
+            managedAiRouting: { kind, auth },
+            env: {
+              OPENAI_API_KEY: "",
+              TASKCORE_AI_PROVIDER_KEY: auth === "none" ? "" : "fixture",
+            },
+          },
+        }),
+      ).toEqual({ provider: "openai", biller, billingType: "api" });
+    },
+  );
   const originalOpenAiKey = process.env.OPENAI_API_KEY;
   const originalOpenRouterKey = process.env.OPENROUTER_API_KEY;
 
   afterEach(() => {
     if (originalOpenAiKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = originalOpenAiKey;
-    if (originalOpenRouterKey === undefined) delete process.env.OPENROUTER_API_KEY;
+    if (originalOpenRouterKey === undefined)
+      delete process.env.OPENROUTER_API_KEY;
     else process.env.OPENROUTER_API_KEY = originalOpenRouterKey;
   });
 
   it("classifies an adapter-config API key as api billing to openai", () => {
     delete process.env.OPENROUTER_API_KEY;
     expect(
-      resolveCodexAcpBillingIdentity({ config: { env: { OPENAI_API_KEY: "sk-test" } } }),
+      resolveCodexAcpBillingIdentity({
+        config: { env: { OPENAI_API_KEY: "sk-test" } },
+      }),
     ).toEqual({ provider: "openai", biller: "openai", billingType: "api" });
   });
 
@@ -1462,7 +1690,9 @@ describe("resolveCodexAcpBillingIdentity", () => {
   it("bills OpenRouter-backed runs to openrouter", () => {
     expect(
       resolveCodexAcpBillingIdentity({
-        config: { env: { OPENAI_API_KEY: "sk-test", OPENROUTER_API_KEY: "or-test" } },
+        config: {
+          env: { OPENAI_API_KEY: "sk-test", OPENROUTER_API_KEY: "or-test" },
+        },
       }),
     ).toEqual({ provider: "openai", biller: "openrouter", billingType: "api" });
   });
@@ -1472,7 +1702,11 @@ describe("resolveCodexAcpBillingIdentity", () => {
     expect(
       resolveCodexAcpBillingIdentity({
         config: {},
-        executionTarget: { kind: "remote", transport: "sandbox", remoteCwd: "/work" },
+        executionTarget: {
+          kind: "remote",
+          transport: "sandbox",
+          remoteCwd: "/work",
+        },
       } as never).billingType,
     ).toBe("subscription");
   });

@@ -18,10 +18,16 @@ export function printCursorCloudEvent(raw: string, _debug: boolean): void {
         console.log(pc.yellow(`tool_call: ${entry.name}`));
         break;
       case "tool_result":
-        console.log((entry.isError ? pc.red : pc.cyan)(entry.content || "tool result"));
+        console.log(
+          (entry.isError ? pc.red : pc.cyan)(entry.content || "tool result"),
+        );
         break;
       case "result":
-        console.log((entry.isError ? pc.red : pc.blue)(`result: ${entry.subtype}${entry.text ? ` - ${entry.text}` : ""}`));
+        console.log(
+          (entry.isError ? pc.red : pc.blue)(
+            `result: ${entry.subtype}${entry.text ? ` - ${entry.text}` : ""}`,
+          ),
+        );
         break;
       case "stderr":
         console.error(pc.red(entry.text));

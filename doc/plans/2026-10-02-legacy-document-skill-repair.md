@@ -4,12 +4,12 @@
 
 This focused repair keeps the eight-word manual, reduced shared prompts and merged Codex base fix #14920 fixed. It varies only the early operational Taskcore skill recipe and the presence of the new `issue-documents.md` reference. The earlier combined prompt-removal comparison retains its two new classic Claude/OpenCode storage failures; this trial repairs Claude's original case but leaves OpenCode's original regression unresolved.
 
-| Classic profile | Case | Pre-fix skill → repaired skill | Retained evidence |
-| --- | --- | --- | --- |
-| Claude | Original assigned skill | Fail → Pass | Baseline lacks a durable task document; candidate saves one containing the skill marker. |
-| Claude | Explicit Taskcore document | Pass → Pass | Both save the document/revision and provide a canonical UI link. |
-| OpenCode | Original assigned skill | Fail → Fail | Both write a workspace file rather than a public task document. Candidate requires automatic disposition recovery. |
-| OpenCode | Explicit Taskcore document | Fail → Fail | Both save the document/revision. Baseline provides a clickable API URL; candidate gives a code-formatted UI path without an anchor. Original UI-link checks fail in both. |
+| Classic profile | Case                       | Pre-fix skill → repaired skill | Retained evidence                                                                                                                                                         |
+| --------------- | -------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude          | Original assigned skill    | Fail → Pass                    | Baseline lacks a durable task document; candidate saves one containing the skill marker.                                                                                  |
+| Claude          | Explicit Taskcore document | Pass → Pass                    | Both save the document/revision and provide a canonical UI link.                                                                                                          |
+| OpenCode        | Original assigned skill    | Fail → Fail                    | Both write a workspace file rather than a public task document. Candidate requires automatic disposition recovery.                                                        |
+| OpenCode        | Explicit Taskcore document | Fail → Fail                    | Both save the document/revision. Baseline provides a clickable API URL; candidate gives a code-formatted UI path without an anchor. Original UI-link checks fail in both. |
 
 Original machine verdicts and evidence hashes are retained in the [safe evidence projection](2026-10-02-legacy-document-skill-repair.json). No model was rerun to improve these results.
 
@@ -35,12 +35,12 @@ A future explicit fixture should name a clickable Taskcore UI document link if t
 
 Eight provider turns were expected; nine actual runs are retained. Candidate OpenCode's original assignment succeeds but leaves the task `in_progress`, triggering automatic disposition recovery. The recovery succeeds and marks it done, without creating the missing document. Both runs, their time and cost are counted rather than selecting a better attempt.
 
-| Profile | Case | Baseline provider seconds | Candidate provider seconds | Baseline reported USD | Candidate reported USD |
-| --- | --- | ---: | ---: | ---: | ---: |
-| legacy-claude | Original | 23.032 | 27.702 | 0.1668394500 | 0.2267947500 |
-| legacy-claude | Explicit storage | 34.999 | 40.513 | 0.1997571000 | 0.2561425500 |
-| legacy-opencode | Original | 36.770 | 68.032 | 0.0033927116 | 0.0047148437 |
-| legacy-opencode | Explicit storage | 206.191 | 46.300 | 0.0102644593 | 0.0042468724 |
+| Profile         | Case             | Baseline provider seconds | Candidate provider seconds | Baseline reported USD | Candidate reported USD |
+| --------------- | ---------------- | ------------------------: | -------------------------: | --------------------: | ---------------------: |
+| legacy-claude   | Original         |                    23.032 |                     27.702 |          0.1668394500 |           0.2267947500 |
+| legacy-claude   | Explicit storage |                    34.999 |                     40.513 |          0.1997571000 |           0.2561425500 |
+| legacy-opencode | Original         |                    36.770 |                     68.032 |          0.0033927116 |           0.0047148437 |
+| legacy-opencode | Explicit storage |                   206.191 |                     46.300 |          0.0102644593 |           0.0042468724 |
 
 Reported LLM totals are $0.3802537209 baseline and $0.4918990161 candidate. All four baseline and five candidate ledger rows contain token usage and reported cost. Local runtime is unmetered and actual external billing is not established. Single trials, the additional recovery and baseline OpenCode's long explicit-case execution prevent a general timing or spending conclusion.
 

@@ -8,9 +8,9 @@ Tool action approvals require `TASKCORE_TOOL_ACTION_SIGNING_SECRET` to be set in
 
 ## Support Matrix
 
-| Transport | Local trusted | Hosted cloud / public authenticated | Notes |
-| --- | --- | --- | --- |
-| `remote_http` | Supported | Supported | Preferred production path. Taskcore proxies calls through the gateway with policy, audit, timeout, and redaction controls. |
+| Transport     | Local trusted                                                     | Hosted cloud / public authenticated                                             | Notes                                                                                                                                                                                            |
+| ------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `remote_http` | Supported                                                         | Supported                                                                       | Preferred production path. Taskcore proxies calls through the gateway with policy, audit, timeout, and redaction controls.                                                                       |
 | `local_stdio` | Supported through approved templates and supervised runtime slots | Supported only when an explicitly trusted MCP runtime worker/host is configured | Set `TASKCORE_TRUSTED_MCP_RUNTIME_HOST` or `TASKCORE_TOOL_RUNTIME_TRUSTED_HOST` only for a worker that is allowed to supervise local processes. Do not enable arbitrary agent-supplied commands. |
 
 ## Native runtime gateway ownership
@@ -58,17 +58,17 @@ Metrics surfaced there include:
 
 ## Alerts
 
-| Alert | Severity | Suggested threshold | First responder action |
-| --- | --- | --- | --- |
-| `mcp_runtime_stuck_starting_slot` | Critical | Any starting slot older than 5 minutes | Inspect slot health/logs, stop the slot, restart it once, then disable the connection if it sticks again. |
-| `mcp_runtime_stuck_running_slot` | Critical | Any running slot with no progress for 5 minutes | Inspect recent audit events and active calls; restart only after confirming no healthy call is still in progress. |
-| `mcp_runtime_high_timeout_rate` | Warning/Critical | Warning at >=3 timeouts and >=10% in 1 hour; critical at >=10 timeouts or >=25% | Check upstream MCP health, runtime capacity, and gateway audit failures before retrying workloads. |
-| `mcp_runtime_high_error_rate` | Warning/Critical | Warning at >=5 failures and >=10% in 1 hour; critical at >=10 failures or >=25% | Group audit failures by `reasonCode`, then fix credentials/config or disable the affected connection. |
-| `mcp_runtime_capacity_deferrals_repeated` | Warning/Critical | Warning at >=3 capacity deferrals in 1 hour; critical at >=10 | Stop idle/stale slots, reduce noisy workloads, or raise slot caps only after confirming host capacity. |
-| `mcp_runtime_restart_storm` | Warning/Critical | Warning at >=3 restarts in 1 hour; critical on any restart suppression | Stop the slot, inspect stderr/audit reason codes, and keep the connection disabled until the template/upstream is fixed. |
-| `mcp_runtime_connection_health_degraded` | Warning/Critical | Any active enabled connection with degraded/failed/missing-secret health, or any disabled enabled-path connection | Run health check, refresh catalog after recovery, or keep the connection disabled and route agents to alternatives. |
-| `mcp_runtime_missing_secret_failures` | Warning/Critical | Warning on any missing-secret failure; critical at >=3 in 1 hour | Check secret bindings and provider health without revealing secret values; rotate or rebind missing secrets. |
-| `mcp_runtime_audit_write_failures` | Critical | Any audit write failure | Treat as a control-plane incident; restore DB/audit durability before retrying tool workloads. |
+| Alert                                     | Severity         | Suggested threshold                                                                                               | First responder action                                                                                                   |
+| ----------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `mcp_runtime_stuck_starting_slot`         | Critical         | Any starting slot older than 5 minutes                                                                            | Inspect slot health/logs, stop the slot, restart it once, then disable the connection if it sticks again.                |
+| `mcp_runtime_stuck_running_slot`          | Critical         | Any running slot with no progress for 5 minutes                                                                   | Inspect recent audit events and active calls; restart only after confirming no healthy call is still in progress.        |
+| `mcp_runtime_high_timeout_rate`           | Warning/Critical | Warning at >=3 timeouts and >=10% in 1 hour; critical at >=10 timeouts or >=25%                                   | Check upstream MCP health, runtime capacity, and gateway audit failures before retrying workloads.                       |
+| `mcp_runtime_high_error_rate`             | Warning/Critical | Warning at >=5 failures and >=10% in 1 hour; critical at >=10 failures or >=25%                                   | Group audit failures by `reasonCode`, then fix credentials/config or disable the affected connection.                    |
+| `mcp_runtime_capacity_deferrals_repeated` | Warning/Critical | Warning at >=3 capacity deferrals in 1 hour; critical at >=10                                                     | Stop idle/stale slots, reduce noisy workloads, or raise slot caps only after confirming host capacity.                   |
+| `mcp_runtime_restart_storm`               | Warning/Critical | Warning at >=3 restarts in 1 hour; critical on any restart suppression                                            | Stop the slot, inspect stderr/audit reason codes, and keep the connection disabled until the template/upstream is fixed. |
+| `mcp_runtime_connection_health_degraded`  | Warning/Critical | Any active enabled connection with degraded/failed/missing-secret health, or any disabled enabled-path connection | Run health check, refresh catalog after recovery, or keep the connection disabled and route agents to alternatives.      |
+| `mcp_runtime_missing_secret_failures`     | Warning/Critical | Warning on any missing-secret failure; critical at >=3 in 1 hour                                                  | Check secret bindings and provider health without revealing secret values; rotate or rebind missing secrets.             |
+| `mcp_runtime_audit_write_failures`        | Critical         | Any audit write failure                                                                                           | Treat as a control-plane incident; restore DB/audit durability before retrying tool workloads.                           |
 
 ## Diagnose A Stuck Slot
 

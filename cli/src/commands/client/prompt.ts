@@ -39,46 +39,67 @@ export function registerPromptCommands(program: Command): void {
   addCommonClientOptions(
     program
       .command("agent-prompt")
-      .description("Create/update Taskcore work for an agent using an agent API key")
+      .description(
+        "Create/update Taskcore work for an agent using an agent API key",
+      )
       .argument("<agent>", "Agent ID, shortname, or name")
       .argument("<agentApiKey>", "Agent API key")
       .argument("<prompt...>", "Prompt text")
       .option("--issue <issueId>", "Append as a comment to an existing issue")
       .option("--title <title>", "Issue title when creating a new issue")
       .option("--no-wake", "Do not wake the agent after creating/updating work")
-      .action(async (agent: string, agentApiKey: string, promptParts: string[], opts: PromptOptions) => {
-        try {
-          const result = await runAgentPrompt(agent, promptParts.join(" "), {
-            ...opts,
-            apiKey: agentApiKey,
-            wake: opts.wake,
-          });
-          printOutput(result, { json: opts.json });
-        } catch (err) {
-          handleCommandError(err);
-        }
-      }),
+      .action(
+        async (
+          agent: string,
+          agentApiKey: string,
+          promptParts: string[],
+          opts: PromptOptions,
+        ) => {
+          try {
+            const result = await runAgentPrompt(agent, promptParts.join(" "), {
+              ...opts,
+              apiKey: agentApiKey,
+              wake: opts.wake,
+            });
+            printOutput(result, { json: opts.json });
+          } catch (err) {
+            handleCommandError(err);
+          }
+        },
+      ),
   );
 
-  const agent = program.commands.find((cmd) => cmd.name() === "agent") ?? program.command("agent");
+  const agent =
+    program.commands.find((cmd) => cmd.name() === "agent") ??
+    program.command("agent");
   addCommonClientOptions(
     agent
       .command("prompt")
       .description("Create/update Taskcore work using an agent persona")
       .argument("<prompt...>", "Prompt text")
-      .option("--agent <agent>", "Agent ID, shortname, or name; defaults to profile/identity agent")
-      .option("--api-key-env <name>", "Read the agent API key from this environment variable")
+      .option(
+        "--agent <agent>",
+        "Agent ID, shortname, or name; defaults to profile/identity agent",
+      )
+      .option(
+        "--api-key-env <name>",
+        "Read the agent API key from this environment variable",
+      )
       .option("--issue <issueId>", "Append as a comment to an existing issue")
       .option("--title <title>", "Issue title when creating a new issue")
       .option("--no-wake", "Do not wake the agent after creating/updating work")
       .action(async (promptParts: string[], opts: PromptOptions) => {
         try {
           const apiKey = readApiKeyEnvOption(opts);
-          const result = await runAgentPrompt(opts.agent, promptParts.join(" "), {
-            ...opts,
-            apiKey: apiKey ?? opts.apiKey,
-            wake: opts.wake,
-          });
+          const result = await runAgentPrompt(
+            opts.agent,
+            promptParts.join(" "),
+            {
+              ...opts,
+              apiKey: apiKey ?? opts.apiKey,
+              wake: opts.wake,
+            },
+          );
           printOutput(result, { json: opts.json });
         } catch (err) {
           handleCommandError(err);
@@ -86,7 +107,9 @@ export function registerPromptCommands(program: Command): void {
       }),
   );
 
-  const board = program.command("board").description("Board operator operations");
+  const board = program
+    .command("board")
+    .description("Board operator operations");
   addCommonClientOptions(
     board
       .command("prompt")
@@ -99,7 +122,11 @@ export function registerPromptCommands(program: Command): void {
       .argument("<prompt...>", "Prompt text")
       .action(async (promptParts: string[], opts: PromptOptions) => {
         try {
-          const result = await runBoardPrompt(opts.agent ?? "", promptParts.join(" "), opts);
+          const result = await runBoardPrompt(
+            opts.agent ?? "",
+            promptParts.join(" "),
+            opts,
+          );
           printOutput(result, { json: opts.json });
         } catch (err) {
           handleCommandError(err);
@@ -116,7 +143,9 @@ export async function runAgentPrompt(
 ): Promise<PromptResult> {
   const ctx = resolveCommandContext(opts);
   if (ctx.profile.persona && ctx.profile.persona !== "agent") {
-    throw new Error(`Profile '${ctx.profileName}' is persona=${ctx.profile.persona}; use an agent profile or board prompt.`);
+    throw new Error(
+      `Profile '${ctx.profileName}' is persona=${ctx.profile.persona}; use an agent profile or board prompt.`,
+    );
   }
   const body = normalizePrompt(prompt);
   const me = await ctx.api.get<Agent>("/api/agents/me");
@@ -144,11 +173,15 @@ export async function runBoardPrompt(
 ): Promise<PromptResult> {
   const ctx = resolveCommandContext(opts, { requireCompany: true });
   if (ctx.profile.persona && ctx.profile.persona !== "board") {
-    throw new Error(`Profile '${ctx.profileName}' is persona=${ctx.profile.persona}; use an agent prompt command or a board profile.`);
+    throw new Error(
+      `Profile '${ctx.profileName}' is persona=${ctx.profile.persona}; use an agent prompt command or a board profile.`,
+    );
   }
   const body = normalizePrompt(prompt);
   const query = new URLSearchParams({ companyId: ctx.companyId ?? "" });
-  const agent = await ctx.api.get<Agent>(`${apiPath`/api/agents/${agentRef}`}?${query.toString()}`);
+  const agent = await ctx.api.get<Agent>(
+    `${apiPath`/api/agents/${agentRef}`}?${query.toString()}`,
+  );
   if (!agent) throw new Error(`Agent not found: ${agentRef}`);
 
   return createOrCommentForAgent({
@@ -181,9 +214,17 @@ async function createOrCommentForAgent(input: {
       body: input.prompt,
       resume: input.wake,
     });
-    const comment = await input.api.post<IssueComment>(apiPath`/api/issues/${input.issueId.trim()}/comments`, payload);
+    const comment = await input.api.post<IssueComment>(
+      apiPath`/api/issues/${input.issueId.trim()}/comments`,
+      payload,
+    );
     const wakeup = input.wake
-      ? await wakeAgent(input.api, input.agent.id, input.issueId.trim(), "Prompt comment handoff")
+      ? await wakeAgent(
+          input.api,
+          input.agent.id,
+          input.issueId.trim(),
+          "Prompt comment handoff",
+        )
       : null;
     return {
       ok: true,
@@ -204,10 +245,19 @@ async function createOrCommentForAgent(input: {
     priority: "medium",
     assigneeAgentId: input.agent.id,
   });
-  const issue = await input.api.post<Issue>(apiPath`/api/companies/${input.companyId}/issues`, payload);
-  const wakeup = input.wake && issue?.id
-    ? await wakeAgent(input.api, input.agent.id, issue.id, "Prompt issue handoff")
-    : null;
+  const issue = await input.api.post<Issue>(
+    apiPath`/api/companies/${input.companyId}/issues`,
+    payload,
+  );
+  const wakeup =
+    input.wake && issue?.id
+      ? await wakeAgent(
+          input.api,
+          input.agent.id,
+          issue.id,
+          "Prompt issue handoff",
+        )
+      : null;
   return {
     ok: true,
     mode: "issue",
@@ -241,7 +291,11 @@ function normalizePrompt(prompt: string): string {
 }
 
 function defaultPromptTitle(prompt: string): string {
-  const firstLine = prompt.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? "Prompt handoff";
+  const firstLine =
+    prompt
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find(Boolean) ?? "Prompt handoff";
   return firstLine.length > 100 ? `${firstLine.slice(0, 97)}...` : firstLine;
 }
 
@@ -271,6 +325,7 @@ function agentSummary(agent: Agent): PromptResult["agent"] {
 function readApiKeyEnvOption(opts: PromptOptions): string | undefined {
   if (!opts.apiKeyEnv?.trim()) return undefined;
   const value = process.env[opts.apiKeyEnv.trim()]?.trim();
-  if (!value) throw new Error(`Environment variable ${opts.apiKeyEnv.trim()} is not set`);
+  if (!value)
+    throw new Error(`Environment variable ${opts.apiKeyEnv.trim()} is not set`);
   return value;
 }

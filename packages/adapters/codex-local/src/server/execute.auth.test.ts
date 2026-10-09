@@ -25,7 +25,9 @@ describe("codex managed-home auth fail-fast", () => {
   });
 
   it("fails fast when a managed CODEX_HOME has no auth.json and OPENAI_API_KEY is empty", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-failfast-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-failfast-"),
+    );
     cleanupDirs.push(root);
 
     const taskcoreHome = path.join(root, "taskcore-home");
@@ -81,7 +83,9 @@ describe("codex managed-home auth fail-fast", () => {
     ).rejects.toThrow(/no Codex credentials provisioned for managed home/);
 
     // The managed home must not have been left with a usable auth.json.
-    await expect(fs.access(path.join(managedAgentHome, "auth.json"))).rejects.toBeTruthy();
+    await expect(
+      fs.access(path.join(managedAgentHome, "auth.json")),
+    ).rejects.toBeTruthy();
   });
 });
 
@@ -98,7 +102,9 @@ describe("codex sandbox-target credential gate", () => {
   });
 
   async function makeCredentiallessManagedHome() {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-codex-sandbox-gate-"));
+    const root = await fs.mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-sandbox-gate-"),
+    );
     cleanupDirs.push(root);
     const taskcoreHome = path.join(root, "taskcore-home");
     const emptySharedHome = path.join(root, "shared-codex-home");
@@ -124,11 +130,18 @@ describe("codex sandbox-target credential gate", () => {
   const sandboxTarget = {
     kind: "remote",
     transport: "sandbox",
-  } as unknown as Parameters<typeof assertCodexCredentialsLaunchable>[0]["target"];
+  } as unknown as Parameters<
+    typeof assertCodexCredentialsLaunchable
+  >[0]["target"];
 
   it("launches against a sandbox that carries its own Codex login", async () => {
     const { env, managedAgentHome } = await makeCredentiallessManagedHome();
-    mockRunTargetShellCommand.mockResolvedValue({ exitCode: 0, timedOut: false, stdout: "", stderr: "" });
+    mockRunTargetShellCommand.mockResolvedValue({
+      exitCode: 0,
+      timedOut: false,
+      stdout: "",
+      stderr: "",
+    });
     const logs: string[] = [];
 
     await expect(
@@ -158,7 +171,12 @@ describe("codex sandbox-target credential gate", () => {
 
   it("fails a sandbox run when neither the host nor the sandbox has credentials", async () => {
     const { env, managedAgentHome } = await makeCredentiallessManagedHome();
-    mockRunTargetShellCommand.mockResolvedValue({ exitCode: 1, timedOut: false, stdout: "", stderr: "" });
+    mockRunTargetShellCommand.mockResolvedValue({
+      exitCode: 1,
+      timedOut: false,
+      stdout: "",
+      stderr: "",
+    });
 
     await expect(
       assertCodexCredentialsLaunchable({
@@ -195,12 +213,19 @@ describe("codex sandbox-target credential gate", () => {
         },
       }),
     ).resolves.toBeUndefined();
-    expect(stderrLines.join("")).toContain("Could not verify the sandbox's Codex login");
+    expect(stderrLines.join("")).toContain(
+      "Could not verify the sandbox's Codex login",
+    );
   });
 
   it("treats a probe timeout as unverifiable, not as a missing credential", async () => {
     const { env, managedAgentHome } = await makeCredentiallessManagedHome();
-    mockRunTargetShellCommand.mockResolvedValue({ exitCode: 0, timedOut: true, stdout: "", stderr: "" });
+    mockRunTargetShellCommand.mockResolvedValue({
+      exitCode: 0,
+      timedOut: true,
+      stdout: "",
+      stderr: "",
+    });
 
     await expect(
       assertCodexCredentialsLaunchable({

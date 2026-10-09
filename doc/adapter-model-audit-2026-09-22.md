@@ -4,16 +4,16 @@ This audit covers model selection in the existing coding-agent adapters. Catalog
 entries identify models; provider accounts and installed CLIs determine access.
 No agent defaults or saved model selections are migrated.
 
-| Adapter | Changes from the audit |
-| --- | --- |
-| Claude Code | Add Opus 5.5 and require CLI 2.1.280. Fable 5.1, Fable 5, Sonnet 5, and Mythos 5 were already listed. Expose the documented model-specific effort levels in creation and editing. |
-| Claude on Bedrock | Add Opus 5.5, Opus 5, Sonnet 5, Opus 4.7, and Sonnet 4.6. Correct the obsolete `-v1` suffix on Opus 4.8 and Fable 5. Apply the Opus 5.5 version check to Bedrock IDs too. |
-| Codex and the Codex runner catalog | Add GPT-6 Sol and Luna, including Fast mode. Astra was already listed. Expose efforts through Ultra for Astra, Sol, and GPT-5.6 Sol/Terra; cap both Luna generations at Max. |
-| Grok Build | Add Grok 4.7, 4.6, and 4.5. Offer Extra High for 4.7/4.6. Save edited effort as `reasoningEffort`, which the runtime consumes. Keep `grok-build` as the sentinel that lets the CLI choose its default. |
-| Gemini CLI | Add Flash 3.8, 3.7, 3.6, 3.5, Flash Lite 3.5/3.1, and 3 Flash Preview. Remove the retired Gemini 2.0 choices. Keep Auto and the existing 3.1 Pro and 2.5 choices. |
-| Cursor | Add the current documented fallback IDs for Composer 2.5, Opus 5.5, Fable 5.1, Sonnet 5, GPT-5.6 Sol/Terra/Luna, Gemini 3.8 Flash, Muse Spark 1.3, and Grok 4.7/4.6/4.5. Runtime model discovery remains available. |
-| OpenCode | Refresh the static fallback used by remote environments with GPT-6 and GPT-5.6 families, current Claude models, Gemini 3.8 Flash, and Grok 4.7. |
-| Kimi Code | Add K3 256K. Relabel `kimi-for-coding` as K2.8 Preview, which replaced K2.7 under the same ID. Forward CLI effort for K2.8 Preview and both K3 variants. |
+| Adapter                            | Changes from the audit                                                                                                                                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code                        | Add Opus 5.5 and require CLI 2.1.280. Fable 5.1, Fable 5, Sonnet 5, and Mythos 5 were already listed. Expose the documented model-specific effort levels in creation and editing.                                   |
+| Claude on Bedrock                  | Add Opus 5.5, Opus 5, Sonnet 5, Opus 4.7, and Sonnet 4.6. Correct the obsolete `-v1` suffix on Opus 4.8 and Fable 5. Apply the Opus 5.5 version check to Bedrock IDs too.                                           |
+| Codex and the Codex runner catalog | Add GPT-6 Sol and Luna, including Fast mode. Astra was already listed. Expose efforts through Ultra for Astra, Sol, and GPT-5.6 Sol/Terra; cap both Luna generations at Max.                                        |
+| Grok Build                         | Add Grok 4.7, 4.6, and 4.5. Offer Extra High for 4.7/4.6. Save edited effort as `reasoningEffort`, which the runtime consumes. Keep `grok-build` as the sentinel that lets the CLI choose its default.              |
+| Gemini CLI                         | Add Flash 3.8, 3.7, 3.6, 3.5, Flash Lite 3.5/3.1, and 3 Flash Preview. Remove the retired Gemini 2.0 choices. Keep Auto and the existing 3.1 Pro and 2.5 choices.                                                   |
+| Cursor                             | Add the current documented fallback IDs for Composer 2.5, Opus 5.5, Fable 5.1, Sonnet 5, GPT-5.6 Sol/Terra/Luna, Gemini 3.8 Flash, Muse Spark 1.3, and Grok 4.7/4.6/4.5. Runtime model discovery remains available. |
+| OpenCode                           | Refresh the static fallback used by remote environments with GPT-6 and GPT-5.6 families, current Claude models, Gemini 3.8 Flash, and Grok 4.7.                                                                     |
+| Kimi Code                          | Add K3 256K. Relabel `kimi-for-coding` as K2.8 Preview, which replaced K2.7 under the same ID. Forward CLI effort for K2.8 Preview and both K3 variants.                                                            |
 
 ## Sources and verification
 

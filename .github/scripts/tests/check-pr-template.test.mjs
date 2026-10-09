@@ -1,6 +1,6 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { checkTemplate } from '../check-pr-template.mjs';
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { checkTemplate } from "../check-pr-template.mjs";
 
 const VALID_BODY = `
 ## Thinking Path
@@ -19,30 +19,34 @@ Low risk — isolated change to one query parameter.
 Claude Sonnet 4.5, 200k context window, extended thinking enabled, tool use: read/edit files
 `;
 
-test('passes with valid full template', () => {
+test("passes with valid full template", () => {
   const result = checkTemplate(VALID_BODY);
   assert.equal(result.passed, true);
   assert.deepEqual(result.failures, []);
 });
 
-test('fails when Thinking Path section is missing', () => {
-  const body = VALID_BODY.replace('## Thinking Path', '## Removed');
+test("fails when Thinking Path section is missing", () => {
+  const body = VALID_BODY.replace("## Thinking Path", "## Removed");
   const result = checkTemplate(body);
   assert.equal(result.passed, false);
-  assert.ok(result.failures.some(f => f.includes('Thinking Path')));
+  assert.ok(result.failures.some((f) => f.includes("Thinking Path")));
 });
 
-test('fails when Thinking Path has fewer than 3 sentences', () => {
+test("fails when Thinking Path has fewer than 3 sentences", () => {
   const body = VALID_BODY.replace(
     /## Thinking Path\n[\s\S]*?\n## What Changed/,
-    '## Thinking Path\nOnly one sentence here.\n\n## What Changed'
+    "## Thinking Path\nOnly one sentence here.\n\n## What Changed",
   );
   const result = checkTemplate(body);
   assert.equal(result.passed, false);
-  assert.ok(result.failures.some(f => f.includes('Thinking Path') && f.includes('sentence')));
+  assert.ok(
+    result.failures.some(
+      (f) => f.includes("Thinking Path") && f.includes("sentence"),
+    ),
+  );
 });
 
-test('passes Thinking Path written as a bullet list without terminal punctuation', () => {
+test("passes Thinking Path written as a bullet list without terminal punctuation", () => {
   const body = VALID_BODY.replace(
     /## Thinking Path\n[\s\S]*?\n## What Changed/,
     `## Thinking Path
@@ -50,14 +54,14 @@ test('passes Thinking Path written as a bullet list without terminal punctuation
 - Second point about how the fix addresses it
 - Third point about why this approach was chosen
 
-## What Changed`
+## What Changed`,
   );
   const result = checkTemplate(body);
   assert.equal(result.passed, true);
   assert.deepEqual(result.failures, []);
 });
 
-test('passes Thinking Path written as a blockquoted bullet list', () => {
+test("passes Thinking Path written as a blockquoted bullet list", () => {
   const body = VALID_BODY.replace(
     /## Thinking Path\n[\s\S]*?\n## What Changed/,
     `## Thinking Path
@@ -65,14 +69,14 @@ test('passes Thinking Path written as a blockquoted bullet list', () => {
 > - Second point in a blockquote
 > - Third point in a blockquote
 
-## What Changed`
+## What Changed`,
   );
   const result = checkTemplate(body);
   assert.equal(result.passed, true);
   assert.deepEqual(result.failures, []);
 });
 
-test('passes Thinking Path written as multiple paragraphs without terminal punctuation', () => {
+test("passes Thinking Path written as multiple paragraphs without terminal punctuation", () => {
   const body = VALID_BODY.replace(
     /## Thinking Path\n[\s\S]*?\n## What Changed/,
     `## Thinking Path
@@ -82,42 +86,46 @@ Second paragraph explaining the chosen approach in detail
 
 Third paragraph explaining the tradeoffs in detail
 
-## What Changed`
+## What Changed`,
   );
   const result = checkTemplate(body);
   assert.equal(result.passed, true);
   assert.deepEqual(result.failures, []);
 });
 
-test('fails when Model Used section is missing', () => {
-  const body = VALID_BODY.replace('## Model Used', '## Removed');
+test("fails when Model Used section is missing", () => {
+  const body = VALID_BODY.replace("## Model Used", "## Removed");
   const result = checkTemplate(body);
   assert.equal(result.passed, false);
-  assert.ok(result.failures.some(f => f.includes('Model Used')));
+  assert.ok(result.failures.some((f) => f.includes("Model Used")));
 });
 
-test('fails when Model Used contains placeholder text', () => {
+test("fails when Model Used contains placeholder text", () => {
   const body = VALID_BODY.replace(
     /## Model Used\n[\s\S]*/,
-    '## Model Used\nprovider, model id/version, context window, reasoning mode, tool use'
+    "## Model Used\nprovider, model id/version, context window, reasoning mode, tool use",
   );
   const result = checkTemplate(body);
   assert.equal(result.passed, false);
-  assert.ok(result.failures.some(f => f.includes('Model Used') && f.includes('placeholder')));
+  assert.ok(
+    result.failures.some(
+      (f) => f.includes("Model Used") && f.includes("placeholder"),
+    ),
+  );
 });
 
-test('fails when What Changed section is empty', () => {
+test("fails when What Changed section is empty", () => {
   const body = VALID_BODY.replace(
     /## What Changed\n[\s\S]*?\n## Verification/,
-    '## What Changed\n\n## Verification'
+    "## What Changed\n\n## Verification",
   );
   const result = checkTemplate(body);
   assert.equal(result.passed, false);
-  assert.ok(result.failures.some(f => f.includes('What Changed')));
+  assert.ok(result.failures.some((f) => f.includes("What Changed")));
 });
 
-test('returns multiple failures at once', () => {
-  const result = checkTemplate('');
+test("returns multiple failures at once", () => {
+  const result = checkTemplate("");
   assert.equal(result.passed, false);
   assert.ok(result.failures.length >= 5);
 });

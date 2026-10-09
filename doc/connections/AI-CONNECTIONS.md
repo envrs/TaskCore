@@ -21,13 +21,13 @@ Storybook's simulated controllers and page annotations do not run in the app.
 
 The shared `AI_CONNECTION_CAPABILITIES` contract defines these combinations:
 
-| Provider | Sign-in method | Existing harness |
-| --- | --- | --- |
-| Claude / Anthropic | Claude subscription token or Anthropic API key | Claude |
-| OpenAI | ChatGPT/Codex subscription or OpenAI API key | Codex |
-| OpenRouter (legacy, no routing metadata) | API key | OpenCode, with an `openrouter/` model |
-| Google | API key | Gemini CLI |
-| Grok / xAI | Grok subscription or xAI API key | Grok |
+| Provider                                 | Sign-in method                                 | Existing harness                      |
+| ---------------------------------------- | ---------------------------------------------- | ------------------------------------- |
+| Claude / Anthropic                       | Claude subscription token or Anthropic API key | Claude                                |
+| OpenAI                                   | ChatGPT/Codex subscription or OpenAI API key   | Codex                                 |
+| OpenRouter (legacy, no routing metadata) | API key                                        | OpenCode, with an `openrouter/` model |
+| Google                                   | API key                                        | Gemini CLI                            |
+| Grok / xAI                               | Grok subscription or xAI API key               | Grok                                  |
 
 Native runner supports the corresponding existing Codex, OpenCode, and Claude
 ACP profiles. Connections creation and reconnect mount `AgentProviderConnection`,
@@ -153,13 +153,13 @@ A 403 returns `permission_denied` with no limits, distinct from expired
 authentication or exhausted capacity. Minting another inference-only token
 does not establish usage access. This probe cannot add scopes to a stored token.
 
-| Connection | Read-only source | Observations |
-| --- | --- | --- |
-| Codex subscription | `GET https://chatgpt.com/backend-api/wham/usage` with stored access token and account ID | Primary/secondary windows, additional feature/model limits, provider admission, workspace spend control, credit balance |
-| Claude subscription | `GET https://api.anthropic.com/api/oauth/usage`, with stored OAuth token and `anthropic-beta: oauth-2025-04-20` | Legacy and structured session/weekly/scoped windows, monthly extra usage, structured spend when legacy extra usage is absent |
-| Grok subscription | `GET https://cli-chat-proxy.grok.com/v1/billing?format=credits`, with stored token and `x-xai-token-auth: xai-grok-cli` | Included-plan utilization/period when reported, separately reported on-demand allowance and prepaid balance in USD cents |
-| OpenRouter API key | `GET https://openrouter.ai/api/v1/key` | Key credit cap, reset cadence, free-model daily request cap when returned |
-| Other API-key methods | No supported single-key allowance endpoint | Explicit `unsupported`; no provider or secret read |
+| Connection            | Read-only source                                                                                                        | Observations                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Codex subscription    | `GET https://chatgpt.com/backend-api/wham/usage` with stored access token and account ID                                | Primary/secondary windows, additional feature/model limits, provider admission, workspace spend control, credit balance      |
+| Claude subscription   | `GET https://api.anthropic.com/api/oauth/usage`, with stored OAuth token and `anthropic-beta: oauth-2025-04-20`         | Legacy and structured session/weekly/scoped windows, monthly extra usage, structured spend when legacy extra usage is absent |
+| Grok subscription     | `GET https://cli-chat-proxy.grok.com/v1/billing?format=credits`, with stored token and `x-xai-token-auth: xai-grok-cli` | Included-plan utilization/period when reported, separately reported on-demand allowance and prepaid balance in USD cents     |
+| OpenRouter API key    | `GET https://openrouter.ai/api/v1/key`                                                                                  | Key credit cap, reset cadence, free-model daily request cap when returned                                                    |
+| Other API-key methods | No supported single-key allowance endpoint                                                                              | Explicit `unsupported`; no provider or secret read                                                                           |
 
 These subscription sources are provider-client endpoints, not a promise of a
 stable public API. Codex's current endpoint/shape is grounded in the official
@@ -186,7 +186,7 @@ spend allowance does not establish a funded usable balance; overage `available`
 stays unknown unless the provider confirms it or reports it disabled/exhausted.
 An unlimited OpenRouter key does not establish account balance. A Grok reset
 timestamp alone does not establish weekly/monthly cadence. API rate limiting
-of the *probe* is an error, not an exhausted subscription. Malformed/empty
+of the _probe_ is an error, not an exhausted subscription. Malformed/empty
 responses and network failures return no fresh limits. Responses are `no-store`,
 bounded to 256 KiB and 15 seconds, use fixed endpoints with redirects disabled,
 and contain neither credentials nor raw provider errors. Expired credentials
@@ -354,7 +354,6 @@ framing. A fresh provider session always receives the complete bootstrap.
 Retained sandbox runner binaries are reused only after an exact SHA-256 match
 with the controller artifact and the normal capability checks. Run-scoped
 credential changes still require provider process rotation.
-
 
 Warm sandbox execution requires both `reuseLease: true` and
 `runnerLifecycleMode: "warm"` on the environment. `runnerIdleTimeoutMs` bounds
@@ -591,13 +590,13 @@ model picker uses that connection’s optional model IDs and accepts manual IDs.
 Changing connections preserves the model for explicit review. URLs and
 credentials belong to the connection; the model belongs to the agent.
 
-| Harness | Implemented managed routes |
-| --- | --- |
-| Codex legacy and Codex New Runner (app-server) | OpenRouter; custom/local OpenAI Responses endpoints |
-| Claude legacy and Claude New Runner (ACPX) | OpenRouter; custom/local Anthropic Messages; Bedrock API key |
-| OpenCode legacy and New Runner | OpenRouter; custom/local Chat Completions |
-| Hermes local | OpenRouter; custom/local Chat Completions |
-| Gemini CLI, Grok | Their native API connections; custom routes are not advertised |
+| Harness                                        | Implemented managed routes                                     |
+| ---------------------------------------------- | -------------------------------------------------------------- |
+| Codex legacy and Codex New Runner (app-server) | OpenRouter; custom/local OpenAI Responses endpoints            |
+| Claude legacy and Claude New Runner (ACPX)     | OpenRouter; custom/local Anthropic Messages; Bedrock API key   |
+| OpenCode legacy and New Runner                 | OpenRouter; custom/local Chat Completions                      |
+| Hermes local                                   | OpenRouter; custom/local Chat Completions                      |
+| Gemini CLI, Grok                               | Their native API connections; custom routes are not advertised |
 
 Migration `0306` adds Google to both account-default provider constraints. Local
 Gemini connections seed the API-key auth choice in their disposable home before

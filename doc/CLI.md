@@ -188,11 +188,11 @@ unrelated local Taskcore process can remain running.
 
 Harness configuration:
 
-| Harness | Agent adapter | Agent credential variable | Model |
-| --- | --- | --- | --- |
-| `claude` | `claude_local` | `ANTHROPIC_API_KEY` | Optional; omitted uses the adapter default |
-| `codex` | `codex_local` | `OPENAI_API_KEY` | Optional; omitted uses the adapter default |
-| `opencode` | `opencode_local` | `OPENROUTER_API_KEY` | Required and must begin with `openrouter/` |
+| Harness    | Agent adapter    | Agent credential variable | Model                                      |
+| ---------- | ---------------- | ------------------------- | ------------------------------------------ |
+| `claude`   | `claude_local`   | `ANTHROPIC_API_KEY`       | Optional; omitted uses the adapter default |
+| `codex`    | `codex_local`    | `OPENAI_API_KEY`          | Optional; omitted uses the adapter default |
+| `opencode` | `opencode_local` | `OPENROUTER_API_KEY`      | Required and must begin with `openrouter/` |
 
 OpenCode model references retain their complete path, including additional
 slashes:
@@ -658,7 +658,7 @@ By default the command creates a `todo` issue assigned to the target agent and w
 1. **Company install** — adds or updates a row in `company_skills` for the
    whole company. This is what `skills install`, `skills import`, `skills create`,
    and `skills scan-projects` do.
-2. **Agent attach** — merges an agent's *desired* company skill set with an
+2. **Agent attach** — merges an agent's _desired_ company skill set with an
    explicit `add`, `remove`, or `replace` mode (`skills agent sync`/`clear`).
    This is a desired-state operation on the agent's adapter config; it does not
    change the company library.

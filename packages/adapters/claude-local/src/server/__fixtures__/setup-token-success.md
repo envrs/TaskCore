@@ -107,8 +107,8 @@ successful authorization — is **confirmed**:
   full token. Capturing with a wide PTY (e.g. many hundreds of columns) avoids
   the split at the source.
 - The token is introduced by the exact line `Your OAuth token (valid for 1
-  year):` and followed by `Store this token securely. You won't be able to see
-  it again.` — these bracket the token region and are stable anchors for a
+year):` and followed by `Store this token securely. You won't be able to see
+it again.` — these bracket the token region and are stable anchors for a
   parser.
 
 ## Token delivery and persistence

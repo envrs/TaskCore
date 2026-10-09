@@ -41,14 +41,24 @@ function catalogTeam(overrides: Record<string, unknown> = {}) {
     defaultInstall: true,
     recommendedForCompanyTypes: ["software"],
     tags: ["engineering"],
-    counts: { agents: 3, projects: 1, tasks: 1, routines: 0, localSkills: 0, catalogSkills: 1, externalSkillSources: 0 },
+    counts: {
+      agents: 3,
+      projects: 1,
+      tasks: 1,
+      routines: 0,
+      localSkills: 0,
+      catalogSkills: 1,
+      externalSkillSources: 0,
+    },
     rootAgentSlugs: ["cto"],
     agentSlugs: ["cto", "senior-coder", "qa"],
     projectSlugs: ["product-engineering"],
     requiredSkills: [],
     envInputs: [],
     sourceRefs: [],
-    files: [{ path: "TEAM.md", kind: "team", sizeBytes: 128, sha256: "sha256:team" }],
+    files: [
+      { path: "TEAM.md", kind: "team", sizeBytes: 128, sha256: "sha256:team" },
+    ],
     trustLevel: "markdown_only",
     compatibility: "compatible",
     contentHash: "sha256:catalog-team",
@@ -114,9 +124,13 @@ describe("teams CLI commands", () => {
       "http://taskcore.test/api/teams/catalog?kind=bundled&category=software-development&q=engineering",
       expect.objectContaining({ method: "GET" }),
     );
-    const rendered = logSpy.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
+    const rendered = logSpy.mock.calls
+      .map((call: unknown[]) => String(call[0]))
+      .join("\n");
     expect(rendered).toContain("id");
-    expect(rendered).toContain("taskcore:bundled:software-development:product-engineering");
+    expect(rendered).toContain(
+      "taskcore:bundled:software-development:product-engineering",
+    );
   });
 
   it("searches catalog teams as JSON", async () => {
@@ -145,25 +159,29 @@ describe("teams CLI commands", () => {
 
   it("lists catalog teams with installed status for a company", async () => {
     fetchMock
-      .mockResolvedValueOnce(jsonResponse([
-        catalogTeam(),
-        catalogTeam({
-          id: "taskcore:optional:content:content-machine",
-          key: "taskcore/optional/content/content-machine",
-          kind: "optional",
-          category: "content",
-          slug: "content-machine",
-          name: "Content Machine",
-          contentHash: "sha256:content-current",
-        }),
-      ]))
-      .mockResolvedValueOnce(jsonResponse([
-        installedCatalogTeam({
-          currentContentHash: "sha256:catalog-team",
-          installedOriginHashes: ["sha256:older"],
-          outOfDate: true,
-        }),
-      ]));
+      .mockResolvedValueOnce(
+        jsonResponse([
+          catalogTeam(),
+          catalogTeam({
+            id: "taskcore:optional:content:content-machine",
+            key: "taskcore/optional/content/content-machine",
+            kind: "optional",
+            category: "content",
+            slug: "content-machine",
+            name: "Content Machine",
+            contentHash: "sha256:content-current",
+          }),
+        ]),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse([
+          installedCatalogTeam({
+            currentContentHash: "sha256:catalog-team",
+            installedOriginHashes: ["sha256:older"],
+            outOfDate: true,
+          }),
+        ]),
+      );
 
     await runCommand([
       "teams",
@@ -188,7 +206,9 @@ describe("teams CLI commands", () => {
       "http://taskcore.test/api/companies/company-1/teams/catalog/installed",
       expect.objectContaining({ method: "GET" }),
     );
-    const rendered = logSpy.mock.calls.map((call: unknown[]) => String(call[0])).join("\n");
+    const rendered = logSpy.mock.calls
+      .map((call: unknown[]) => String(call[0]))
+      .join("\n");
     expect(rendered).toContain("installedStatus");
     expect(rendered).toContain("out_of_date");
     expect(rendered).toContain("not_installed");
@@ -197,17 +217,19 @@ describe("teams CLI commands", () => {
   it("lists installed status as JSON including removed catalog teams", async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse([catalogTeam()]))
-      .mockResolvedValueOnce(jsonResponse([
-        installedCatalogTeam(),
-        installedCatalogTeam({
-          catalogId: "taskcore:removed:team",
-          catalogKey: "taskcore/removed/team",
-          present: false,
-          currentContentHash: null,
-          installedOriginHashes: ["sha256:removed"],
-          agentCount: 2,
-        }),
-      ]));
+      .mockResolvedValueOnce(
+        jsonResponse([
+          installedCatalogTeam(),
+          installedCatalogTeam({
+            catalogId: "taskcore:removed:team",
+            catalogKey: "taskcore/removed/team",
+            present: false,
+            currentContentHash: null,
+            installedOriginHashes: ["sha256:removed"],
+            agentCount: 2,
+          }),
+        ]),
+      );
 
     await runCommand([
       "teams",
@@ -266,7 +288,12 @@ describe("teams CLI commands", () => {
     const result = {
       team: catalogTeam(),
       portabilityPreview: {
-        plan: { companyAction: "none", agentPlans: [], projectPlans: [], issuePlans: [] },
+        plan: {
+          companyAction: "none",
+          agentPlans: [],
+          projectPlans: [],
+          issuePlans: [],
+        },
         warnings: [],
         errors: [],
       },
@@ -375,7 +402,9 @@ describe("teams CLI commands", () => {
       updatedAt: "2026-06-04T00:00:00.000Z",
     };
     fetchMock
-      .mockResolvedValueOnce(jsonResponse({ error: "Missing permission: can create agents" }, 403))
+      .mockResolvedValueOnce(
+        jsonResponse({ error: "Missing permission: can create agents" }, 403),
+      )
       .mockResolvedValueOnce(jsonResponse(approval, 201));
 
     await runCommand([
@@ -421,7 +450,9 @@ describe("teams CLI commands", () => {
         body: expect.any(String),
       }),
     );
-    const approvalPayload = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body));
+    const approvalPayload = JSON.parse(
+      String(fetchMock.mock.calls[1]?.[1]?.body),
+    );
     expect(approvalPayload).toMatchObject({
       type: "request_board_approval",
       issueIds: ["11111111-1111-4111-8111-111111111111"],
@@ -475,7 +506,9 @@ describe("teams CLI commands", () => {
       updatedAt: "2026-06-04T00:00:00.000Z",
     };
     fetchMock
-      .mockResolvedValueOnce(jsonResponse({ error: "Missing permission: can create agents" }, 403))
+      .mockResolvedValueOnce(
+        jsonResponse({ error: "Missing permission: can create agents" }, 403),
+      )
       .mockResolvedValueOnce(jsonResponse(approval, 201));
 
     await runCommand([
@@ -499,7 +532,9 @@ describe("teams CLI commands", () => {
         body: expect.any(String),
       }),
     );
-    const approvalPayload = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body));
+    const approvalPayload = JSON.parse(
+      String(fetchMock.mock.calls[1]?.[1]?.body),
+    );
     expect(approvalPayload).toMatchObject({
       type: "request_board_approval",
       issueIds: ["11111111-1111-4111-8111-111111111111"],
@@ -519,23 +554,29 @@ describe("teams CLI commands", () => {
   });
 
   it("does not request board approval for unrelated forbidden install errors", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ error: "Agent key cannot access another company" }, 403));
-    vi.spyOn(process, "exit").mockImplementation(((code?: string | number | null) => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ error: "Agent key cannot access another company" }, 403),
+    );
+    vi.spyOn(process, "exit").mockImplementation(((
+      code?: string | number | null,
+    ) => {
       throw new Error(`exit:${code ?? 0}`);
     }) as typeof process.exit);
 
-    await expect(runCommand([
-      "teams",
-      "install",
-      "product-engineering",
-      "--company-id",
-      "company-1",
-      "--request-approval-on-forbidden",
-      "--api-base",
-      "http://taskcore.test",
-      "--api-key",
-      "token",
-    ])).rejects.toThrow("exit:1");
+    await expect(
+      runCommand([
+        "teams",
+        "install",
+        "product-engineering",
+        "--company-id",
+        "company-1",
+        "--request-approval-on-forbidden",
+        "--api-base",
+        "http://taskcore.test",
+        "--api-key",
+        "token",
+      ]),
+    ).rejects.toThrow("exit:1");
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
@@ -545,28 +586,40 @@ describe("teams CLI commands", () => {
         body: JSON.stringify({}),
       }),
     );
-    expect(String(errorSpy.mock.calls[0]?.[0])).toContain("Agent key cannot access another company");
+    expect(String(errorSpy.mock.calls[0]?.[0])).toContain(
+      "Agent key cannot access another company",
+    );
   });
 
   it("surfaces server blocks for unsafe local-path catalog team sources", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({
-      error: 'Local path skill source "../unsafe" is development-only and is not allowed for catalog team install.',
-    }, 422));
-    vi.spyOn(process, "exit").mockImplementation(((code?: string | number | null) => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          error:
+            'Local path skill source "../unsafe" is development-only and is not allowed for catalog team install.',
+        },
+        422,
+      ),
+    );
+    vi.spyOn(process, "exit").mockImplementation(((
+      code?: string | number | null,
+    ) => {
       throw new Error(`exit:${code ?? 0}`);
     }) as typeof process.exit);
 
-    await expect(runCommand([
-      "teams",
-      "install",
-      "unsafe-local-team",
-      "--company-id",
-      "company-1",
-      "--api-base",
-      "http://taskcore.test",
-      "--api-key",
-      "token",
-    ])).rejects.toThrow("exit:1");
+    await expect(
+      runCommand([
+        "teams",
+        "install",
+        "unsafe-local-team",
+        "--company-id",
+        "company-1",
+        "--api-base",
+        "http://taskcore.test",
+        "--api-key",
+        "token",
+      ]),
+    ).rejects.toThrow("exit:1");
 
     expect(fetchMock).toHaveBeenCalledWith(
       "http://taskcore.test/api/companies/company-1/teams/catalog/ref/install?ref=unsafe-local-team",

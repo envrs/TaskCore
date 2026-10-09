@@ -52,7 +52,10 @@ describe("sortClaudeModels", () => {
 
   it("reads Bedrock region prefixes and revision suffixes", () => {
     const bedrock = [
-      { id: "us.anthropic.claude-sonnet-4-5-20250929-v2:0", label: "Bedrock Sonnet 4.5" },
+      {
+        id: "us.anthropic.claude-sonnet-4-5-20250929-v2:0",
+        label: "Bedrock Sonnet 4.5",
+      },
       { id: "us.anthropic.claude-opus-4-6-v1", label: "Bedrock Opus 4.6" },
       { id: "us.anthropic.claude-fable-5-1", label: "Bedrock Fable 5.1" },
     ];
@@ -71,23 +74,51 @@ describe("sortClaudeModels", () => {
       { id: "another-custom", label: "Another" },
     ];
 
-    expect(ids(sortClaudeModels(mixed))).toEqual(["claude-opus-5", "proxy/custom-model", "another-custom"]);
+    expect(ids(sortClaudeModels(mixed))).toEqual([
+      "claude-opus-5",
+      "proxy/custom-model",
+      "another-custom",
+    ]);
   });
 });
 
 describe("parseClaudeModelId", () => {
   it("reads the current and the legacy id schemes", () => {
-    expect(parseClaudeModelId("claude-opus-4-8")).toMatchObject({ major: 4, minor: 8, pinned: false });
-    expect(parseClaudeModelId("claude-opus-5")).toMatchObject({ major: 5, minor: 0, pinned: false });
-    expect(parseClaudeModelId("claude-3-7-sonnet-20250219")).toMatchObject({ major: 3, minor: 7, pinned: true, snapshot: 20250219 });
-    expect(parseClaudeModelId("claude-3-5-sonnet-latest")).toMatchObject({ major: 3, minor: 5, pinned: false });
-    expect(parseClaudeModelId("claude-sonnet-5[1m]")).toMatchObject({ major: 5, minor: 0 });
-    expect(parseClaudeModelId("us.anthropic.claude-opus-4-6-v1")).toMatchObject({ major: 4, minor: 6, pinned: true });
+    expect(parseClaudeModelId("claude-opus-4-8")).toMatchObject({
+      major: 4,
+      minor: 8,
+      pinned: false,
+    });
+    expect(parseClaudeModelId("claude-opus-5")).toMatchObject({
+      major: 5,
+      minor: 0,
+      pinned: false,
+    });
+    expect(parseClaudeModelId("claude-3-7-sonnet-20250219")).toMatchObject({
+      major: 3,
+      minor: 7,
+      pinned: true,
+      snapshot: 20250219,
+    });
+    expect(parseClaudeModelId("claude-3-5-sonnet-latest")).toMatchObject({
+      major: 3,
+      minor: 5,
+      pinned: false,
+    });
+    expect(parseClaudeModelId("claude-sonnet-5[1m]")).toMatchObject({
+      major: 5,
+      minor: 0,
+    });
+    expect(parseClaudeModelId("us.anthropic.claude-opus-4-6-v1")).toMatchObject(
+      { major: 4, minor: 6, pinned: true },
+    );
   });
 
   it("returns null for ids that are not Claude models", () => {
     expect(parseClaudeModelId("gpt-6-astra")).toBeNull();
     expect(parseClaudeModelId("claude-instant-1.2")).toBeNull();
-    expect(parseClaudeModelId("arn:aws:bedrock:us-east-1:123:inference-profile/x")).toBeNull();
+    expect(
+      parseClaudeModelId("arn:aws:bedrock:us-east-1:123:inference-profile/x"),
+    ).toBeNull();
   });
 });

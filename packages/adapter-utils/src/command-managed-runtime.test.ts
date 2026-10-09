@@ -40,19 +40,32 @@ const execFile = promisify(execFileCallback);
 
 interface SpawnRunnerHandle {
   runner: CommandManagedRuntimeRunner;
-  calls: Array<{ command: string; args?: string[]; cwd?: string; stdin?: string }>;
+  calls: Array<{
+    command: string;
+    args?: string[];
+    cwd?: string;
+    stdin?: string;
+  }>;
 }
 
 // A runner that actually executes the shell scripts (piping stdin through a real
 // pipe so multi-MB payloads work) and replays stdout through onLog in several
 // chunks so the streaming readFile byte-counter is exercised.
-function makeSpawnRunner(options: {
-  supportsSingleStreamStdinProgress?: boolean;
-  maxStdoutBytes?: number;
-} = {}): SpawnRunnerHandle {
-  const calls: Array<{ command: string; args?: string[]; cwd?: string; stdin?: string }> = [];
+function makeSpawnRunner(
+  options: {
+    supportsSingleStreamStdinProgress?: boolean;
+    maxStdoutBytes?: number;
+  } = {},
+): SpawnRunnerHandle {
+  const calls: Array<{
+    command: string;
+    args?: string[];
+    cwd?: string;
+    stdin?: string;
+  }> = [];
   const runner: CommandManagedRuntimeRunner = {
-    supportsSingleStreamStdinProgress: options.supportsSingleStreamStdinProgress,
+    supportsSingleStreamStdinProgress:
+      options.supportsSingleStreamStdinProgress,
     execute: async (input) =>
       await new Promise<RunProcessResult>((resolve) => {
         calls.push({
@@ -63,7 +76,11 @@ function makeSpawnRunner(options: {
         });
         const startedAt = new Date().toISOString();
         const command =
-          input.command === "sh" ? "/bin/sh" : input.command === "bash" ? "/bin/bash" : input.command;
+          input.command === "sh"
+            ? "/bin/sh"
+            : input.command === "bash"
+              ? "/bin/bash"
+              : input.command;
         const child = spawn(command, input.args ?? [], {
           cwd: input.cwd,
           env: { ...process.env, ...input.env },
@@ -77,7 +94,15 @@ function makeSpawnRunner(options: {
           stderr += chunk.toString("utf8");
         });
         child.on("error", () => {
-          resolve({ exitCode: 127, signal: null, timedOut: false, stdout, stderr, pid: null, startedAt });
+          resolve({
+            exitCode: 127,
+            signal: null,
+            timedOut: false,
+            stdout,
+            stderr,
+            pid: null,
+            startedAt,
+          });
         });
         child.on("close", async (code) => {
           if (
@@ -98,7 +123,10 @@ function makeSpawnRunner(options: {
           if (input.onLog && stdout.length > 0) {
             const chunkSize = Math.max(1, Math.ceil(stdout.length / 4));
             for (let offset = 0; offset < stdout.length; offset += chunkSize) {
-              await input.onLog("stdout", stdout.slice(offset, offset + chunkSize));
+              await input.onLog(
+                "stdout",
+                stdout.slice(offset, offset + chunkSize),
+              );
             }
           }
           resolve({
@@ -126,7 +154,10 @@ function shellQuoteForTest(value: string): string {
   return `'${value.replace(/'/g, `'"'"'`)}'`;
 }
 
-async function withBase64StringByteLimit<T>(limitBytes: number, fn: () => Promise<T>): Promise<T> {
+async function withBase64StringByteLimit<T>(
+  limitBytes: number,
+  fn: () => Promise<T>,
+): Promise<T> {
   const originalToString = Buffer.prototype.toString;
   Buffer.prototype.toString = function patchedToString(
     this: Buffer,
@@ -135,7 +166,9 @@ async function withBase64StringByteLimit<T>(limitBytes: number, fn: () => Promis
     end?: number,
   ) {
     if (encoding === "base64" && this.byteLength > limitBytes) {
-      throw new Error(`test guard: attempted to base64-encode ${this.byteLength} bytes at once`);
+      throw new Error(
+        `test guard: attempted to base64-encode ${this.byteLength} bytes at once`,
+      );
     }
     return originalToString.call(this, encoding, start, end);
   } as typeof Buffer.prototype.toString;
@@ -158,36 +191,74 @@ describe("command managed runtime", () => {
   });
 
   it("reports a missing sandbox file as ENOENT without masking command failures", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "taskcore-remote-missing-"));
+    const root = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-remote-missing-"),
+    );
     try {
       const { runner } = makeSpawnRunner();
-      const client = createCommandManagedRuntimeClient({ runner, commandCwd: root, timeoutMs: 5000 });
+      const client = createCommandManagedRuntimeClient({
+        runner,
+        commandCwd: root,
+        timeoutMs: 5000,
+      });
       const missingPath = path.join(root, "auth.json");
-      await expect(client.readFile(missingPath)).rejects.toMatchObject({ code: "ENOENT", path: missingPath });
+      await expect(client.readFile(missingPath)).rejects.toMatchObject({
+        code: "ENOENT",
+        path: missingPath,
+      });
       await writeFile(missingPath, "present");
       const failedClient = createCommandManagedRuntimeClient({
-        commandCwd: root, timeoutMs: 5000,
-        runner: { ...runner, execute: async (input) => input.args?.some((arg) => arg.startsWith("wc -c"))
-          ? { exitCode: 1, signal: null, timedOut: false, stdout: "", stderr: "transport read failed", pid: null, startedAt: new Date().toISOString() }
-          : runner.execute(input) },
+        commandCwd: root,
+        timeoutMs: 5000,
+        runner: {
+          ...runner,
+          execute: async (input) =>
+            input.args?.some((arg) => arg.startsWith("wc -c"))
+              ? {
+                  exitCode: 1,
+                  signal: null,
+                  timedOut: false,
+                  stdout: "",
+                  stderr: "transport read failed",
+                  pid: null,
+                  startedAt: new Date().toISOString(),
+                }
+              : runner.execute(input),
+        },
       });
-      await expect(failedClient.readFile(missingPath)).rejects.toThrow("transport read failed");
-      await expect(client.readFile(missingPath)).resolves.toEqual(Buffer.from("present"));
+      await expect(failedClient.readFile(missingPath)).rejects.toThrow(
+        "transport read failed",
+      );
+      await expect(client.readFile(missingPath)).resolves.toEqual(
+        Buffer.from("present"),
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }
   });
 
   it("keeps the runtime overlay out of sandbox workspace sync by default", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-runtime-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-runtime-"),
+    );
     cleanupDirs.push(rootDir);
 
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
-    await mkdir(path.join(localWorkspaceDir, ".taskcore-runtime"), { recursive: true });
+    await mkdir(path.join(localWorkspaceDir, ".taskcore-runtime"), {
+      recursive: true,
+    });
     await mkdir(remoteWorkspaceDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "local workspace\n", "utf8");
-    await writeFile(path.join(localWorkspaceDir, ".taskcore-runtime", "state.json"), "{\"keep\":true}\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "local workspace\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(localWorkspaceDir, ".taskcore-runtime", "state.json"),
+      '{"keep":true}\n',
+      "utf8",
+    );
 
     const calls: Array<{
       command: string;
@@ -213,7 +284,11 @@ describe("command managed runtime", () => {
           ...input.env,
         };
         const command =
-          input.command === "sh" ? "/bin/sh" : input.command === "bash" ? "/bin/bash" : input.command;
+          input.command === "sh"
+            ? "/bin/sh"
+            : input.command === "bash"
+              ? "/bin/bash"
+              : input.command;
         const args = [...(input.args ?? [])];
         if (
           input.stdin != null &&
@@ -271,30 +346,58 @@ describe("command managed runtime", () => {
       workspaceLocalDir: localWorkspaceDir,
     });
 
-    await expect(readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8")).resolves.toBe("local workspace\n");
-    await expect(readFile(path.join(remoteWorkspaceDir, ".taskcore-runtime", "state.json"), "utf8")).rejects
-      .toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("local workspace\n");
+    await expect(
+      readFile(
+        path.join(remoteWorkspaceDir, ".taskcore-runtime", "state.json"),
+        "utf8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
     // The single-stream upload pipes the tarball through exactly one stdin-backed
     // process (the speed fix); nothing else streams stdin.
     expect(calls.filter((call) => call.stdin != null).length).toBe(1);
 
-    await mkdir(path.join(remoteWorkspaceDir, ".taskcore-runtime"), { recursive: true });
-    await writeFile(path.join(remoteWorkspaceDir, "README.md"), "remote workspace\n", "utf8");
-    await writeFile(path.join(remoteWorkspaceDir, ".taskcore-runtime", "remote-state.json"), "{\"remote\":true}\n", "utf8");
+    await mkdir(path.join(remoteWorkspaceDir, ".taskcore-runtime"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(remoteWorkspaceDir, "README.md"),
+      "remote workspace\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(remoteWorkspaceDir, ".taskcore-runtime", "remote-state.json"),
+      '{"remote":true}\n',
+      "utf8",
+    );
     await prepared.restoreWorkspace();
 
-    await expect(readFile(path.join(localWorkspaceDir, "README.md"), "utf8")).resolves.toBe("remote workspace\n");
-    await expect(readFile(path.join(localWorkspaceDir, ".taskcore-runtime", "state.json"), "utf8")).resolves
-      .toBe("{\"keep\":true}\n");
-    await expect(readFile(path.join(localWorkspaceDir, ".taskcore-runtime", "remote-state.json"), "utf8")).rejects
-      .toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(path.join(localWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("remote workspace\n");
+    await expect(
+      readFile(
+        path.join(localWorkspaceDir, ".taskcore-runtime", "state.json"),
+        "utf8",
+      ),
+    ).resolves.toBe('{"keep":true}\n');
+    await expect(
+      readFile(
+        path.join(localWorkspaceDir, ".taskcore-runtime", "remote-state.json"),
+        "utf8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
     // Restore streams the download through `base64`/onLog (no stdin), so the only
     // stdin-backed call remains the single upload from prepare.
     expect(calls.filter((call) => call.stdin != null).length).toBe(1);
   });
 
   it("stages runtime assets without replacing or restoring an in-place workspace", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-runtime-assets-only-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-runtime-assets-only-"),
+    );
     cleanupDirs.push(rootDir);
 
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
@@ -303,9 +406,21 @@ describe("command managed runtime", () => {
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(remoteWorkspaceDir, { recursive: true });
     await mkdir(localHomeDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "local workspace\n", "utf8");
-    await writeFile(path.join(remoteWorkspaceDir, "README.md"), "authoritative workspace\n", "utf8");
-    await writeFile(path.join(localHomeDir, "auth.json"), '{"token":"host"}\n', "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "local workspace\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(remoteWorkspaceDir, "README.md"),
+      "authoritative workspace\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(localHomeDir, "auth.json"),
+      '{"token":"host"}\n',
+      "utf8",
+    );
 
     const { runner } = makeSpawnRunner();
     let restoredAuth = "";
@@ -323,46 +438,64 @@ describe("command managed runtime", () => {
           key: "home",
           localDir: localHomeDir,
           restore: async ({ assetDir, readFile }) => {
-            restoredAuth = (await readFile(path.join(assetDir, "auth.json"))).toString("utf8");
+            restoredAuth = (
+              await readFile(path.join(assetDir, "auth.json"))
+            ).toString("utf8");
           },
         },
       ],
     });
 
     expect(prepared.workspaceRemoteDir).toBe(remoteWorkspaceDir);
-    expect(prepared.assetDirs.home).toBe(path.join(remoteWorkspaceDir, ".taskcore-runtime", "codex", "home"));
-    await expect(readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8")).resolves.toBe(
-      "authoritative workspace\n",
+    expect(prepared.assetDirs.home).toBe(
+      path.join(remoteWorkspaceDir, ".taskcore-runtime", "codex", "home"),
     );
-    await expect(readFile(path.join(prepared.assetDirs.home, "auth.json"), "utf8")).resolves.toBe(
-      '{"token":"host"}\n',
-    );
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("authoritative workspace\n");
+    await expect(
+      readFile(path.join(prepared.assetDirs.home, "auth.json"), "utf8"),
+    ).resolves.toBe('{"token":"host"}\n');
 
-    await writeFile(path.join(prepared.assetDirs.home, "auth.json"), '{"token":"remote"}\n', "utf8");
+    await writeFile(
+      path.join(prepared.assetDirs.home, "auth.json"),
+      '{"token":"remote"}\n',
+      "utf8",
+    );
     await prepared.restoreWorkspace();
 
     expect(restoredAuth).toBe('{"token":"remote"}\n');
-    await expect(readFile(path.join(localWorkspaceDir, "README.md"), "utf8")).resolves.toBe(
-      "local workspace\n",
-    );
+    await expect(
+      readFile(path.join(localWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("local workspace\n");
   });
 
   it("stages each additional project into an isolated dir on the base64/tar transport, one failure skipped", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-runtime-additional-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-runtime-additional-"),
+    );
     cleanupDirs.push(rootDir);
 
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(remoteWorkspaceDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "anchor\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "anchor\n",
+      "utf8",
+    );
 
     const goodOne = path.join(rootDir, "src-one");
     const goodTwo = path.join(rootDir, "src-two");
     await mkdir(goodOne, { recursive: true });
     await mkdir(path.join(goodTwo, "nested"), { recursive: true });
     await writeFile(path.join(goodOne, "one.txt"), "one body\n", "utf8");
-    await writeFile(path.join(goodTwo, "nested", "two.txt"), "two body\n", "utf8");
+    await writeFile(
+      path.join(goodTwo, "nested", "two.txt"),
+      "two body\n",
+      "utf8",
+    );
 
     // The `makeSpawnRunner` runner exposes no native syncIn, so staging rides the
     // base64/tar fallback. The middle source points at a missing directory, so
@@ -377,31 +510,63 @@ describe("command managed runtime", () => {
       adapterKey: "claude",
       workspaceLocalDir: localWorkspaceDir,
       additionalSources: [
-        { localPath: goodOne, projectId: "one", ignoreResolution: { kind: "other" } },
-        { localPath: path.join(rootDir, "missing"), projectId: "broken", ignoreResolution: { kind: "other" } },
-        { localPath: goodTwo, projectId: "two", ignoreResolution: { kind: "other" } },
+        {
+          localPath: goodOne,
+          projectId: "one",
+          ignoreResolution: { kind: "other" },
+        },
+        {
+          localPath: path.join(rootDir, "missing"),
+          projectId: "broken",
+          ignoreResolution: { kind: "other" },
+        },
+        {
+          localPath: goodTwo,
+          projectId: "two",
+          ignoreResolution: { kind: "other" },
+        },
       ],
     });
 
-    const runtimeRootDir = path.posix.join(remoteWorkspaceDir, ".taskcore-runtime", "claude");
-    expect(Object.keys(prepared.additionalSourceDirs).sort()).toEqual(["one", "two"]);
-    expect(prepared.additionalSourceDirs.one).toBe(path.posix.join(runtimeRootDir, "project-one"));
-    expect(prepared.additionalSourceDirs.two).toBe(path.posix.join(runtimeRootDir, "project-two"));
+    const runtimeRootDir = path.posix.join(
+      remoteWorkspaceDir,
+      ".taskcore-runtime",
+      "claude",
+    );
+    expect(Object.keys(prepared.additionalSourceDirs).sort()).toEqual([
+      "one",
+      "two",
+    ]);
+    expect(prepared.additionalSourceDirs.one).toBe(
+      path.posix.join(runtimeRootDir, "project-one"),
+    );
+    expect(prepared.additionalSourceDirs.two).toBe(
+      path.posix.join(runtimeRootDir, "project-two"),
+    );
     expect(prepared.additionalSourceDirs.broken).toBeUndefined();
 
     // Each healthy project's tree materialized in its OWN dir (nested files kept).
-    await expect(readFile(path.join(prepared.additionalSourceDirs.one, "one.txt"), "utf8")).resolves.toBe("one body\n");
-    await expect(readFile(path.join(prepared.additionalSourceDirs.two, "nested", "two.txt"), "utf8")).resolves.toBe(
-      "two body\n",
-    );
+    await expect(
+      readFile(path.join(prepared.additionalSourceDirs.one, "one.txt"), "utf8"),
+    ).resolves.toBe("one body\n");
+    await expect(
+      readFile(
+        path.join(prepared.additionalSourceDirs.two, "nested", "two.txt"),
+        "utf8",
+      ),
+    ).resolves.toBe("two body\n");
     // The broken project's dir was never created.
-    await expect(readFile(path.join(runtimeRootDir, "project-broken"), "utf8")).rejects.toMatchObject({
+    await expect(
+      readFile(path.join(runtimeRootDir, "project-broken"), "utf8"),
+    ).rejects.toMatchObject({
       code: "ENOENT",
     });
   });
 
   it("keeps adapter detection on the profile-backed shell path", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-runtime-detect-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-runtime-detect-"),
+    );
     cleanupDirs.push(rootDir);
 
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
@@ -427,19 +592,33 @@ describe("command managed runtime", () => {
     expect(calls[0]?.args?.join(" ")).toContain("command -v 'sh'");
     // Detection succeeds here, so the install command must be skipped entirely;
     // the remaining calls are workspace staging, never the install command.
-    expect(calls.some((call) => call.args?.join(" ").includes("echo install"))).toBe(false);
+    expect(
+      calls.some((call) => call.args?.join(" ").includes("echo install")),
+    ).toBe(false);
   });
 
   it("runs setup commands from a stable root cwd when staging into a nested remote workspace dir", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-runtime-nested-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-runtime-nested-"),
+    );
     cleanupDirs.push(rootDir);
 
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteBaseDir = path.join(rootDir, "remote-base");
-    const remoteWorkspaceDir = path.join(remoteBaseDir, ".taskcore-runtime", "runs", "test", "workspace");
+    const remoteWorkspaceDir = path.join(
+      remoteBaseDir,
+      ".taskcore-runtime",
+      "runs",
+      "test",
+      "workspace",
+    );
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(remoteBaseDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "local workspace\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "local workspace\n",
+      "utf8",
+    );
 
     const { runner, calls } = makeSpawnRunner();
 
@@ -456,11 +635,15 @@ describe("command managed runtime", () => {
 
     expect(calls.length).toBeGreaterThan(0);
     expect(calls.every((call) => call.cwd === "/")).toBe(true);
-    await expect(readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8")).resolves.toBe("local workspace\n");
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("local workspace\n");
   });
 
   it("uploads a multi-MB payload in a single process and preserves exact bytes", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-write-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-write-"),
+    );
     cleanupDirs.push(rootDir);
     const remotePath = path.join(rootDir, "nested", "payload.bin");
 
@@ -468,8 +651,14 @@ describe("command managed runtime", () => {
     const payload = Buffer.alloc(3 * 1024 * 1024);
     for (let i = 0; i < payload.length; i++) payload[i] = i % 256;
 
-    const { runner, calls } = makeSpawnRunner({ supportsSingleStreamStdinProgress: true });
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const { runner, calls } = makeSpawnRunner({
+      supportsSingleStreamStdinProgress: true,
+    });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
 
     const progress: Array<{ done: number; total: number | null }> = [];
     await withBase64StringByteLimit(4 * 1024 * 1024, async () => {
@@ -493,17 +682,31 @@ describe("command managed runtime", () => {
     for (let i = 1; i < progress.length; i++) {
       expect(progress[i].done).toBeGreaterThanOrEqual(progress[i - 1].done);
     }
-    expect(progress.at(-1)).toEqual({ done: payload.length, total: payload.length });
+    expect(progress.at(-1)).toEqual({
+      done: payload.length,
+      total: payload.length,
+    });
   });
 
   it("stages a single-file write to <path>.taskcore-upload then atomically renames it (single-stream path)", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-atomic-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-atomic-"),
+    );
     cleanupDirs.push(rootDir);
     const remotePath = path.join(rootDir, "nested", "payload.bin");
 
-    const { runner, calls } = makeSpawnRunner({ supportsSingleStreamStdinProgress: true });
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
-    await client.writeFile(remotePath, toArrayBuffer(Buffer.from("hello atomic\n")));
+    const { runner, calls } = makeSpawnRunner({
+      supportsSingleStreamStdinProgress: true,
+    });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
+    await client.writeFile(
+      remotePath,
+      toArrayBuffer(Buffer.from("hello atomic\n")),
+    );
 
     // Characterization guardrail: the legacy single-file transport must keep its
     // stage-then-atomic-rename shape (temp .taskcore-upload + `mv -f`).
@@ -511,22 +714,33 @@ describe("command managed runtime", () => {
     expect(script).toContain(`${remotePath}.taskcore-upload`);
     expect(script).toContain(`trap cleanup EXIT`);
     expect(script).toContain(`mv -f`);
-    expect(script.indexOf(".taskcore-upload")).toBeLessThan(script.indexOf("mv -f"));
+    expect(script.indexOf(".taskcore-upload")).toBeLessThan(
+      script.indexOf("mv -f"),
+    );
     expect(await readFile(remotePath, "utf8")).toBe("hello atomic\n");
   });
 
   it("cleans up a staged upload when rename fails", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-upload-cleanup-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-upload-cleanup-"),
+    );
     cleanupDirs.push(rootDir);
     const remotePath = path.join(rootDir, "nested", "payload.bin");
 
     const payload = Buffer.alloc(3 * 1024 * 1024, 7);
-    const { runner, calls } = makeSpawnRunner({ supportsSingleStreamStdinProgress: true });
+    const { runner, calls } = makeSpawnRunner({
+      supportsSingleStreamStdinProgress: true,
+    });
     const delegatedExecute = runner.execute.bind(runner);
     runner.execute = async (input) => {
       const script = (input.args ?? []).join(" ");
       if (script.includes("mv -f") && script.includes(".taskcore-upload.")) {
-        calls.push({ command: input.command, args: input.args, cwd: input.cwd, stdin: input.stdin });
+        calls.push({
+          command: input.command,
+          args: input.args,
+          cwd: input.cwd,
+          stdin: input.stdin,
+        });
         return {
           exitCode: 1,
           signal: null,
@@ -539,32 +753,62 @@ describe("command managed runtime", () => {
       }
       return await delegatedExecute(input);
     };
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
 
-    await expect(client.writeFile(remotePath, toArrayBuffer(payload))).rejects.toThrow(/rename failed/);
+    await expect(
+      client.writeFile(remotePath, toArrayBuffer(payload)),
+    ).rejects.toThrow(/rename failed/);
 
-    const uploadCall = calls.find((call) => (call.args ?? []).join(" ").includes(".taskcore-upload."));
+    const uploadCall = calls.find((call) =>
+      (call.args ?? []).join(" ").includes(".taskcore-upload."),
+    );
     expect(uploadCall).toBeDefined();
-    const stagedPath = (uploadCall?.args ?? []).join(" ").match(/([/A-Za-z0-9_.-]+\.taskcore-upload\.[A-Za-z0-9-]+)/)?.[1];
+    const stagedPath = (uploadCall?.args ?? [])
+      .join(" ")
+      .match(/([/A-Za-z0-9_.-]+\.taskcore-upload\.[A-Za-z0-9-]+)/)?.[1];
     expect(stagedPath).toBeDefined();
-    await expect(readFile(stagedPath!, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-    expect(calls.some((call) => (call.args ?? []).join(" ").includes(`rm -rf '${stagedPath}'`))).toBe(true);
-    await expect(readFile(remotePath, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(stagedPath!, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    expect(
+      calls.some((call) =>
+        (call.args ?? []).join(" ").includes(`rm -rf '${stagedPath}'`),
+      ),
+    ).toBe(true);
+    await expect(readFile(remotePath, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   it("stages a single-file write to a temp then renames it on the chunked fallback path too", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-atomic-fallback-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-atomic-fallback-"),
+    );
     cleanupDirs.push(rootDir);
     const remotePath = path.join(rootDir, "nested", "payload.bin");
 
     const payload = Buffer.alloc(10 * 1024 * 1024);
     for (let i = 0; i < payload.length; i++) payload[i] = i % 256;
-    const { runner, calls } = makeSpawnRunner({ supportsSingleStreamStdinProgress: false });
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const { runner, calls } = makeSpawnRunner({
+      supportsSingleStreamStdinProgress: false,
+    });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
     await client.writeFile(remotePath, toArrayBuffer(payload));
 
     const scripts = calls.map((call) => (call.args ?? []).join(" "));
-    expect(scripts.some((script) => script.includes(`${remotePath}.taskcore-upload`))).toBe(true);
+    expect(
+      scripts.some((script) =>
+        script.includes(`${remotePath}.taskcore-upload`),
+      ),
+    ).toBe(true);
     expect(scripts.some((script) => script.includes(`mv -f`))).toBe(true);
     expect((await readFile(remotePath)).equals(payload)).toBe(true);
   });
@@ -574,14 +818,25 @@ describe("command managed runtime", () => {
     // delegate unconditionally. `syncOut` stays native-only (no generic outbound
     // fallback in this seam).
     const base = makeSpawnRunner().runner;
-    const client = createCommandManagedRuntimeClient({ runner: base, commandCwd: "/", timeoutMs: 1 });
+    const client = createCommandManagedRuntimeClient({
+      runner: base,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
     expect(client.syncIn).toBeTypeOf("function");
     expect(client.syncOut).toBeUndefined();
 
     // A runner advertising only one verb still gets the fallback syncIn; syncOut
     // stays undefined (native delegation needs BOTH verbs).
-    const onlyIn: CommandManagedRuntimeRunner = { ...base, syncIn: async () => ({ operations: [] }) };
-    const partial = createCommandManagedRuntimeClient({ runner: onlyIn, commandCwd: "/", timeoutMs: 1 });
+    const onlyIn: CommandManagedRuntimeRunner = {
+      ...base,
+      syncIn: async () => ({ operations: [] }),
+    };
+    const partial = createCommandManagedRuntimeClient({
+      runner: onlyIn,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
     expect(partial.syncIn).toBeTypeOf("function");
     expect(partial.syncOut).toBeUndefined();
 
@@ -591,7 +846,11 @@ describe("command managed runtime", () => {
       syncIn: async () => ({ operations: [] }),
       syncOut: async () => ({ operations: [] }),
     };
-    const native = createCommandManagedRuntimeClient({ runner: both, commandCwd: "/", timeoutMs: 1 });
+    const native = createCommandManagedRuntimeClient({
+      runner: both,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
     expect(native.syncIn).toBeTypeOf("function");
     expect(native.syncOut).toBeTypeOf("function");
   });
@@ -600,7 +859,11 @@ describe("command managed runtime", () => {
     // A runner with no native sync uses the base64 fallback, which always
     // permits concurrent sync operations.
     const base = makeSpawnRunner().runner;
-    const client = createCommandManagedRuntimeClient({ runner: base, commandCwd: "/", timeoutMs: 1 });
+    const client = createCommandManagedRuntimeClient({
+      runner: base,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
     expect(client.allowConcurrentSyncOperations).toBe(true);
   });
 
@@ -648,7 +911,11 @@ describe("command managed runtime", () => {
       allowConcurrentSyncOperations: true,
       syncIn: async () => ({ operations: [] }),
     };
-    const client = createCommandManagedRuntimeClient({ runner: onlyIn, commandCwd: "/", timeoutMs: 1 });
+    const client = createCommandManagedRuntimeClient({
+      runner: onlyIn,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
     expect(client.allowConcurrentSyncOperations).toBe(true);
   });
 
@@ -661,7 +928,15 @@ describe("command managed runtime", () => {
     const runner: CommandManagedRuntimeRunner = {
       execute: async () => {
         executeCalls += 1;
-        return { exitCode: 0, signal: null, timedOut: false, stdout: "", stderr: "", pid: null, startedAt: "" };
+        return {
+          exitCode: 0,
+          signal: null,
+          timedOut: false,
+          stdout: "",
+          stderr: "",
+          pid: null,
+          startedAt: "",
+        };
       },
       syncIn: async (operations) => {
         forwarded.push(operations);
@@ -675,12 +950,18 @@ describe("command managed runtime", () => {
       },
       syncOut: async () => ({ operations: [] }),
     };
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 1 });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
 
     const operations: SandboxSyncOperation[] = [
       {
         operationId: "op-1",
-        files: [{ sourcePath: "/host/a", targetPath: "/remote/a", kind: "directory" }],
+        files: [
+          { sourcePath: "/host/a", targetPath: "/remote/a", kind: "directory" },
+        ],
         postUploadCommands: [{ command: "echo done", cwd: "/remote/a" }],
       },
     ];
@@ -688,11 +969,16 @@ describe("command managed runtime", () => {
 
     expect(executeCalls).toBe(0);
     expect(forwarded).toEqual([operations]);
-    expect(result.operations[0]).toMatchObject({ operationId: "op-1", filesTransferred: 1 });
+    expect(result.operations[0]).toMatchObject({
+      operationId: "op-1",
+      filesTransferred: 1,
+    });
   });
 
   it("fallback syncIn tarballs+uploads a directory then runs post-upload commands in order", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-syncin-fallback-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-syncin-fallback-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceDir = path.join(rootDir, "source");
     const targetDir = path.join(rootDir, "target");
@@ -700,34 +986,64 @@ describe("command managed runtime", () => {
     await mkdir(path.join(sourceDir, "nested"), { recursive: true });
     await mkdir(markerDir, { recursive: true });
     await writeFile(path.join(sourceDir, "file.txt"), "payload\n", "utf8");
-    await writeFile(path.join(sourceDir, "nested", "deep.txt"), "deep\n", "utf8");
+    await writeFile(
+      path.join(sourceDir, "nested", "deep.txt"),
+      "deep\n",
+      "utf8",
+    );
 
-    const { runner, calls } = makeSpawnRunner({ supportsSingleStreamStdinProgress: true });
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const { runner, calls } = makeSpawnRunner({
+      supportsSingleStreamStdinProgress: true,
+    });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
 
     await client.syncIn!([
       {
         operationId: "op-dir",
-        files: [{ sourcePath: sourceDir, targetPath: targetDir, kind: "directory" }],
+        files: [
+          { sourcePath: sourceDir, targetPath: targetDir, kind: "directory" },
+        ],
         postUploadCommands: [
-          { command: "touch " + shellQuoteForTest(path.join(markerDir, "1-first")) },
-          { command: "touch " + shellQuoteForTest(path.join(markerDir, "2-second")) },
+          {
+            command:
+              "touch " + shellQuoteForTest(path.join(markerDir, "1-first")),
+          },
+          {
+            command:
+              "touch " + shellQuoteForTest(path.join(markerDir, "2-second")),
+          },
         ],
       },
     ]);
 
     // Files landed via tar → untar (destroy-then-replace).
-    expect(await readFile(path.join(targetDir, "file.txt"), "utf8")).toBe("payload\n");
-    expect(await readFile(path.join(targetDir, "nested", "deep.txt"), "utf8")).toBe("deep\n");
+    expect(await readFile(path.join(targetDir, "file.txt"), "utf8")).toBe(
+      "payload\n",
+    );
+    expect(
+      await readFile(path.join(targetDir, "nested", "deep.txt"), "utf8"),
+    ).toBe("deep\n");
     // Both post-upload commands ran (markers exist).
-    await expect(readFile(path.join(markerDir, "1-first"))).resolves.toBeDefined();
-    await expect(readFile(path.join(markerDir, "2-second"))).resolves.toBeDefined();
+    await expect(
+      readFile(path.join(markerDir, "1-first")),
+    ).resolves.toBeDefined();
+    await expect(
+      readFile(path.join(markerDir, "2-second")),
+    ).resolves.toBeDefined();
 
     // Ordering: upload → untar → command 1 → command 2. The tarball upload is the
     // single stdin-backed call; the untar and the two commands follow it in order.
     const scripts = calls.map((call) => (call.args ?? []).join("\n"));
-    const uploadIdx = scripts.findIndex((s) => s.includes(".taskcore-syncin.tar") && s.includes("base64 -d"));
-    const untarIdx = scripts.findIndex((s) => s.includes("tar -xf") && s.includes(targetDir));
+    const uploadIdx = scripts.findIndex(
+      (s) => s.includes(".taskcore-syncin.tar") && s.includes("base64 -d"),
+    );
+    const untarIdx = scripts.findIndex(
+      (s) => s.includes("tar -xf") && s.includes(targetDir),
+    );
     const cmd1Idx = scripts.findIndex((s) => s.includes("1-first"));
     const cmd2Idx = scripts.findIndex((s) => s.includes("2-second"));
     expect(uploadIdx).toBeGreaterThanOrEqual(0);
@@ -747,10 +1063,22 @@ describe("command managed runtime", () => {
     const runner: CommandManagedRuntimeRunner = {
       execute: async (input) => {
         execTimeouts.push(input.timeoutMs);
-        return { exitCode: 0, signal: null, timedOut: false, stdout: "", stderr: "", pid: null, startedAt: "" };
+        return {
+          exitCode: 0,
+          signal: null,
+          timedOut: false,
+          stdout: "",
+          stderr: "",
+          pid: null,
+          startedAt: "",
+        };
       },
     };
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: syncClientTimeoutMs });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: syncClientTimeoutMs,
+    });
 
     await client.syncIn!([
       {
@@ -770,19 +1098,34 @@ describe("command managed runtime", () => {
   });
 
   it("fallback syncIn writes a mode-constrained file directly to its target and then applies the mode", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-syncin-mode-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-syncin-mode-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceFile = path.join(rootDir, "source.txt");
     const targetFile = path.join(rootDir, "target.txt");
     await writeFile(sourceFile, "payload\n", "utf8");
 
-    const { runner, calls } = makeSpawnRunner({ supportsSingleStreamStdinProgress: true });
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const { runner, calls } = makeSpawnRunner({
+      supportsSingleStreamStdinProgress: true,
+    });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
 
     await client.syncIn!([
       {
         operationId: "op-mode",
-        files: [{ sourcePath: sourceFile, targetPath: targetFile, kind: "file", mode: 0o640 }],
+        files: [
+          {
+            sourcePath: sourceFile,
+            targetPath: targetFile,
+            kind: "file",
+            mode: 0o640,
+          },
+        ],
       },
     ]);
 
@@ -790,10 +1133,15 @@ describe("command managed runtime", () => {
     // The write goes straight to the target path. No staging name and no
     // rename step exist between the write and the chmod.
     const scripts = calls.map((call) => (call.args ?? []).join(" "));
-    expect(scripts.some((script) => script.includes(".taskcore-syncin."))).toBe(false);
-    expect(scripts.some((script) => script.includes("mv -f") && script.includes(".taskcore-syncin."))).toBe(
+    expect(scripts.some((script) => script.includes(".taskcore-syncin."))).toBe(
       false,
     );
+    expect(
+      scripts.some(
+        (script) =>
+          script.includes("mv -f") && script.includes(".taskcore-syncin."),
+      ),
+    ).toBe(false);
     const chmodScript = scripts.find((script) => script.includes("chmod 640"));
     expect(chmodScript).toBeDefined();
     expect(chmodScript).toContain(targetFile);
@@ -806,17 +1154,33 @@ describe("command managed runtime", () => {
     const runner: CommandManagedRuntimeRunner = {
       execute: async (input) => {
         // Only capture the post-upload command executions (single `sh -c <cmd>`).
-        if ((input.args?.[0] === "-c") && typeof input.args?.[1] === "string") {
+        if (input.args?.[0] === "-c" && typeof input.args?.[1] === "string") {
           executed.push(input.args[1]);
         }
-        return { exitCode: 0, signal: null, timedOut: false, stdout: "", stderr: "", pid: null, startedAt: "" };
+        return {
+          exitCode: 0,
+          signal: null,
+          timedOut: false,
+          stdout: "",
+          stderr: "",
+          pid: null,
+          startedAt: "",
+        };
       },
     };
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 1 });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
 
     const verbatim = "my-tool --flag 'quoted value' && echo $HOME";
     await client.syncIn!([
-      { operationId: "op-verbatim", files: [], postUploadCommands: [{ command: verbatim }] },
+      {
+        operationId: "op-verbatim",
+        files: [],
+        postUploadCommands: [{ command: verbatim }],
+      },
     ]);
 
     // The exact string appears among executed scripts, unmodified.
@@ -830,28 +1194,48 @@ describe("command managed runtime", () => {
     const runner: CommandManagedRuntimeRunner = {
       execute: async () => {
         executeCalls += 1;
-        return { exitCode: 0, signal: null, timedOut: false, stdout: "", stderr: "", pid: null, startedAt: "" };
+        return {
+          exitCode: 0,
+          signal: null,
+          timedOut: false,
+          stdout: "",
+          stderr: "",
+          pid: null,
+          startedAt: "",
+        };
       },
     };
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 1 });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
 
     const traversal: SandboxSyncOperation[] = [
       {
         operationId: "op-traversal",
-        files: [{ sourcePath: "/host/a", targetPath: "/remote/a", kind: "directory" }],
+        files: [
+          { sourcePath: "/host/a", targetPath: "/remote/a", kind: "directory" },
+        ],
         postUploadCommands: [{ command: "echo x", cwd: "/remote/a/../etc" }],
       },
     ];
-    await expect(client.syncIn!(traversal)).rejects.toThrow(/confined absolute POSIX path|escapes/);
+    await expect(client.syncIn!(traversal)).rejects.toThrow(
+      /confined absolute POSIX path|escapes/,
+    );
 
     const absoluteEscape: SandboxSyncOperation[] = [
       {
         operationId: "op-escape",
-        files: [{ sourcePath: "/host/a", targetPath: "/remote/a", kind: "directory" }],
+        files: [
+          { sourcePath: "/host/a", targetPath: "/remote/a", kind: "directory" },
+        ],
         postUploadCommands: [{ command: "echo x", cwd: "/etc/passwd" }],
       },
     ];
-    await expect(client.syncIn!(absoluteEscape)).rejects.toThrow(/escapes the operation's target root/);
+    await expect(client.syncIn!(absoluteEscape)).rejects.toThrow(
+      /escapes the operation's target root/,
+    );
 
     // A confined cwd (equal to the target root) passes confinement — it fails
     // later at tar time (the source dir does not exist), which is a DIFFERENT
@@ -859,7 +1243,9 @@ describe("command managed runtime", () => {
     const confined: SandboxSyncOperation[] = [
       {
         operationId: "op-confined",
-        files: [{ sourcePath: "/host/a", targetPath: "/remote/a", kind: "directory" }],
+        files: [
+          { sourcePath: "/host/a", targetPath: "/remote/a", kind: "directory" },
+        ],
         postUploadCommands: [{ command: "echo x", cwd: "/remote/a" }],
       },
     ];
@@ -867,9 +1253,10 @@ describe("command managed runtime", () => {
     try {
       await client.syncIn!(confined);
     } catch (error) {
-      confinementRejected = /escapes the operation's target root|confined absolute POSIX path/.test(
-        (error as Error).message,
-      );
+      confinementRejected =
+        /escapes the operation's target root|confined absolute POSIX path/.test(
+          (error as Error).message,
+        );
     }
     expect(confinementRejected).toBe(false);
 
@@ -897,7 +1284,11 @@ describe("command managed runtime", () => {
         };
       },
     };
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 1 });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 1,
+    });
 
     await expect(
       client.syncIn!([
@@ -922,36 +1313,68 @@ describe("command managed runtime", () => {
     // Research A1: with single-stream enabled a ≤96 MiB write is ONE round-trip;
     // without it, the chunked path is `2 + ceil(bytes / 3 MiB)`. Same payload,
     // same client API — only the runner capability flag differs.
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-single-stream-collapse-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-single-stream-collapse-"),
+    );
     cleanupDirs.push(rootDir);
     const payload = Buffer.alloc(9 * 1024 * 1024, 7); // 9 MiB → chunked = 2 + 3 = 5 execs
 
     const single = makeSpawnRunner({ supportsSingleStreamStdinProgress: true });
-    const singleClient = createCommandManagedRuntimeClient({ runner: single.runner, commandCwd: "/", timeoutMs: 30_000 });
-    await singleClient.writeFile(path.join(rootDir, "single.bin"), toArrayBuffer(payload));
+    const singleClient = createCommandManagedRuntimeClient({
+      runner: single.runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
+    await singleClient.writeFile(
+      path.join(rootDir, "single.bin"),
+      toArrayBuffer(payload),
+    );
     expect(single.calls.length).toBe(2);
 
-    const chunked = makeSpawnRunner({ supportsSingleStreamStdinProgress: false });
-    const chunkedClient = createCommandManagedRuntimeClient({ runner: chunked.runner, commandCwd: "/", timeoutMs: 30_000 });
-    await chunkedClient.writeFile(path.join(rootDir, "chunked.bin"), toArrayBuffer(payload));
+    const chunked = makeSpawnRunner({
+      supportsSingleStreamStdinProgress: false,
+    });
+    const chunkedClient = createCommandManagedRuntimeClient({
+      runner: chunked.runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
+    await chunkedClient.writeFile(
+      path.join(rootDir, "chunked.bin"),
+      toArrayBuffer(payload),
+    );
     // 3 (init temp + final mv + cleanup) + ceil(9MiB / 3MiB) = 6 round-trips.
-    expect(chunked.calls.length).toBe(3 + Math.ceil(payload.byteLength / (3 * 1024 * 1024)));
+    expect(chunked.calls.length).toBe(
+      3 + Math.ceil(payload.byteLength / (3 * 1024 * 1024)),
+    );
     expect(chunked.calls.length).toBeGreaterThan(single.calls.length);
 
-    expect((await readFile(path.join(rootDir, "single.bin"))).equals(payload)).toBe(true);
-    expect((await readFile(path.join(rootDir, "chunked.bin"))).equals(payload)).toBe(true);
+    expect(
+      (await readFile(path.join(rootDir, "single.bin"))).equals(payload),
+    ).toBe(true);
+    expect(
+      (await readFile(path.join(rootDir, "chunked.bin"))).equals(payload),
+    ).toBe(true);
   });
 
   it("falls back to chunked upload progress when the runner cannot report mid-stream stdin progress", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-write-fallback-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-write-fallback-"),
+    );
     cleanupDirs.push(rootDir);
     const remotePath = path.join(rootDir, "nested", "payload.bin");
 
     const payload = Buffer.alloc(12 * 1024 * 1024);
     for (let i = 0; i < payload.length; i++) payload[i] = i % 256;
 
-    const { runner, calls } = makeSpawnRunner({ supportsSingleStreamStdinProgress: false });
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const { runner, calls } = makeSpawnRunner({
+      supportsSingleStreamStdinProgress: false,
+    });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
 
     const progress: Array<{ done: number; total: number | null }> = [];
     await client.writeFile(remotePath, toArrayBuffer(payload), {
@@ -968,16 +1391,26 @@ describe("command managed runtime", () => {
     expect(calls.length).toBeGreaterThan(2);
     const stdinCalls = calls.filter((call) => call.stdin != null);
     expect(stdinCalls.length).toBeGreaterThan(2);
-    expect(stdinCalls.every((call) => Buffer.byteLength(call.stdin ?? "", "utf8") <= 4.1 * 1024 * 1024)).toBe(true);
+    expect(
+      stdinCalls.every(
+        (call) =>
+          Buffer.byteLength(call.stdin ?? "", "utf8") <= 4.1 * 1024 * 1024,
+      ),
+    ).toBe(true);
     expect(progress.length).toBeGreaterThan(2);
     for (let i = 1; i < progress.length; i++) {
       expect(progress[i].done).toBeGreaterThanOrEqual(progress[i - 1].done);
     }
-    expect(progress.at(-1)).toEqual({ done: payload.length, total: payload.length });
+    expect(progress.at(-1)).toEqual({
+      done: payload.length,
+      total: payload.length,
+    });
   });
 
   it("falls back to bounded chunks when the runner does not explicitly opt in", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-write-fallback-no-progress-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-write-fallback-no-progress-"),
+    );
     cleanupDirs.push(rootDir);
     const remotePath = path.join(rootDir, "nested", "payload.bin");
 
@@ -985,7 +1418,11 @@ describe("command managed runtime", () => {
     for (let i = 0; i < payload.length; i++) payload[i] = i % 256;
 
     const { runner, calls } = makeSpawnRunner();
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
 
     await withBase64StringByteLimit(4 * 1024 * 1024, async () => {
       await client.writeFile(remotePath, toArrayBuffer(payload));
@@ -998,11 +1435,18 @@ describe("command managed runtime", () => {
     // the whole base64 archive as one string, so we expect multiple append calls.
     const stdinCalls = calls.filter((call) => call.stdin != null);
     expect(stdinCalls.length).toBeGreaterThan(1);
-    expect(stdinCalls.every((call) => Buffer.byteLength(call.stdin ?? "", "utf8") <= 4.1 * 1024 * 1024)).toBe(true);
+    expect(
+      stdinCalls.every(
+        (call) =>
+          Buffer.byteLength(call.stdin ?? "", "utf8") <= 4.1 * 1024 * 1024,
+      ),
+    ).toBe(true);
   });
 
   it("downloads in bounded stdout chunks and reports monotonic byte progress to the total", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-command-read-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-command-read-"),
+    );
     cleanupDirs.push(rootDir);
     const remotePath = path.join(rootDir, "download.bin");
 
@@ -1010,8 +1454,14 @@ describe("command managed runtime", () => {
     for (let i = 0; i < payload.length; i++) payload[i] = (i * 7) % 256;
     await writeFile(remotePath, payload);
 
-    const { runner, calls } = makeSpawnRunner({ maxStdoutBytes: 5 * 1024 * 1024 });
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const { runner, calls } = makeSpawnRunner({
+      maxStdoutBytes: 5 * 1024 * 1024,
+    });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
 
     const progress: Array<{ done: number; total: number | null }> = [];
     const bytes = await client.readFile(remotePath, {
@@ -1024,13 +1474,19 @@ describe("command managed runtime", () => {
 
     // The old single `base64 < file` path would exceed the runner's stdout cap.
     // The bounded path reads with several small `dd | base64` commands instead.
-    expect(calls.some((call) => call.args?.join(" ").includes("base64 <"))).toBe(false);
-    expect(calls.filter((call) => call.args?.join(" ").includes("dd if=")).length).toBeGreaterThan(1);
+    expect(
+      calls.some((call) => call.args?.join(" ").includes("base64 <")),
+    ).toBe(false);
+    expect(
+      calls.filter((call) => call.args?.join(" ").includes("dd if=")).length,
+    ).toBeGreaterThan(1);
     expect(progress.length).toBeGreaterThan(1);
     for (let i = 1; i < progress.length; i++) {
       expect(progress[i].done).toBeGreaterThanOrEqual(progress[i - 1].done);
     }
-    expect(progress.every((entry) => entry.total === payload.length)).toBe(true);
+    expect(progress.every((entry) => entry.total === payload.length)).toBe(
+      true,
+    );
     expect(progress.at(-1)?.done).toBe(payload.length);
   });
 
@@ -1047,9 +1503,15 @@ describe("command managed runtime", () => {
         startedAt,
       }),
     };
-    const client = createCommandManagedRuntimeClient({ runner, commandCwd: "/", timeoutMs: 30_000 });
+    const client = createCommandManagedRuntimeClient({
+      runner,
+      commandCwd: "/",
+      timeoutMs: 30_000,
+    });
 
-    await expect(client.run("tar -cf workspace-download.tar .", { timeoutMs: 30_000 })).rejects.toThrow(
+    await expect(
+      client.run("tar -cf workspace-download.tar .", { timeoutMs: 30_000 }),
+    ).rejects.toThrow(
       /stdout: tar: workspace-download\.tar: Cannot open: Permission denied/,
     );
   });
@@ -1069,6 +1531,8 @@ describe("command managed runtime", () => {
     // JavaScript string can hold the code point U+0000, but a C-style consumer
     // downstream of a string channel often treats it as a terminator.
     expect(received[0]).toEqual(allByteValues);
-    expect(Array.from(received[0] ?? [])).toEqual(Array.from({ length: 256 }, (_, value) => value));
+    expect(Array.from(received[0] ?? [])).toEqual(
+      Array.from({ length: 256 }, (_, value) => value),
+    );
   });
 });

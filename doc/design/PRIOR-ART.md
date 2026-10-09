@@ -4,7 +4,7 @@ A previous audit/relink pass ran against this codebase in mid-2026. Its code nev
 
 ## Key findings to inherit
 
-- **Drift is mostly NOT same-value-mappable.** The relink pass (commit `032d6c8db` on the branch) attempted to swap hardcoded values for existing semantic tokens *without visual change* and found only **6 exact-value swaps** possible (`text-muted-fg`, `rounded-md`) out of ~220 audited drift sites (~193 color / 23 radius / 7 type). Implication for Phase 2: expect to mint many new verbatim tokens; do not force-fit near-misses onto existing tokens — that changes pixels.
+- **Drift is mostly NOT same-value-mappable.** The relink pass (commit `032d6c8db` on the branch) attempted to swap hardcoded values for existing semantic tokens _without visual change_ and found only **6 exact-value swaps** possible (`text-muted-fg`, `rounded-md`) out of ~220 audited drift sites (~193 color / 23 radius / 7 type). Implication for Phase 2: expect to mint many new verbatim tokens; do not force-fit near-misses onto existing tokens — that changes pixels.
 - **Token gap clusters identified** (commit `96689351d`): recurring un-tokenized needs were a code-surface background, an accent blue, and a muted feed text color — these became `--surface-code`, `--accent-blue`-style gap tokens on the branch. Audit should check whether the same clusters still dominate.
 - **Tailwind v4 tunability gotcha** (learned the hard way): `@theme inline` bakes literals at build time; tunable tokens must live in a non-inline block.
 

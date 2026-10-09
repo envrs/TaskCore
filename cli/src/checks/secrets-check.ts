@@ -30,7 +30,10 @@ function decodeMasterKey(raw: string): Buffer | null {
 }
 
 function withStrictModeNote(
-  base: Pick<CheckResult, "name" | "status" | "message" | "canRepair" | "repair" | "repairHint">,
+  base: Pick<
+    CheckResult,
+    "name" | "status" | "message" | "canRepair" | "repair" | "repairHint"
+  >,
   config: TaskcoreConfig,
 ): CheckResult {
   const strictModeDisabledInDeployedSetup =
@@ -48,7 +51,10 @@ function withStrictModeNote(
   };
 }
 
-export function secretsCheck(config: TaskcoreConfig, configPath?: string): CheckResult {
+export function secretsCheck(
+  config: TaskcoreConfig,
+  configPath?: string,
+): CheckResult {
   const provider = config.secrets.provider;
   if (provider === "aws_secrets_manager") {
     return withStrictModeNote(awsSecretsManagerCheck(), config);
@@ -59,7 +65,8 @@ export function secretsCheck(config: TaskcoreConfig, configPath?: string): Check
       status: "fail",
       message: `${provider} is configured, but this build only supports local_encrypted and aws_secrets_manager`,
       canRepair: false,
-      repairHint: "Run `taskcore configure --section secrets` and choose local_encrypted or aws_secrets_manager",
+      repairHint:
+        "Run `taskcore configure --section secrets` and choose local_encrypted or aws_secrets_manager",
     };
   }
 
@@ -72,7 +79,8 @@ export function secretsCheck(config: TaskcoreConfig, configPath?: string): Check
         message:
           "TASKCORE_SECRETS_MASTER_KEY is invalid (expected 32-byte base64, 64-char hex, or raw 32-char string)",
         canRepair: false,
-        repairHint: "Set TASKCORE_SECRETS_MASTER_KEY to a valid key or unset it to use a key file",
+        repairHint:
+          "Set TASKCORE_SECRETS_MASTER_KEY to a valid key or unset it to use a key file",
       };
     }
 
@@ -80,7 +88,8 @@ export function secretsCheck(config: TaskcoreConfig, configPath?: string): Check
       {
         name: "Secrets adapter",
         status: "pass",
-        message: "Local encrypted provider configured via TASKCORE_SECRETS_MASTER_KEY",
+        message:
+          "Local encrypted provider configured via TASKCORE_SECRETS_MASTER_KEY",
       },
       config,
     );
@@ -112,7 +121,8 @@ export function secretsCheck(config: TaskcoreConfig, configPath?: string): Check
             // best effort
           }
         },
-        repairHint: "Run with --repair to create a local encrypted secrets key file",
+        repairHint:
+          "Run with --repair to create a local encrypted secrets key file",
       },
       config,
     );
@@ -137,7 +147,8 @@ export function secretsCheck(config: TaskcoreConfig, configPath?: string): Check
       status: "fail",
       message: `Invalid key material in ${keyFilePath}`,
       canRepair: false,
-      repairHint: "Replace with valid key material or delete it and run doctor --repair",
+      repairHint:
+        "Replace with valid key material or delete it and run doctor --repair",
     };
   }
 
@@ -168,13 +179,13 @@ function awsSecretsManagerCheck(): CheckResult {
       status: "fail",
       message: `AWS Secrets Manager provider is missing non-secret config: ${missingConfig.join(", ")}`,
       canRepair: false,
-      repairHint:
-        `Set ${missingConfig.join(", ")} in the Taskcore server runtime. ${AWS_CREDENTIAL_SOURCE_HINT}. Do not store AWS root credentials or long-lived IAM user keys in Taskcore secrets.`,
+      repairHint: `Set ${missingConfig.join(", ")} in the Taskcore server runtime. ${AWS_CREDENTIAL_SOURCE_HINT}. Do not store AWS root credentials or long-lived IAM user keys in Taskcore secrets.`,
     };
   }
 
   const staticEnvCredentials =
-    process.env.AWS_ACCESS_KEY_ID?.trim() && process.env.AWS_SECRET_ACCESS_KEY?.trim();
+    process.env.AWS_ACCESS_KEY_ID?.trim() &&
+    process.env.AWS_SECRET_ACCESS_KEY?.trim();
   const credentialSource = detectedAwsCredentialSources().join(", ");
   const message =
     `AWS Secrets Manager provider configured for deployment ${process.env.TASKCORE_SECRETS_AWS_DEPLOYMENT_ID}; ` +
@@ -200,14 +211,14 @@ function awsSecretsManagerCheck(): CheckResult {
 
 function missingAwsSecretsManagerConfig(): string[] {
   const missing: string[] = [];
-  if (
-    !(
-      process.env.TASKCORE_SECRETS_AWS_REGION?.trim() ||
-      process.env.AWS_REGION?.trim() ||
-      process.env.AWS_DEFAULT_REGION?.trim()
-    )
-  ) {
-    missing.push("TASKCORE_SECRETS_AWS_REGION or AWS_REGION/AWS_DEFAULT_REGION");
+  if (!(
+    process.env.TASKCORE_SECRETS_AWS_REGION?.trim() ||
+    process.env.AWS_REGION?.trim() ||
+    process.env.AWS_DEFAULT_REGION?.trim()
+  )) {
+    missing.push(
+      "TASKCORE_SECRETS_AWS_REGION or AWS_REGION/AWS_DEFAULT_REGION",
+    );
   }
   if (!process.env.TASKCORE_SECRETS_AWS_DEPLOYMENT_ID?.trim()) {
     missing.push("TASKCORE_SECRETS_AWS_DEPLOYMENT_ID");
@@ -220,11 +231,20 @@ function missingAwsSecretsManagerConfig(): string[] {
 
 function detectedAwsCredentialSources(): string[] {
   const sources: string[] = [];
-  if (process.env.AWS_PROFILE?.trim()) sources.push("AWS_PROFILE/shared config");
-  if (process.env.AWS_ACCESS_KEY_ID?.trim() && process.env.AWS_SECRET_ACCESS_KEY?.trim()) {
-    sources.push("temporary AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment credentials");
+  if (process.env.AWS_PROFILE?.trim())
+    sources.push("AWS_PROFILE/shared config");
+  if (
+    process.env.AWS_ACCESS_KEY_ID?.trim() &&
+    process.env.AWS_SECRET_ACCESS_KEY?.trim()
+  ) {
+    sources.push(
+      "temporary AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY environment credentials",
+    );
   }
-  if (process.env.AWS_WEB_IDENTITY_TOKEN_FILE?.trim() && process.env.AWS_ROLE_ARN?.trim()) {
+  if (
+    process.env.AWS_WEB_IDENTITY_TOKEN_FILE?.trim() &&
+    process.env.AWS_ROLE_ARN?.trim()
+  ) {
     sources.push("AWS web identity token");
   }
   if (
@@ -233,7 +253,10 @@ function detectedAwsCredentialSources(): string[] {
   ) {
     sources.push("AWS container credentials endpoint");
   }
-  if (process.env.AWS_SHARED_CREDENTIALS_FILE?.trim() || process.env.AWS_CONFIG_FILE?.trim()) {
+  if (
+    process.env.AWS_SHARED_CREDENTIALS_FILE?.trim() ||
+    process.env.AWS_CONFIG_FILE?.trim()
+  ) {
     sources.push("custom AWS shared credentials/config file");
   }
   return sources;

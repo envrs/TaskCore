@@ -28,12 +28,17 @@ interface ContextSetOptions extends ContextOptions {
 }
 
 export function registerContextCommands(program: Command): void {
-  const context = program.command("context").description("Manage CLI client context profiles");
+  const context = program
+    .command("context")
+    .description("Manage CLI client context profiles");
 
   context
     .command("show")
     .description("Show current context and active profile")
-    .option("-d, --data-dir <path>", "Taskcore data directory root (isolates state from ~/.taskcore)")
+    .option(
+      "-d, --data-dir <path>",
+      "Taskcore data directory root (isolates state from ~/.taskcore)",
+    )
     .option("--context <path>", "Path to CLI context file")
     .option("--profile <name>", "Profile to inspect")
     .option("--json", "Output raw JSON")
@@ -54,7 +59,10 @@ export function registerContextCommands(program: Command): void {
   context
     .command("list")
     .description("List available context profiles")
-    .option("-d, --data-dir <path>", "Taskcore data directory root (isolates state from ~/.taskcore)")
+    .option(
+      "-d, --data-dir <path>",
+      "Taskcore data directory root (isolates state from ~/.taskcore)",
+    )
     .option("--context <path>", "Path to CLI context file")
     .option("--json", "Output raw JSON")
     .action((opts: ContextOptions) => {
@@ -76,7 +84,10 @@ export function registerContextCommands(program: Command): void {
     .command("use")
     .description("Set active context profile")
     .argument("<profile>", "Profile name")
-    .option("-d, --data-dir <path>", "Taskcore data directory root (isolates state from ~/.taskcore)")
+    .option(
+      "-d, --data-dir <path>",
+      "Taskcore data directory root (isolates state from ~/.taskcore)",
+    )
     .option("--context <path>", "Path to CLI context file")
     .action((profile: string, opts: ContextOptions) => {
       setCurrentProfile(profile, opts.context);
@@ -86,7 +97,10 @@ export function registerContextCommands(program: Command): void {
   context
     .command("set")
     .description("Set values on a profile")
-    .option("-d, --data-dir <path>", "Taskcore data directory root (isolates state from ~/.taskcore)")
+    .option(
+      "-d, --data-dir <path>",
+      "Taskcore data directory root (isolates state from ~/.taskcore)",
+    )
     .option("--context <path>", "Path to CLI context file")
     .option("--profile <name>", "Profile name (default: current profile)")
     .option("--api-base <url>", "Default API base URL")
@@ -94,18 +108,18 @@ export function registerContextCommands(program: Command): void {
     .option("--persona <persona>", "Profile persona: board or agent")
     .option("--agent-id <id>", "Default agent ID for agent persona")
     .option("--agent-name <name>", "Default agent display name")
-    .option("--api-key-env-var-name <name>", "Env var containing API key (recommended)")
+    .option(
+      "--api-key-env-var-name <name>",
+      "Env var containing API key (recommended)",
+    )
     .option("--use", "Set this profile as active")
     .option("--json", "Output raw JSON")
     .action((opts: ContextSetOptions) => {
       const existing = readContext(opts.context);
-      const targetProfile = opts.profile?.trim() || existing.currentProfile || "default";
+      const targetProfile =
+        opts.profile?.trim() || existing.currentProfile || "default";
 
-      upsertProfile(
-        targetProfile,
-        buildContextPatch(opts),
-        opts.context,
-      );
+      upsertProfile(targetProfile, buildContextPatch(opts), opts.context);
 
       if (opts.use) {
         setCurrentProfile(targetProfile, opts.context);
@@ -140,7 +154,9 @@ function setIfProvided<K extends keyof ClientContextProfile>(
   }
 }
 
-function buildContextPatch(opts: ContextSetOptions): Partial<ClientContextProfile> {
+function buildContextPatch(
+  opts: ContextSetOptions,
+): Partial<ClientContextProfile> {
   const patch: Partial<ClientContextProfile> = {};
   setIfProvided(patch, "apiBase", opts.apiBase);
   setIfProvided(patch, "companyId", opts.companyId);
@@ -151,7 +167,9 @@ function buildContextPatch(opts: ContextSetOptions): Partial<ClientContextProfil
   return patch;
 }
 
-function parsePersona(value: string | undefined): "board" | "agent" | undefined {
+function parsePersona(
+  value: string | undefined,
+): "board" | "agent" | undefined {
   if (value === undefined) return undefined;
   if (value === "board" || value === "agent") return value;
   throw new Error("Invalid --persona value. Use board or agent.");

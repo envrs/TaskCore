@@ -35,39 +35,39 @@ The linked v8 SVGs remain a four-provider visual-design artifact; they are not e
 
 ## Screen inventory
 
-| ID | Group | Surface | Title | Desktop | Mobile |
-|---|---|---|---|---|---|
-| 01 | Start | Shared | Connectors | 1280×800 | 375×812 |
-| 02 | Start | Shared | Choose how to connect | 1280×800 | 375×812 |
-| 03 | Start | Shared | Which agent do you want to chat with? | 1280×800 | 375×812 |
-| 13 | Slack | Setup | Connect a Slack app | 1280×800 | 375×812 |
-| 41 | Slack | Setup | Try Maya in Slack | 1280×800 | 375×944 |
-| 14 | Slack | Settings | Slack settings | 1280×984 | 375×1072 |
-| 26 | Slack | Access | Slack access | 1280×880 | 375×920 |
-| 27 | Slack | Conversations | Slack conversations | 1280×800 | 375×916 |
-| 28 | Slack | Activity | Slack activity | 1280×1200 | 375×1640 |
-| 16 | GitHub | Setup | Create or connect a GitHub App | 1280×920 | 375×1312 |
-| 46 | GitHub | Setup | Try Maya in GitHub | 1280×800 | 375×812 |
-| 17 | GitHub | Settings | GitHub settings | 1280×816 | 375×896 |
-| 30 | GitHub | Access | GitHub access | 1280×880 | 375×920 |
-| 31 | GitHub | Conversations | GitHub conversations | 1280×800 | 375×916 |
-| 32 | GitHub | Activity | GitHub activity | 1280×1200 | 375×1640 |
-| 19 | Microsoft Teams | Setup | Create Maya for Microsoft Teams | 1280×800 | 375×1080 |
-| 49 | Microsoft Teams | Setup | Install Maya in Microsoft Teams | 1280×800 | 375×888 |
-| 50 | Microsoft Teams | Setup | Try Maya in Microsoft Teams | 1280×800 | 375×1000 |
-| 48 | Microsoft Teams | Setup | Microsoft provider setup details | 1280×1064 | 375×1496 |
-| 20 | Microsoft Teams | Settings | Microsoft Teams settings | 1280×1064 | 375×1176 |
-| 34 | Microsoft Teams | Access | Microsoft Teams access | 1280×880 | 375×920 |
-| 35 | Microsoft Teams | Conversations | Microsoft Teams conversations | 1280×800 | 375×916 |
-| 36 | Microsoft Teams | Activity | Microsoft Teams activity | 1280×1200 | 375×1640 |
-| 22 | Telegram | Setup | Create Maya in Telegram | 1280×800 | 375×1128 |
-| 51 | Telegram | Setup | Try Maya in Telegram | 1280×800 | 375×832 |
-| 23 | Telegram | Settings | Telegram settings | 1280×984 | 375×1072 |
-| 38 | Telegram | Access | Telegram access | 1280×880 | 375×920 |
-| 39 | Telegram | Conversations | Telegram conversations | 1280×800 | 375×916 |
-| 40 | Telegram | Activity | Telegram activity | 1280×1200 | 375×1640 |
-| 11 | Taskcore | Task | Externally connected task | 1280×800 | 375×812 |
-| 12 | Taskcore | Agent | Agent Channels | 1280×800 | 375×812 |
+| ID  | Group           | Surface       | Title                                 | Desktop   | Mobile   |
+| --- | --------------- | ------------- | ------------------------------------- | --------- | -------- |
+| 01  | Start           | Shared        | Connectors                            | 1280×800  | 375×812  |
+| 02  | Start           | Shared        | Choose how to connect                 | 1280×800  | 375×812  |
+| 03  | Start           | Shared        | Which agent do you want to chat with? | 1280×800  | 375×812  |
+| 13  | Slack           | Setup         | Connect a Slack app                   | 1280×800  | 375×812  |
+| 41  | Slack           | Setup         | Try Maya in Slack                     | 1280×800  | 375×944  |
+| 14  | Slack           | Settings      | Slack settings                        | 1280×984  | 375×1072 |
+| 26  | Slack           | Access        | Slack access                          | 1280×880  | 375×920  |
+| 27  | Slack           | Conversations | Slack conversations                   | 1280×800  | 375×916  |
+| 28  | Slack           | Activity      | Slack activity                        | 1280×1200 | 375×1640 |
+| 16  | GitHub          | Setup         | Create or connect a GitHub App        | 1280×920  | 375×1312 |
+| 46  | GitHub          | Setup         | Try Maya in GitHub                    | 1280×800  | 375×812  |
+| 17  | GitHub          | Settings      | GitHub settings                       | 1280×816  | 375×896  |
+| 30  | GitHub          | Access        | GitHub access                         | 1280×880  | 375×920  |
+| 31  | GitHub          | Conversations | GitHub conversations                  | 1280×800  | 375×916  |
+| 32  | GitHub          | Activity      | GitHub activity                       | 1280×1200 | 375×1640 |
+| 19  | Microsoft Teams | Setup         | Create Maya for Microsoft Teams       | 1280×800  | 375×1080 |
+| 49  | Microsoft Teams | Setup         | Install Maya in Microsoft Teams       | 1280×800  | 375×888  |
+| 50  | Microsoft Teams | Setup         | Try Maya in Microsoft Teams           | 1280×800  | 375×1000 |
+| 48  | Microsoft Teams | Setup         | Microsoft provider setup details      | 1280×1064 | 375×1496 |
+| 20  | Microsoft Teams | Settings      | Microsoft Teams settings              | 1280×1064 | 375×1176 |
+| 34  | Microsoft Teams | Access        | Microsoft Teams access                | 1280×880  | 375×920  |
+| 35  | Microsoft Teams | Conversations | Microsoft Teams conversations         | 1280×800  | 375×916  |
+| 36  | Microsoft Teams | Activity      | Microsoft Teams activity              | 1280×1200 | 375×1640 |
+| 22  | Telegram        | Setup         | Create Maya in Telegram               | 1280×800  | 375×1128 |
+| 51  | Telegram        | Setup         | Try Maya in Telegram                  | 1280×800  | 375×832  |
+| 23  | Telegram        | Settings      | Telegram settings                     | 1280×984  | 375×1072 |
+| 38  | Telegram        | Access        | Telegram access                       | 1280×880  | 375×920  |
+| 39  | Telegram        | Conversations | Telegram conversations                | 1280×800  | 375×916  |
+| 40  | Telegram        | Activity      | Telegram activity                     | 1280×1200 | 375×1640 |
+| 11  | Taskcore        | Task          | Externally connected task             | 1280×800  | 375×812  |
+| 12  | Taskcore        | Agent         | Agent Channels                        | 1280×800  | 375×812  |
 
 ## Annotation and action notes
 

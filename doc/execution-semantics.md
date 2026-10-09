@@ -790,7 +790,7 @@ The same bounded rule applies when the previous heartbeat reported waiting on a 
 
 #### Deliberate wait is not a lost run
 
-A continuation that the staleness gate cancelled with `issue_continuation_waiting_on_review` is a *deliberate park*, not a disappeared execution path. The latest run reported that the issue is waiting for review/approval (for example, an umbrella issue whose work was just decomposed into sub-tasks). Treating that park as a stranded run would retry it, then escalate it to `blocked` with a recovery action and an operator-facing failure notice — even though nothing failed and there is nothing for a human to do.
+A continuation that the staleness gate cancelled with `issue_continuation_waiting_on_review` is a _deliberate park_, not a disappeared execution path. The latest run reported that the issue is waiting for review/approval (for example, an umbrella issue whose work was just decomposed into sub-tasks). Treating that park as a stranded run would retry it, then escalate it to `blocked` with a recovery action and an operator-facing failure notice — even though nothing failed and there is nothing for a human to do.
 
 Execution admission reads a narrow server-owned cancellation-evidence projection. Ordinary run presentation can redact `resultJson` for database encoding or output size; that presentation projection must not decide Retry eligibility or saved-input recovery. The admission projection excludes provider diagnostics and preserves whether the stored result is absent.
 
@@ -1168,7 +1168,6 @@ completed turn. Retain a bounded local diagnostic and use cumulative totals as
 a baseline; do not emit a warning or charge its historical `last` usage to the
 new run. Preserve the baseline across recovery of the same run and start a new
 delta when attaching a new run. Other stale-event and authority checks remain.
-
 
 ### Explicit user continuation after execution failure
 
@@ -1577,7 +1576,6 @@ URL, and token together through the launch allowlist; unrelated environment
 secrets remain excluded. This does not restrict arbitrary network access to a
 public service outside the gateway.
 
-
 ### Use real connection requests (2026-09-14)
 
 When a user asks to connect a known service, the agent searches for that service
@@ -1639,7 +1637,6 @@ Renewal updates only the ownership deadline, never the retry cooldown. Cleanup
 does not await an outstanding renewal; a stalled database response cannot retain
 process-local cleanup ownership. Late responses still require the same active
 attempt, and completed attempts use only the persisted retry cooldown.
-
 
 ### Follow-up completion instructions
 

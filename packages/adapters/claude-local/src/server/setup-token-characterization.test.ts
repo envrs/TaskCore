@@ -68,7 +68,9 @@ finally:
 `;
 
 function hasCommand(command: string): boolean {
-  const probe = spawnSync("sh", ["-c", `command -v ${command}`], { encoding: "utf8" });
+  const probe = spawnSync("sh", ["-c", `command -v ${command}`], {
+    encoding: "utf8",
+  });
   return probe.status === 0;
 }
 
@@ -85,61 +87,69 @@ function readClaudeVersion(): string {
 // test can assert on the rendered banner text. It keeps this local, so the test
 // never imports a parser internal.
 function renderForBanner(raw: string): string {
-  return raw
-    // OSC sequences (hyperlinks and other OSC), BEL or ST terminated.
-    .replace(/\x1b\][^\x1b\x07]*(?:\x1b\\|\x07)/g, "")
-    // Horizontal-move CSI sequences render as one space.
-    .replace(/\x1b\[[0-9;]*[GC]/g, " ")
-    // Any remaining CSI sequence.
-    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "");
+  return (
+    raw
+      // OSC sequences (hyperlinks and other OSC), BEL or ST terminated.
+      .replace(/\x1b\][^\x1b\x07]*(?:\x1b\\|\x07)/g, "")
+      // Horizontal-move CSI sequences render as one space.
+      .replace(/\x1b\[[0-9;]*[GC]/g, " ")
+      // Any remaining CSI sequence.
+      .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "")
+  );
 }
 
 const run = OPT_IN ? describe : describe.skip;
 
 run("claude setup-token live characterization", () => {
-  it(
-    "reads the real sign-in prompt contract and records the Claude Code version",
-    () => {
-      expect(hasCommand("claude"), "the claude binary must be installed").toBe(true);
-      expect(hasCommand("python3"), "python3 must be installed for the pseudo-terminal").toBe(true);
+  it("reads the real sign-in prompt contract and records the Claude Code version", () => {
+    expect(hasCommand("claude"), "the claude binary must be installed").toBe(
+      true,
+    );
+    expect(
+      hasCommand("python3"),
+      "python3 must be installed for the pseudo-terminal",
+    ).toBe(true);
 
-      const version = readClaudeVersion();
+    const version = readClaudeVersion();
 
-      const result = spawnSync("python3", ["-c", PTY_HARNESS], {
-        encoding: "buffer",
-        maxBuffer: 8 * 1024 * 1024,
-        env: { ...process.env, STCHAR_DURATION: "40" },
-      });
-      if (result.error) throw result.error;
-      const raw = (result.stdout ?? Buffer.alloc(0)).toString("utf8");
+    const result = spawnSync("python3", ["-c", PTY_HARNESS], {
+      encoding: "buffer",
+      maxBuffer: 8 * 1024 * 1024,
+      env: { ...process.env, STCHAR_DURATION: "40" },
+    });
+    if (result.error) throw result.error;
+    const raw = (result.stdout ?? Buffer.alloc(0)).toString("utf8");
 
-      // Fail loudly on a parse miss. A terminal-contract drift breaks the suite
-      // here instead of passing silently.
-      const parsed = parseSetupTokenPrompt(raw);
-      expect(parsed, "the parser did not read the live setup-token prompt").not.toBeNull();
+    // Fail loudly on a parse miss. A terminal-contract drift breaks the suite
+    // here instead of passing silently.
+    const parsed = parseSetupTokenPrompt(raw);
+    expect(
+      parsed,
+      "the parser did not read the live setup-token prompt",
+    ).not.toBeNull();
 
-      const url = new URL(parsed!.url);
-      // The live CLI emits one of the two accepted origin-and-path pairs. The
-      // installed version decides which pair the run records.
-      expect(SETUP_TOKEN_AUTH_URLS).toContain(`${url.origin}${url.pathname}`);
-      expect([...url.searchParams.keys()].sort()).toEqual([...SETUP_TOKEN_URL_QUERY_KEYS].sort());
-      expect(url.hash).toBe("");
-      expect(parsed!.prompt).toBe(SETUP_TOKEN_PROMPT);
+    const url = new URL(parsed!.url);
+    // The live CLI emits one of the two accepted origin-and-path pairs. The
+    // installed version decides which pair the run records.
+    expect(SETUP_TOKEN_AUTH_URLS).toContain(`${url.origin}${url.pathname}`);
+    expect([...url.searchParams.keys()].sort()).toEqual(
+      [...SETUP_TOKEN_URL_QUERY_KEYS].sort(),
+    );
+    expect(url.hash).toBe("");
+    expect(parsed!.prompt).toBe(SETUP_TOKEN_PROMPT);
 
-      // The banner names the tested Claude Code version. This ties the recorded
-      // contract to the version that produced it.
-      const banner = renderForBanner(raw);
-      expect(banner).toContain(`Claude Code v${version}`);
+    // The banner names the tested Claude Code version. This ties the recorded
+    // contract to the version that produced it.
+    const banner = renderForBanner(raw);
+    expect(banner).toContain(`Claude Code v${version}`);
 
-      // Record the tested version and the non-secret anchors. The reporter shows
-      // this line; it names no secret.
-      // eslint-disable-next-line no-console
-      console.log(
-        `[characterization] Claude Code v${version}: prompt "${SETUP_TOKEN_PROMPT}", ` +
-          `URL ${url.origin}${url.pathname} with query keys ` +
-          `[${[...SETUP_TOKEN_URL_QUERY_KEYS].join(", ")}].`,
-      );
-    },
-    60_000,
-  );
+    // Record the tested version and the non-secret anchors. The reporter shows
+    // this line; it names no secret.
+    // eslint-disable-next-line no-console
+    console.log(
+      `[characterization] Claude Code v${version}: prompt "${SETUP_TOKEN_PROMPT}", ` +
+        `URL ${url.origin}${url.pathname} with query keys ` +
+        `[${[...SETUP_TOKEN_URL_QUERY_KEYS].join(", ")}].`,
+    );
+  }, 60_000);
 });

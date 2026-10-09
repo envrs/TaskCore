@@ -70,7 +70,9 @@ function secret(partial: Partial<CompanySecret>): CompanySecret {
   };
 }
 
-function configWithSecretsProvider(provider: TaskcoreConfig["secrets"]["provider"]): TaskcoreConfig {
+function configWithSecretsProvider(
+  provider: TaskcoreConfig["secrets"]["provider"],
+): TaskcoreConfig {
   return {
     $meta: {
       version: 1,
@@ -236,12 +238,18 @@ describe("secrets CLI helpers", () => {
 
   it("reads only explicit plain env values", () => {
     expect(toPlainEnvValue("plain-value")).toBe("plain-value");
-    expect(toPlainEnvValue({ type: "plain", value: "wrapped" })).toBe("wrapped");
-    expect(toPlainEnvValue({ type: "secret_ref", secretId: "secret-1" })).toBeNull();
+    expect(toPlainEnvValue({ type: "plain", value: "wrapped" })).toBe(
+      "wrapped",
+    );
+    expect(
+      toPlainEnvValue({ type: "secret_ref", secretId: "secret-1" }),
+    ).toBeNull();
   });
 
   it("reports the AWS bootstrap config required by doctor", () => {
-    const result = secretsCheck(configWithSecretsProvider("aws_secrets_manager"));
+    const result = secretsCheck(
+      configWithSecretsProvider("aws_secrets_manager"),
+    );
 
     expect(result.status).toBe("fail");
     expect(result.message).toContain("TASKCORE_SECRETS_AWS_DEPLOYMENT_ID");
@@ -256,7 +264,9 @@ describe("secrets CLI helpers", () => {
       "arn:aws:kms:us-east-1:123456789012:key/test";
     process.env.AWS_PROFILE = "taskcore-prod";
 
-    const result = secretsCheck(configWithSecretsProvider("aws_secrets_manager"));
+    const result = secretsCheck(
+      configWithSecretsProvider("aws_secrets_manager"),
+    );
 
     expect(result.status).toBe("pass");
     expect(result.message).toContain("prod-us-1");
@@ -277,45 +287,132 @@ describe("secrets API parity commands", () => {
   });
 
   it("wraps provider config and remote import endpoints", async () => {
-    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(jsonResponse()));
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse()));
     vi.stubGlobal("fetch", fetchMock);
 
-    await runSecretCommand(["secrets", "provider-configs", "--company-id", "company-1"]);
-    await runSecretCommand(["secrets", "provider-config:create", "--company-id", "company-1", "--payload-json", "{}"]);
-    await runSecretCommand(["secrets", "provider-config:discovery-preview", "--company-id", "company-1", "--payload-json", "{}"]);
+    await runSecretCommand([
+      "secrets",
+      "provider-configs",
+      "--company-id",
+      "company-1",
+    ]);
+    await runSecretCommand([
+      "secrets",
+      "provider-config:create",
+      "--company-id",
+      "company-1",
+      "--payload-json",
+      "{}",
+    ]);
+    await runSecretCommand([
+      "secrets",
+      "provider-config:discovery-preview",
+      "--company-id",
+      "company-1",
+      "--payload-json",
+      "{}",
+    ]);
     await runSecretCommand(["secrets", "provider-config:get", "config-1"]);
-    await runSecretCommand(["secrets", "provider-config:update", "config-1", "--payload-json", "{}"]);
+    await runSecretCommand([
+      "secrets",
+      "provider-config:update",
+      "config-1",
+      "--payload-json",
+      "{}",
+    ]);
     await runSecretCommand(["secrets", "provider-config:default", "config-1"]);
     await runSecretCommand(["secrets", "provider-config:health", "config-1"]);
     await runSecretCommand(["secrets", "provider-config:delete", "config-1"]);
-    await runSecretCommand(["secrets", "remote-import:preview", "--company-id", "company-1", "--payload-json", "{}"]);
-    await runSecretCommand(["secrets", "remote-import", "--company-id", "company-1", "--payload-json", "{}"]);
+    await runSecretCommand([
+      "secrets",
+      "remote-import:preview",
+      "--company-id",
+      "company-1",
+      "--payload-json",
+      "{}",
+    ]);
+    await runSecretCommand([
+      "secrets",
+      "remote-import",
+      "--company-id",
+      "company-1",
+      "--payload-json",
+      "{}",
+    ]);
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
-      ["GET", "http://localhost:3100/api/companies/company-1/secret-provider-configs"],
-      ["POST", "http://localhost:3100/api/companies/company-1/secret-provider-configs"],
-      ["POST", "http://localhost:3100/api/companies/company-1/secret-provider-configs/discovery/preview"],
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
+      [
+        "GET",
+        "http://localhost:3100/api/companies/company-1/secret-provider-configs",
+      ],
+      [
+        "POST",
+        "http://localhost:3100/api/companies/company-1/secret-provider-configs",
+      ],
+      [
+        "POST",
+        "http://localhost:3100/api/companies/company-1/secret-provider-configs/discovery/preview",
+      ],
       ["GET", "http://localhost:3100/api/secret-provider-configs/config-1"],
       ["PATCH", "http://localhost:3100/api/secret-provider-configs/config-1"],
-      ["POST", "http://localhost:3100/api/secret-provider-configs/config-1/default"],
-      ["POST", "http://localhost:3100/api/secret-provider-configs/config-1/health"],
+      [
+        "POST",
+        "http://localhost:3100/api/secret-provider-configs/config-1/default",
+      ],
+      [
+        "POST",
+        "http://localhost:3100/api/secret-provider-configs/config-1/health",
+      ],
       ["DELETE", "http://localhost:3100/api/secret-provider-configs/config-1"],
-      ["POST", "http://localhost:3100/api/companies/company-1/secrets/remote-import/preview"],
-      ["POST", "http://localhost:3100/api/companies/company-1/secrets/remote-import"],
+      [
+        "POST",
+        "http://localhost:3100/api/companies/company-1/secrets/remote-import/preview",
+      ],
+      [
+        "POST",
+        "http://localhost:3100/api/companies/company-1/secrets/remote-import",
+      ],
     ]);
   });
 
   it("wraps secret metadata, rotation, usage, access event, and delete endpoints", async () => {
-    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(jsonResponse()));
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse()));
     vi.stubGlobal("fetch", fetchMock);
 
-    await runSecretCommand(["secrets", "update", "secret-1", "--payload-json", "{\"description\":\"updated\"}"]);
-    await runSecretCommand(["secrets", "rotate", "secret-1", "--value", "new-value"]);
+    await runSecretCommand([
+      "secrets",
+      "update",
+      "secret-1",
+      "--payload-json",
+      '{"description":"updated"}',
+    ]);
+    await runSecretCommand([
+      "secrets",
+      "rotate",
+      "secret-1",
+      "--value",
+      "new-value",
+    ]);
     await runSecretCommand(["secrets", "usage", "secret-1"]);
     await runSecretCommand(["secrets", "access-events", "secret-1"]);
-    await runSecretCommand(["secrets", "delete", "secret-1", "--yes", "--confirm", "secret-1"]);
+    await runSecretCommand([
+      "secrets",
+      "delete",
+      "secret-1",
+      "--yes",
+      "--confirm",
+      "secret-1",
+    ]);
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
       ["PATCH", "http://localhost:3100/api/secrets/secret-1"],
       ["POST", "http://localhost:3100/api/secrets/secret-1/rotate"],
       ["GET", "http://localhost:3100/api/secrets/secret-1/usage"],
@@ -330,9 +427,21 @@ async function runSecretCommand(args: string[]): Promise<void> {
   program.exitOverride();
   program.configureOutput({ writeOut: () => {}, writeErr: () => {} });
   registerSecretCommands(program);
-  await program.parseAsync([...args, "--api-base", "http://localhost:3100", "--api-key", "board-token"], { from: "user" });
+  await program.parseAsync(
+    [
+      ...args,
+      "--api-base",
+      "http://localhost:3100",
+      "--api-key",
+      "board-token",
+    ],
+    { from: "user" },
+  );
 }
 
-function jsonResponse(body: unknown = { ok: true }, init: ResponseInit = { status: 200 }): Response {
+function jsonResponse(
+  body: unknown = { ok: true },
+  init: ResponseInit = { status: 200 },
+): Response {
   return new Response(JSON.stringify(body), init);
 }

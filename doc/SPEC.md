@@ -10,12 +10,12 @@ A Company is a first-order object. One Taskcore instance runs multiple Companies
 
 ### Fields (Draft)
 
-| Field       | Type          | Notes                             |
-| ----------- | ------------- | --------------------------------- |
-| `id`        | uuid          | Primary key                       |
-| `name`      | string        | Company name                      |
-| `createdAt` | timestamp     |                                   |
-| `updatedAt` | timestamp     |                                   |
+| Field       | Type      | Notes        |
+| ----------- | --------- | ------------ |
+| `id`        | uuid      | Primary key  |
+| `name`      | string    | Company name |
+| `createdAt` | timestamp |              |
+| `updatedAt` | timestamp |              |
 
 ### Board Governance [DRAFT]
 
@@ -239,17 +239,17 @@ The heartbeat is a protocol, not a runtime. Taskcore defines how to initiate an 
 
 Agent configuration includes an **adapter** that defines how Taskcore invokes the agent. Built-in adapters include:
 
-| Adapter | Mechanism | Example |
-| ---------------- | -------------------------- | -------------------------------------------------- |
-| `process` | Execute a child process | `python run_agent.py --agent-id {id}` |
-| `http` | Send an HTTP request | `POST https://openclaw.example.com/hook/{id}` |
-| `claude_local` | Local Claude Code process | Claude Code heartbeat worker |
-| `codex_local` | Local Codex process | Codex CLI heartbeat worker |
-| `opencode_local` | Local OpenCode process | OpenCode heartbeat worker |
-| `pi_local` | Local Pi process | Pi CLI heartbeat worker |
-| `cursor` | Cursor API/CLI bridge | Cursor-integrated heartbeat worker |
-| `openclaw_gateway` | OpenClaw gateway API | Managed OpenClaw agent via gateway |
-| `hermes_local` | Local Hermes process | Hermes agent heartbeat worker |
+| Adapter            | Mechanism                 | Example                                       |
+| ------------------ | ------------------------- | --------------------------------------------- |
+| `process`          | Execute a child process   | `python run_agent.py --agent-id {id}`         |
+| `http`             | Send an HTTP request      | `POST https://openclaw.example.com/hook/{id}` |
+| `claude_local`     | Local Claude Code process | Claude Code heartbeat worker                  |
+| `codex_local`      | Local Codex process       | Codex CLI heartbeat worker                    |
+| `opencode_local`   | Local OpenCode process    | OpenCode heartbeat worker                     |
+| `pi_local`         | Local Pi process          | Pi CLI heartbeat worker                       |
+| `cursor`           | Cursor API/CLI bridge     | Cursor-integrated heartbeat worker            |
+| `openclaw_gateway` | OpenClaw gateway API      | Managed OpenClaw agent via gateway            |
+| `hermes_local`     | Local Hermes process      | Hermes agent heartbeat worker                 |
 
 The `process` and `http` adapters ship as generic defaults. Additional built-in adapters cover common local coding runtimes (see list above), and new adapter types can be registered via the plugin system (see Plugin / Extension Architecture).
 
@@ -331,7 +331,6 @@ Ordinary Agent Chat questions use the server-owned conversation recipient.
 Task questions may optionally name a particular user or agent. Explicit user
 recipients must be valid and authorized in the company before a question is
 saved. See `SPEC-implementation.md` §9.8.1 for the resolver contract.
-
 
 Experimental Agent Chat presents one persistent task per person and agent as a simplified conversation. Chat has a searchable secondary sidebar with agent avatars; adding an agent starts or reopens their single conversation. It retains the task composer, transcript, tools, attachments, documents, and existing Subtasks panel, with the task's selected visibility. New execution tasks are ordinary project tasks, not structural children of the conversation; private-source restrictions still flow through their run provenance. Idle conversations wait for a message without entering execution-task work queues. Agents clarify goals here and create assigned tasks for substantial execution. `/new` resets provider context at an ordered session boundary within the same task while preserving visible history. `enableAgentChat` is disabled by default; the V1 lifecycle and rollout contract is specified in `SPEC-implementation.md`.
 
@@ -454,12 +453,12 @@ Flow:
 
 ### Tech Stack
 
-| Layer    | Technology                                                   |
-| -------- | ------------------------------------------------------------ |
-| Frontend | React + Vite                                                 |
-| Backend  | TypeScript + Express (REST API, not tRPC — need non-TS clients) |
+| Layer    | Technology                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend | React + Vite                                                                                                                          |
+| Backend  | TypeScript + Express (REST API, not tRPC — need non-TS clients)                                                                       |
 | Database | PostgreSQL (see [doc/DATABASE.md](./doc/DATABASE.md) for details — PGlite embedded for dev, Docker or hosted Supabase for production) |
-| Auth     | [Better Auth](https://www.better-auth.com/)                  |
+| Auth     | [Better Auth](https://www.better-auth.com/)                                                                                           |
 
 ### Concurrency Model: Atomic Task Checkout
 
@@ -631,6 +630,7 @@ Agent appearances are stable, versioned ClipLab end-cap personas, separate from
 behavioral instructions. Compact surfaces use on-demand cached PNG URLs; larger
 placements may use a lazy live character. See [agent-personas.md](agent-personas.md)
 for persistence, migration, rendering, and integration contracts.
+
 ### Agent chat project handoff (2026-09-11)
 
 Chat supports research and full plan drafting/revision in its existing plan document. On handoff, each ordinary assigned task receives the relevant plan in its own `plan` document, committed with task creation before execution is scheduled. The source plan remains in the conversation. Plan acceptance hands off execution; it never switches the conversation into implementation.

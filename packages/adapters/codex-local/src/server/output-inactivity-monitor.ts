@@ -17,13 +17,22 @@ export type CodexOutputInactivityMonitorResolution =
  * - number > 0     → configured value.
  * - number ≤ 0     → default 30m (and a `non_positive` note for logging).
  */
-export function resolveCodexInactivityTimeout(rawValue: unknown): CodexOutputInactivityMonitorResolution {
+export function resolveCodexInactivityTimeout(
+  rawValue: unknown,
+): CodexOutputInactivityMonitorResolution {
   if (rawValue === null) return { mode: "disabled", reason: "explicit_null" };
   if (typeof rawValue === "number" && Number.isFinite(rawValue)) {
     if (rawValue > 0) return { mode: "configured", timeoutMs: rawValue };
-    return { mode: "default", timeoutMs: DEFAULT_CODEX_OUTPUT_INACTIVITY_TIMEOUT_MS, reason: "non_positive" };
+    return {
+      mode: "default",
+      timeoutMs: DEFAULT_CODEX_OUTPUT_INACTIVITY_TIMEOUT_MS,
+      reason: "non_positive",
+    };
   }
-  return { mode: "default", timeoutMs: DEFAULT_CODEX_OUTPUT_INACTIVITY_TIMEOUT_MS };
+  return {
+    mode: "default",
+    timeoutMs: DEFAULT_CODEX_OUTPUT_INACTIVITY_TIMEOUT_MS,
+  };
 }
 
 export interface CodexOutputInactivityMonitorState {
@@ -70,12 +79,16 @@ export function createCodexOutputInactivityMonitor(
 ): CodexOutputInactivityMonitorHandle {
   const now = options.now ?? (() => Date.now());
   const setTimer = options.setTimer ?? ((cb, ms) => setTimeout(cb, ms));
-  const clearTimer = options.clearTimer ?? ((h) => clearTimeout(h as ReturnType<typeof setTimeout>));
+  const clearTimer =
+    options.clearTimer ??
+    ((h) => clearTimeout(h as ReturnType<typeof setTimeout>));
   const isHeartbeatLine = options.isHeartbeatLine ?? defaultIsHeartbeatLine;
   const timeoutMs = options.timeoutMs;
 
   if (!(timeoutMs > 0)) {
-    throw new Error(`createCodexOutputInactivityMonitor requires timeoutMs > 0 (got ${timeoutMs})`);
+    throw new Error(
+      `createCodexOutputInactivityMonitor requires timeoutMs > 0 (got ${timeoutMs})`,
+    );
   }
 
   const spawnedAt = now();
@@ -147,7 +160,9 @@ export function createCodexOutputInactivityMonitor(
  * Format the inactivity monitor error message in the canonical
  * `monitor: no codex activity (output or process) for {N}m {S}s` shape consumed by NEE-81.
  */
-export function formatOutputInactivityMonitorErrorMessage(elapsedMs: number): string {
+export function formatOutputInactivityMonitorErrorMessage(
+  elapsedMs: number,
+): string {
   const total = Math.max(0, Math.round(elapsedMs / 1000));
   const minutes = Math.floor(total / 60);
   const seconds = total - minutes * 60;

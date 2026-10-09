@@ -6,7 +6,10 @@ import { buildLocalAdapterTestProbeEnv } from "./probe-env.js";
 
 const tempDirs: string[] = [];
 
-async function makeTrustedPathWithClaude(): Promise<{ dir: string; claudePath: string }> {
+async function makeTrustedPathWithClaude(): Promise<{
+  dir: string;
+  claudePath: string;
+}> {
   const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-env-"));
   tempDirs.push(dir);
   const claudePath = path.join(dir, "claude");
@@ -18,7 +21,8 @@ async function makeTrustedPathWithClaude(): Promise<{ dir: string; claudePath: s
 afterEach(async () => {
   while (tempDirs.length > 0) {
     const dir = tempDirs.pop();
-    if (dir) await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+    if (dir)
+      await rm(dir, { recursive: true, force: true }).catch(() => undefined);
   }
 });
 
@@ -26,7 +30,11 @@ describe("buildLocalAdapterTestProbeEnv", () => {
   it("resolves claude from the trusted PATH and ignores the caller PATH", async () => {
     const { dir, claudePath } = await makeTrustedPathWithClaude();
     const built = await buildLocalAdapterTestProbeEnv({
-      callerEnv: { PATH: "/hostile/bin", Path: "/hostile/bin", command: "/tmp/evil/claude" },
+      callerEnv: {
+        PATH: "/hostile/bin",
+        Path: "/hostile/bin",
+        command: "/tmp/evil/claude",
+      },
       trustedEnv: { PATH: dir },
     });
     expect(built.command).toBe(claudePath);
@@ -35,7 +43,9 @@ describe("buildLocalAdapterTestProbeEnv", () => {
   });
 
   it("returns a null command when the trusted PATH holds no claude", async () => {
-    const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-probe-env-empty-"));
+    const dir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-probe-env-empty-"),
+    );
     tempDirs.push(dir);
     const built = await buildLocalAdapterTestProbeEnv({
       callerEnv: {},
@@ -62,7 +72,9 @@ describe("buildLocalAdapterTestProbeEnv", () => {
     expect(built.env.ANTHROPIC_API_KEY).toBe("api-key-value");
     expect(built.env.CLAUDE_CODE_OAUTH_TOKEN).toBe("oauth-token-value");
     expect(built.env.CLAUDE_CODE_USE_BEDROCK).toBe("1");
-    expect(built.env.ANTHROPIC_BEDROCK_BASE_URL).toBe("https://bedrock.example");
+    expect(built.env.ANTHROPIC_BEDROCK_BASE_URL).toBe(
+      "https://bedrock.example",
+    );
     expect(built.env.AWS_ACCESS_KEY_ID).toBe("aws-key");
     expect(built.env.AWS_SECRET_ACCESS_KEY).toBe("aws-secret");
     expect(built.env.AWS_REGION).toBe("us-east-1");
@@ -132,7 +144,10 @@ describe("buildLocalAdapterTestProbeEnv", () => {
   it("forwards no proxy variable when the trusted env has none", async () => {
     const { dir } = await makeTrustedPathWithClaude();
     const built = await buildLocalAdapterTestProbeEnv({
-      callerEnv: { HTTP_PROXY: "http://caller-proxy:8080", https_proxy: "http://caller:8443" },
+      callerEnv: {
+        HTTP_PROXY: "http://caller-proxy:8080",
+        https_proxy: "http://caller:8443",
+      },
       trustedEnv: { PATH: dir },
     });
     for (const key of Object.keys(built.env)) {

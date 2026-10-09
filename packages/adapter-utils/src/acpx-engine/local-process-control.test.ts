@@ -1,10 +1,16 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { expect, it, vi } from "vitest";
-import { captureLocalProcess, capturedProcessExited, killCapturedLocalProcess } from "./local-process-control.js";
+import {
+  captureLocalProcess,
+  capturedProcessExited,
+  killCapturedLocalProcess,
+} from "./local-process-control.js";
 
 it("captures and terminates the actual spawned child on the current platform", async () => {
-  const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });
+  const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+    stdio: "ignore",
+  });
   try {
     await once(child, "spawn");
     const captured = captureLocalProcess(child.pid!);
@@ -21,8 +27,18 @@ it("captures and terminates the actual spawned child on the current platform", a
 });
 
 it("never signals an exited child even if another process has reused its PID", () => {
-  const original = { pid: 123, exitCode: 0, signalCode: null, kill: vi.fn(() => true) };
-  const replacement = { pid: 123, exitCode: null, signalCode: null, kill: vi.fn(() => true) };
+  const original = {
+    pid: 123,
+    exitCode: 0,
+    signalCode: null,
+    kill: vi.fn(() => true),
+  };
+  const replacement = {
+    pid: 123,
+    exitCode: null,
+    signalCode: null,
+    kill: vi.fn(() => true),
+  };
   expect(killCapturedLocalProcess(original)).toBe(false);
   expect(original.kill).not.toHaveBeenCalled();
   expect(replacement.kill).not.toHaveBeenCalled();
@@ -34,6 +50,20 @@ it("fails closed when the spawned handle was not captured", () => {
 });
 
 it("reports an unsuccessful signal without throwing", () => {
-  expect(killCapturedLocalProcess({ exitCode: null, signalCode: null, kill: () => false })).toBe(false);
-  expect(killCapturedLocalProcess({ exitCode: null, signalCode: null, kill: () => { throw new Error("gone"); } })).toBe(false);
+  expect(
+    killCapturedLocalProcess({
+      exitCode: null,
+      signalCode: null,
+      kill: () => false,
+    }),
+  ).toBe(false);
+  expect(
+    killCapturedLocalProcess({
+      exitCode: null,
+      signalCode: null,
+      kill: () => {
+        throw new Error("gone");
+      },
+    }),
+  ).toBe(false);
 });

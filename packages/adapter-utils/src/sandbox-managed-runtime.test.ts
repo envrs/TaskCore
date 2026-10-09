@@ -1,6 +1,17 @@
 import { randomBytes } from "node:crypto";
 import { promises as fsPromises } from "node:fs";
-import { lstat, mkdir, mkdtemp, readFile, readdir, readlink, rm, stat, symlink, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  readlink,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { execFile as execFileCallback, spawn } from "node:child_process";
@@ -47,7 +58,10 @@ import {
 import type { RunProcessResult } from "./server-utils.js";
 
 function toArrayBuffer(bytes: Buffer): ArrayBuffer {
-  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  return bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
 }
 
 // Sum the file sizes under a directory, recursively. Test-only: it stands in
@@ -72,8 +86,13 @@ async function directoryByteSize(dir: string): Promise<number> {
 // ordered `postUploadCommands` fail-fast via `run`) — byte-for-byte the prior
 // inline `writeFile`+`run` sequence, exercised through the unified seam. Inbound
 // staging uses only `kind: "file"` mappings.
-function attachFallbackSyncIn(client: SandboxManagedRuntimeClient, timeoutMs = 30_000): void {
-  client.syncIn = async (operations: SandboxSyncOperation[]): Promise<SandboxSyncResult> => {
+function attachFallbackSyncIn(
+  client: SandboxManagedRuntimeClient,
+  timeoutMs = 30_000,
+): void {
+  client.syncIn = async (
+    operations: SandboxSyncOperation[],
+  ): Promise<SandboxSyncResult> => {
     const resultOperations: SandboxSyncResult["operations"] = [];
     for (const operation of operations) {
       let filesTransferred = 0;
@@ -95,9 +114,15 @@ function attachFallbackSyncIn(client: SandboxManagedRuntimeClient, timeoutMs = 3
         bytesTransferred += bytes.byteLength;
       }
       for (const command of operation.postUploadCommands ?? []) {
-        await client.run(command.command, { timeoutMs: command.timeoutMs ?? timeoutMs });
+        await client.run(command.command, {
+          timeoutMs: command.timeoutMs ?? timeoutMs,
+        });
       }
-      resultOperations.push({ operationId: operation.operationId, filesTransferred, bytesTransferred });
+      resultOperations.push({
+        operationId: operation.operationId,
+        filesTransferred,
+        bytesTransferred,
+      });
     }
     return { operations: resultOperations };
   };
@@ -112,7 +137,9 @@ function attachNativeRecordingSyncIn(
   client: SandboxManagedRuntimeClient,
   captured: SandboxSyncOperation[],
 ): void {
-  client.syncIn = async (operations: SandboxSyncOperation[]): Promise<SandboxSyncResult> => {
+  client.syncIn = async (
+    operations: SandboxSyncOperation[],
+  ): Promise<SandboxSyncResult> => {
     const resultOperations: SandboxSyncResult["operations"] = [];
     for (const operation of operations) {
       captured.push(operation);
@@ -120,16 +147,25 @@ function attachNativeRecordingSyncIn(
       let bytesTransferred = 0;
       for (const mapping of operation.files) {
         const bytes = await readFile(mapping.sourcePath);
-        await mkdir(path.posix.dirname(mapping.targetPath), { recursive: true });
+        await mkdir(path.posix.dirname(mapping.targetPath), {
+          recursive: true,
+        });
         await writeFile(mapping.targetPath, bytes);
-        if (mapping.mode != null) await fsPromises.chmod(mapping.targetPath, mapping.mode);
+        if (mapping.mode != null)
+          await fsPromises.chmod(mapping.targetPath, mapping.mode);
         filesTransferred += 1;
         bytesTransferred += bytes.byteLength;
       }
       for (const command of operation.postUploadCommands ?? []) {
-        await execFile("sh", ["-c", command.command], { maxBuffer: 32 * 1024 * 1024 });
+        await execFile("sh", ["-c", command.command], {
+          maxBuffer: 32 * 1024 * 1024,
+        });
       }
-      resultOperations.push({ operationId: operation.operationId, filesTransferred, bytesTransferred });
+      resultOperations.push({
+        operationId: operation.operationId,
+        filesTransferred,
+        bytesTransferred,
+      });
     }
     return { operations: resultOperations };
   };
@@ -145,29 +181,40 @@ function attachCapturingSyncIn(
   client: SandboxManagedRuntimeClient,
   captured: SandboxSyncOperation[],
 ): void {
-  client.syncIn = async (operations: SandboxSyncOperation[]): Promise<SandboxSyncResult> => {
+  client.syncIn = async (
+    operations: SandboxSyncOperation[],
+  ): Promise<SandboxSyncResult> => {
     const resultOperations: SandboxSyncResult["operations"] = [];
     for (const operation of operations) {
       captured.push(operation);
       let filesTransferred = 0;
       let bytesTransferred = 0;
       for (const mapping of operation.files) {
-        await mkdir(path.posix.dirname(mapping.targetPath), { recursive: true });
+        await mkdir(path.posix.dirname(mapping.targetPath), {
+          recursive: true,
+        });
         if (mapping.kind === "directory") {
           await mirrorDirectory(mapping.sourcePath, mapping.targetPath);
           bytesTransferred += await directoryByteSize(mapping.targetPath);
         } else {
           const bytes = await readFile(mapping.sourcePath);
           await writeFile(mapping.targetPath, bytes);
-          if (mapping.mode != null) await fsPromises.chmod(mapping.targetPath, mapping.mode);
+          if (mapping.mode != null)
+            await fsPromises.chmod(mapping.targetPath, mapping.mode);
           bytesTransferred += bytes.byteLength;
         }
         filesTransferred += 1;
       }
       for (const command of operation.postUploadCommands ?? []) {
-        await execFile("sh", ["-c", command.command], { maxBuffer: 32 * 1024 * 1024 });
+        await execFile("sh", ["-c", command.command], {
+          maxBuffer: 32 * 1024 * 1024,
+        });
       }
-      resultOperations.push({ operationId: operation.operationId, filesTransferred, bytesTransferred });
+      resultOperations.push({
+        operationId: operation.operationId,
+        filesTransferred,
+        bytesTransferred,
+      });
     }
     return { operations: resultOperations };
   };
@@ -217,14 +264,45 @@ function makeInlineSpawnRunner(): CommandManagedRuntimeRunner {
       new Promise<RunProcessResult>((resolve) => {
         const startedAt = new Date().toISOString();
         const command =
-          input.command === "sh" ? "/bin/sh" : input.command === "bash" ? "/bin/bash" : input.command;
-        const child = spawn(command, input.args ?? [], { cwd: input.cwd, env: { ...process.env, ...input.env } });
+          input.command === "sh"
+            ? "/bin/sh"
+            : input.command === "bash"
+              ? "/bin/bash"
+              : input.command;
+        const child = spawn(command, input.args ?? [], {
+          cwd: input.cwd,
+          env: { ...process.env, ...input.env },
+        });
         let stdout = "";
         let stderr = "";
-        child.stdout.on("data", (chunk) => { stdout += chunk.toString("utf8"); });
-        child.stderr.on("data", (chunk) => { stderr += chunk.toString("utf8"); });
-        child.on("error", () => resolve({ exitCode: 127, signal: null, timedOut: false, stdout, stderr, pid: null, startedAt }));
-        child.on("close", (code) => resolve({ exitCode: code ?? 0, signal: null, timedOut: false, stdout, stderr, pid: child.pid ?? null, startedAt }));
+        child.stdout.on("data", (chunk) => {
+          stdout += chunk.toString("utf8");
+        });
+        child.stderr.on("data", (chunk) => {
+          stderr += chunk.toString("utf8");
+        });
+        child.on("error", () =>
+          resolve({
+            exitCode: 127,
+            signal: null,
+            timedOut: false,
+            stdout,
+            stderr,
+            pid: null,
+            startedAt,
+          }),
+        );
+        child.on("close", (code) =>
+          resolve({
+            exitCode: code ?? 0,
+            signal: null,
+            timedOut: false,
+            stdout,
+            stderr,
+            pid: child.pid ?? null,
+            startedAt,
+          }),
+        );
         if (input.stdin != null) child.stdin.write(input.stdin);
         child.stdin.end();
       }),
@@ -242,21 +320,36 @@ async function stageOneReferencedProject(
   const localWorkspaceDir = path.join(rootDir, "local-workspace");
   const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
   await mkdir(localWorkspaceDir, { recursive: true });
-  await writeFile(path.join(localWorkspaceDir, "README.md"), "anchor\n", "utf8");
+  await writeFile(
+    path.join(localWorkspaceDir, "README.md"),
+    "anchor\n",
+    "utf8",
+  );
   return await prepareCommandManagedRuntime({
     runner: makeInlineSpawnRunner(),
     spec: { remoteCwd: remoteWorkspaceDir, timeoutMs: 30_000 },
     adapterKey: "test-adapter",
     workspaceLocalDir: localWorkspaceDir,
-    additionalSources: [{ localPath: referencedDir, projectId: "proj", ignoreResolution }],
+    additionalSources: [
+      { localPath: referencedDir, projectId: "proj", ignoreResolution },
+    ],
   });
 }
 
-async function listTarMembers(rootDir: string, name: string, bytes: Buffer): Promise<string[]> {
+async function listTarMembers(
+  rootDir: string,
+  name: string,
+  bytes: Buffer,
+): Promise<string[]> {
   const tarPath = path.join(rootDir, name);
   await writeFile(tarPath, bytes);
-  const { stdout } = await execFile("tar", ["-tf", tarPath], { maxBuffer: 32 * 1024 * 1024 });
-  return stdout.split("\n").map((line) => line.trim()).filter(Boolean);
+  const { stdout } = await execFile("tar", ["-tf", tarPath], {
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  return stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 // Build a filesystem-backed managed-runtime client. The host tarball path runs
@@ -273,7 +366,9 @@ function makeFilesystemClient(): SandboxManagedRuntimeClient {
     },
     readFile: async (remotePath) => await readFile(remotePath),
     listFiles: async (remotePath) => {
-      const entries = await readdir(remotePath, { withFileTypes: true }).catch(() => []);
+      const entries = await readdir(remotePath, { withFileTypes: true }).catch(
+        () => [],
+      );
       return entries
         .filter((entry) => entry.isFile())
         .map((entry) => entry.name)
@@ -343,72 +438,152 @@ function createRecordingTraceContext(): {
 describe("sandbox managed runtime", () => {
   const cleanupDirs: string[] = [];
 
-  it.each(["host_current", "adopt_remote", "durable_seed"] as const)("stages and restores both project repositories with independent Git histories (%s)", async (mode) => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "taskcore-multi-repo-"));
-    cleanupDirs.push(root);
-    const local = path.join(root, "local");
-    const remote = path.join(root, "remote");
-    const secondPath = ".taskcore-repositories/backend";
-    for (const [relative, contents] of [["", "frontend"], [secondPath, "backend"]]) {
-      const cwd = path.join(local, relative!);
-      await mkdir(cwd, { recursive: true });
-      await git(cwd, ["init", "-b", "main"]);
-      await git(cwd, ["config", "user.name", "Test"]);
-      await git(cwd, ["config", "user.email", "test@example.com"]);
-      await writeFile(path.join(cwd, "README.md"), contents!);
-      await writeFile(path.join(cwd, ".gitignore"), "secret.txt\n");
-      await mkdir(path.join(cwd, ".claude/skills"), { recursive: true });
-      await mkdir(path.join(cwd, "skills/demo"), { recursive: true });
-      await writeFile(path.join(cwd, "skills/demo/SKILL.md"), "base skill\n");
-      await symlink("../../skills/demo", path.join(cwd, ".claude/skills/demo"));
-      await git(cwd, ["add", "."]);
-      await git(cwd, ["commit", "-m", contents!]);
-      await writeFile(path.join(cwd, "secret.txt"), "must stay local");
-    }
-    await writeFile(path.join(local, ".git/info/exclude"), ".taskcore-repositories/\n");
-    await writeFile(path.join(local, secondPath, "dirty.txt"), "local edit");
-    await writeFile(path.join(local, secondPath, "host-config.txt"), "excluded by operator");
-    const seed = { workspaceArchivePath: path.join(root, "workspace.tar"), gitArchivePath: path.join(root, "git.tar") };
-    const input = {
-      spec: { transport: "sandbox", provider: "test", sandboxId: "two-repos", remoteCwd: remote, timeoutMs: 30_000, apiKey: null },
-      client: makeFilesystemClient(), adapterKey: "test", workspaceLocalDir: local,
-      workspaceDurableSeed: seed,
-      workspaceExclude: [`${secondPath}/host-config.txt`],
-    } satisfies Parameters<typeof prepareSandboxManagedRuntime>[0];
-    let prepared = await prepareSandboxManagedRuntime(input);
-    if (mode !== "host_current") {
-      if (mode === "durable_seed") await rm(remote, { recursive: true, force: true });
-      await writeFile(path.join(local, secondPath, "host-only.txt"), "concurrent host work");
-      prepared = await prepareSandboxManagedRuntime({
-        ...input, workspaceInboundMode: mode,
-        workspaceBaseline: prepared.workspaceSyncSnapshot!.baseline,
-        workspaceGitSnapshot: prepared.workspaceSyncSnapshot!.gitSnapshot,
-      });
-    }
-    for (const relative of ["", secondPath]) {
-      const cwd = path.join(remote, relative);
-      expect((await lstat(path.join(cwd, ".git"))).isDirectory()).toBe(true);
-      expect(await readlink(path.join(cwd, ".claude/skills/demo"))).toBe("../../skills/demo");
-      expect(await readFile(path.join(cwd, ".claude/skills/demo/SKILL.md"), "utf8")).toBe("base skill\n");
-      await expect(stat(path.join(cwd, "secret.txt"))).rejects.toMatchObject({ code: "ENOENT" });
-      await writeFile(path.join(cwd, "README.md"), `updated ${relative}`);
-      await writeFile(path.join(cwd, ".claude/skills/demo/SKILL.md"), "updated skill\n");
-      await git(cwd, ["-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-am", "remote change"]);
-    }
-    expect(await readFile(path.join(remote, secondPath, "dirty.txt"), "utf8")).toBe("local edit");
-    await expect(stat(path.join(remote, secondPath, "host-config.txt"))).rejects.toMatchObject({ code: "ENOENT" });
-    await writeFile(path.join(remote, secondPath, "host-config.txt"), "remote must not replace host config");
-    await prepared.restoreWorkspace();
-    expect(await readFile(path.join(local, secondPath, "host-config.txt"), "utf8")).toBe("excluded by operator");
-    if (mode !== "host_current") expect(await readFile(path.join(local, secondPath, "host-only.txt"), "utf8")).toBe("concurrent host work");
-    for (const relative of ["", secondPath]) {
-      expect(await readFile(path.join(local, relative, "README.md"), "utf8")).toBe(`updated ${relative}`);
-      expect(await git(path.join(local, relative), ["log", "-1", "--format=%s"])).toBe("remote change");
-      expect(await readFile(path.join(local, relative, "secret.txt"), "utf8")).toBe("must stay local");
-      expect(await readlink(path.join(local, relative, ".claude/skills/demo"))).toBe("../../skills/demo");
-      expect(await readFile(path.join(local, relative, ".claude/skills/demo/SKILL.md"), "utf8")).toBe("updated skill\n");
-    }
-  }, 30_000);
+  it.each(["host_current", "adopt_remote", "durable_seed"] as const)(
+    "stages and restores both project repositories with independent Git histories (%s)",
+    async (mode) => {
+      const root = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-multi-repo-"),
+      );
+      cleanupDirs.push(root);
+      const local = path.join(root, "local");
+      const remote = path.join(root, "remote");
+      const secondPath = ".taskcore-repositories/backend";
+      for (const [relative, contents] of [
+        ["", "frontend"],
+        [secondPath, "backend"],
+      ]) {
+        const cwd = path.join(local, relative!);
+        await mkdir(cwd, { recursive: true });
+        await git(cwd, ["init", "-b", "main"]);
+        await git(cwd, ["config", "user.name", "Test"]);
+        await git(cwd, ["config", "user.email", "test@example.com"]);
+        await writeFile(path.join(cwd, "README.md"), contents!);
+        await writeFile(path.join(cwd, ".gitignore"), "secret.txt\n");
+        await mkdir(path.join(cwd, ".claude/skills"), { recursive: true });
+        await mkdir(path.join(cwd, "skills/demo"), { recursive: true });
+        await writeFile(path.join(cwd, "skills/demo/SKILL.md"), "base skill\n");
+        await symlink(
+          "../../skills/demo",
+          path.join(cwd, ".claude/skills/demo"),
+        );
+        await git(cwd, ["add", "."]);
+        await git(cwd, ["commit", "-m", contents!]);
+        await writeFile(path.join(cwd, "secret.txt"), "must stay local");
+      }
+      await writeFile(
+        path.join(local, ".git/info/exclude"),
+        ".taskcore-repositories/\n",
+      );
+      await writeFile(path.join(local, secondPath, "dirty.txt"), "local edit");
+      await writeFile(
+        path.join(local, secondPath, "host-config.txt"),
+        "excluded by operator",
+      );
+      const seed = {
+        workspaceArchivePath: path.join(root, "workspace.tar"),
+        gitArchivePath: path.join(root, "git.tar"),
+      };
+      const input = {
+        spec: {
+          transport: "sandbox",
+          provider: "test",
+          sandboxId: "two-repos",
+          remoteCwd: remote,
+          timeoutMs: 30_000,
+          apiKey: null,
+        },
+        client: makeFilesystemClient(),
+        adapterKey: "test",
+        workspaceLocalDir: local,
+        workspaceDurableSeed: seed,
+        workspaceExclude: [`${secondPath}/host-config.txt`],
+      } satisfies Parameters<typeof prepareSandboxManagedRuntime>[0];
+      let prepared = await prepareSandboxManagedRuntime(input);
+      if (mode !== "host_current") {
+        if (mode === "durable_seed")
+          await rm(remote, { recursive: true, force: true });
+        await writeFile(
+          path.join(local, secondPath, "host-only.txt"),
+          "concurrent host work",
+        );
+        prepared = await prepareSandboxManagedRuntime({
+          ...input,
+          workspaceInboundMode: mode,
+          workspaceBaseline: prepared.workspaceSyncSnapshot!.baseline,
+          workspaceGitSnapshot: prepared.workspaceSyncSnapshot!.gitSnapshot,
+        });
+      }
+      for (const relative of ["", secondPath]) {
+        const cwd = path.join(remote, relative);
+        expect((await lstat(path.join(cwd, ".git"))).isDirectory()).toBe(true);
+        expect(await readlink(path.join(cwd, ".claude/skills/demo"))).toBe(
+          "../../skills/demo",
+        );
+        expect(
+          await readFile(
+            path.join(cwd, ".claude/skills/demo/SKILL.md"),
+            "utf8",
+          ),
+        ).toBe("base skill\n");
+        await expect(stat(path.join(cwd, "secret.txt"))).rejects.toMatchObject({
+          code: "ENOENT",
+        });
+        await writeFile(path.join(cwd, "README.md"), `updated ${relative}`);
+        await writeFile(
+          path.join(cwd, ".claude/skills/demo/SKILL.md"),
+          "updated skill\n",
+        );
+        await git(cwd, [
+          "-c",
+          "user.name=Test",
+          "-c",
+          "user.email=test@example.com",
+          "commit",
+          "-am",
+          "remote change",
+        ]);
+      }
+      expect(
+        await readFile(path.join(remote, secondPath, "dirty.txt"), "utf8"),
+      ).toBe("local edit");
+      await expect(
+        stat(path.join(remote, secondPath, "host-config.txt")),
+      ).rejects.toMatchObject({ code: "ENOENT" });
+      await writeFile(
+        path.join(remote, secondPath, "host-config.txt"),
+        "remote must not replace host config",
+      );
+      await prepared.restoreWorkspace();
+      expect(
+        await readFile(path.join(local, secondPath, "host-config.txt"), "utf8"),
+      ).toBe("excluded by operator");
+      if (mode !== "host_current")
+        expect(
+          await readFile(path.join(local, secondPath, "host-only.txt"), "utf8"),
+        ).toBe("concurrent host work");
+      for (const relative of ["", secondPath]) {
+        expect(
+          await readFile(path.join(local, relative, "README.md"), "utf8"),
+        ).toBe(`updated ${relative}`);
+        expect(
+          await git(path.join(local, relative), ["log", "-1", "--format=%s"]),
+        ).toBe("remote change");
+        expect(
+          await readFile(path.join(local, relative, "secret.txt"), "utf8"),
+        ).toBe("must stay local");
+        expect(
+          await readlink(path.join(local, relative, ".claude/skills/demo")),
+        ).toBe("../../skills/demo");
+        expect(
+          await readFile(
+            path.join(local, relative, ".claude/skills/demo/SKILL.md"),
+            "utf8",
+          ),
+        ).toBe("updated skill\n");
+      }
+    },
+    30_000,
+  );
 
   afterEach(async () => {
     while (cleanupDirs.length > 0) {
@@ -542,32 +717,62 @@ describe("sandbox managed runtime", () => {
   });
 
   it("preserves excluded local workspace artifacts during restore mirroring", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-restore-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-restore-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceDir = path.join(rootDir, "source");
     const targetDir = path.join(rootDir, "target");
     await mkdir(path.join(sourceDir, "src"), { recursive: true });
     await mkdir(path.join(targetDir, ".claude"), { recursive: true });
     await mkdir(path.join(targetDir, ".taskcore-runtime"), { recursive: true });
-    await writeFile(path.join(sourceDir, "src", "app.ts"), "export const value = 2;\n", "utf8");
+    await writeFile(
+      path.join(sourceDir, "src", "app.ts"),
+      "export const value = 2;\n",
+      "utf8",
+    );
     await writeFile(path.join(targetDir, "stale.txt"), "remove me\n", "utf8");
-    await writeFile(path.join(targetDir, ".claude", "settings.json"), "{\"keep\":true}\n", "utf8");
-    await writeFile(path.join(targetDir, ".claude.json"), "{\"keep\":true}\n", "utf8");
-    await writeFile(path.join(targetDir, ".taskcore-runtime", "state.json"), "{}\n", "utf8");
+    await writeFile(
+      path.join(targetDir, ".claude", "settings.json"),
+      '{"keep":true}\n',
+      "utf8",
+    );
+    await writeFile(
+      path.join(targetDir, ".claude.json"),
+      '{"keep":true}\n',
+      "utf8",
+    );
+    await writeFile(
+      path.join(targetDir, ".taskcore-runtime", "state.json"),
+      "{}\n",
+      "utf8",
+    );
 
     await mirrorDirectory(sourceDir, targetDir, {
       preserveAbsent: [".taskcore-runtime", ".claude", ".claude.json"],
     });
 
-    await expect(readFile(path.join(targetDir, "src", "app.ts"), "utf8")).resolves.toBe("export const value = 2;\n");
-    await expect(readFile(path.join(targetDir, ".claude", "settings.json"), "utf8")).resolves.toBe("{\"keep\":true}\n");
-    await expect(readFile(path.join(targetDir, ".claude.json"), "utf8")).resolves.toBe("{\"keep\":true}\n");
-    await expect(readFile(path.join(targetDir, ".taskcore-runtime", "state.json"), "utf8")).resolves.toBe("{}\n");
-    await expect(readFile(path.join(targetDir, "stale.txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(path.join(targetDir, "src", "app.ts"), "utf8"),
+    ).resolves.toBe("export const value = 2;\n");
+    await expect(
+      readFile(path.join(targetDir, ".claude", "settings.json"), "utf8"),
+    ).resolves.toBe('{"keep":true}\n');
+    await expect(
+      readFile(path.join(targetDir, ".claude.json"), "utf8"),
+    ).resolves.toBe('{"keep":true}\n');
+    await expect(
+      readFile(path.join(targetDir, ".taskcore-runtime", "state.json"), "utf8"),
+    ).resolves.toBe("{}\n");
+    await expect(
+      readFile(path.join(targetDir, "stale.txt"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("applies file mode on a staged sibling before renaming into place", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-copy-mode-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-copy-mode-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceDir = path.join(rootDir, "source");
     const targetDir = path.join(rootDir, "target");
@@ -585,16 +790,22 @@ describe("sandbox managed runtime", () => {
 
     await mirrorDirectory(sourceDir, targetDir);
 
-    await expect(readFile(targetPath, "utf8")).resolves.toBe("#!/bin/sh\necho hello\n");
+    await expect(readFile(targetPath, "utf8")).resolves.toBe(
+      "#!/bin/sh\necho hello\n",
+    );
     expect(chmodMock).toHaveBeenCalledTimes(1);
     expect(renameMock).toHaveBeenCalledTimes(1);
     expect(chmodMock.mock.calls[0]?.[0]).toContain(".taskcore-copy.");
     expect(chmodMock.mock.calls[0]?.[0]).not.toBe(targetPath);
-    expect(chmodMock.mock.invocationCallOrder[0]).toBeLessThan(renameMock.mock.invocationCallOrder[0]);
+    expect(chmodMock.mock.invocationCallOrder[0]).toBeLessThan(
+      renameMock.mock.invocationCallOrder[0],
+    );
   });
 
   it("cleans up a staged sibling when chmod fails before rename", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-copy-cleanup-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-copy-cleanup-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceDir = path.join(rootDir, "source");
     const targetDir = path.join(rootDir, "target");
@@ -613,18 +824,26 @@ describe("sandbox managed runtime", () => {
       throw new Error("chmod failed");
     });
 
-    await expect(mirrorDirectory(sourceDir, targetDir)).rejects.toThrow(/chmod failed/);
+    await expect(mirrorDirectory(sourceDir, targetDir)).rejects.toThrow(
+      /chmod failed/,
+    );
 
     expect(chmodMock).toHaveBeenCalledTimes(1);
     expect(renameMock).not.toHaveBeenCalled();
     const stagedPath = chmodMock.mock.calls[0]?.[0];
     expect(stagedPath).toContain(".taskcore-copy.");
-    await expect(readFile(stagedPath, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(readFile(targetPath, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(stagedPath, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    await expect(readFile(targetPath, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   it("syncs workspace and assets through a provider-neutral sandbox client", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-managed-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-managed-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -632,9 +851,21 @@ describe("sandbox managed runtime", () => {
     const linkedAssetPath = path.join(rootDir, "linked-skill.md");
     await mkdir(path.join(localWorkspaceDir, ".claude"), { recursive: true });
     await mkdir(localAssetsDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "local workspace\n", "utf8");
-    await writeFile(path.join(localWorkspaceDir, "._README.md"), "appledouble\n", "utf8");
-    await writeFile(path.join(localWorkspaceDir, ".claude", "settings.json"), "{\"local\":true}\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "local workspace\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(localWorkspaceDir, "._README.md"),
+      "appledouble\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(localWorkspaceDir, ".claude", "settings.json"),
+      '{"local":true}\n',
+      "utf8",
+    );
     await writeFile(linkedAssetPath, "skill body\n", "utf8");
     await symlink(linkedAssetPath, path.join(localAssetsDir, "skill.md"));
 
@@ -648,7 +879,9 @@ describe("sandbox managed runtime", () => {
       },
       readFile: async (remotePath) => await readFile(remotePath),
       listFiles: async (remotePath) => {
-        const entries = await readdir(remotePath, { withFileTypes: true }).catch(() => []);
+        const entries = await readdir(remotePath, {
+          withFileTypes: true,
+        }).catch(() => []);
         return entries
           .filter((entry) => entry.isFile())
           .map((entry) => entry.name)
@@ -683,47 +916,108 @@ describe("sandbox managed runtime", () => {
       onRuntimeProgress: async (status) => {
         runtimeStatuses.push(`${status.phase}:${status.message}`);
       },
-      assets: [{
-        key: "skills",
-        localDir: localAssetsDir,
-        followSymlinks: true,
-      }],
+      assets: [
+        {
+          key: "skills",
+          localDir: localAssetsDir,
+          followSymlinks: true,
+        },
+      ],
     });
 
-    await expect(readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8")).resolves.toBe("local workspace\n");
-    await expect(readFile(path.join(remoteWorkspaceDir, "._README.md"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(readFile(path.join(remoteWorkspaceDir, ".claude", "settings.json"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(readFile(path.join(prepared.assetDirs.skills, "skill.md"), "utf8")).resolves.toBe("skill body\n");
-    expect((await lstat(path.join(prepared.assetDirs.skills, "skill.md"))).isFile()).toBe(true);
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("local workspace\n");
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "._README.md"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(
+        path.join(remoteWorkspaceDir, ".claude", "settings.json"),
+        "utf8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(path.join(prepared.assetDirs.skills, "skill.md"), "utf8"),
+    ).resolves.toBe("skill body\n");
+    expect(
+      (await lstat(path.join(prepared.assetDirs.skills, "skill.md"))).isFile(),
+    ).toBe(true);
 
-    await writeFile(path.join(remoteWorkspaceDir, "README.md"), "remote workspace\n", "utf8");
-    await writeFile(path.join(remoteWorkspaceDir, "remote-only.txt"), "sync back\n", "utf8");
-    await mkdir(path.join(localWorkspaceDir, ".taskcore-runtime"), { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, ".taskcore-runtime", "state.json"), "{}\n", "utf8");
-    await writeFile(path.join(localWorkspaceDir, "local-stale.txt"), "remove\n", "utf8");
+    await writeFile(
+      path.join(remoteWorkspaceDir, "README.md"),
+      "remote workspace\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(remoteWorkspaceDir, "remote-only.txt"),
+      "sync back\n",
+      "utf8",
+    );
+    await mkdir(path.join(localWorkspaceDir, ".taskcore-runtime"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(localWorkspaceDir, ".taskcore-runtime", "state.json"),
+      "{}\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(localWorkspaceDir, "local-stale.txt"),
+      "remove\n",
+      "utf8",
+    );
     await prepared.restoreWorkspace();
 
-    await expect(readFile(path.join(localWorkspaceDir, "README.md"), "utf8")).resolves.toBe("remote workspace\n");
-    await expect(readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8")).resolves.toBe("sync back\n");
-    await expect(readFile(path.join(localWorkspaceDir, "local-stale.txt"), "utf8")).resolves.toBe("remove\n");
-    await expect(readFile(path.join(localWorkspaceDir, ".claude", "settings.json"), "utf8")).resolves.toBe("{\"local\":true}\n");
-    await expect(readFile(path.join(localWorkspaceDir, ".taskcore-runtime", "state.json"), "utf8")).resolves.toBe("{}\n");
-    expect(runtimeStatuses).toEqual(expect.arrayContaining([
-      "config_sync:Syncing workspace to environment",
-      "config_sync:Syncing runtime assets to environment",
-      "restore:Restoring workspace from environment",
-      "finalize:Finalizing workspace",
-    ]));
-    expect(runtimeStatuses).toEqual(expect.arrayContaining([
-      expect.stringMatching(/^config_sync:Syncing workspace to environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/),
-      expect.stringMatching(/^config_sync:Syncing skills to environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/),
-      expect.stringMatching(/^restore:Restoring workspace from environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/),
-    ]));
+    await expect(
+      readFile(path.join(localWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("remote workspace\n");
+    await expect(
+      readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8"),
+    ).resolves.toBe("sync back\n");
+    await expect(
+      readFile(path.join(localWorkspaceDir, "local-stale.txt"), "utf8"),
+    ).resolves.toBe("remove\n");
+    await expect(
+      readFile(
+        path.join(localWorkspaceDir, ".claude", "settings.json"),
+        "utf8",
+      ),
+    ).resolves.toBe('{"local":true}\n');
+    await expect(
+      readFile(
+        path.join(localWorkspaceDir, ".taskcore-runtime", "state.json"),
+        "utf8",
+      ),
+    ).resolves.toBe("{}\n");
+    expect(runtimeStatuses).toEqual(
+      expect.arrayContaining([
+        "config_sync:Syncing workspace to environment",
+        "config_sync:Syncing runtime assets to environment",
+        "restore:Restoring workspace from environment",
+        "finalize:Finalizing workspace",
+      ]),
+    );
+    expect(runtimeStatuses).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(
+          /^config_sync:Syncing workspace to environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/,
+        ),
+        expect.stringMatching(
+          /^config_sync:Syncing skills to environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/,
+        ),
+        expect.stringMatching(
+          /^restore:Restoring workspace from environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/,
+        ),
+      ]),
+    );
     expect(runtimeStatuses.at(-1)).toBe("finalize:Finalizing workspace");
   });
 
   it("falls back to the host-known byte count when the provider reports 0 for inbound workspace sync", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-zero-report-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-zero-report-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -731,7 +1025,10 @@ describe("sandbox managed runtime", () => {
     // Sizeable content, well above the 0.1 MB rounding step, so a fallback bug
     // that stays at 0 is distinguishable from a small transfer that would
     // still round down to "0.0 MB".
-    await writeFile(path.join(localWorkspaceDir, "large.bin"), Buffer.alloc(300 * 1024, "a"));
+    await writeFile(
+      path.join(localWorkspaceDir, "large.bin"),
+      Buffer.alloc(300 * 1024, "a"),
+    );
 
     const client = makeFilesystemClient();
     const realSyncIn = client.syncIn!;
@@ -740,7 +1037,10 @@ describe("sandbox managed runtime", () => {
     client.syncIn = async (operations) => {
       const result = await realSyncIn(operations);
       return {
-        operations: result.operations.map((operation) => ({ ...operation, bytesTransferred: 0 })),
+        operations: result.operations.map((operation) => ({
+          ...operation,
+          bytesTransferred: 0,
+        })),
       };
     };
 
@@ -757,30 +1057,46 @@ describe("sandbox managed runtime", () => {
       adapterKey: "test-adapter",
       client,
       workspaceLocalDir: localWorkspaceDir,
-      onProgress: (line) => { lines.push(line); },
+      onProgress: (line) => {
+        lines.push(line);
+      },
     });
 
-    await expect(readFile(path.join(remoteWorkspaceDir, "large.bin"))).resolves.toHaveLength(300 * 1024);
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "large.bin")),
+    ).resolves.toHaveLength(300 * 1024);
 
-    const workspaceLines = lines.filter((line) => line.includes("Syncing workspace to environment"));
+    const workspaceLines = lines.filter((line) =>
+      line.includes("Syncing workspace to environment"),
+    );
     expect(workspaceLines.length).toBeGreaterThan(0);
     // Even though the provider reported 0, the line still shows the real,
     // host-known workspace size, from the caller-supplied fallback.
-    expect(workspaceLines.some((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line))).toBe(true);
-    expect(workspaceLines.some((line) => line.includes("(0.0/0.0 MB)"))).toBe(false);
+    expect(
+      workspaceLines.some((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line)),
+    ).toBe(true);
+    expect(workspaceLines.some((line) => line.includes("(0.0/0.0 MB)"))).toBe(
+      false,
+    );
   });
 
   it.each(["workspace", "git-workspace"])(
     "rejects an asset key that collides with the reserved %s archive name",
     async (reservedKey) => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-asset-key-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-sandbox-asset-key-"),
+      );
       cleanupDirs.push(rootDir);
       const localWorkspaceDir = path.join(rootDir, "local-workspace");
       const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
       const localAssetsDir = path.join(rootDir, "local-assets");
       await mkdir(localWorkspaceDir, { recursive: true });
       await mkdir(localAssetsDir, { recursive: true });
-      await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
+      await writeFile(
+        path.join(localWorkspaceDir, "README.md"),
+        "workspace\n",
+        "utf8",
+      );
 
       const client = makeFilesystemClient();
       await expect(
@@ -802,21 +1118,29 @@ describe("sandbox managed runtime", () => {
 
       // The reserved-key guard fails before any workspace or asset archive is
       // built, so nothing lands in the remote workspace directory.
-      await expect(readdir(remoteWorkspaceDir)).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(readdir(remoteWorkspaceDir)).rejects.toMatchObject({
+        code: "ENOENT",
+      });
     },
   );
 
   it.each(["skills/nested", "skills\\nested", "..", "../escape"])(
     "rejects an asset key that is not a simple path segment: %s",
     async (unsafeKey) => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-asset-key-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-sandbox-asset-key-"),
+      );
       cleanupDirs.push(rootDir);
       const localWorkspaceDir = path.join(rootDir, "local-workspace");
       const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
       const localAssetsDir = path.join(rootDir, "local-assets");
       await mkdir(localWorkspaceDir, { recursive: true });
       await mkdir(localAssetsDir, { recursive: true });
-      await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
+      await writeFile(
+        path.join(localWorkspaceDir, "README.md"),
+        "workspace\n",
+        "utf8",
+      );
 
       const client = makeFilesystemClient();
       await expect(
@@ -839,7 +1163,9 @@ describe("sandbox managed runtime", () => {
   );
 
   it("restores a sandbox rebase without merging it with unchanged host history", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-rebase-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-rebase-"),
+    );
     cleanupDirs.push(rootDir);
     const host = path.join(rootDir, "host");
     const remote = path.join(rootDir, "remote");
@@ -862,21 +1188,38 @@ describe("sandbox managed runtime", () => {
     await git(host, ["checkout", "work"]);
 
     const prepared = await prepareSandboxManagedRuntime({
-      spec: { transport: "sandbox", provider: "test", sandboxId: "rebase", remoteCwd: remote, timeoutMs: 30_000, apiKey: null },
+      spec: {
+        transport: "sandbox",
+        provider: "test",
+        sandboxId: "rebase",
+        remoteCwd: remote,
+        timeoutMs: 30_000,
+        apiKey: null,
+      },
       adapterKey: "test-adapter",
       client: makeFilesystemClient(),
       workspaceLocalDir: host,
     });
     await git(remote, ["config", "user.name", "Taskcore Test"]);
     await git(remote, ["config", "user.email", "test@taskcore.dev"]);
-    await git(remote, ["fetch", "--unshallow", host, "+refs/heads/*:refs/remotes/source/*"]);
-    await expect(git(remote, ["rebase", "refs/remotes/source/upstream"])).rejects.toMatchObject({ code: 1 });
+    await git(remote, [
+      "fetch",
+      "--unshallow",
+      host,
+      "+refs/heads/*:refs/remotes/source/*",
+    ]);
+    await expect(
+      git(remote, ["rebase", "refs/remotes/source/upstream"]),
+    ).rejects.toMatchObject({ code: 1 });
     await writeFile(path.join(remote, "pins.txt"), "resolved pins\n");
     await git(remote, ["add", "pins.txt"]);
     await git(remote, ["-c", "core.editor=true", "rebase", "--continue"]);
     const rebasedHead = await git(remote, ["rev-parse", "HEAD"]);
     expect(rebasedHead).not.toBe(startingHead);
-    await writeFile(path.join(host, "notes.txt"), "host edits during the run\n");
+    await writeFile(
+      path.join(host, "notes.txt"),
+      "host edits during the run\n",
+    );
     await writeFile(path.join(host, "local-only.txt"), "local file\n");
     await writeFile(path.join(remote, "output.txt"), "sandbox output\n");
 
@@ -884,15 +1227,25 @@ describe("sandbox managed runtime", () => {
 
     expect(await git(host, ["rev-parse", "HEAD"])).toBe(rebasedHead);
     expect(await git(host, ["symbolic-ref", "--short", "HEAD"])).toBe("work");
-    expect(await readFile(path.join(host, "pins.txt"), "utf8")).toBe("resolved pins\n");
-    expect(await readFile(path.join(host, "notes.txt"), "utf8")).toBe("host edits during the run\n");
-    expect(await readFile(path.join(host, "local-only.txt"), "utf8")).toBe("local file\n");
-    expect(await readFile(path.join(host, "output.txt"), "utf8")).toBe("sandbox output\n");
+    expect(await readFile(path.join(host, "pins.txt"), "utf8")).toBe(
+      "resolved pins\n",
+    );
+    expect(await readFile(path.join(host, "notes.txt"), "utf8")).toBe(
+      "host edits during the run\n",
+    );
+    expect(await readFile(path.join(host, "local-only.txt"), "utf8")).toBe(
+      "local file\n",
+    );
+    expect(await readFile(path.join(host, "output.txt"), "utf8")).toBe(
+      "sandbox output\n",
+    );
     expect(await git(host, ["diff", "--cached", "--name-only"])).toBe("");
   });
 
   it("restores a sandbox reset to an ancestor with the matching clean working tree", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-reset-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-reset-"),
+    );
     cleanupDirs.push(rootDir);
     const host = path.join(rootDir, "host");
     const remote = path.join(rootDir, "remote");
@@ -909,7 +1262,14 @@ describe("sandbox managed runtime", () => {
     await git(host, ["commit", "-am", "later change"]);
 
     const prepared = await prepareSandboxManagedRuntime({
-      spec: { transport: "sandbox", provider: "test", sandboxId: "reset", remoteCwd: remote, timeoutMs: 30_000, apiKey: null },
+      spec: {
+        transport: "sandbox",
+        provider: "test",
+        sandboxId: "reset",
+        remoteCwd: remote,
+        timeoutMs: 30_000,
+        apiKey: null,
+      },
       adapterKey: "test-adapter",
       client: makeFilesystemClient(),
       workspaceLocalDir: host,
@@ -921,12 +1281,16 @@ describe("sandbox managed runtime", () => {
 
     expect(await git(host, ["rev-parse", "HEAD"])).toBe(ancestor);
     expect(await git(host, ["symbolic-ref", "--short", "HEAD"])).toBe("work");
-    expect(await readFile(path.join(host, "tracked.txt"), "utf8")).toBe("original\n");
+    expect(await readFile(path.join(host, "tracked.txt"), "utf8")).toBe(
+      "original\n",
+    );
     expect(await git(host, ["status", "--porcelain"])).toBe("");
   });
 
   it("syncs git-backed workspaces through a shallow standalone clone and keeps .git out of archives", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-git-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-git-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-worktree");
@@ -937,29 +1301,78 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(sourceRepoDir, ".gitignore"), "node_modules/\n*.secret\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, ".gitignore"),
+      "node_modules/\n*.secret\n",
+      "utf8",
+    );
     await writeFile(path.join(sourceRepoDir, "tracked.txt"), "base\n", "utf8");
-    await writeFile(path.join(sourceRepoDir, "clean.txt"), "from git\n", "utf8");
-    await writeFile(path.join(sourceRepoDir, "deleted.txt"), "delete me\n", "utf8");
-    await git(sourceRepoDir, ["add", ".gitignore", "tracked.txt", "clean.txt", "deleted.txt"]);
+    await writeFile(
+      path.join(sourceRepoDir, "clean.txt"),
+      "from git\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(sourceRepoDir, "deleted.txt"),
+      "delete me\n",
+      "utf8",
+    );
+    await git(sourceRepoDir, [
+      "add",
+      ".gitignore",
+      "tracked.txt",
+      "clean.txt",
+      "deleted.txt",
+    ]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
 
-    expect((await lstat(path.join(localWorkspaceDir, ".git"))).isFile()).toBe(true);
-    await mkdir(path.join(localWorkspaceDir, "node_modules"), { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "tracked.txt"), "dirty local\n", "utf8");
-    await writeFile(path.join(localWorkspaceDir, "untracked.txt"), "from local\n", "utf8");
+    expect((await lstat(path.join(localWorkspaceDir, ".git"))).isFile()).toBe(
+      true,
+    );
+    await mkdir(path.join(localWorkspaceDir, "node_modules"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(localWorkspaceDir, "tracked.txt"),
+      "dirty local\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(localWorkspaceDir, "untracked.txt"),
+      "from local\n",
+      "utf8",
+    );
     await mkdir(path.join(localWorkspaceDir, "drafts"));
-    await writeFile(path.join(localWorkspaceDir, "drafts", "report.md"), "draft\n");
-    await symlink("report.md", path.join(localWorkspaceDir, "drafts", "report-link.md"));
-    await writeFile(path.join(localWorkspaceDir, "node_modules", "cache.bin"), "do not upload\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "drafts", "report.md"),
+      "draft\n",
+    );
+    await symlink(
+      "report.md",
+      path.join(localWorkspaceDir, "drafts", "report-link.md"),
+    );
+    await writeFile(
+      path.join(localWorkspaceDir, "node_modules", "cache.bin"),
+      "do not upload\n",
+      "utf8",
+    );
     await rm(path.join(localWorkspaceDir, "deleted.txt"));
 
     const uploadedTars: { remotePath: string; bytes: Buffer }[] = [];
     const downloadedTars: { remotePath: string; bytes: Buffer }[] = [];
     const driveProgress = async (
       total: number,
-      onProgress: ((done: number, total: number | null) => void | Promise<void>) | undefined,
+      onProgress:
+        | ((done: number, total: number | null) => void | Promise<void>)
+        | undefined,
     ) => {
       if (!onProgress) return;
       await onProgress(Math.max(1, Math.floor(total / 2)), total);
@@ -972,13 +1385,15 @@ describe("sandbox managed runtime", () => {
       writeFile: async (remotePath, bytes, options) => {
         await mkdir(path.dirname(remotePath), { recursive: true });
         const buffer = Buffer.from(bytes);
-        if (remotePath.endsWith("-upload.tar")) uploadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("-upload.tar"))
+          uploadedTars.push({ remotePath, bytes: buffer });
         await writeFile(remotePath, buffer);
         await driveProgress(buffer.byteLength, options?.onProgress);
       },
       readFile: async (remotePath, options) => {
         const buffer = await readFile(remotePath);
-        if (remotePath.endsWith("workspace-download.tar")) downloadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("workspace-download.tar"))
+          downloadedTars.push({ remotePath, bytes: buffer });
         await driveProgress(buffer.byteLength, options?.onProgress);
         return buffer;
       },
@@ -1009,81 +1424,178 @@ describe("sandbox managed runtime", () => {
         runtimeStatuses.push({ phase: status.phase, message: status.message });
         if (status.phase === "config_sync") {
           // These files appear after the Git snapshot, before the overlay copy.
-          await writeFile(path.join(localWorkspaceDir, "drafts", "late.secret"), "private\n");
-          await writeFile(path.join(localWorkspaceDir, "drafts", "late.txt"), "later work\n");
+          await writeFile(
+            path.join(localWorkspaceDir, "drafts", "late.secret"),
+            "private\n",
+          );
+          await writeFile(
+            path.join(localWorkspaceDir, "drafts", "late.txt"),
+            "later work\n",
+          );
         }
       },
     });
 
-    expect((await lstat(path.join(remoteWorkspaceDir, ".git"))).isDirectory()).toBe(true);
-    await expect(readFile(path.join(remoteWorkspaceDir, ".git", "shallow"), "utf8")).resolves.toContain(
-      await git(localWorkspaceDir, ["rev-parse", "HEAD"]),
+    expect(
+      (await lstat(path.join(remoteWorkspaceDir, ".git"))).isDirectory(),
+    ).toBe(true);
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, ".git", "shallow"), "utf8"),
+    ).resolves.toContain(await git(localWorkspaceDir, ["rev-parse", "HEAD"]));
+    expect(await git(remoteWorkspaceDir, ["rev-list", "--count", "HEAD"])).toBe(
+      "1",
     );
-    expect(await git(remoteWorkspaceDir, ["rev-list", "--count", "HEAD"])).toBe("1");
-    expect(await git(remoteWorkspaceDir, ["status", "--short"])).toContain("M tracked.txt");
-    expect(await git(remoteWorkspaceDir, ["status", "--short"])).toContain("?? untracked.txt");
-    await expect(readFile(path.join(remoteWorkspaceDir, "deleted.txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await git(remoteWorkspaceDir, ["status", "--short"])).toContain(
+      "M tracked.txt",
+    );
+    expect(await git(remoteWorkspaceDir, ["status", "--short"])).toContain(
+      "?? untracked.txt",
+    );
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "deleted.txt"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
 
-    const gitUpload = uploadedTars.find((entry) => path.posix.basename(entry.remotePath) === "git-workspace-upload.tar");
-    const workspaceUpload = uploadedTars.find((entry) => path.posix.basename(entry.remotePath) === "workspace-upload.tar");
+    const gitUpload = uploadedTars.find(
+      (entry) =>
+        path.posix.basename(entry.remotePath) === "git-workspace-upload.tar",
+    );
+    const workspaceUpload = uploadedTars.find(
+      (entry) =>
+        path.posix.basename(entry.remotePath) === "workspace-upload.tar",
+    );
     expect(gitUpload).toBeDefined();
     expect(workspaceUpload).toBeDefined();
-    const gitMembers = await listTarMembers(rootDir, "git-upload-list.tar", gitUpload!.bytes);
-    const workspaceMembers = await listTarMembers(rootDir, "workspace-upload-list.tar", workspaceUpload!.bytes);
-    expect(gitMembers.some((entry) => entry === ".git" || entry.startsWith(".git/"))).toBe(true);
-    expect(workspaceMembers.some((entry) => entry === ".git" || entry.startsWith(".git/"))).toBe(false);
+    const gitMembers = await listTarMembers(
+      rootDir,
+      "git-upload-list.tar",
+      gitUpload!.bytes,
+    );
+    const workspaceMembers = await listTarMembers(
+      rootDir,
+      "workspace-upload-list.tar",
+      workspaceUpload!.bytes,
+    );
+    expect(
+      gitMembers.some((entry) => entry === ".git" || entry.startsWith(".git/")),
+    ).toBe(true);
+    expect(
+      workspaceMembers.some(
+        (entry) => entry === ".git" || entry.startsWith(".git/"),
+      ),
+    ).toBe(false);
     expect(workspaceMembers).toContain("tracked.txt");
     expect(workspaceMembers).toContain("untracked.txt");
     expect(workspaceMembers).toContain("drafts/report.md");
-    expect(await readlink(path.join(remoteWorkspaceDir, "drafts", "report-link.md"))).toBe("report.md");
+    expect(
+      await readlink(path.join(remoteWorkspaceDir, "drafts", "report-link.md")),
+    ).toBe("report.md");
     expect(workspaceMembers).not.toContain("drafts/late.secret");
     expect(workspaceMembers).not.toContain("drafts/late.txt");
     expect(workspaceMembers).not.toContain("clean.txt");
-    expect(workspaceMembers.some((entry) => entry === "node_modules" || entry.startsWith("node_modules/"))).toBe(false);
+    expect(
+      workspaceMembers.some(
+        (entry) =>
+          entry === "node_modules" || entry.startsWith("node_modules/"),
+      ),
+    ).toBe(false);
 
     await git(remoteWorkspaceDir, ["config", "user.name", "Taskcore Sandbox"]);
-    await git(remoteWorkspaceDir, ["config", "user.email", "sandbox@taskcore.dev"]);
+    await git(remoteWorkspaceDir, [
+      "config",
+      "user.email",
+      "sandbox@taskcore.dev",
+    ]);
     await git(remoteWorkspaceDir, ["add", "-A"]);
     await git(remoteWorkspaceDir, ["commit", "-m", "sandbox update"]);
-    await writeFile(path.join(remoteWorkspaceDir, "tracked.txt"), "remote dirty\n", "utf8");
-    await writeFile(path.join(remoteWorkspaceDir, "remote-only.txt"), "from sandbox\n", "utf8");
+    await writeFile(
+      path.join(remoteWorkspaceDir, "tracked.txt"),
+      "remote dirty\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(remoteWorkspaceDir, "remote-only.txt"),
+      "from sandbox\n",
+      "utf8",
+    );
 
     await prepared.restoreWorkspace();
 
-    expect((await lstat(path.join(localWorkspaceDir, ".git"))).isFile()).toBe(true);
-    expect(await git(localWorkspaceDir, ["log", "-1", "--pretty=%s"])).toBe("sandbox update");
-    await expect(readFile(path.join(localWorkspaceDir, "tracked.txt"), "utf8")).resolves.toBe("remote dirty\n");
-    await expect(readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8")).resolves.toBe("from sandbox\n");
-    await expect(readFile(path.join(localWorkspaceDir, "deleted.txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(readFile(path.join(localWorkspaceDir, "node_modules", "cache.bin"), "utf8")).resolves.toBe("do not upload\n");
+    expect((await lstat(path.join(localWorkspaceDir, ".git"))).isFile()).toBe(
+      true,
+    );
+    expect(await git(localWorkspaceDir, ["log", "-1", "--pretty=%s"])).toBe(
+      "sandbox update",
+    );
+    await expect(
+      readFile(path.join(localWorkspaceDir, "tracked.txt"), "utf8"),
+    ).resolves.toBe("remote dirty\n");
+    await expect(
+      readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8"),
+    ).resolves.toBe("from sandbox\n");
+    await expect(
+      readFile(path.join(localWorkspaceDir, "deleted.txt"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(
+        path.join(localWorkspaceDir, "node_modules", "cache.bin"),
+        "utf8",
+      ),
+    ).resolves.toBe("do not upload\n");
 
     expect(downloadedTars).toHaveLength(1);
-    const downloadMembers = await listTarMembers(rootDir, "workspace-download-list.tar", downloadedTars[0]!.bytes);
-    expect(downloadMembers.some((entry) => entry === ".git" || entry.startsWith(".git/"))).toBe(false);
-    expect(downloadMembers.some((entry) => entry === "node_modules" || entry.startsWith("node_modules/"))).toBe(false);
-    expect(runtimeStatuses.map((status) => status.phase)).toEqual(expect.arrayContaining([
-      "git_sync",
-      "config_sync",
-      "export",
-      "restore",
-      "finalize",
-    ]));
+    const downloadMembers = await listTarMembers(
+      rootDir,
+      "workspace-download-list.tar",
+      downloadedTars[0]!.bytes,
+    );
+    expect(
+      downloadMembers.some(
+        (entry) => entry === ".git" || entry.startsWith(".git/"),
+      ),
+    ).toBe(false);
+    expect(
+      downloadMembers.some(
+        (entry) =>
+          entry === "node_modules" || entry.startsWith("node_modules/"),
+      ),
+    ).toBe(false);
+    expect(runtimeStatuses.map((status) => status.phase)).toEqual(
+      expect.arrayContaining([
+        "git_sync",
+        "config_sync",
+        "export",
+        "restore",
+        "finalize",
+      ]),
+    );
     // Git history and workspace overlay sync as ONE merged operation, so a single
     // transfer-progress event rides the config_sync (workspace) phase. The git_sync
     // phase still emits its plain status message (asserted by the arrayContaining
     // check above).
-    expect(runtimeStatuses.some((status) => (
-      status.phase === "config_sync" &&
-      /^Syncing workspace to environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/.test(status.message)
-    ))).toBe(true);
-    expect(runtimeStatuses.some((status) => (
-      status.phase === "export" &&
-      /^Exporting git history from environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/.test(status.message)
-    ))).toBe(true);
+    expect(
+      runtimeStatuses.some(
+        (status) =>
+          status.phase === "config_sync" &&
+          /^Syncing workspace to environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/.test(
+            status.message,
+          ),
+      ),
+    ).toBe(true);
+    expect(
+      runtimeStatuses.some(
+        (status) =>
+          status.phase === "export" &&
+          /^Exporting git history from environment: 100% \(\d+\.\d\/\d+\.\d MB\)$/.test(
+            status.message,
+          ),
+      ),
+    ).toBe(true);
   });
 
   it("repairs stale host index deletions when the sandbox restores a clean git worktree", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-clean-restore-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-clean-restore-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-worktree");
@@ -1095,13 +1607,26 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
     await writeFile(path.join(sourceRepoDir, "kept.txt"), "kept\n", "utf8");
-    await writeFile(path.join(sourceRepoDir, "restored.txt"), "restored\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, "restored.txt"),
+      "restored\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "kept.txt", "restored.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
 
     await git(localWorkspaceDir, ["rm", "restored.txt"]);
-    expect(await git(localWorkspaceDir, ["status", "--short"])).toContain("D  restored.txt");
+    expect(await git(localWorkspaceDir, ["status", "--short"])).toContain(
+      "D  restored.txt",
+    );
 
     const missingStatusReads: string[] = [];
     const client: SandboxManagedRuntimeClient = {
@@ -1143,22 +1668,40 @@ describe("sandbox managed runtime", () => {
       workspaceLocalDir: localWorkspaceDir,
     });
 
-    expect(await git(remoteWorkspaceDir, ["status", "--short"])).toContain("D restored.txt");
+    expect(await git(remoteWorkspaceDir, ["status", "--short"])).toContain(
+      "D restored.txt",
+    );
     await git(remoteWorkspaceDir, ["reset", "--hard", "HEAD"]);
     expect(await git(remoteWorkspaceDir, ["status", "--short"])).toBe("");
 
     await prepared.restoreWorkspace();
 
-    await expect(readFile(path.join(localWorkspaceDir, "restored.txt"), "utf8")).resolves.toBe("restored\n");
-    expect(await git(localWorkspaceDir, ["ls-files", "restored.txt"])).toBe("restored.txt");
+    await expect(
+      readFile(path.join(localWorkspaceDir, "restored.txt"), "utf8"),
+    ).resolves.toBe("restored\n");
+    expect(await git(localWorkspaceDir, ["ls-files", "restored.txt"])).toBe(
+      "restored.txt",
+    );
     expect(await git(localWorkspaceDir, ["status", "--short"])).toBe("");
-    expect(await git(localWorkspaceDir, ["diff", "--name-status", "HEAD", "--"])).toBe("");
-    expect(await git(localWorkspaceDir, ["diff", "--cached", "--name-status", "HEAD", "--"])).toBe("");
+    expect(
+      await git(localWorkspaceDir, ["diff", "--name-status", "HEAD", "--"]),
+    ).toBe("");
+    expect(
+      await git(localWorkspaceDir, [
+        "diff",
+        "--cached",
+        "--name-status",
+        "HEAD",
+        "--",
+      ]),
+    ).toBe("");
     expect(missingStatusReads).toHaveLength(1);
   });
 
   it("does not fail clean restore checks when local working tree changes survive", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-preserved-local-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-preserved-local-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-worktree");
@@ -1171,11 +1714,24 @@ describe("sandbox managed runtime", () => {
     await writeFile(path.join(sourceRepoDir, "kept.txt"), "base\n", "utf8");
     await git(sourceRepoDir, ["add", "kept.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
 
-    await writeFile(path.join(localWorkspaceDir, "kept.txt"), "local user change\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "kept.txt"),
+      "local user change\n",
+      "utf8",
+    );
 
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
     try {
       await resetLocalGitIndexToHead({
         localDir: localWorkspaceDir,
@@ -1188,13 +1744,27 @@ describe("sandbox managed runtime", () => {
       warnSpy.mockRestore();
     }
 
-    await expect(readFile(path.join(localWorkspaceDir, "kept.txt"), "utf8")).resolves.toBe("local user change\n");
-    expect(await git(localWorkspaceDir, ["diff", "--cached", "--name-status", "HEAD", "--"])).toBe("");
-    expect(await git(localWorkspaceDir, ["status", "--short"])).toContain("M kept.txt");
+    await expect(
+      readFile(path.join(localWorkspaceDir, "kept.txt"), "utf8"),
+    ).resolves.toBe("local user change\n");
+    expect(
+      await git(localWorkspaceDir, [
+        "diff",
+        "--cached",
+        "--name-status",
+        "HEAD",
+        "--",
+      ]),
+    ).toBe("");
+    expect(await git(localWorkspaceDir, ["status", "--short"])).toContain(
+      "M kept.txt",
+    );
   });
 
   it("excludes unignored dependency trees from git-backed workspace overlay archives", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-unignored-deps-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-unignored-deps-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-worktree");
@@ -1206,20 +1776,57 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
     await mkdir(path.join(sourceRepoDir, "src"), { recursive: true });
-    await writeFile(path.join(sourceRepoDir, "src", "tracked.ts"), "export const tracked = true;\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, "src", "tracked.ts"),
+      "export const tracked = true;\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "src/tracked.ts"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
 
-    await mkdir(path.join(localWorkspaceDir, "node_modules", "root-package"), { recursive: true });
-    await mkdir(path.join(localWorkspaceDir, "packages", "ui", "node_modules", "nested-package"), { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "node_modules", "root-package", "cache.bin"), "root dependency\n", "utf8");
+    await mkdir(path.join(localWorkspaceDir, "node_modules", "root-package"), {
+      recursive: true,
+    });
+    await mkdir(
+      path.join(
+        localWorkspaceDir,
+        "packages",
+        "ui",
+        "node_modules",
+        "nested-package",
+      ),
+      { recursive: true },
+    );
     await writeFile(
-      path.join(localWorkspaceDir, "packages", "ui", "node_modules", "nested-package", "cache.bin"),
+      path.join(localWorkspaceDir, "node_modules", "root-package", "cache.bin"),
+      "root dependency\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(
+        localWorkspaceDir,
+        "packages",
+        "ui",
+        "node_modules",
+        "nested-package",
+        "cache.bin",
+      ),
       "nested dependency\n",
       "utf8",
     );
-    await writeFile(path.join(localWorkspaceDir, "src", "local-only.ts"), "export const local = true;\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "src", "local-only.ts"),
+      "export const local = true;\n",
+      "utf8",
+    );
 
     const uploadedTars: { remotePath: string; bytes: Buffer }[] = [];
     const downloadedTars: { remotePath: string; bytes: Buffer }[] = [];
@@ -1230,12 +1837,14 @@ describe("sandbox managed runtime", () => {
       writeFile: async (remotePath, bytes) => {
         await mkdir(path.dirname(remotePath), { recursive: true });
         const buffer = Buffer.from(bytes);
-        if (remotePath.endsWith("-upload.tar")) uploadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("-upload.tar"))
+          uploadedTars.push({ remotePath, bytes: buffer });
         await writeFile(remotePath, buffer);
       },
       readFile: async (remotePath) => {
         const buffer = await readFile(remotePath);
-        if (remotePath.endsWith("workspace-download.tar")) downloadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("workspace-download.tar"))
+          downloadedTars.push({ remotePath, bytes: buffer });
         return buffer;
       },
       listFiles: async () => [],
@@ -1262,148 +1871,330 @@ describe("sandbox managed runtime", () => {
       workspaceLocalDir: localWorkspaceDir,
     });
 
-    const workspaceUpload = uploadedTars.find((entry) => path.posix.basename(entry.remotePath) === "workspace-upload.tar");
+    const workspaceUpload = uploadedTars.find(
+      (entry) =>
+        path.posix.basename(entry.remotePath) === "workspace-upload.tar",
+    );
     expect(workspaceUpload).toBeDefined();
-    const workspaceMembers = await listTarMembers(rootDir, "unignored-deps-workspace-upload.tar", workspaceUpload!.bytes);
+    const workspaceMembers = await listTarMembers(
+      rootDir,
+      "unignored-deps-workspace-upload.tar",
+      workspaceUpload!.bytes,
+    );
     expect(workspaceMembers).toContain("src/local-only.ts");
-    expect(workspaceMembers.some((entry) => entry === "node_modules" || entry.startsWith("node_modules/"))).toBe(false);
-    expect(workspaceMembers.some((entry) => entry.includes("/node_modules/") || entry.endsWith("/node_modules"))).toBe(false);
+    expect(
+      workspaceMembers.some(
+        (entry) =>
+          entry === "node_modules" || entry.startsWith("node_modules/"),
+      ),
+    ).toBe(false);
+    expect(
+      workspaceMembers.some(
+        (entry) =>
+          entry.includes("/node_modules/") || entry.endsWith("/node_modules"),
+      ),
+    ).toBe(false);
 
-    await expect(readFile(path.join(remoteWorkspaceDir, "src", "local-only.ts"), "utf8")).resolves.toBe("export const local = true;\n");
-    await expect(readFile(path.join(remoteWorkspaceDir, "node_modules", "root-package", "cache.bin"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
     await expect(
-      readFile(path.join(remoteWorkspaceDir, "packages", "ui", "node_modules", "nested-package", "cache.bin"), "utf8"),
+      readFile(path.join(remoteWorkspaceDir, "src", "local-only.ts"), "utf8"),
+    ).resolves.toBe("export const local = true;\n");
+    await expect(
+      readFile(
+        path.join(
+          remoteWorkspaceDir,
+          "node_modules",
+          "root-package",
+          "cache.bin",
+        ),
+        "utf8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(
+        path.join(
+          remoteWorkspaceDir,
+          "packages",
+          "ui",
+          "node_modules",
+          "nested-package",
+          "cache.bin",
+        ),
+        "utf8",
+      ),
     ).rejects.toMatchObject({ code: "ENOENT" });
 
-    await mkdir(path.join(remoteWorkspaceDir, "node_modules", "sandbox-package"), { recursive: true });
-    await mkdir(path.join(remoteWorkspaceDir, "packages", "ui", "node_modules", "sandbox-package"), { recursive: true });
-    await writeFile(path.join(remoteWorkspaceDir, "node_modules", "sandbox-package", "cache.bin"), "sandbox root dependency\n", "utf8");
+    await mkdir(
+      path.join(remoteWorkspaceDir, "node_modules", "sandbox-package"),
+      { recursive: true },
+    );
+    await mkdir(
+      path.join(
+        remoteWorkspaceDir,
+        "packages",
+        "ui",
+        "node_modules",
+        "sandbox-package",
+      ),
+      { recursive: true },
+    );
     await writeFile(
-      path.join(remoteWorkspaceDir, "packages", "ui", "node_modules", "sandbox-package", "cache.bin"),
+      path.join(
+        remoteWorkspaceDir,
+        "node_modules",
+        "sandbox-package",
+        "cache.bin",
+      ),
+      "sandbox root dependency\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(
+        remoteWorkspaceDir,
+        "packages",
+        "ui",
+        "node_modules",
+        "sandbox-package",
+        "cache.bin",
+      ),
       "sandbox nested dependency\n",
       "utf8",
     );
-    await writeFile(path.join(remoteWorkspaceDir, "src", "remote-only.ts"), "export const remote = true;\n", "utf8");
+    await writeFile(
+      path.join(remoteWorkspaceDir, "src", "remote-only.ts"),
+      "export const remote = true;\n",
+      "utf8",
+    );
 
     await prepared.restoreWorkspace();
 
-    await expect(readFile(path.join(localWorkspaceDir, "node_modules", "root-package", "cache.bin"), "utf8")).resolves.toBe("root dependency\n");
     await expect(
-      readFile(path.join(localWorkspaceDir, "packages", "ui", "node_modules", "nested-package", "cache.bin"), "utf8"),
+      readFile(
+        path.join(
+          localWorkspaceDir,
+          "node_modules",
+          "root-package",
+          "cache.bin",
+        ),
+        "utf8",
+      ),
+    ).resolves.toBe("root dependency\n");
+    await expect(
+      readFile(
+        path.join(
+          localWorkspaceDir,
+          "packages",
+          "ui",
+          "node_modules",
+          "nested-package",
+          "cache.bin",
+        ),
+        "utf8",
+      ),
     ).resolves.toBe("nested dependency\n");
-    await expect(readFile(path.join(localWorkspaceDir, "src", "remote-only.ts"), "utf8")).resolves.toBe("export const remote = true;\n");
-    await expect(readFile(path.join(localWorkspaceDir, "node_modules", "sandbox-package", "cache.bin"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(path.join(localWorkspaceDir, "src", "remote-only.ts"), "utf8"),
+    ).resolves.toBe("export const remote = true;\n");
+    await expect(
+      readFile(
+        path.join(
+          localWorkspaceDir,
+          "node_modules",
+          "sandbox-package",
+          "cache.bin",
+        ),
+        "utf8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
 
     expect(downloadedTars).toHaveLength(1);
-    const downloadMembers = await listTarMembers(rootDir, "unignored-deps-workspace-download.tar", downloadedTars[0]!.bytes);
-    expect(downloadMembers.some((entry) => entry === ".git" || entry.startsWith(".git/"))).toBe(false);
-    expect(downloadMembers.some((entry) => entry === "node_modules" || entry.startsWith("node_modules/"))).toBe(false);
-    expect(downloadMembers.some((entry) => entry.includes("/node_modules/") || entry.endsWith("/node_modules"))).toBe(false);
+    const downloadMembers = await listTarMembers(
+      rootDir,
+      "unignored-deps-workspace-download.tar",
+      downloadedTars[0]!.bytes,
+    );
+    expect(
+      downloadMembers.some(
+        (entry) => entry === ".git" || entry.startsWith(".git/"),
+      ),
+    ).toBe(false);
+    expect(
+      downloadMembers.some(
+        (entry) =>
+          entry === "node_modules" || entry.startsWith("node_modules/"),
+      ),
+    ).toBe(false);
+    expect(
+      downloadMembers.some(
+        (entry) =>
+          entry.includes("/node_modules/") || entry.endsWith("/node_modules"),
+      ),
+    ).toBe(false);
   });
 
-  it.each(["symlink", "root_symlink", "root_alias", "root_alias_retarget", "case_alias", "EACCES", "EIO", "ENOENT"])("handles an overlay source changed after the snapshot: %s", async (change) => {
-    // The runtime pins a realpath root before staging. Match that spelling so
-    // injected I/O errors also reach the selected file on macOS's /var alias.
-    const rootDir = await fsPromises.realpath(await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-overlay-source-")));
-    cleanupDirs.push(rootDir);
-    const workspaceLocalDir = path.join(rootDir, "workspace");
-    await initGitRepo(workspaceLocalDir);
-    const draftsDir = path.join(workspaceLocalDir, "drafts");
-    const selectedPath = path.join(change === "root_symlink" ? workspaceLocalDir : draftsDir, "report.md");
-    await mkdir(draftsDir);
-    await writeFile(selectedPath, "selected work\n");
-    const workspaceInputDir = change.startsWith("root_alias") ? path.join(rootDir, "workspace-alias") : workspaceLocalDir;
-    if (change.startsWith("root_alias")) await symlink(workspaceLocalDir, workspaceInputDir);
-    const outsideDir = path.join(rootDir, "outside");
-    await mkdir(outsideDir);
-    await writeFile(path.join(outsideDir, "report.md"), "private outside content\n");
-    await mkdir(path.join(outsideDir, "drafts"));
-    await writeFile(path.join(outsideDir, "drafts", "report.md"), "private outside content\n");
-    const syncIn = vi.fn(async (operations: SandboxSyncOperation[]) => {
-      if (change.startsWith("root_alias")) {
-        const overlay = operations.flatMap((operation) => operation.files)
-          .find((file) => path.basename(file.targetPath) === "workspace-upload.tar");
-        expect(overlay).toBeDefined();
-        const contents = await execFile("tar", ["-xOf", overlay!.sourcePath, "drafts/report.md"]);
-        expect(contents.stdout).toBe("selected work\n");
-      }
-      return { operations: [] };
-    });
-    const client: SandboxManagedRuntimeClient = {
-      makeDir: async () => {},
-      writeFile: async () => {},
-      readFile: async () => new ArrayBuffer(0),
-      listFiles: async () => [],
-      remove: async () => {},
-      run: async () => {},
-      syncIn,
-    };
-    const realLstat = fsPromises.lstat.bind(fsPromises);
-    const realRealpath = fsPromises.realpath.bind(fsPromises);
-    const failure = Object.assign(new Error(`Cannot inspect overlay: ${change}`), { code: change });
-    let statSpy: ReturnType<typeof vi.spyOn> | undefined;
-    let realpathSpy: ReturnType<typeof vi.spyOn> | undefined;
-    try {
-      const preparing = prepareSandboxManagedRuntime({
-        spec: {
-          transport: "sandbox",
-          provider: "test",
-          sandboxId: "sandbox-1",
-          remoteCwd: path.join(rootDir, "remote"),
-          timeoutMs: 30_000,
-          apiKey: null,
-        },
-        adapterKey: "test-adapter",
-        client,
-        workspaceLocalDir: workspaceInputDir,
-        onRuntimeProgress: async (status) => {
-          if (status.phase !== "config_sync") return;
-          if (change === "root_alias") return;
-          if (change === "root_alias_retarget") {
-            await rm(workspaceInputDir);
-            await symlink(outsideDir, workspaceInputDir);
-            return;
-          }
-          if (change === "symlink") {
-            await rm(draftsDir, { recursive: true });
-            await symlink(outsideDir, draftsDir);
-          } else if (change === "ENOENT") {
-            await rm(selectedPath);
-          } else if (change === "case_alias") {
-            // Model a case-insensitive filesystem: Git's indexed spelling
-            // still resolves, while realpath reports the directory's new case.
-            realpathSpy = vi.spyOn(fsPromises, "realpath").mockImplementation((async (...args: Parameters<typeof fsPromises.realpath>) => {
-              if (args[0] === draftsDir) return path.join(workspaceLocalDir, "Drafts");
-              return realRealpath(...args);
-            }) as typeof fsPromises.realpath);
-          } else if (change === "root_symlink") {
-            // The root was captured with the snapshot, before config_sync.
-            await fsPromises.rename(workspaceLocalDir, path.join(rootDir, "original-workspace"));
-            await symlink(outsideDir, workspaceLocalDir);
-          } else {
-            statSpy = vi.spyOn(fsPromises, "lstat").mockImplementation((async (...args: Parameters<typeof fsPromises.lstat>) => {
-              if (args[0] === selectedPath) throw failure;
-              return realLstat(...args);
-            }) as typeof fsPromises.lstat);
-          }
-        },
+  it.each([
+    "symlink",
+    "root_symlink",
+    "root_alias",
+    "root_alias_retarget",
+    "case_alias",
+    "EACCES",
+    "EIO",
+    "ENOENT",
+  ])(
+    "handles an overlay source changed after the snapshot: %s",
+    async (change) => {
+      // The runtime pins a realpath root before staging. Match that spelling so
+      // injected I/O errors also reach the selected file on macOS's /var alias.
+      const rootDir = await fsPromises.realpath(
+        await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-sandbox-overlay-source-"),
+        ),
+      );
+      cleanupDirs.push(rootDir);
+      const workspaceLocalDir = path.join(rootDir, "workspace");
+      await initGitRepo(workspaceLocalDir);
+      const draftsDir = path.join(workspaceLocalDir, "drafts");
+      const selectedPath = path.join(
+        change === "root_symlink" ? workspaceLocalDir : draftsDir,
+        "report.md",
+      );
+      await mkdir(draftsDir);
+      await writeFile(selectedPath, "selected work\n");
+      const workspaceInputDir = change.startsWith("root_alias")
+        ? path.join(rootDir, "workspace-alias")
+        : workspaceLocalDir;
+      if (change.startsWith("root_alias"))
+        await symlink(workspaceLocalDir, workspaceInputDir);
+      const outsideDir = path.join(rootDir, "outside");
+      await mkdir(outsideDir);
+      await writeFile(
+        path.join(outsideDir, "report.md"),
+        "private outside content\n",
+      );
+      await mkdir(path.join(outsideDir, "drafts"));
+      await writeFile(
+        path.join(outsideDir, "drafts", "report.md"),
+        "private outside content\n",
+      );
+      const syncIn = vi.fn(async (operations: SandboxSyncOperation[]) => {
+        if (change.startsWith("root_alias")) {
+          const overlay = operations
+            .flatMap((operation) => operation.files)
+            .find(
+              (file) =>
+                path.basename(file.targetPath) === "workspace-upload.tar",
+            );
+          expect(overlay).toBeDefined();
+          const contents = await execFile("tar", [
+            "-xOf",
+            overlay!.sourcePath,
+            "drafts/report.md",
+          ]);
+          expect(contents.stdout).toBe("selected work\n");
+        }
+        return { operations: [] };
       });
-      if (change === "ENOENT" || change === "case_alias" || change.startsWith("root_alias")) {
-        await preparing;
-        expect(syncIn).toHaveBeenCalledOnce();
-      } else {
-        await expect(preparing).rejects.toThrow(change.endsWith("symlink") ? /overlay.*directory/i : failure.message);
-        if (statSpy) expect(statSpy).toHaveBeenCalledWith(selectedPath);
-        expect(syncIn).not.toHaveBeenCalled();
+      const client: SandboxManagedRuntimeClient = {
+        makeDir: async () => {},
+        writeFile: async () => {},
+        readFile: async () => new ArrayBuffer(0),
+        listFiles: async () => [],
+        remove: async () => {},
+        run: async () => {},
+        syncIn,
+      };
+      const realLstat = fsPromises.lstat.bind(fsPromises);
+      const realRealpath = fsPromises.realpath.bind(fsPromises);
+      const failure = Object.assign(
+        new Error(`Cannot inspect overlay: ${change}`),
+        { code: change },
+      );
+      let statSpy: ReturnType<typeof vi.spyOn> | undefined;
+      let realpathSpy: ReturnType<typeof vi.spyOn> | undefined;
+      try {
+        const preparing = prepareSandboxManagedRuntime({
+          spec: {
+            transport: "sandbox",
+            provider: "test",
+            sandboxId: "sandbox-1",
+            remoteCwd: path.join(rootDir, "remote"),
+            timeoutMs: 30_000,
+            apiKey: null,
+          },
+          adapterKey: "test-adapter",
+          client,
+          workspaceLocalDir: workspaceInputDir,
+          onRuntimeProgress: async (status) => {
+            if (status.phase !== "config_sync") return;
+            if (change === "root_alias") return;
+            if (change === "root_alias_retarget") {
+              await rm(workspaceInputDir);
+              await symlink(outsideDir, workspaceInputDir);
+              return;
+            }
+            if (change === "symlink") {
+              await rm(draftsDir, { recursive: true });
+              await symlink(outsideDir, draftsDir);
+            } else if (change === "ENOENT") {
+              await rm(selectedPath);
+            } else if (change === "case_alias") {
+              // Model a case-insensitive filesystem: Git's indexed spelling
+              // still resolves, while realpath reports the directory's new case.
+              realpathSpy = vi
+                .spyOn(fsPromises, "realpath")
+                .mockImplementation((async (
+                  ...args: Parameters<typeof fsPromises.realpath>
+                ) => {
+                  if (args[0] === draftsDir)
+                    return path.join(workspaceLocalDir, "Drafts");
+                  return realRealpath(...args);
+                }) as typeof fsPromises.realpath);
+            } else if (change === "root_symlink") {
+              // The root was captured with the snapshot, before config_sync.
+              await fsPromises.rename(
+                workspaceLocalDir,
+                path.join(rootDir, "original-workspace"),
+              );
+              await symlink(outsideDir, workspaceLocalDir);
+            } else {
+              statSpy = vi
+                .spyOn(fsPromises, "lstat")
+                .mockImplementation((async (
+                  ...args: Parameters<typeof fsPromises.lstat>
+                ) => {
+                  if (args[0] === selectedPath) throw failure;
+                  return realLstat(...args);
+                }) as typeof fsPromises.lstat);
+            }
+          },
+        });
+        if (
+          change === "ENOENT" ||
+          change === "case_alias" ||
+          change.startsWith("root_alias")
+        ) {
+          await preparing;
+          expect(syncIn).toHaveBeenCalledOnce();
+        } else {
+          await expect(preparing).rejects.toThrow(
+            change.endsWith("symlink")
+              ? /overlay.*directory/i
+              : failure.message,
+          );
+          if (statSpy) expect(statSpy).toHaveBeenCalledWith(selectedPath);
+          expect(syncIn).not.toHaveBeenCalled();
+        }
+      } finally {
+        statSpy?.mockRestore();
+        realpathSpy?.mockRestore();
       }
-    } finally {
-      statSpy?.mockRestore();
-      realpathSpy?.mockRestore();
-    }
-  });
+    },
+  );
 
   it("excludes an anchor-workspace ignored file whose name has leading and trailing whitespace from the staged tree", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-ignored-whitespace-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-ignored-whitespace-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceLocalDir = path.join(rootDir, "workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -1414,8 +2205,16 @@ describe("sandbox managed runtime", () => {
     // under test lives in the matched FILE name, proving the anchor `splitNul`
     // parser keeps it instead of trimming it away and missing the exclude.
     const ignoredName = " ignored padded ";
-    await writeFile(path.join(workspaceLocalDir, ".gitignore"), "*ignored*padded*\n", "utf8");
-    await writeFile(path.join(workspaceLocalDir, ignoredName), "TOKEN=abc\n", "utf8");
+    await writeFile(
+      path.join(workspaceLocalDir, ".gitignore"),
+      "*ignored*padded*\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(workspaceLocalDir, ignoredName),
+      "TOKEN=abc\n",
+      "utf8",
+    );
     await writeFile(path.join(workspaceLocalDir, "kept.txt"), "kept\n", "utf8");
 
     const uploadedTars: { remotePath: string; bytes: Buffer }[] = [];
@@ -1426,7 +2225,8 @@ describe("sandbox managed runtime", () => {
       writeFile: async (remotePath, bytes) => {
         await mkdir(path.dirname(remotePath), { recursive: true });
         const buffer = Buffer.from(bytes);
-        if (remotePath.endsWith("-upload.tar")) uploadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("-upload.tar"))
+          uploadedTars.push({ remotePath, bytes: buffer });
         await writeFile(remotePath, buffer);
       },
       readFile: async (remotePath) => await readFile(remotePath),
@@ -1454,15 +2254,24 @@ describe("sandbox managed runtime", () => {
       workspaceLocalDir,
     });
 
-    const workspaceUpload = uploadedTars.find((entry) => path.posix.basename(entry.remotePath) === "workspace-upload.tar");
+    const workspaceUpload = uploadedTars.find(
+      (entry) =>
+        path.posix.basename(entry.remotePath) === "workspace-upload.tar",
+    );
     expect(workspaceUpload).toBeDefined();
-    const members = await listTarMembers(rootDir, "ignored-whitespace-workspace-upload.tar", workspaceUpload!.bytes);
+    const members = await listTarMembers(
+      rootDir,
+      "ignored-whitespace-workspace-upload.tar",
+      workspaceUpload!.bytes,
+    );
     expect(members).not.toContain(ignoredName);
     expect(members).toContain("kept.txt");
   });
 
   it("builds workspace/asset tarballs without a './' self-entry (so untar does not chmod/utime an unowned target dir)", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-tarself-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-tarself-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -1470,7 +2279,11 @@ describe("sandbox managed runtime", () => {
     await mkdir(path.join(localWorkspaceDir, "src"), { recursive: true });
     await mkdir(localAssetsDir, { recursive: true });
     await writeFile(path.join(localWorkspaceDir, "README.md"), "ws\n", "utf8");
-    await writeFile(path.join(localWorkspaceDir, "src", "main.ts"), "x\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "src", "main.ts"),
+      "x\n",
+      "utf8",
+    );
     await writeFile(path.join(localAssetsDir, "asset.txt"), "a\n", "utf8");
 
     // Capture every tar uploaded/downloaded through the sandbox so we can inspect its members.
@@ -1483,12 +2296,14 @@ describe("sandbox managed runtime", () => {
       writeFile: async (remotePath, bytes) => {
         await mkdir(path.dirname(remotePath), { recursive: true });
         const buffer = Buffer.from(bytes);
-        if (remotePath.endsWith("-upload.tar")) uploadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("-upload.tar"))
+          uploadedTars.push({ remotePath, bytes: buffer });
         await writeFile(remotePath, buffer);
       },
       readFile: async (remotePath) => {
         const buffer = await readFile(remotePath);
-        if (remotePath.endsWith("workspace-download.tar")) downloadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("workspace-download.tar"))
+          downloadedTars.push({ remotePath, bytes: buffer });
         return buffer;
       },
       listFiles: async () => [],
@@ -1520,8 +2335,13 @@ describe("sandbox managed runtime", () => {
     for (const { remotePath, bytes } of uploadedTars) {
       const listPath = path.join(rootDir, `list-${path.basename(remotePath)}`);
       await writeFile(listPath, bytes);
-      const { stdout } = await execFile("tar", ["-tf", listPath], { maxBuffer: 32 * 1024 * 1024 });
-      const members = stdout.split("\n").map((line) => line.trim()).filter(Boolean);
+      const { stdout } = await execFile("tar", ["-tf", listPath], {
+        maxBuffer: 32 * 1024 * 1024,
+      });
+      const members = stdout
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
       // The archive must NOT contain a self-entry for the root directory; that is
       // what makes tar try to mutate the (possibly unowned) extraction target.
       expect(members).not.toContain(".");
@@ -1529,18 +2349,28 @@ describe("sandbox managed runtime", () => {
     }
 
     // And the workspace still extracts correctly into an existing target dir.
-    await expect(readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8")).resolves.toBe("ws\n");
-    await expect(readFile(path.join(remoteWorkspaceDir, "src", "main.ts"), "utf8")).resolves.toBe("x\n");
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("ws\n");
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "src", "main.ts"), "utf8"),
+    ).resolves.toBe("x\n");
 
     await prepared.restoreWorkspace();
     expect(downloadedTars).toHaveLength(1);
-    const downloadMembers = await listTarMembers(rootDir, "workspace-download-list.tar", downloadedTars[0]!.bytes);
+    const downloadMembers = await listTarMembers(
+      rootDir,
+      "workspace-download-list.tar",
+      downloadedTars[0]!.bytes,
+    );
     expect(downloadMembers).not.toContain(".");
     expect(downloadMembers).not.toContain("./");
   });
 
   it("excludes transient symlinked home dirs from the asset tar while keeping required content", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-home-tmp-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-home-tmp-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -1555,9 +2385,21 @@ describe("sandbox managed runtime", () => {
 
     // Required managed-home content that MUST still reach the sandbox.
     await mkdir(path.join(homeDir, "skills"), { recursive: true });
-    await writeFile(path.join(homeDir, "auth.json"), "{\"OPENAI_API_KEY\":\"sk-test\"}\n", "utf8");
-    await writeFile(path.join(homeDir, "config.toml"), "model = \"gpt\"\n", "utf8");
-    await writeFile(path.join(homeDir, "skills", "demo.md"), "skill body\n", "utf8");
+    await writeFile(
+      path.join(homeDir, "auth.json"),
+      '{"OPENAI_API_KEY":"sk-test"}\n',
+      "utf8",
+    );
+    await writeFile(
+      path.join(homeDir, "config.toml"),
+      'model = "gpt"\n',
+      "utf8",
+    );
+    await writeFile(
+      path.join(homeDir, "skills", "demo.md"),
+      "skill body\n",
+      "utf8",
+    );
 
     // Transient dirs holding symlinks to the host binary (the bloat source).
     await mkdir(path.join(homeDir, "tmp", "arg0"), { recursive: true });
@@ -1573,7 +2415,8 @@ describe("sandbox managed runtime", () => {
       writeFile: async (remotePath, bytes) => {
         await mkdir(path.dirname(remotePath), { recursive: true });
         const buffer = Buffer.from(bytes);
-        if (remotePath.endsWith("-upload.tar")) uploadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("-upload.tar"))
+          uploadedTars.push({ remotePath, bytes: buffer });
         await writeFile(remotePath, buffer);
       },
       readFile: async (remotePath) => await readFile(remotePath),
@@ -1599,21 +2442,33 @@ describe("sandbox managed runtime", () => {
       adapterKey: "codex",
       client,
       workspaceLocalDir: localWorkspaceDir,
-      assets: [{
-        key: "home",
-        localDir: homeDir,
-        followSymlinks: true,
-        exclude: ["tmp", ".tmp"],
-      }],
+      assets: [
+        {
+          key: "home",
+          localDir: homeDir,
+          followSymlinks: true,
+          exclude: ["tmp", ".tmp"],
+        },
+      ],
     });
 
-    const homeTar = uploadedTars.find(({ remotePath }) => path.basename(remotePath) === "home-upload.tar");
+    const homeTar = uploadedTars.find(
+      ({ remotePath }) => path.basename(remotePath) === "home-upload.tar",
+    );
     expect(homeTar).toBeDefined();
-    const members = await listTarMembers(rootDir, "home-members.tar", homeTar!.bytes);
+    const members = await listTarMembers(
+      rootDir,
+      "home-members.tar",
+      homeTar!.bytes,
+    );
 
     // Transient symlink trees must be filtered out entirely.
-    expect(members.some((entry) => entry === "tmp" || entry.startsWith("tmp/"))).toBe(false);
-    expect(members.some((entry) => entry === ".tmp" || entry.startsWith(".tmp/"))).toBe(false);
+    expect(
+      members.some((entry) => entry === "tmp" || entry.startsWith("tmp/")),
+    ).toBe(false);
+    expect(
+      members.some((entry) => entry === ".tmp" || entry.startsWith(".tmp/")),
+    ).toBe(false);
     // Required managed-home content must survive.
     expect(members).toContain("auth.json");
     expect(members).toContain("config.toml");
@@ -1623,30 +2478,44 @@ describe("sandbox managed runtime", () => {
     expect(homeTar!.bytes.includes(Buffer.from(binaryMarker))).toBe(false);
 
     // The extracted sandbox home keeps required content and omits the transient dirs.
-    await expect(readFile(path.join(prepared.assetDirs.home, "auth.json"), "utf8"))
-      .resolves.toBe("{\"OPENAI_API_KEY\":\"sk-test\"}\n");
-    await expect(readFile(path.join(prepared.assetDirs.home, "skills", "demo.md"), "utf8"))
-      .resolves.toBe("skill body\n");
-    await expect(lstat(path.join(prepared.assetDirs.home, "tmp"))).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(lstat(path.join(prepared.assetDirs.home, ".tmp"))).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(path.join(prepared.assetDirs.home, "auth.json"), "utf8"),
+    ).resolves.toBe('{"OPENAI_API_KEY":"sk-test"}\n');
+    await expect(
+      readFile(path.join(prepared.assetDirs.home, "skills", "demo.md"), "utf8"),
+    ).resolves.toBe("skill body\n");
+    await expect(
+      lstat(path.join(prepared.assetDirs.home, "tmp")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      lstat(path.join(prepared.assetDirs.home, ".tmp")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("emits throttled, labeled upload and restore progress with direction and percentages", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-progress-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-progress-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     const localAssetsDir = path.join(rootDir, "local-assets");
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(localAssetsDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace\n",
+      "utf8",
+    );
     await writeFile(path.join(localAssetsDir, "skill.md"), "skill\n", "utf8");
 
     // Drive byte progress in 100 fine (1%) increments so the throttle has many
     // chances to emit; the reporter must collapse them to ~one line per 10% step.
     const driveProgress = async (
       total: number,
-      onProgress: ((done: number, total: number | null) => void | Promise<void>) | undefined,
+      onProgress:
+        | ((done: number, total: number | null) => void | Promise<void>)
+        | undefined,
     ) => {
       if (!onProgress) return;
       for (let i = 1; i <= 100; i++) {
@@ -1698,25 +2567,39 @@ describe("sandbox managed runtime", () => {
       },
     });
 
-    const uploadWorkspaceLines = lines.filter((line) => line.includes("Syncing workspace to environment"));
-    const uploadAssetLines = lines.filter((line) => line.includes("Syncing skills to environment"));
+    const uploadWorkspaceLines = lines.filter((line) =>
+      line.includes("Syncing workspace to environment"),
+    );
+    const uploadAssetLines = lines.filter((line) =>
+      line.includes("Syncing skills to environment"),
+    );
     expect(uploadWorkspaceLines.length).toBeGreaterThan(0);
     expect(uploadAssetLines.length).toBeGreaterThan(0);
     // 100 reported increments must be throttled to at most ~one line per 10% step.
     expect(uploadWorkspaceLines.length).toBeLessThanOrEqual(11);
     // Reaches 100% and shows the MB breakdown.
-    expect(uploadWorkspaceLines.some((line) => line.includes("100%"))).toBe(true);
-    expect(uploadWorkspaceLines.every((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line))).toBe(true);
+    expect(uploadWorkspaceLines.some((line) => line.includes("100%"))).toBe(
+      true,
+    );
+    expect(
+      uploadWorkspaceLines.every((line) =>
+        /\(\d+\.\d\/\d+\.\d MB\)/.test(line),
+      ),
+    ).toBe(true);
 
     await prepared.restoreWorkspace();
-    const restoreLines = lines.filter((line) => line.includes("Restoring workspace from environment"));
+    const restoreLines = lines.filter((line) =>
+      line.includes("Restoring workspace from environment"),
+    );
     expect(restoreLines.length).toBeGreaterThan(0);
     expect(restoreLines.length).toBeLessThanOrEqual(11);
     expect(restoreLines.some((line) => line.includes("100%"))).toBe(true);
   });
 
   it("creates valid empty workspace tarballs when the workspace is empty", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-empty-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-empty-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -1734,7 +2617,8 @@ describe("sandbox managed runtime", () => {
       },
       readFile: async (remotePath) => {
         const buffer = await readFile(remotePath);
-        if (remotePath.endsWith("workspace-download.tar")) downloadedTars.push({ remotePath, bytes: buffer });
+        if (remotePath.endsWith("workspace-download.tar"))
+          downloadedTars.push({ remotePath, bytes: buffer });
         return buffer;
       },
       listFiles: async () => [],
@@ -1764,23 +2648,39 @@ describe("sandbox managed runtime", () => {
 
     await prepared.restoreWorkspace();
     expect(downloadedTars).toHaveLength(1);
-    const members = await listTarMembers(rootDir, "empty-workspace-download.tar", downloadedTars[0]!.bytes);
+    const members = await listTarMembers(
+      rootDir,
+      "empty-workspace-download.tar",
+      downloadedTars[0]!.bytes,
+    );
     expect(members).toEqual([]);
-    const emptyArchiveCommand = runCommands.find((command) => command.includes("--null -T"));
+    const emptyArchiveCommand = runCommands.find((command) =>
+      command.includes("--null -T"),
+    );
     expect(emptyArchiveCommand).toBeDefined();
     expect(emptyArchiveCommand).not.toContain("/dev/null");
   });
 
   it("provisions a contribution-less asset via a plain tar extract and restores it as a no-op", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-default-asset-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-default-asset-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     const localAssetsDir = path.join(rootDir, "local-assets");
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(localAssetsDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
-    await writeFile(path.join(localAssetsDir, "plain.txt"), "plain asset\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(localAssetsDir, "plain.txt"),
+      "plain asset\n",
+      "utf8",
+    );
 
     const stagedWrites: string[] = [];
     const runCommands: string[] = [];
@@ -1790,7 +2690,8 @@ describe("sandbox managed runtime", () => {
       },
       writeFile: async (remotePath, bytes) => {
         await mkdir(path.dirname(remotePath), { recursive: true });
-        if (!remotePath.endsWith("-upload.tar")) stagedWrites.push(path.basename(remotePath));
+        if (!remotePath.endsWith("-upload.tar"))
+          stagedWrites.push(path.basename(remotePath));
         await writeFile(remotePath, Buffer.from(bytes));
       },
       readFile: async (remotePath) => await readFile(remotePath),
@@ -1822,29 +2723,43 @@ describe("sandbox managed runtime", () => {
     });
 
     // Extracted through the default `tar -xf` path.
-    await expect(readFile(path.join(prepared.assetDirs.plain, "plain.txt"), "utf8")).resolves.toBe("plain asset\n");
+    await expect(
+      readFile(path.join(prepared.assetDirs.plain, "plain.txt"), "utf8"),
+    ).resolves.toBe("plain asset\n");
     // A contribution-less asset stages no extra files beyond its own tar.
     expect(stagedWrites.filter((name) => name.includes("plain"))).toEqual([]);
     // The extract command is the generic tar path, not an adapter-specific script.
-    const assetExtract = runCommands.find((command) => command.includes(`${path.posix.basename(prepared.assetDirs.plain)}-upload.tar`));
+    const assetExtract = runCommands.find((command) =>
+      command.includes(
+        `${path.posix.basename(prepared.assetDirs.plain)}-upload.tar`,
+      ),
+    );
     expect(assetExtract).toBeDefined();
     expect(assetExtract).toContain("tar -xf");
     expect(assetExtract).not.toMatch(/\.sh|\.cjs/);
 
     // Restore is a clean no-op for a contribution-less asset (no throw, asset dir untouched).
     await expect(prepared.restoreWorkspace()).resolves.toBeUndefined();
-    await expect(readFile(path.join(prepared.assetDirs.plain, "plain.txt"), "utf8")).resolves.toBe("plain asset\n");
+    await expect(
+      readFile(path.join(prepared.assetDirs.plain, "plain.txt"), "utf8"),
+    ).resolves.toBe("plain asset\n");
   });
 
   it("round-trips a non-codex asset through generic provision + restore contributions", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-seam-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-seam-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     const localAssetsDir = path.join(rootDir, "local-assets");
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(localAssetsDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace\n",
+      "utf8",
+    );
     await writeFile(path.join(localAssetsDir, "seed.txt"), "seed\n", "utf8");
 
     const client: SandboxManagedRuntimeClient = {
@@ -1884,33 +2799,50 @@ describe("sandbox managed runtime", () => {
       adapterKey: "generic-adapter",
       client,
       workspaceLocalDir: localWorkspaceDir,
-      assets: [{
-        key: "widget",
-        localDir: localAssetsDir,
-        provision: {
-          stageFiles: [{ name: "widget-helper.txt", contents: "helper-bytes\n" }],
-          // Extract the asset AND consume the staged helper file, proving both
-          // stageFiles and postUploadCommand flow through the core generically.
-          postUploadCommand: ({ assetTarPath, assetDir, runtimeRootDir }) =>
-            `rm -rf ${q(assetDir)} && mkdir -p ${q(assetDir)} && ` +
-            `tar -xf ${q(assetTarPath)} -C ${q(assetDir)} && rm -f ${q(assetTarPath)} && ` +
-            `cp ${q(path.posix.join(runtimeRootDir, "widget-helper.txt"))} ${q(path.posix.join(assetDir, "helper.copied.txt"))}`,
+      assets: [
+        {
+          key: "widget",
+          localDir: localAssetsDir,
+          provision: {
+            stageFiles: [
+              { name: "widget-helper.txt", contents: "helper-bytes\n" },
+            ],
+            // Extract the asset AND consume the staged helper file, proving both
+            // stageFiles and postUploadCommand flow through the core generically.
+            postUploadCommand: ({ assetTarPath, assetDir, runtimeRootDir }) =>
+              `rm -rf ${q(assetDir)} && mkdir -p ${q(assetDir)} && ` +
+              `tar -xf ${q(assetTarPath)} -C ${q(assetDir)} && rm -f ${q(assetTarPath)} && ` +
+              `cp ${q(path.posix.join(runtimeRootDir, "widget-helper.txt"))} ${q(path.posix.join(assetDir, "helper.copied.txt"))}`,
+          },
+          restore: async ({ assetDir, readFile: readRemote }) => {
+            const bytes = await readRemote(
+              path.posix.join(assetDir, "refreshed.txt"),
+            );
+            restored.push(bytes.toString("utf8"));
+          },
         },
-        restore: async ({ assetDir, readFile: readRemote }) => {
-          const bytes = await readRemote(path.posix.join(assetDir, "refreshed.txt"));
-          restored.push(bytes.toString("utf8"));
-        },
-      }],
+      ],
     });
 
     // provision: the asset's own content extracted...
-    await expect(readFile(path.join(prepared.assetDirs.widget, "seed.txt"), "utf8")).resolves.toBe("seed\n");
+    await expect(
+      readFile(path.join(prepared.assetDirs.widget, "seed.txt"), "utf8"),
+    ).resolves.toBe("seed\n");
     // ...the staged helper file was written to the runtime root and consumed by the custom extract command.
-    await expect(readFile(path.join(prepared.assetDirs.widget, "helper.copied.txt"), "utf8")).resolves.toBe("helper-bytes\n");
+    await expect(
+      readFile(
+        path.join(prepared.assetDirs.widget, "helper.copied.txt"),
+        "utf8",
+      ),
+    ).resolves.toBe("helper-bytes\n");
     stagedContentSeen.push("provisioned");
 
     // Simulate the sandbox refreshing a file inside the asset dir, then restore.
-    await writeFile(path.join(prepared.assetDirs.widget, "refreshed.txt"), "refreshed-by-sandbox\n", "utf8");
+    await writeFile(
+      path.join(prepared.assetDirs.widget, "refreshed.txt"),
+      "refreshed-by-sandbox\n",
+      "utf8",
+    );
     await prepared.restoreWorkspace();
 
     // restore contribution was invoked with a working remote readFile against assetDir.
@@ -1919,14 +2851,20 @@ describe("sandbox managed runtime", () => {
   });
 
   it("rejects a provision stageFile.name that is not a simple basename", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-traversal-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-traversal-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     const localAssetsDir = path.join(rootDir, "local-assets");
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(localAssetsDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace\n",
+      "utf8",
+    );
     await writeFile(path.join(localAssetsDir, "seed.txt"), "seed\n", "utf8");
 
     const writtenPaths: string[] = [];
@@ -1952,7 +2890,13 @@ describe("sandbox managed runtime", () => {
 
     // A compromised adapter supplying a traversal name must be rejected before
     // the core ever writes outside the runtime root.
-    for (const maliciousName of ["../evil.txt", "..", "nested/child.txt", "back\\slash.txt", "../../etc/passwd"]) {
+    for (const maliciousName of [
+      "../evil.txt",
+      "..",
+      "nested/child.txt",
+      "back\\slash.txt",
+      "../../etc/passwd",
+    ]) {
       writtenPaths.length = 0;
       await expect(
         prepareSandboxManagedRuntime({
@@ -1967,30 +2911,45 @@ describe("sandbox managed runtime", () => {
           adapterKey: "generic-adapter",
           client,
           workspaceLocalDir: localWorkspaceDir,
-          assets: [{
-            key: "widget",
-            localDir: localAssetsDir,
-            provision: {
-              stageFiles: [{ name: maliciousName, contents: "payload\n" }],
+          assets: [
+            {
+              key: "widget",
+              localDir: localAssetsDir,
+              provision: {
+                stageFiles: [{ name: maliciousName, contents: "payload\n" }],
+              },
             },
-          }],
+          ],
         }),
       ).rejects.toThrow(/must be a simple basename/);
 
       // The guard fires before the offending write, so nothing landed under the runtime root.
-      expect(writtenPaths.some((p) => p.endsWith("evil.txt") || p.endsWith("passwd") || p.endsWith("child.txt"))).toBe(false);
+      expect(
+        writtenPaths.some(
+          (p) =>
+            p.endsWith("evil.txt") ||
+            p.endsWith("passwd") ||
+            p.endsWith("child.txt"),
+        ),
+      ).toBe(false);
     }
   });
 
   it("routes a custom-provisioned asset through a single syncIn operation with its post-upload command (native runner → 0 direct writeFile/run)", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-native-asset-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-native-asset-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     const localAssetsDir = path.join(rootDir, "local-assets");
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(localAssetsDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace\n",
+      "utf8",
+    );
     await writeFile(path.join(localAssetsDir, "seed.txt"), "seed\n", "utf8");
 
     // A native runner delegates every staging step to `syncIn`; the orchestrator
@@ -2032,19 +2991,26 @@ describe("sandbox managed runtime", () => {
       adapterKey: "generic-adapter",
       client,
       workspaceLocalDir: localWorkspaceDir,
-      assets: [{
-        key: "widget",
-        localDir: localAssetsDir,
-        provision: {
-          stageFiles: [{ name: "widget-helper.sh", contents: "#!/bin/sh\ntar -xf \"$2\" -C \"$1\"\n" }],
-          // A bespoke post-upload command that consumes the staged helper — proves
-          // the custom command (not a plain default `tar -xf`) rides syncIn.
-          postUploadCommand: ({ assetTarPath, assetDir, runtimeRootDir }) =>
-            `rm -rf ${q(assetDir)} && mkdir -p ${q(assetDir)} && ` +
-            `sh ${q(path.posix.join(runtimeRootDir, "widget-helper.sh"))} ${q(assetDir)} ${q(assetTarPath)} && ` +
-            `rm -f ${q(assetTarPath)}`,
+      assets: [
+        {
+          key: "widget",
+          localDir: localAssetsDir,
+          provision: {
+            stageFiles: [
+              {
+                name: "widget-helper.sh",
+                contents: '#!/bin/sh\ntar -xf "$2" -C "$1"\n',
+              },
+            ],
+            // A bespoke post-upload command that consumes the staged helper — proves
+            // the custom command (not a plain default `tar -xf`) rides syncIn.
+            postUploadCommand: ({ assetTarPath, assetDir, runtimeRootDir }) =>
+              `rm -rf ${q(assetDir)} && mkdir -p ${q(assetDir)} && ` +
+              `sh ${q(path.posix.join(runtimeRootDir, "widget-helper.sh"))} ${q(assetDir)} ${q(assetTarPath)} && ` +
+              `rm -f ${q(assetTarPath)}`,
+          },
         },
-      }],
+      ],
     });
 
     // The orchestrator delegated everything to syncIn: no direct exec/writeFile.
@@ -2054,36 +3020,52 @@ describe("sandbox managed runtime", () => {
     // Exactly one operation carries the asset: the asset tar + the staged helper
     // as `files`, and the bespoke command as the ordered post-upload command.
     const assetOp = captured.find((op) =>
-      op.files.some((mapping) => mapping.targetPath.endsWith("widget-upload.tar")),
+      op.files.some((mapping) =>
+        mapping.targetPath.endsWith("widget-upload.tar"),
+      ),
     );
     expect(assetOp).toBeDefined();
-    const targets = assetOp!.files.map((mapping) => path.posix.basename(mapping.targetPath)).sort();
+    const targets = assetOp!.files
+      .map((mapping) => path.posix.basename(mapping.targetPath))
+      .sort();
     expect(targets).toEqual(["widget-helper.sh", "widget-upload.tar"]);
-    expect(assetOp!.files.every((mapping) => mapping.kind === "file")).toBe(true);
+    expect(assetOp!.files.every((mapping) => mapping.kind === "file")).toBe(
+      true,
+    );
     expect(assetOp!.postUploadCommands).toHaveLength(1);
-    expect(assetOp!.postUploadCommands![0].command).toContain("widget-helper.sh");
+    expect(assetOp!.postUploadCommands![0].command).toContain(
+      "widget-helper.sh",
+    );
     expect(assetOp!.postUploadCommands![0].command).not.toBe(
       `rm -rf ${q(path.posix.join(prepared.runtimeRootDir, "widget"))} && mkdir -p ${q(path.posix.join(prepared.runtimeRootDir, "widget"))}`,
     );
 
     // The asset tar carries the asset directory as its read-write destination,
     // because the extract command fills that directory, not the staging archive.
-    const assetTarMapping = assetOp!.files.find((mapping) => mapping.targetPath.endsWith("widget-upload.tar"));
+    const assetTarMapping = assetOp!.files.find((mapping) =>
+      mapping.targetPath.endsWith("widget-upload.tar"),
+    );
     expect(assetTarMapping?.access).toBe("rw");
     expect(assetTarMapping?.writablePath).toBe(prepared.assetDirs.widget);
 
     // The staged helper file is a read-only input that the command consumes, so
     // it is `access: "ro"` and never joins the writable set.
-    const stageMapping = assetOp!.files.find((mapping) => mapping.targetPath.endsWith("widget-helper.sh"));
+    const stageMapping = assetOp!.files.find((mapping) =>
+      mapping.targetPath.endsWith("widget-helper.sh"),
+    );
     expect(stageMapping?.access).toBe("ro");
     expect(stageMapping?.writablePath).toBeUndefined();
 
     // The asset actually materialized through the native seam.
-    await expect(readFile(path.join(prepared.assetDirs.widget, "seed.txt"), "utf8")).resolves.toBe("seed\n");
+    await expect(
+      readFile(path.join(prepared.assetDirs.widget, "seed.txt"), "utf8"),
+    ).resolves.toBe("seed\n");
   });
 
   it("stages git and workspace via syncIn preserving .taskcore-runtime (native runner → 0 direct writeFile/run)", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-native-git-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-native-git-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
@@ -2093,13 +3075,30 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(sourceRepoDir, "tracked.txt"), "tracked\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, "tracked.txt"),
+      "tracked\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "tracked.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
     // Pre-seed the sandbox with a `.taskcore-runtime` dir that MUST survive.
-    await mkdir(path.join(remoteWorkspaceDir, ".taskcore-runtime"), { recursive: true });
-    await writeFile(path.join(remoteWorkspaceDir, ".taskcore-runtime", "keep.txt"), "keep\n", "utf8");
+    await mkdir(path.join(remoteWorkspaceDir, ".taskcore-runtime"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(remoteWorkspaceDir, ".taskcore-runtime", "keep.txt"),
+      "keep\n",
+      "utf8",
+    );
 
     const directWrites: string[] = [];
     const directRuns: string[] = [];
@@ -2148,7 +3147,9 @@ describe("sandbox managed runtime", () => {
     expect(captured).toHaveLength(1);
     const op = captured[0];
     const byBase = (base: string) =>
-      op.files.find((mapping) => path.posix.basename(mapping.targetPath) === base);
+      op.files.find(
+        (mapping) => path.posix.basename(mapping.targetPath) === base,
+      );
     expect(byBase("git-workspace-upload.tar")).toBeDefined();
     expect(byBase("workspace-upload.tar")).toBeDefined();
     expect(op.files.every((mapping) => mapping.kind === "file")).toBe(true);
@@ -2160,14 +3161,21 @@ describe("sandbox managed runtime", () => {
 
     // The pre-seeded runtime dir survived the git+workspace staging.
     await expect(
-      readFile(path.join(remoteWorkspaceDir, ".taskcore-runtime", "keep.txt"), "utf8"),
+      readFile(
+        path.join(remoteWorkspaceDir, ".taskcore-runtime", "keep.txt"),
+        "utf8",
+      ),
     ).resolves.toBe("keep\n");
-    await expect(readFile(path.join(remoteWorkspaceDir, "tracked.txt"), "utf8")).resolves.toBe("tracked\n");
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "tracked.txt"), "utf8"),
+    ).resolves.toBe("tracked\n");
     expect(prepared.workspaceRemoteDir).toBe(remoteWorkspaceDir);
   });
 
   it("the workspace wipe command preserves in-flight sync scratch tarballs (.taskcore-upload-*)", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-scratch-shape-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-scratch-shape-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
@@ -2177,10 +3185,21 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(sourceRepoDir, "tracked.txt"), "tracked\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, "tracked.txt"),
+      "tracked\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "tracked.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
 
     const client: SandboxManagedRuntimeClient = {
       makeDir: async (remotePath) => {
@@ -2224,7 +3243,9 @@ describe("sandbox managed runtime", () => {
   });
 
   it("the workspace wipe keeps an in-flight scratch tarball at the root but removes a stale sibling", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-scratch-race-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-scratch-race-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
@@ -2234,16 +3255,35 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(sourceRepoDir, "tracked.txt"), "tracked\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, "tracked.txt"),
+      "tracked\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "tracked.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
     // Pre-seed the sandbox root. `.taskcore-upload-test.tar` simulates a
     // concurrent referenced-project scratch tarball in flight; `stale-junk.txt`
     // is an unrelated child that the wipe must remove.
     await mkdir(remoteWorkspaceDir, { recursive: true });
-    await writeFile(path.join(remoteWorkspaceDir, ".taskcore-upload-test.tar"), "scratch\n", "utf8");
-    await writeFile(path.join(remoteWorkspaceDir, "stale-junk.txt"), "junk\n", "utf8");
+    await writeFile(
+      path.join(remoteWorkspaceDir, ".taskcore-upload-test.tar"),
+      "scratch\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(remoteWorkspaceDir, "stale-junk.txt"),
+      "junk\n",
+      "utf8",
+    );
 
     const client: SandboxManagedRuntimeClient = {
       makeDir: async (remotePath) => {
@@ -2282,7 +3322,10 @@ describe("sandbox managed runtime", () => {
     // The real `find` wipe ran through `sh -c`. The scratch tarball survived and
     // the unrelated sibling did not.
     await expect(
-      readFile(path.join(remoteWorkspaceDir, ".taskcore-upload-test.tar"), "utf8"),
+      readFile(
+        path.join(remoteWorkspaceDir, ".taskcore-upload-test.tar"),
+        "utf8",
+      ),
     ).resolves.toBe("scratch\n");
     await expect(
       readFile(path.join(remoteWorkspaceDir, "stale-junk.txt"), "utf8"),
@@ -2290,7 +3333,9 @@ describe("sandbox managed runtime", () => {
   });
 
   it("issues one merged syncIn operation for a git-backed workspace stage-sync with two ordered extract commands", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-merged-git-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-merged-git-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
@@ -2300,13 +3345,30 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(sourceRepoDir, "tracked.txt"), "tracked\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, "tracked.txt"),
+      "tracked\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "tracked.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
     // Pre-seed the sandbox with a `.taskcore-runtime` dir that MUST survive.
-    await mkdir(path.join(remoteWorkspaceDir, ".taskcore-runtime"), { recursive: true });
-    await writeFile(path.join(remoteWorkspaceDir, ".taskcore-runtime", "keep.txt"), "keep\n", "utf8");
+    await mkdir(path.join(remoteWorkspaceDir, ".taskcore-runtime"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(remoteWorkspaceDir, ".taskcore-runtime", "keep.txt"),
+      "keep\n",
+      "utf8",
+    );
 
     const client: SandboxManagedRuntimeClient = {
       makeDir: async (remotePath) => {
@@ -2357,7 +3419,9 @@ describe("sandbox managed runtime", () => {
 
     // Both host tars ride the one operation as two `file` mappings.
     const byBase = (base: string) =>
-      op.files.find((mapping) => path.posix.basename(mapping.targetPath) === base);
+      op.files.find(
+        (mapping) => path.posix.basename(mapping.targetPath) === base,
+      );
     const gitMapping = byBase("git-workspace-upload.tar");
     const overlayMapping = byBase("workspace-upload.tar");
     expect(gitMapping).toBeDefined();
@@ -2385,13 +3449,19 @@ describe("sandbox managed runtime", () => {
 
     // The pre-seeded runtime dir survived and the workspace overlay applied.
     await expect(
-      readFile(path.join(remoteWorkspaceDir, ".taskcore-runtime", "keep.txt"), "utf8"),
+      readFile(
+        path.join(remoteWorkspaceDir, ".taskcore-runtime", "keep.txt"),
+        "utf8",
+      ),
     ).resolves.toBe("keep\n");
-    await expect(readFile(path.join(remoteWorkspaceDir, "tracked.txt"), "utf8")).resolves.toBe("tracked\n");
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "tracked.txt"), "utf8"),
+    ).resolves.toBe("tracked\n");
   });
 
   it("the merged workspace confine guard covers both tar mappings (escape in either trips it)", () => {
-    const runtimeRoot = "/home/daytona/taskcore-workspace/.taskcore-runtime/test-adapter";
+    const runtimeRoot =
+      "/home/daytona/taskcore-workspace/.taskcore-runtime/test-adapter";
     const tempRoot = "/tmp/taskcore-sandbox-sync-abc";
     const gitMapping = {
       sourcePath: `${tempRoot}/git-workspace.tar`,
@@ -2417,13 +3487,18 @@ describe("sandbox managed runtime", () => {
     // merged operation is rejected before any transfer.
     expect(() =>
       assertSyncOperationsConfined(
-        [{
-          operationId: "merged",
-          files: [
-            gitMapping,
-            { ...overlayMapping, targetPath: `${runtimeRoot}/../../etc/workspace-upload.tar` },
-          ],
-        }],
+        [
+          {
+            operationId: "merged",
+            files: [
+              gitMapping,
+              {
+                ...overlayMapping,
+                targetPath: `${runtimeRoot}/../../etc/workspace-upload.tar`,
+              },
+            ],
+          },
+        ],
         roots,
       ),
     ).toThrow(/escapes its confinement root|not a confined absolute path/);
@@ -2431,10 +3506,15 @@ describe("sandbox managed runtime", () => {
     // An absolute-path source escape in the git mapping trips the guard too.
     expect(() =>
       assertSyncOperationsConfined(
-        [{
-          operationId: "merged",
-          files: [{ ...gitMapping, sourcePath: "/etc/passwd" }, overlayMapping],
-        }],
+        [
+          {
+            operationId: "merged",
+            files: [
+              { ...gitMapping, sourcePath: "/etc/passwd" },
+              overlayMapping,
+            ],
+          },
+        ],
         roots,
       ),
     ).toThrow(/escapes its confinement root|not a confined absolute path/);
@@ -2451,7 +3531,9 @@ describe("sandbox managed runtime", () => {
   // workspace operation back into two — fails loudly here instead of silently
   // regressing the start path.
   it("collapses a representative codex_local start to two syncIn round-trips: one merged workspace op plus the asset op", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-sandbox-codex-roundtrip-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-sandbox-codex-roundtrip-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
@@ -2464,16 +3546,35 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(sourceRepoDir, "tracked.txt"), "tracked\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, "tracked.txt"),
+      "tracked\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "tracked.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
 
     // Managed Codex home with an auth.json that a custom post-upload command
     // merges in-sandbox — the credential path is routed onto native uploadFiles.
     await mkdir(homeDir, { recursive: true });
-    await writeFile(path.join(homeDir, "auth.json"), "{\"OPENAI_API_KEY\":\"sk-test\"}\n", "utf8");
-    await writeFile(path.join(homeDir, "config.toml"), "model = \"gpt\"\n", "utf8");
+    await writeFile(
+      path.join(homeDir, "auth.json"),
+      '{"OPENAI_API_KEY":"sk-test"}\n',
+      "utf8",
+    );
+    await writeFile(
+      path.join(homeDir, "config.toml"),
+      'model = "gpt"\n',
+      "utf8",
+    );
 
     // A native runner delegates every staging step to `syncIn`; ANY direct
     // writeFile/run exec is a collapse regression.
@@ -2514,17 +3615,24 @@ describe("sandbox managed runtime", () => {
       adapterKey: "codex",
       client,
       workspaceLocalDir: localWorkspaceDir,
-      assets: [{
-        key: "home",
-        localDir: homeDir,
-        provision: {
-          stageFiles: [{ name: "home-merge.sh", contents: "#!/bin/sh\ntar -xf \"$2\" -C \"$1\"\n" }],
-          postUploadCommand: ({ assetTarPath, assetDir, runtimeRootDir }) =>
-            `mkdir -p ${q(assetDir)} && ` +
-            `sh ${q(path.posix.join(runtimeRootDir, "home-merge.sh"))} ${q(assetDir)} ${q(assetTarPath)} && ` +
-            `rm -f ${q(assetTarPath)}`,
+      assets: [
+        {
+          key: "home",
+          localDir: homeDir,
+          provision: {
+            stageFiles: [
+              {
+                name: "home-merge.sh",
+                contents: '#!/bin/sh\ntar -xf "$2" -C "$1"\n',
+              },
+            ],
+            postUploadCommand: ({ assetTarPath, assetDir, runtimeRootDir }) =>
+              `mkdir -p ${q(assetDir)} && ` +
+              `sh ${q(path.posix.join(runtimeRootDir, "home-merge.sh"))} ${q(assetDir)} ${q(assetTarPath)} && ` +
+              `rm -f ${q(assetTarPath)}`,
+          },
         },
-      }],
+      ],
     });
 
     // The orchestrator delegated everything to syncIn: no re-inlined writeFile/run.
@@ -2535,8 +3643,12 @@ describe("sandbox managed runtime", () => {
     // op (git history + overlay) and the home asset op.
     expect(captured).toHaveLength(2);
     const hasBase = (op: SandboxSyncOperation, base: string) =>
-      op.files.some((mapping) => path.posix.basename(mapping.targetPath) === base);
-    const workspaceOp = captured.find((op) => hasBase(op, "workspace-upload.tar"));
+      op.files.some(
+        (mapping) => path.posix.basename(mapping.targetPath) === base,
+      );
+    const workspaceOp = captured.find((op) =>
+      hasBase(op, "workspace-upload.tar"),
+    );
     const homeOp = captured.find((op) => hasBase(op, "home-upload.tar"));
     expect(workspaceOp).toBeDefined();
     expect(homeOp).toBeDefined();
@@ -2545,7 +3657,9 @@ describe("sandbox managed runtime", () => {
     // second). The two tars ride one native uploadFiles round-trip.
     expect(hasBase(workspaceOp!, "git-workspace-upload.tar")).toBe(true);
     expect(workspaceOp!.files).toHaveLength(2);
-    expect((workspaceOp!.postUploadCommands ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(
+      (workspaceOp!.postUploadCommands ?? []).length,
+    ).toBeGreaterThanOrEqual(2);
 
     // Every operation is a native uploadFiles (all `file` mappings) whose
     // extract/merge rides as an ordered provider-executed post-upload command.
@@ -2558,12 +3672,15 @@ describe("sandbox managed runtime", () => {
     expect(new Set(captured.map((op) => op.operationId)).size).toBe(2);
 
     // The credential asset actually materialized through the native seam.
-    await expect(readFile(path.join(prepared.assetDirs.home, "auth.json"), "utf8"))
-      .resolves.toBe("{\"OPENAI_API_KEY\":\"sk-test\"}\n");
+    await expect(
+      readFile(path.join(prepared.assetDirs.home, "auth.json"), "utf8"),
+    ).resolves.toBe('{"OPENAI_API_KEY":"sk-test"}\n');
   });
 
   it("authors the advisory access intent rw on workspace, git, and asset inbound mappings", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-access-rw-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-access-rw-"),
+    );
     cleanupDirs.push(rootDir);
     const sourceRepoDir = path.join(rootDir, "source-repo");
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
@@ -2576,24 +3693,45 @@ describe("sandbox managed runtime", () => {
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(sourceRepoDir, "tracked.txt"), "tracked\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, "tracked.txt"),
+      "tracked\n",
+      "utf8",
+    );
     await git(sourceRepoDir, ["add", "tracked.txt"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
 
     await mkdir(assetDir, { recursive: true });
-    await writeFile(path.join(assetDir, "config.toml"), "model = \"gpt\"\n", "utf8");
+    await writeFile(
+      path.join(assetDir, "config.toml"),
+      'model = "gpt"\n',
+      "utf8",
+    );
 
     const client: SandboxManagedRuntimeClient = {
-      makeDir: async (remotePath) => { await mkdir(remotePath, { recursive: true }); },
+      makeDir: async (remotePath) => {
+        await mkdir(remotePath, { recursive: true });
+      },
       writeFile: async (remotePath, bytes) => {
         await mkdir(path.dirname(remotePath), { recursive: true });
         await writeFile(remotePath, Buffer.from(bytes));
       },
       readFile: async (remotePath) => await readFile(remotePath),
       listFiles: async () => [],
-      remove: async (remotePath) => { await rm(remotePath, { recursive: true, force: true }); },
-      run: async (command) => { await execFile("sh", ["-c", command], { maxBuffer: 32 * 1024 * 1024 }); },
+      remove: async (remotePath) => {
+        await rm(remotePath, { recursive: true, force: true });
+      },
+      run: async (command) => {
+        await execFile("sh", ["-c", command], { maxBuffer: 32 * 1024 * 1024 });
+      },
     };
     const captured: SandboxSyncOperation[] = [];
     attachCapturingSyncIn(client, captured);
@@ -2629,9 +3767,18 @@ describe("sandbox managed runtime", () => {
     // directory that the post-upload extract command fills: the workspace
     // directory for the workspace and git tars, and the asset directory for the
     // asset tar.
-    const remoteAssetDir = path.posix.join(remoteWorkspaceDir, ".taskcore-runtime", "test-adapter", "home");
-    expect(findMapping("workspace-upload.tar")?.writablePath).toBe(remoteWorkspaceDir);
-    expect(findMapping("git-workspace-upload.tar")?.writablePath).toBe(remoteWorkspaceDir);
+    const remoteAssetDir = path.posix.join(
+      remoteWorkspaceDir,
+      ".taskcore-runtime",
+      "test-adapter",
+      "home",
+    );
+    expect(findMapping("workspace-upload.tar")?.writablePath).toBe(
+      remoteWorkspaceDir,
+    );
+    expect(findMapping("git-workspace-upload.tar")?.writablePath).toBe(
+      remoteWorkspaceDir,
+    );
     expect(findMapping("home-upload.tar")?.writablePath).toBe(remoteAssetDir);
   });
 
@@ -2640,26 +3787,44 @@ describe("sandbox managed runtime", () => {
     const priorFlag = process.env[flagKey];
     process.env[flagKey] = "1";
     try {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-access-ro-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-access-ro-"),
+      );
       cleanupDirs.push(rootDir);
       const localWorkspaceDir = path.join(rootDir, "local-workspace");
       const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
       const referencedDir = path.join(rootDir, "referenced-project");
       await mkdir(localWorkspaceDir, { recursive: true });
       await mkdir(referencedDir, { recursive: true });
-      await writeFile(path.join(localWorkspaceDir, "README.md"), "anchor\n", "utf8");
-      await writeFile(path.join(referencedDir, "notes.md"), "reference\n", "utf8");
+      await writeFile(
+        path.join(localWorkspaceDir, "README.md"),
+        "anchor\n",
+        "utf8",
+      );
+      await writeFile(
+        path.join(referencedDir, "notes.md"),
+        "reference\n",
+        "utf8",
+      );
 
       const client: SandboxManagedRuntimeClient = {
-        makeDir: async (remotePath) => { await mkdir(remotePath, { recursive: true }); },
+        makeDir: async (remotePath) => {
+          await mkdir(remotePath, { recursive: true });
+        },
         writeFile: async (remotePath, bytes) => {
           await mkdir(path.dirname(remotePath), { recursive: true });
           await writeFile(remotePath, Buffer.from(bytes));
         },
         readFile: async (remotePath) => await readFile(remotePath),
         listFiles: async () => [],
-        remove: async (remotePath) => { await rm(remotePath, { recursive: true, force: true }); },
-        run: async (command) => { await execFile("sh", ["-c", command], { maxBuffer: 32 * 1024 * 1024 }); },
+        remove: async (remotePath) => {
+          await rm(remotePath, { recursive: true, force: true });
+        },
+        run: async (command) => {
+          await execFile("sh", ["-c", command], {
+            maxBuffer: 32 * 1024 * 1024,
+          });
+        },
       };
       const captured: SandboxSyncOperation[] = [];
       attachCapturingSyncIn(client, captured);
@@ -2676,12 +3841,21 @@ describe("sandbox managed runtime", () => {
         adapterKey: "test-adapter",
         client,
         workspaceLocalDir: localWorkspaceDir,
-        additionalSources: [{ localPath: referencedDir, projectId: "proj-first", ignoreResolution: { kind: "other" } }],
+        additionalSources: [
+          {
+            localPath: referencedDir,
+            projectId: "proj-first",
+            ignoreResolution: { kind: "other" },
+          },
+        ],
       });
 
       const referencedMapping = captured
         .flatMap((op) => op.files)
-        .find((mapping) => path.posix.basename(mapping.targetPath) === "project-proj-first");
+        .find(
+          (mapping) =>
+            path.posix.basename(mapping.targetPath) === "project-proj-first",
+        );
 
       // A referenced project is a read-only tree, so the author marks it `access: "ro"`.
       expect(referencedMapping).toBeDefined();
@@ -2698,31 +3872,48 @@ describe("sandbox managed runtime", () => {
     const priorFlag = process.env[flagKey];
     process.env[flagKey] = "1";
     try {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-project-bytes-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-project-bytes-"),
+      );
       cleanupDirs.push(rootDir);
       const localWorkspaceDir = path.join(rootDir, "local-workspace");
       const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
       const referencedDir = path.join(rootDir, "referenced-project");
       await mkdir(localWorkspaceDir, { recursive: true });
       await mkdir(referencedDir, { recursive: true });
-      await writeFile(path.join(localWorkspaceDir, "README.md"), "anchor\n", "utf8");
+      await writeFile(
+        path.join(localWorkspaceDir, "README.md"),
+        "anchor\n",
+        "utf8",
+      );
       // A referenced project has no host tarball to `fs.stat`, so its progress
       // line depends entirely on the transport's own `bytesTransferred`. Give it
       // real, sizeable content (well above the 0.1 MB rounding step), so a bug
       // that keeps the line at 0 stays distinguishable from a correctly-reported
       // small transfer that would still round down to "0.0 MB".
-      await writeFile(path.join(referencedDir, "notes.md"), Buffer.alloc(300 * 1024, "a"));
+      await writeFile(
+        path.join(referencedDir, "notes.md"),
+        Buffer.alloc(300 * 1024, "a"),
+      );
 
       const client: SandboxManagedRuntimeClient = {
-        makeDir: async (remotePath) => { await mkdir(remotePath, { recursive: true }); },
+        makeDir: async (remotePath) => {
+          await mkdir(remotePath, { recursive: true });
+        },
         writeFile: async (remotePath, bytes) => {
           await mkdir(path.dirname(remotePath), { recursive: true });
           await writeFile(remotePath, Buffer.from(bytes));
         },
         readFile: async (remotePath) => await readFile(remotePath),
         listFiles: async () => [],
-        remove: async (remotePath) => { await rm(remotePath, { recursive: true, force: true }); },
-        run: async (command) => { await execFile("sh", ["-c", command], { maxBuffer: 32 * 1024 * 1024 }); },
+        remove: async (remotePath) => {
+          await rm(remotePath, { recursive: true, force: true });
+        },
+        run: async (command) => {
+          await execFile("sh", ["-c", command], {
+            maxBuffer: 32 * 1024 * 1024,
+          });
+        },
       };
       attachCapturingSyncIn(client, []);
 
@@ -2739,18 +3930,32 @@ describe("sandbox managed runtime", () => {
         adapterKey: "test-adapter",
         client,
         workspaceLocalDir: localWorkspaceDir,
-        additionalSources: [{ localPath: referencedDir, projectId: "proj-first", ignoreResolution: { kind: "other" } }],
-        onProgress: (line) => { lines.push(line); },
+        additionalSources: [
+          {
+            localPath: referencedDir,
+            projectId: "proj-first",
+            ignoreResolution: { kind: "other" },
+          },
+        ],
+        onProgress: (line) => {
+          lines.push(line);
+        },
       });
 
-      const projectLines = lines.filter((line) => line.includes("Syncing project-proj-first to environment"));
+      const projectLines = lines.filter((line) =>
+        line.includes("Syncing project-proj-first to environment"),
+      );
       expect(projectLines.length).toBeGreaterThan(0);
       // The transfer landed real bytes, so the terminal line carries the actual
       // byte total and a 100% completion, not the "0.0 MB" that a discarded
       // sync result would show.
       expect(projectLines.some((line) => line.includes("100%"))).toBe(true);
-      expect(projectLines.every((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line))).toBe(true);
-      expect(projectLines.some((line) => line.includes("(0.0/0.0 MB)"))).toBe(false);
+      expect(
+        projectLines.every((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line)),
+      ).toBe(true);
+      expect(projectLines.some((line) => line.includes("(0.0/0.0 MB)"))).toBe(
+        false,
+      );
     } finally {
       if (priorFlag === undefined) delete process.env[flagKey];
       else process.env[flagKey] = priorFlag;
@@ -2758,7 +3963,10 @@ describe("sandbox managed runtime", () => {
   });
 
   it("keeps the sandbox runtime core free of Codex-specific string literals", async () => {
-    const coreSource = await readFile(new URL("./sandbox-managed-runtime.ts", import.meta.url), "utf8");
+    const coreSource = await readFile(
+      new URL("./sandbox-managed-runtime.ts", import.meta.url),
+      "utf8",
+    );
     // The seam must be generic: no adapter (Codex) knowledge may live in the core.
     expect(coreSource).not.toMatch(/codex/i);
     expect(coreSource).not.toMatch(/auth\.json/i);
@@ -2780,14 +3988,20 @@ describe("sandbox managed runtime", () => {
     const priorFlag = process.env[flagKey];
     process.env[flagKey] = "1";
     try {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-e2e-additional-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-e2e-additional-"),
+      );
       cleanupDirs.push(rootDir);
 
       const localWorkspaceDir = path.join(rootDir, "local-workspace");
       const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
       await mkdir(localWorkspaceDir, { recursive: true });
       await mkdir(remoteWorkspaceDir, { recursive: true });
-      await writeFile(path.join(localWorkspaceDir, "README.md"), "anchor content\n", "utf8");
+      await writeFile(
+        path.join(localWorkspaceDir, "README.md"),
+        "anchor content\n",
+        "utf8",
+      );
 
       // Two real referenced-project checkouts (one with a nested file) plus a
       // deliberately-missing source between them.
@@ -2795,7 +4009,11 @@ describe("sandbox managed runtime", () => {
       const second = path.join(rootDir, "referenced-second");
       await mkdir(path.join(first, "docs"), { recursive: true });
       await mkdir(second, { recursive: true });
-      await writeFile(path.join(first, "docs", "guide.md"), "first guide\n", "utf8");
+      await writeFile(
+        path.join(first, "docs", "guide.md"),
+        "first guide\n",
+        "utf8",
+      );
       await writeFile(path.join(second, "notes.md"), "second notes\n", "utf8");
 
       const runner: CommandManagedRuntimeRunner = {
@@ -2803,14 +4021,45 @@ describe("sandbox managed runtime", () => {
           new Promise<RunProcessResult>((resolve) => {
             const startedAt = new Date().toISOString();
             const command =
-              input.command === "sh" ? "/bin/sh" : input.command === "bash" ? "/bin/bash" : input.command;
-            const child = spawn(command, input.args ?? [], { cwd: input.cwd, env: { ...process.env, ...input.env } });
+              input.command === "sh"
+                ? "/bin/sh"
+                : input.command === "bash"
+                  ? "/bin/bash"
+                  : input.command;
+            const child = spawn(command, input.args ?? [], {
+              cwd: input.cwd,
+              env: { ...process.env, ...input.env },
+            });
             let stdout = "";
             let stderr = "";
-            child.stdout.on("data", (chunk) => { stdout += chunk.toString("utf8"); });
-            child.stderr.on("data", (chunk) => { stderr += chunk.toString("utf8"); });
-            child.on("error", () => resolve({ exitCode: 127, signal: null, timedOut: false, stdout, stderr, pid: null, startedAt }));
-            child.on("close", (code) => resolve({ exitCode: code ?? 0, signal: null, timedOut: false, stdout, stderr, pid: child.pid ?? null, startedAt }));
+            child.stdout.on("data", (chunk) => {
+              stdout += chunk.toString("utf8");
+            });
+            child.stderr.on("data", (chunk) => {
+              stderr += chunk.toString("utf8");
+            });
+            child.on("error", () =>
+              resolve({
+                exitCode: 127,
+                signal: null,
+                timedOut: false,
+                stdout,
+                stderr,
+                pid: null,
+                startedAt,
+              }),
+            );
+            child.on("close", (code) =>
+              resolve({
+                exitCode: code ?? 0,
+                signal: null,
+                timedOut: false,
+                stdout,
+                stderr,
+                pid: child.pid ?? null,
+                startedAt,
+              }),
+            );
             if (input.stdin != null) child.stdin.write(input.stdin);
             child.stdin.end();
           }),
@@ -2822,44 +4071,90 @@ describe("sandbox managed runtime", () => {
         adapterKey: "test-adapter",
         workspaceLocalDir: localWorkspaceDir,
         additionalSources: [
-          { localPath: first, projectId: "proj-first", ignoreResolution: { kind: "other" } },
-          { localPath: path.join(rootDir, "referenced-missing"), projectId: "proj-missing", ignoreResolution: { kind: "other" } },
-          { localPath: second, projectId: "proj-second", ignoreResolution: { kind: "other" } },
+          {
+            localPath: first,
+            projectId: "proj-first",
+            ignoreResolution: { kind: "other" },
+          },
+          {
+            localPath: path.join(rootDir, "referenced-missing"),
+            projectId: "proj-missing",
+            ignoreResolution: { kind: "other" },
+          },
+          {
+            localPath: second,
+            projectId: "proj-second",
+            ignoreResolution: { kind: "other" },
+          },
         ],
       });
 
-      const runtimeRootDir = path.posix.join(remoteWorkspaceDir, ".taskcore-runtime", "test-adapter");
+      const runtimeRootDir = path.posix.join(
+        remoteWorkspaceDir,
+        ".taskcore-runtime",
+        "test-adapter",
+      );
 
       // The anchor workspace synced normally and stays byte-identical.
-      await expect(readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8")).resolves.toBe("anchor content\n");
+      await expect(
+        readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8"),
+      ).resolves.toBe("anchor content\n");
 
       // Each healthy referenced project landed in its OWN isolated dir; the
       // missing one is skipped, not fatal.
-      expect(Object.keys(prepared.additionalSourceDirs).sort()).toEqual(["proj-first", "proj-second"]);
-      expect(prepared.additionalSourceDirs["proj-first"]).toBe(path.posix.join(runtimeRootDir, "project-proj-first"));
-      expect(prepared.additionalSourceDirs["proj-second"]).toBe(path.posix.join(runtimeRootDir, "project-proj-second"));
+      expect(Object.keys(prepared.additionalSourceDirs).sort()).toEqual([
+        "proj-first",
+        "proj-second",
+      ]);
+      expect(prepared.additionalSourceDirs["proj-first"]).toBe(
+        path.posix.join(runtimeRootDir, "project-proj-first"),
+      );
+      expect(prepared.additionalSourceDirs["proj-second"]).toBe(
+        path.posix.join(runtimeRootDir, "project-proj-second"),
+      );
       expect(prepared.additionalSourceDirs["proj-missing"]).toBeUndefined();
 
       // The skipped project is a first-class per-project failure outcome, not only a warning, so the
       // run can count it in the requested-vs-synced accounting. The two healthy projects do not
       // appear as failures.
-      expect(prepared.additionalSourceFailures.map((failure) => failure.projectId)).toEqual([
-        "proj-missing",
-      ]);
-      expect(prepared.additionalSourceFailures[0]!.error.length).toBeGreaterThan(0);
+      expect(
+        prepared.additionalSourceFailures.map((failure) => failure.projectId),
+      ).toEqual(["proj-missing"]);
+      expect(
+        prepared.additionalSourceFailures[0]!.error.length,
+      ).toBeGreaterThan(0);
 
-      await expect(readFile(path.join(prepared.additionalSourceDirs["proj-first"], "docs", "guide.md"), "utf8"))
-        .resolves.toBe("first guide\n");
-      await expect(readFile(path.join(prepared.additionalSourceDirs["proj-second"], "notes.md"), "utf8"))
-        .resolves.toBe("second notes\n");
+      await expect(
+        readFile(
+          path.join(
+            prepared.additionalSourceDirs["proj-first"],
+            "docs",
+            "guide.md",
+          ),
+          "utf8",
+        ),
+      ).resolves.toBe("first guide\n");
+      await expect(
+        readFile(
+          path.join(prepared.additionalSourceDirs["proj-second"], "notes.md"),
+          "utf8",
+        ),
+      ).resolves.toBe("second notes\n");
 
       // Neither project's tree leaked into the anchor workspace or into the other
       // project's dir.
-      await expect(readFile(path.join(remoteWorkspaceDir, "notes.md"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-      await expect(readFile(path.join(prepared.additionalSourceDirs["proj-first"], "notes.md"), "utf8")).rejects
-        .toMatchObject({ code: "ENOENT" });
-      await expect(readFile(path.join(runtimeRootDir, "project-proj-missing"), "utf8")).rejects
-        .toMatchObject({ code: "ENOENT" });
+      await expect(
+        readFile(path.join(remoteWorkspaceDir, "notes.md"), "utf8"),
+      ).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(
+        readFile(
+          path.join(prepared.additionalSourceDirs["proj-first"], "notes.md"),
+          "utf8",
+        ),
+      ).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(
+        readFile(path.join(runtimeRootDir, "project-proj-missing"), "utf8"),
+      ).rejects.toMatchObject({ code: "ENOENT" });
     } finally {
       if (priorFlag === undefined) delete process.env[flagKey];
       else process.env[flagKey] = priorFlag;
@@ -2868,14 +4163,24 @@ describe("sandbox managed runtime", () => {
 
   describe("resolveReferencedSourceIgnore", () => {
     it("re-relativizes root-relative ignored paths to a nested localPath", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-nested-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-ignore-nested-"),
+      );
       cleanupDirs.push(rootDir);
       const repo = path.join(rootDir, "repo");
       await initGitRepo(repo);
       // An ignored entry OUTSIDE the referenced project's localPath, and two
       // ignored entries inside it (one top-level, one nested).
-      await writeFile(path.join(repo, ".gitignore"), "outside-secret.env\npackages/app/secret.env\npackages/app/build/\n", "utf8");
-      await writeFile(path.join(repo, "outside-secret.env"), "outside\n", "utf8");
+      await writeFile(
+        path.join(repo, ".gitignore"),
+        "outside-secret.env\npackages/app/secret.env\npackages/app/build/\n",
+        "utf8",
+      );
+      await writeFile(
+        path.join(repo, "outside-secret.env"),
+        "outside\n",
+        "utf8",
+      );
       const localPath = path.join(repo, "packages", "app");
       // Commit a tracked file under `localPath` first. Otherwise the whole
       // `packages/` directory is untracked, and `git status` collapses it to
@@ -2886,52 +4191,82 @@ describe("sandbox managed runtime", () => {
       await git(repo, ["add", "packages/app/index.ts"]);
       await git(repo, ["commit", "-qm", "add app"]);
       await mkdir(path.join(localPath, "build"), { recursive: true });
-      await writeFile(path.join(localPath, "secret.env"), "TOKEN=abc\n", "utf8");
-      await writeFile(path.join(localPath, "build", "out.js"), "artifact\n", "utf8");
+      await writeFile(
+        path.join(localPath, "secret.env"),
+        "TOKEN=abc\n",
+        "utf8",
+      );
+      await writeFile(
+        path.join(localPath, "build", "out.js"),
+        "artifact\n",
+        "utf8",
+      );
 
       const resolution = await resolveReferencedSourceIgnore(localPath);
 
       // Only the entries under `localPath` apply, re-relativized to it — the
       // sibling `outside-secret.env` never appears, and the prefix
       // `packages/app/` is stripped.
-      expect(resolution).toEqual({ kind: "git", ignoredPaths: ["build", "secret.env"] });
+      expect(resolution).toEqual({
+        kind: "git",
+        ignoredPaths: ["build", "secret.env"],
+      });
     });
 
     it("keeps today's fixed excludes for a non-Git source", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-nongit-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-ignore-nongit-"),
+      );
       cleanupDirs.push(rootDir);
       const plainDir = path.join(rootDir, "plain-project");
       await mkdir(plainDir, { recursive: true });
       await writeFile(path.join(plainDir, "file.txt"), "body\n", "utf8");
 
-      await expect(resolveReferencedSourceIgnore(plainDir)).resolves.toEqual({ kind: "other" });
+      await expect(resolveReferencedSourceIgnore(plainDir)).resolves.toEqual({
+        kind: "other",
+      });
     });
 
     it("fails closed on a real Git error instead of returning an unfiltered result", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-fail-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-ignore-fail-"),
+      );
       cleanupDirs.push(rootDir);
       const repo = path.join(rootDir, "repo");
       await initGitRepo(repo);
       // Corrupt the index so `git rev-parse --show-toplevel` still succeeds but
       // `git status --ignored` fails with a real error (not "not a git repository").
-      await writeFile(path.join(repo, ".git", "index"), "not a valid index\n", "utf8");
+      await writeFile(
+        path.join(repo, ".git", "index"),
+        "not a valid index\n",
+        "utf8",
+      );
 
       const resolution = await resolveReferencedSourceIgnore(repo);
 
       // The reason is the fixed category, never the caught error's own message
       // (which would embed `repo`, an absolute host path).
-      expect(resolution).toEqual({ kind: "failed", reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed });
+      expect(resolution).toEqual({
+        kind: "failed",
+        reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed,
+      });
     });
 
     // Nadia's required probes: none of these three example absolute paths —
     // an ordinary POSIX path, a home directory, and a Windows path — may ever
     // reach `reason`, however they arrive (a caught Git error, or a raw
     // toplevel string that makes `localPath` a non-descendant).
-    const SENSITIVE_PATH_PROBES = ["/srv/alice/project", "/home/alice/project", "C:\\Users\\alice\\project"];
+    const SENSITIVE_PATH_PROBES = [
+      "/srv/alice/project",
+      "/home/alice/project",
+      "C:\\Users\\alice\\project",
+    ];
 
     for (const sensitivePath of SENSITIVE_PATH_PROBES) {
       it(`redacts a caught Git error embedding ${sensitivePath} to the fixed category`, async () => {
-        const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-redact-caught-"));
+        const rootDir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-ignore-redact-caught-"),
+        );
         cleanupDirs.push(rootDir);
         const repo = path.join(rootDir, "repo");
         await initGitRepo(repo);
@@ -2939,8 +4274,12 @@ describe("sandbox managed runtime", () => {
           setExpensiveWorkspaceGitExecutor(async (input) => {
             if (input.operation === "referenced_source.ignored_files") {
               throw Object.assign(
-                new Error(`fatal: unable to read tree object for ${sensitivePath}, pid 4242`),
-                { stderr: `fatal: unable to read tree object for ${sensitivePath}, pid 4242` },
+                new Error(
+                  `fatal: unable to read tree object for ${sensitivePath}, pid 4242`,
+                ),
+                {
+                  stderr: `fatal: unable to read tree object for ${sensitivePath}, pid 4242`,
+                },
               );
             }
             return await runLocalGit(input.localDir, [...input.args], {
@@ -2952,14 +4291,19 @@ describe("sandbox managed runtime", () => {
 
           const resolution = await resolveReferencedSourceIgnore(repo);
 
-          expect(resolution).toEqual({ kind: "failed", reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed });
+          expect(resolution).toEqual({
+            kind: "failed",
+            reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed,
+          });
         } finally {
           setExpensiveWorkspaceGitExecutor(null);
         }
       });
 
       it(`redacts a non-descendant toplevel embedding ${sensitivePath} to the fixed category`, async () => {
-        const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-redact-nondescendant-"));
+        const rootDir = await mkdtemp(
+          path.join(os.tmpdir(), "taskcore-ignore-redact-nondescendant-"),
+        );
         cleanupDirs.push(rootDir);
         const localPath = path.join(rootDir, "referenced");
         await mkdir(localPath, { recursive: true });
@@ -2976,7 +4320,11 @@ describe("sandbox managed runtime", () => {
 
           const resolution = await resolveReferencedSourceIgnore(localPath);
 
-          expect(resolution).toEqual({ kind: "failed", reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.toplevelNotDescendant });
+          expect(resolution).toEqual({
+            kind: "failed",
+            reason:
+              REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.toplevelNotDescendant,
+          });
         } finally {
           setExpensiveWorkspaceGitExecutor(null);
         }
@@ -2984,7 +4332,9 @@ describe("sandbox managed runtime", () => {
     }
 
     it("fails closed with a fixed category when the parsed ignored-entry count exceeds the bound", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-bound-count-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-ignore-bound-count-"),
+      );
       cleanupDirs.push(rootDir);
       const repo = path.join(rootDir, "repo");
       await initGitRepo(repo);
@@ -3004,14 +4354,19 @@ describe("sandbox managed runtime", () => {
 
         const resolution = await resolveReferencedSourceIgnore(repo);
 
-        expect(resolution).toEqual({ kind: "failed", reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.limitExceeded });
+        expect(resolution).toEqual({
+          kind: "failed",
+          reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.limitExceeded,
+        });
       } finally {
         setExpensiveWorkspaceGitExecutor(null);
       }
     });
 
     it("fails closed with a fixed category when the total UTF-8 byte size of ignored paths exceeds the bound", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-bound-bytes-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-ignore-bound-bytes-"),
+      );
       cleanupDirs.push(rootDir);
       const repo = path.join(rootDir, "repo");
       await initGitRepo(repo);
@@ -3032,14 +4387,19 @@ describe("sandbox managed runtime", () => {
 
         const resolution = await resolveReferencedSourceIgnore(repo);
 
-        expect(resolution).toEqual({ kind: "failed", reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.limitExceeded });
+        expect(resolution).toEqual({
+          kind: "failed",
+          reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.limitExceeded,
+        });
       } finally {
         setExpensiveWorkspaceGitExecutor(null);
       }
     });
 
     it("stages no bytes for either a count-breach or a byte-breach project, and stages a healthy sibling", async () => {
-      const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-bound-staging-"));
+      const rootDir = await mkdtemp(
+        path.join(os.tmpdir(), "taskcore-ignore-bound-staging-"),
+      );
       cleanupDirs.push(rootDir);
       const localWorkspaceDir = path.join(rootDir, "local-workspace");
       const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -3050,13 +4410,31 @@ describe("sandbox managed runtime", () => {
       await mkdir(healthyDir, { recursive: true });
       await mkdir(countBreachDir, { recursive: true });
       await mkdir(byteBreachDir, { recursive: true });
-      await writeFile(path.join(localWorkspaceDir, "README.md"), "anchor\n", "utf8");
+      await writeFile(
+        path.join(localWorkspaceDir, "README.md"),
+        "anchor\n",
+        "utf8",
+      );
       await writeFile(path.join(healthyDir, "notes.md"), "healthy\n", "utf8");
-      await writeFile(path.join(countBreachDir, "should-never-ship.txt"), "must not stage\n", "utf8");
-      await writeFile(path.join(byteBreachDir, "should-never-ship.txt"), "must not stage\n", "utf8");
+      await writeFile(
+        path.join(countBreachDir, "should-never-ship.txt"),
+        "must not stage\n",
+        "utf8",
+      );
+      await writeFile(
+        path.join(byteBreachDir, "should-never-ship.txt"),
+        "must not stage\n",
+        "utf8",
+      );
 
-      const countBreachReason = { kind: "failed" as const, reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.limitExceeded };
-      const byteBreachReason = { kind: "failed" as const, reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.limitExceeded };
+      const countBreachReason = {
+        kind: "failed" as const,
+        reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.limitExceeded,
+      };
+      const byteBreachReason = {
+        kind: "failed" as const,
+        reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.limitExceeded,
+      };
 
       const prepared = await prepareCommandManagedRuntime({
         runner: makeInlineSpawnRunner(),
@@ -3064,22 +4442,57 @@ describe("sandbox managed runtime", () => {
         adapterKey: "test-adapter",
         workspaceLocalDir: localWorkspaceDir,
         additionalSources: [
-          { localPath: healthyDir, projectId: "healthy", ignoreResolution: { kind: "other" } },
-          { localPath: countBreachDir, projectId: "count-breach", ignoreResolution: countBreachReason },
-          { localPath: byteBreachDir, projectId: "byte-breach", ignoreResolution: byteBreachReason },
+          {
+            localPath: healthyDir,
+            projectId: "healthy",
+            ignoreResolution: { kind: "other" },
+          },
+          {
+            localPath: countBreachDir,
+            projectId: "count-breach",
+            ignoreResolution: countBreachReason,
+          },
+          {
+            localPath: byteBreachDir,
+            projectId: "byte-breach",
+            ignoreResolution: byteBreachReason,
+          },
         ],
       });
 
-      expect(Object.keys(prepared.additionalSourceDirs).sort()).toEqual(["healthy"]);
-      expect(prepared.additionalSourceFailures.map((failure) => failure.projectId).sort()).toEqual([
-        "byte-breach",
-        "count-breach",
+      expect(Object.keys(prepared.additionalSourceDirs).sort()).toEqual([
+        "healthy",
       ]);
-      const runtimeRootDir = path.posix.join(remoteWorkspaceDir, ".taskcore-runtime", "test-adapter");
-      await expect(readFile(path.join(runtimeRootDir, "project-count-breach", "should-never-ship.txt"), "utf8")).rejects
-        .toMatchObject({ code: "ENOENT" });
-      await expect(readFile(path.join(runtimeRootDir, "project-byte-breach", "should-never-ship.txt"), "utf8")).rejects
-        .toMatchObject({ code: "ENOENT" });
+      expect(
+        prepared.additionalSourceFailures
+          .map((failure) => failure.projectId)
+          .sort(),
+      ).toEqual(["byte-breach", "count-breach"]);
+      const runtimeRootDir = path.posix.join(
+        remoteWorkspaceDir,
+        ".taskcore-runtime",
+        "test-adapter",
+      );
+      await expect(
+        readFile(
+          path.join(
+            runtimeRootDir,
+            "project-count-breach",
+            "should-never-ship.txt",
+          ),
+          "utf8",
+        ),
+      ).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(
+        readFile(
+          path.join(
+            runtimeRootDir,
+            "project-byte-breach",
+            "should-never-ship.txt",
+          ),
+          "utf8",
+        ),
+      ).rejects.toMatchObject({ code: "ENOENT" });
     });
 
     describe("saturation retry", () => {
@@ -3090,7 +4503,9 @@ describe("sandbox managed runtime", () => {
 
       function throwSaturated(): never {
         throw Object.assign(
-          new Error("Changed files are temporarily unavailable because the Git scan queue is full"),
+          new Error(
+            "Changed files are temporarily unavailable because the Git scan queue is full",
+          ),
           { code: WORKSPACE_GIT_SCAN_SATURATED_CODE },
         );
       }
@@ -3143,7 +4558,10 @@ describe("sandbox managed runtime", () => {
         await vi.advanceTimersByTimeAsync(2_000);
         const resolution = await resolutionPromise;
 
-        expect(resolution).toEqual({ kind: "failed", reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed });
+        expect(resolution).toEqual({
+          kind: "failed",
+          reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed,
+        });
         // Three total attempts (the first plus two retries) — no fourth,
         // unscheduled invocation past the retry budget.
         expect(ignoredCallCount).toBe(3);
@@ -3156,14 +4574,20 @@ describe("sandbox managed runtime", () => {
             return { stdout: `${repo}\n`, stderr: "" };
           }
           ignoredCallCount += 1;
-          throw Object.assign(new Error("Workspace Git scan timed out after 8000ms"), {
-            code: "workspace_git_scan_timeout",
-          });
+          throw Object.assign(
+            new Error("Workspace Git scan timed out after 8000ms"),
+            {
+              code: "workspace_git_scan_timeout",
+            },
+          );
         });
 
         const resolution = await resolveReferencedSourceIgnore(repo);
 
-        expect(resolution).toEqual({ kind: "failed", reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed });
+        expect(resolution).toEqual({
+          kind: "failed",
+          reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed,
+        });
         expect(ignoredCallCount).toBe(1);
       });
 
@@ -3174,14 +4598,20 @@ describe("sandbox managed runtime", () => {
             return { stdout: `${repo}\n`, stderr: "" };
           }
           ignoredCallCount += 1;
-          throw Object.assign(new Error("Workspace Git scan exceeded its output limit"), {
-            code: "workspace_git_scan_output_limit",
-          });
+          throw Object.assign(
+            new Error("Workspace Git scan exceeded its output limit"),
+            {
+              code: "workspace_git_scan_output_limit",
+            },
+          );
         });
 
         const resolution = await resolveReferencedSourceIgnore(repo);
 
-        expect(resolution).toEqual({ kind: "failed", reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed });
+        expect(resolution).toEqual({
+          kind: "failed",
+          reason: REFERENCED_SOURCE_IGNORE_FAILURE_REASONS.scanFailed,
+        });
         expect(ignoredCallCount).toBe(1);
       });
     });
@@ -3196,50 +4626,96 @@ describe("sandbox managed runtime", () => {
     expect(escapeTarExcludeLiteral("wildcard*name")).toBe("wildcard\\*name");
     expect(escapeTarExcludeLiteral("question?mark")).toBe("question\\?mark");
 
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-glob-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-ignore-glob-"),
+    );
     cleanupDirs.push(rootDir);
     const referencedDir = path.join(rootDir, "referenced-project");
     await initGitRepo(referencedDir);
     // The gitignore pattern itself escapes `[` and `]` (gitignore patterns are
     // globs too), so it ignores ONLY the literal file `secret[1].txt`.
-    await writeFile(path.join(referencedDir, ".gitignore"), "secret\\[1\\].txt\n", "utf8");
-    await writeFile(path.join(referencedDir, "secret[1].txt"), "ignored\n", "utf8");
+    await writeFile(
+      path.join(referencedDir, ".gitignore"),
+      "secret\\[1\\].txt\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(referencedDir, "secret[1].txt"),
+      "ignored\n",
+      "utf8",
+    );
     // A sibling that would ALSO match the UNESCAPED tar exclude glob
     // `secret[1].txt` (its `[1]` is a one-character class matching `1`), if the
     // staging path failed to escape the ignored entry before passing it to tar.
-    await writeFile(path.join(referencedDir, "secret1.txt"), "must stay\n", "utf8");
+    await writeFile(
+      path.join(referencedDir, "secret1.txt"),
+      "must stay\n",
+      "utf8",
+    );
 
     const ignoreResolution = await resolveReferencedSourceIgnore(referencedDir);
-    expect(ignoreResolution).toEqual({ kind: "git", ignoredPaths: ["secret[1].txt"] });
+    expect(ignoreResolution).toEqual({
+      kind: "git",
+      ignoredPaths: ["secret[1].txt"],
+    });
 
-    const prepared = await stageOneReferencedProject(referencedDir, ignoreResolution);
+    const prepared = await stageOneReferencedProject(
+      referencedDir,
+      ignoreResolution,
+    );
 
     const stagedDir = prepared.additionalSourceDirs["proj"]!;
-    await expect(readFile(path.join(stagedDir, "secret[1].txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(readFile(path.join(stagedDir, "secret1.txt"), "utf8")).resolves.toBe("must stay\n");
+    await expect(
+      readFile(path.join(stagedDir, "secret[1].txt"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(path.join(stagedDir, "secret1.txt"), "utf8"),
+    ).resolves.toBe("must stay\n");
   });
 
   it("never ships a Git-ignored secret in a referenced project's staged tree", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-secret-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-ignore-secret-"),
+    );
     cleanupDirs.push(rootDir);
     const referencedDir = path.join(rootDir, "referenced-project");
     await initGitRepo(referencedDir);
-    await writeFile(path.join(referencedDir, ".gitignore"), "secret.env\n", "utf8");
-    await writeFile(path.join(referencedDir, "secret.env"), "TOKEN=abc\n", "utf8");
+    await writeFile(
+      path.join(referencedDir, ".gitignore"),
+      "secret.env\n",
+      "utf8",
+    );
+    await writeFile(
+      path.join(referencedDir, "secret.env"),
+      "TOKEN=abc\n",
+      "utf8",
+    );
     await writeFile(path.join(referencedDir, "tracked.md"), "kept\n", "utf8");
 
     const ignoreResolution = await resolveReferencedSourceIgnore(referencedDir);
-    expect(ignoreResolution).toEqual({ kind: "git", ignoredPaths: ["secret.env"] });
+    expect(ignoreResolution).toEqual({
+      kind: "git",
+      ignoredPaths: ["secret.env"],
+    });
 
-    const prepared = await stageOneReferencedProject(referencedDir, ignoreResolution);
+    const prepared = await stageOneReferencedProject(
+      referencedDir,
+      ignoreResolution,
+    );
 
     const stagedDir = prepared.additionalSourceDirs["proj"]!;
-    await expect(readFile(path.join(stagedDir, "secret.env"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(readFile(path.join(stagedDir, "tracked.md"), "utf8")).resolves.toBe("kept\n");
+    await expect(
+      readFile(path.join(stagedDir, "secret.env"), "utf8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      readFile(path.join(stagedDir, "tracked.md"), "utf8"),
+    ).resolves.toBe("kept\n");
   });
 
   it("stages no bytes for a project whose ignore resolution failed, and stages the rest", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-ignore-failed-skip-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-ignore-failed-skip-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -3248,9 +4724,17 @@ describe("sandbox managed runtime", () => {
     await mkdir(localWorkspaceDir, { recursive: true });
     await mkdir(healthyDir, { recursive: true });
     await mkdir(failedDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "anchor\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "anchor\n",
+      "utf8",
+    );
     await writeFile(path.join(healthyDir, "notes.md"), "healthy\n", "utf8");
-    await writeFile(path.join(failedDir, "should-never-ship.txt"), "must not stage\n", "utf8");
+    await writeFile(
+      path.join(failedDir, "should-never-ship.txt"),
+      "must not stage\n",
+      "utf8",
+    );
 
     const prepared = await prepareCommandManagedRuntime({
       runner: makeInlineSpawnRunner(),
@@ -3258,8 +4742,19 @@ describe("sandbox managed runtime", () => {
       adapterKey: "test-adapter",
       workspaceLocalDir: localWorkspaceDir,
       additionalSources: [
-        { localPath: healthyDir, projectId: "healthy", ignoreResolution: { kind: "other" } },
-        { localPath: failedDir, projectId: "failed", ignoreResolution: { kind: "failed", reason: "boom: git status timed out" } },
+        {
+          localPath: healthyDir,
+          projectId: "healthy",
+          ignoreResolution: { kind: "other" },
+        },
+        {
+          localPath: failedDir,
+          projectId: "failed",
+          ignoreResolution: {
+            kind: "failed",
+            reason: "boom: git status timed out",
+          },
+        },
       ],
     });
 
@@ -3267,20 +4762,38 @@ describe("sandbox managed runtime", () => {
     // sandbox for it — and is recorded as a first-class failure. The healthy
     // project stages normally.
     expect(Object.keys(prepared.additionalSourceDirs)).toEqual(["healthy"]);
-    expect(prepared.additionalSourceFailures.map((failure) => failure.projectId)).toEqual(["failed"]);
-    expect(prepared.additionalSourceFailures[0]!.error).toContain("boom: git status timed out");
-    const runtimeRootDir = path.posix.join(remoteWorkspaceDir, ".taskcore-runtime", "test-adapter");
-    await expect(readFile(path.join(runtimeRootDir, "project-failed", "should-never-ship.txt"), "utf8")).rejects
-      .toMatchObject({ code: "ENOENT" });
+    expect(
+      prepared.additionalSourceFailures.map((failure) => failure.projectId),
+    ).toEqual(["failed"]);
+    expect(prepared.additionalSourceFailures[0]!.error).toContain(
+      "boom: git status timed out",
+    );
+    const runtimeRootDir = path.posix.join(
+      remoteWorkspaceDir,
+      ".taskcore-runtime",
+      "test-adapter",
+    );
+    await expect(
+      readFile(
+        path.join(runtimeRootDir, "project-failed", "should-never-ship.txt"),
+        "utf8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("builds the workspace tarball inside one host pack span for a usual workspace sync", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-pack-span-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-pack-span-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     await mkdir(localWorkspaceDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace body\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace body\n",
+      "utf8",
+    );
 
     // Record every span name the runner opens and run the wrapped work, so the
     // test proves the host opens a span around each host-side staging sub-step
@@ -3310,25 +4823,42 @@ describe("sandbox managed runtime", () => {
     // The workspace stage task opens its own `stage.workspace` span, and the
     // host tarball build opens the `pack` span inside it. The two pre-task
     // sub-steps stay ahead of the task.
-    expect(openedSpans).toEqual(["snapshot.git", "snapshot.baseline", "stage.workspace", "pack"]);
+    expect(openedSpans).toEqual([
+      "snapshot.git",
+      "snapshot.baseline",
+      "stage.workspace",
+      "pack",
+    ]);
     // The tarball build still lands the workspace inside the span, so the wrap
     // changes no staging behavior.
-    await expect(readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8")).resolves.toBe("workspace body\n");
+    await expect(
+      readFile(path.join(remoteWorkspaceDir, "README.md"), "utf8"),
+    ).resolves.toBe("workspace body\n");
     expect(prepared.workspaceRemoteDir).toBe(remoteWorkspaceDir);
   });
 
   it("nests the host pack span under the stage.workspace task span", async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-pack-nest-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-pack-nest-"),
+    );
     cleanupDirs.push(rootDir);
     const localWorkspaceDir = path.join(rootDir, "local-workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
     await mkdir(localWorkspaceDir, { recursive: true });
-    await writeFile(path.join(localWorkspaceDir, "README.md"), "workspace body\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "README.md"),
+      "workspace body\n",
+      "utf8",
+    );
 
     const { traceContext, spans } = createRecordingTraceContext();
     // The root span stands in for `sandbox.startup`. Its child context is the
     // step span's parent, exactly as the executor wires it.
-    const rootHandle = traceContext.tracer.startSpan("sandbox.startup", undefined, undefined);
+    const rootHandle = traceContext.tracer.startSpan(
+      "sandbox.startup",
+      undefined,
+      undefined,
+    );
     const rootContext = traceContext.contextWithSpan(rootHandle);
 
     // The stage runner parents each span to the ACTIVE startup step, so the
@@ -3452,8 +4982,15 @@ interface SyncControl {
 }
 
 function labelOfOperation(operation: SandboxSyncOperation): string {
-  const bases = operation.files.map((mapping) => path.posix.basename(mapping.targetPath));
-  if (bases.some((base) => base === "workspace-upload.tar" || base === "git-workspace-upload.tar")) {
+  const bases = operation.files.map((mapping) =>
+    path.posix.basename(mapping.targetPath),
+  );
+  if (
+    bases.some(
+      (base) =>
+        base === "workspace-upload.tar" || base === "git-workspace-upload.tar",
+    )
+  ) {
     return "workspace";
   }
   const assetBase = bases.find((base) => base.endsWith("-upload.tar"));
@@ -3532,11 +5069,13 @@ function makeControlledSyncClient(options: { concurrent: boolean }): {
           throw failure;
         }
         return {
-          operations: [{
-            operationId: operation.operationId,
-            filesTransferred: operation.files.length,
-            bytesTransferred: 0,
-          }],
+          operations: [
+            {
+              operationId: operation.operationId,
+              filesTransferred: operation.files.length,
+              bytesTransferred: 0,
+            },
+          ],
         };
       } finally {
         settled.push(label);
@@ -3576,7 +5115,9 @@ describe("sandbox managed runtime inbound coordinator", () => {
     workspaceDir: string;
     dirOf: (name: string) => string;
   }> {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-inbound-coordinator-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-inbound-coordinator-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     await mkdir(workspaceDir, { recursive: true });
@@ -3592,7 +5133,11 @@ describe("sandbox managed runtime inbound coordinator", () => {
   }
 
   // Resolve true when the label started within the window, false on timeout.
-  async function startedWithin(control: SyncControl, label: string, ms: number): Promise<boolean> {
+  async function startedWithin(
+    control: SyncControl,
+    label: string,
+    ms: number,
+  ): Promise<boolean> {
     return Promise.race([
       control.waitForStart(label).then(() => true),
       settleTick(ms).then(() => false),
@@ -3667,7 +5212,10 @@ describe("sandbox managed runtime inbound coordinator", () => {
   });
 
   it("holds one upload open after another upload fails, and returns only after both settle", async () => {
-    const { workspaceDir, dirOf } = await makeInboundDirs(["asset-a", "asset-b"]);
+    const { workspaceDir, dirOf } = await makeInboundDirs([
+      "asset-a",
+      "asset-b",
+    ]);
     const { client, control } = makeControlledSyncClient({ concurrent: true });
     control.hold("asset-b");
 
@@ -3684,8 +5232,12 @@ describe("sandbox managed runtime inbound coordinator", () => {
       ],
     });
     const done = prepared.then(
-      () => { coordinatorSettled = true; },
-      () => { coordinatorSettled = true; },
+      () => {
+        coordinatorSettled = true;
+      },
+      () => {
+        coordinatorSettled = true;
+      },
     );
 
     control.failWith("asset-a", new Error("asset-a-fail"));
@@ -3701,7 +5253,9 @@ describe("sandbox managed runtime inbound coordinator", () => {
     control.release("asset-b");
     await done;
     expect(coordinatorSettled).toBe(true);
-    expect(control.settled).toEqual(expect.arrayContaining(["asset-a", "asset-b"]));
+    expect(control.settled).toEqual(
+      expect.arrayContaining(["asset-a", "asset-b"]),
+    );
   });
 
   it("records a referenced-project failure as nonfatal and finishes the other referenced-project uploads", async () => {
@@ -3716,21 +5270,34 @@ describe("sandbox managed runtime inbound coordinator", () => {
       syncWorkspace: false,
       workspaceLocalDir: workspaceDir,
       additionalSources: [
-        { localPath: dirOf("good"), projectId: "good", ignoreResolution: { kind: "other" } },
-        { localPath: dirOf("bad"), projectId: "bad", ignoreResolution: { kind: "other" } },
+        {
+          localPath: dirOf("good"),
+          projectId: "good",
+          ignoreResolution: { kind: "other" },
+        },
+        {
+          localPath: dirOf("bad"),
+          projectId: "bad",
+          ignoreResolution: { kind: "other" },
+        },
       ],
     });
 
     // The healthy project synced; the failed project is a recorded, nonfatal
     // outcome, so the coordinator resolved.
     expect(Object.keys(prepared.additionalSourceDirs)).toEqual(["good"]);
-    expect(prepared.additionalSourceFailures.map((failure) => failure.projectId)).toEqual(["bad"]);
+    expect(
+      prepared.additionalSourceFailures.map((failure) => failure.projectId),
+    ).toEqual(["bad"]);
     expect(prepared.additionalSourceFailures[0]!.error).toContain("bad-upload");
     expect(control.settled).toContain("project-good");
   });
 
   it("raises an asset failure as fatal after the barrier", async () => {
-    const { workspaceDir, dirOf } = await makeInboundDirs(["asset-good", "asset-bad"]);
+    const { workspaceDir, dirOf } = await makeInboundDirs([
+      "asset-good",
+      "asset-bad",
+    ]);
     const { client, control } = makeControlledSyncClient({ concurrent: true });
     control.failWith("asset-bad", new Error("asset-bad-fail"));
 
@@ -3809,7 +5376,13 @@ describe("sandbox managed runtime inbound coordinator", () => {
       client,
       workspaceLocalDir: workspaceDir,
       assets: [{ key: "home", localDir: dirOf("home") }],
-      additionalSources: [{ localPath: dirOf("proj"), projectId: "proj-1", ignoreResolution: { kind: "other" } }],
+      additionalSources: [
+        {
+          localPath: dirOf("proj"),
+          projectId: "proj-1",
+          ignoreResolution: { kind: "other" },
+        },
+      ],
       runtimeSpan,
     });
 
@@ -3952,8 +5525,13 @@ function makeGatedOutboundClient(
     },
     readFile: async (remotePath) => await readFile(remotePath),
     listFiles: async (remotePath) => {
-      const entries = await readdir(remotePath, { withFileTypes: true }).catch(() => []);
-      return entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
+      const entries = await readdir(remotePath, { withFileTypes: true }).catch(
+        () => [],
+      );
+      return entries
+        .filter((entry) => entry.isFile())
+        .map((entry) => entry.name)
+        .sort();
     },
     remove: async (remotePath) => {
       await rm(remotePath, { recursive: true, force: true });
@@ -3969,8 +5547,13 @@ function makeGatedOutboundClient(
             if (mapping.kind === "directory") {
               await mirrorDirectory(mapping.sourcePath, mapping.targetPath);
             } else {
-              await mkdir(path.dirname(mapping.targetPath), { recursive: true });
-              await writeFile(mapping.targetPath, await readFile(mapping.sourcePath));
+              await mkdir(path.dirname(mapping.targetPath), {
+                recursive: true,
+              });
+              await writeFile(
+                mapping.targetPath,
+                await readFile(mapping.sourcePath),
+              );
             }
           }
         }
@@ -4003,7 +5586,11 @@ function makeControlledAsset(
       control.restoreTempDirs.set(key, ctx.tempDir);
       await gate(key, async () => {
         if (ctx.tempDir) {
-          await writeFile(path.join(ctx.tempDir, `scratch-${key}.txt`), key, "utf8");
+          await writeFile(
+            path.join(ctx.tempDir, `scratch-${key}.txt`),
+            key,
+            "utf8",
+          );
         }
       });
     },
@@ -4041,7 +5628,9 @@ describe("sandbox managed runtime outbound coordinator", () => {
     remoteWorkspaceDir: string;
     dirOf: (name: string) => string;
   }> {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-outbound-coordinator-"));
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-outbound-coordinator-"),
+    );
     cleanupDirs.push(rootDir);
     const workspaceDir = path.join(rootDir, "workspace");
     const remoteWorkspaceDir = path.join(rootDir, "remote-workspace");
@@ -4054,50 +5643,100 @@ describe("sandbox managed runtime outbound coordinator", () => {
       await writeFile(path.join(dir, "file.txt"), `${name}\n`, "utf8");
       dirs.set(name, dir);
     }
-    return { rootDir, workspaceDir, remoteWorkspaceDir, dirOf: (name) => dirs.get(name)! };
+    return {
+      rootDir,
+      workspaceDir,
+      remoteWorkspaceDir,
+      dirOf: (name) => dirs.get(name)!,
+    };
   }
 
   // Resolve true when the label started within the window, false on timeout.
-  async function startedWithin(control: OutboundControl, label: string, ms: number): Promise<boolean> {
+  async function startedWithin(
+    control: OutboundControl,
+    label: string,
+    ms: number,
+  ): Promise<boolean> {
     return Promise.race([
       control.waitForStart(label).then(() => true),
       settleTick(ms).then(() => false),
     ]);
   }
 
-  it.each([false, true])("records each failed restore phase in stable order (shared error: %s)", async (sharedError) => {
-    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs(["home", "private-asset"]);
-    const { control, gate } = makeOutboundControl();
-    const client = makeGatedOutboundClient(true, gate);
-    const workspaceError = Object.assign(new Error("private workspace path"), { code: "EACCES" });
-    control.failWith("workspace", workspaceError);
-    control.failWith("home", sharedError ? workspaceError : Object.assign(new Error("private credential"), { status: 404 }));
-    control.failWith("private-asset", sharedError ? workspaceError : new Error("private asset error"));
-    const prepared = await prepareSandboxManagedRuntime({
-      spec: makeSpec(remoteWorkspaceDir), adapterKey: "codex", client, workspaceLocalDir: workspaceDir,
-      assets: [
-        makeControlledAsset("home", dirOf("home"), control, gate),
-        makeControlledAsset("private-asset", dirOf("private-asset"), control, gate),
-      ],
-    });
-    const lines: string[] = [];
-    await expect(prepared.restoreWorkspace((line) => { lines.push(line); })).rejects.toBe(workspaceError);
-    const diagnostics = lines.filter((line) => line.includes("Workspace restore diagnostic:"));
-    expect(diagnostics).toHaveLength(3);
-    expect(diagnostics).toEqual(expect.arrayContaining([
-      '[taskcore] Workspace restore diagnostic: {"phase":"workspace","step":"workspace_transfer","errorCode":"EACCES"}\n',
-      sharedError ? '[taskcore] Workspace restore diagnostic: {"phase":"asset","step":"asset_restore","errorCode":"EACCES"}\n'
-        : '[taskcore] Workspace restore diagnostic: {"phase":"asset","step":"asset_restore","errorCode":"unknown","httpStatus":404}\n',
-      sharedError ? '[taskcore] Workspace restore diagnostic: {"phase":"asset","step":"asset_restore","errorCode":"EACCES"}\n'
-        : '[taskcore] Workspace restore diagnostic: {"phase":"asset","step":"asset_restore","errorCode":"unknown"}\n',
-    ]));
-    expect(diagnostics.join("")).not.toContain("private");
-    expect(getWorkspaceRestoreDiagnostic(workspaceError)).toEqual({ phase: "workspace", step: "workspace_transfer", errorCode: "EACCES" });
-    expect(control.settled).toEqual(expect.arrayContaining(["workspace", "home", "private-asset"]));
-  });
+  it.each([false, true])(
+    "records each failed restore phase in stable order (shared error: %s)",
+    async (sharedError) => {
+      const { workspaceDir, remoteWorkspaceDir, dirOf } =
+        await makeOutboundDirs(["home", "private-asset"]);
+      const { control, gate } = makeOutboundControl();
+      const client = makeGatedOutboundClient(true, gate);
+      const workspaceError = Object.assign(
+        new Error("private workspace path"),
+        { code: "EACCES" },
+      );
+      control.failWith("workspace", workspaceError);
+      control.failWith(
+        "home",
+        sharedError
+          ? workspaceError
+          : Object.assign(new Error("private credential"), { status: 404 }),
+      );
+      control.failWith(
+        "private-asset",
+        sharedError ? workspaceError : new Error("private asset error"),
+      );
+      const prepared = await prepareSandboxManagedRuntime({
+        spec: makeSpec(remoteWorkspaceDir),
+        adapterKey: "codex",
+        client,
+        workspaceLocalDir: workspaceDir,
+        assets: [
+          makeControlledAsset("home", dirOf("home"), control, gate),
+          makeControlledAsset(
+            "private-asset",
+            dirOf("private-asset"),
+            control,
+            gate,
+          ),
+        ],
+      });
+      const lines: string[] = [];
+      await expect(
+        prepared.restoreWorkspace((line) => {
+          lines.push(line);
+        }),
+      ).rejects.toBe(workspaceError);
+      const diagnostics = lines.filter((line) =>
+        line.includes("Workspace restore diagnostic:"),
+      );
+      expect(diagnostics).toHaveLength(3);
+      expect(diagnostics).toEqual(
+        expect.arrayContaining([
+          '[taskcore] Workspace restore diagnostic: {"phase":"workspace","step":"workspace_transfer","errorCode":"EACCES"}\n',
+          sharedError
+            ? '[taskcore] Workspace restore diagnostic: {"phase":"asset","step":"asset_restore","errorCode":"EACCES"}\n'
+            : '[taskcore] Workspace restore diagnostic: {"phase":"asset","step":"asset_restore","errorCode":"unknown","httpStatus":404}\n',
+          sharedError
+            ? '[taskcore] Workspace restore diagnostic: {"phase":"asset","step":"asset_restore","errorCode":"EACCES"}\n'
+            : '[taskcore] Workspace restore diagnostic: {"phase":"asset","step":"asset_restore","errorCode":"unknown"}\n',
+        ]),
+      );
+      expect(diagnostics.join("")).not.toContain("private");
+      expect(getWorkspaceRestoreDiagnostic(workspaceError)).toEqual({
+        phase: "workspace",
+        step: "workspace_transfer",
+        errorCode: "EACCES",
+      });
+      expect(control.settled).toEqual(
+        expect.arrayContaining(["workspace", "home", "private-asset"]),
+      );
+    },
+  );
 
   it("with concurrency permitted, an asset restore starts while the workspace restore is held open", async () => {
-    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs(["home"]);
+    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs([
+      "home",
+    ]);
     const { control, gate } = makeOutboundControl();
     const client = makeGatedOutboundClient(true, gate);
     control.hold("workspace");
@@ -4126,7 +5765,10 @@ describe("sandbox managed runtime outbound coordinator", () => {
   });
 
   it("holds one restore open after another restore fails, and returns only after both settle", async () => {
-    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs(["asset-a", "asset-b"]);
+    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs([
+      "asset-a",
+      "asset-b",
+    ]);
     const { control, gate } = makeOutboundControl();
     const client = makeGatedOutboundClient(true, gate);
 
@@ -4147,8 +5789,12 @@ describe("sandbox managed runtime outbound coordinator", () => {
 
     let coordinatorSettled = false;
     const done = prepared.restoreWorkspace().then(
-      () => { coordinatorSettled = true; },
-      () => { coordinatorSettled = true; },
+      () => {
+        coordinatorSettled = true;
+      },
+      () => {
+        coordinatorSettled = true;
+      },
     );
 
     await control.waitForStart("asset-b");
@@ -4163,11 +5809,15 @@ describe("sandbox managed runtime outbound coordinator", () => {
     control.release("asset-b");
     await done;
     expect(coordinatorSettled).toBe(true);
-    expect(control.settled).toEqual(expect.arrayContaining(["asset-a", "asset-b"]));
+    expect(control.settled).toEqual(
+      expect.arrayContaining(["asset-a", "asset-b"]),
+    );
   });
 
   it("with concurrency forbidden, keeps the serial restore schedule in the current order", async () => {
-    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs(["asset-a"]);
+    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs([
+      "asset-a",
+    ]);
     const { control, gate } = makeOutboundControl();
     const client = makeGatedOutboundClient(false, gate);
     control.hold("workspace");
@@ -4198,7 +5848,10 @@ describe("sandbox managed runtime outbound coordinator", () => {
   });
 
   it("with concurrency permitted, two concurrent restore tasks use separate temporary state", async () => {
-    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs(["asset-a", "asset-b"]);
+    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs([
+      "asset-a",
+      "asset-b",
+    ]);
     const { control, gate } = makeOutboundControl();
     const client = makeGatedOutboundClient(true, gate);
 
@@ -4233,11 +5886,15 @@ describe("sandbox managed runtime outbound coordinator", () => {
     control.release("asset-a");
     control.release("asset-b");
     await restore;
-    expect(control.settled).toEqual(expect.arrayContaining(["asset-a", "asset-b"]));
+    expect(control.settled).toEqual(
+      expect.arrayContaining(["asset-a", "asset-b"]),
+    );
   });
 
   it("opens one named span per outbound restore task: restore.workspace, restore.asset.<key>", async () => {
-    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs(["home"]);
+    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs([
+      "home",
+    ]);
     const { control, gate } = makeOutboundControl();
     const client = makeGatedOutboundClient(true, gate);
     const { runtimeSpan, opened } = makeSpanRecorder();
@@ -4260,7 +5917,9 @@ describe("sandbox managed runtime outbound coordinator", () => {
   });
 
   it("with concurrency permitted, the workspace and asset restore task spans overlap in time", async () => {
-    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs(["home"]);
+    const { workspaceDir, remoteWorkspaceDir, dirOf } = await makeOutboundDirs([
+      "home",
+    ]);
     const { control, gate } = makeOutboundControl();
     const client = makeGatedOutboundClient(true, gate);
     const { runtimeSpan, openNow } = makeSpanRecorder();
@@ -4319,7 +5978,9 @@ describe("sandbox git-bundle export transport", () => {
     targetDir: string,
     exclude: string[] | undefined,
   ): Promise<void> {
-    const excludeNames = new Set((exclude ?? []).map((entry) => entry.replace(/\/$/, "")));
+    const excludeNames = new Set(
+      (exclude ?? []).map((entry) => entry.replace(/\/$/, "")),
+    );
     await mkdir(targetDir, { recursive: true });
     const entries = await readdir(sourceDir, { withFileTypes: true });
     for (const entry of entries) {
@@ -4344,7 +6005,10 @@ describe("sandbox git-bundle export transport", () => {
   // Build a git-backed managed-runtime client. `native` toggles the outbound
   // `syncOut`. The client records every `syncOut` operation and every `readFile`
   // remote path, so a test can prove which transport moved the bundle.
-  function makeTransportClient(native: boolean, capture: TransportCapture): SandboxManagedRuntimeClient {
+  function makeTransportClient(
+    native: boolean,
+    capture: TransportCapture,
+  ): SandboxManagedRuntimeClient {
     const client: SandboxManagedRuntimeClient = {
       makeDir: async (remotePath) => {
         await mkdir(remotePath, { recursive: true });
@@ -4377,10 +6041,16 @@ describe("sandbox git-bundle export transport", () => {
           let bytesTransferred = 0;
           for (const mapping of operation.files) {
             if (mapping.kind === "directory") {
-              await copyDirectoryWithExclude(mapping.sourcePath, mapping.targetPath, mapping.exclude);
+              await copyDirectoryWithExclude(
+                mapping.sourcePath,
+                mapping.targetPath,
+                mapping.exclude,
+              );
               bytesTransferred += await directoryByteSize(mapping.targetPath);
             } else {
-              await mkdir(path.dirname(mapping.targetPath), { recursive: true });
+              await mkdir(path.dirname(mapping.targetPath), {
+                recursive: true,
+              });
               const bytes = await readFile(mapping.sourcePath);
               await writeFile(mapping.targetPath, bytes);
               bytesTransferred += bytes.byteLength;
@@ -4424,11 +6094,22 @@ describe("sandbox git-bundle export transport", () => {
     await git(sourceRepoDir, ["checkout", "-b", "main"]);
     await git(sourceRepoDir, ["config", "user.name", "Taskcore Test"]);
     await git(sourceRepoDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(sourceRepoDir, ".gitignore"), "node_modules/\n", "utf8");
+    await writeFile(
+      path.join(sourceRepoDir, ".gitignore"),
+      "node_modules/\n",
+      "utf8",
+    );
     await writeFile(path.join(sourceRepoDir, "tracked.txt"), "base\n", "utf8");
     await git(sourceRepoDir, ["add", "-A"]);
     await git(sourceRepoDir, ["commit", "-m", "base"]);
-    await git(sourceRepoDir, ["worktree", "add", "-b", "work", localWorkspaceDir, "HEAD"]);
+    await git(sourceRepoDir, [
+      "worktree",
+      "add",
+      "-b",
+      "work",
+      localWorkspaceDir,
+      "HEAD",
+    ]);
     return { localWorkspaceDir, remoteWorkspaceDir };
   }
 
@@ -4436,8 +6117,16 @@ describe("sandbox git-bundle export transport", () => {
   // caller runs the restore after this, so the export moves this new history.
   async function commitInSandbox(remoteWorkspaceDir: string): Promise<void> {
     await git(remoteWorkspaceDir, ["config", "user.name", "Taskcore Sandbox"]);
-    await git(remoteWorkspaceDir, ["config", "user.email", "sandbox@taskcore.dev"]);
-    await writeFile(path.join(remoteWorkspaceDir, "remote-only.txt"), "from sandbox\n", "utf8");
+    await git(remoteWorkspaceDir, [
+      "config",
+      "user.email",
+      "sandbox@taskcore.dev",
+    ]);
+    await writeFile(
+      path.join(remoteWorkspaceDir, "remote-only.txt"),
+      "from sandbox\n",
+      "utf8",
+    );
     await git(remoteWorkspaceDir, ["add", "-A"]);
     await git(remoteWorkspaceDir, ["commit", "-m", "sandbox update"]);
   }
@@ -4445,54 +6134,120 @@ describe("sandbox git-bundle export transport", () => {
   function bundleFileMappings(capture: TransportCapture) {
     return capture.syncOutOperations
       .flatMap((operation) => operation.files)
-      .filter((mapping) => path.posix.basename(mapping.sourcePath) === "git-delta.bundle");
+      .filter(
+        (mapping) =>
+          path.posix.basename(mapping.sourcePath) === "git-delta.bundle",
+      );
   }
 
   it.each([
-    "git_export", "git_import", "workspace_transfer", "workspace_extract",
-    "directory_merge", "git_integration", "index_reset", "git_ref_cleanup",
-  ] as const)("identifies the actual %s failure during workspace restore", async (step) => {
-    const { localWorkspaceDir, remoteWorkspaceDir } = await setupGitBackedWorkspace("taskcore-restore-diagnostic-");
-    const client = makeTransportClient(step !== "workspace_extract", { syncOutOperations: [], readFilePaths: [] });
-    const prepared = await prepareSandboxManagedRuntime({
-      spec: gitSpec(remoteWorkspaceDir), adapterKey: "test-adapter", client, workspaceLocalDir: localWorkspaceDir,
-    });
-    await commitInSandbox(remoteWorkspaceDir);
-    const failure = Object.assign(new Error("private-restore-command /private-restore-path"), { code: 7, stderr: "private-restore-stderr" });
-    if (step === "git_export") client.run = async () => { throw failure; };
-    if (step === "git_import") vi.spyOn(gitSync, "fetchGitBundleIntoLocalRef").mockRejectedValueOnce(failure);
-    if (step === "directory_merge") vi.spyOn(restoreMerge, "mergeDirectoryWithBaseline").mockRejectedValueOnce(failure);
-    if (step === "git_integration") vi.spyOn(gitSync, "integrateImportedGitHead").mockRejectedValueOnce(failure);
-    if (step === "index_reset") vi.spyOn(gitSync, "resetLocalGitIndexToHead").mockRejectedValueOnce(failure);
-    if (step === "git_ref_cleanup") vi.spyOn(gitSync, "deleteLocalGitRef").mockRejectedValueOnce(failure);
-    if (step === "workspace_transfer") {
-      const syncOut = client.syncOut!;
-      client.syncOut = async (operations) => {
-        if (operations.some((operation) => operation.files.some((file) => file.kind === "directory"))) throw failure;
-        return syncOut(operations);
-      };
-    }
-    if (step === "workspace_extract") {
-      const readRemote = client.readFile;
-      client.readFile = async (remotePath, options) => remotePath.endsWith("workspace-download.tar")
-        ? Buffer.from("invalid archive") : readRemote(remotePath, options);
-    }
-    const lines: string[] = [];
-    try {
-      const thrown = await prepared.restoreWorkspace((line) => { lines.push(line); }).then(() => undefined, (error: unknown) => error);
-      expect(thrown).toBeInstanceOf(Error);
-      if (step !== "workspace_extract") expect(thrown).toBe(failure);
-      expect(getWorkspaceRestoreDiagnostic(thrown)).toMatchObject({ phase: "workspace", step, errorCode: "unknown" });
-      if (step !== "workspace_extract") expect(getWorkspaceRestoreDiagnostic(thrown)?.exitCode).toBe(7);
-      const diagnostics = lines.filter((line) => line.includes("Workspace restore diagnostic:"));
-      expect(diagnostics).toHaveLength(1);
-      expect(diagnostics[0]).not.toContain("private-restore-");
-    } finally { vi.restoreAllMocks(); }
-  });
+    "git_export",
+    "git_import",
+    "workspace_transfer",
+    "workspace_extract",
+    "directory_merge",
+    "git_integration",
+    "index_reset",
+    "git_ref_cleanup",
+  ] as const)(
+    "identifies the actual %s failure during workspace restore",
+    async (step) => {
+      const { localWorkspaceDir, remoteWorkspaceDir } =
+        await setupGitBackedWorkspace("taskcore-restore-diagnostic-");
+      const client = makeTransportClient(step !== "workspace_extract", {
+        syncOutOperations: [],
+        readFilePaths: [],
+      });
+      const prepared = await prepareSandboxManagedRuntime({
+        spec: gitSpec(remoteWorkspaceDir),
+        adapterKey: "test-adapter",
+        client,
+        workspaceLocalDir: localWorkspaceDir,
+      });
+      await commitInSandbox(remoteWorkspaceDir);
+      const failure = Object.assign(
+        new Error("private-restore-command /private-restore-path"),
+        { code: 7, stderr: "private-restore-stderr" },
+      );
+      if (step === "git_export")
+        client.run = async () => {
+          throw failure;
+        };
+      if (step === "git_import")
+        vi.spyOn(gitSync, "fetchGitBundleIntoLocalRef").mockRejectedValueOnce(
+          failure,
+        );
+      if (step === "directory_merge")
+        vi.spyOn(
+          restoreMerge,
+          "mergeDirectoryWithBaseline",
+        ).mockRejectedValueOnce(failure);
+      if (step === "git_integration")
+        vi.spyOn(gitSync, "integrateImportedGitHead").mockRejectedValueOnce(
+          failure,
+        );
+      if (step === "index_reset")
+        vi.spyOn(gitSync, "resetLocalGitIndexToHead").mockRejectedValueOnce(
+          failure,
+        );
+      if (step === "git_ref_cleanup")
+        vi.spyOn(gitSync, "deleteLocalGitRef").mockRejectedValueOnce(failure);
+      if (step === "workspace_transfer") {
+        const syncOut = client.syncOut!;
+        client.syncOut = async (operations) => {
+          if (
+            operations.some((operation) =>
+              operation.files.some((file) => file.kind === "directory"),
+            )
+          )
+            throw failure;
+          return syncOut(operations);
+        };
+      }
+      if (step === "workspace_extract") {
+        const readRemote = client.readFile;
+        client.readFile = async (remotePath, options) =>
+          remotePath.endsWith("workspace-download.tar")
+            ? Buffer.from("invalid archive")
+            : readRemote(remotePath, options);
+      }
+      const lines: string[] = [];
+      try {
+        const thrown = await prepared
+          .restoreWorkspace((line) => {
+            lines.push(line);
+          })
+          .then(
+            () => undefined,
+            (error: unknown) => error,
+          );
+        expect(thrown).toBeInstanceOf(Error);
+        if (step !== "workspace_extract") expect(thrown).toBe(failure);
+        expect(getWorkspaceRestoreDiagnostic(thrown)).toMatchObject({
+          phase: "workspace",
+          step,
+          errorCode: "unknown",
+        });
+        if (step !== "workspace_extract")
+          expect(getWorkspaceRestoreDiagnostic(thrown)?.exitCode).toBe(7);
+        const diagnostics = lines.filter((line) =>
+          line.includes("Workspace restore diagnostic:"),
+        );
+        expect(diagnostics).toHaveLength(1);
+        expect(diagnostics[0]).not.toContain("private-restore-");
+      } finally {
+        vi.restoreAllMocks();
+      }
+    },
+  );
 
   it("moves the bundle through one native syncOut file mapping, never through readFile", async () => {
-    const capture: TransportCapture = { syncOutOperations: [], readFilePaths: [] };
-    const { localWorkspaceDir, remoteWorkspaceDir } = await setupGitBackedWorkspace("taskcore-bundle-native-");
+    const capture: TransportCapture = {
+      syncOutOperations: [],
+      readFilePaths: [],
+    };
+    const { localWorkspaceDir, remoteWorkspaceDir } =
+      await setupGitBackedWorkspace("taskcore-bundle-native-");
     const client = makeTransportClient(true, capture);
     const prepared = await prepareSandboxManagedRuntime({
       spec: gitSpec(remoteWorkspaceDir),
@@ -4505,24 +6260,42 @@ describe("sandbox git-bundle export transport", () => {
     await prepared.restoreWorkspace();
 
     // The restore imported the sandbox commit and its new file.
-    expect(await git(localWorkspaceDir, ["log", "-1", "--pretty=%s"])).toBe("sandbox update");
-    await expect(readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8")).resolves.toBe("from sandbox\n");
+    expect(await git(localWorkspaceDir, ["log", "-1", "--pretty=%s"])).toBe(
+      "sandbox update",
+    );
+    await expect(
+      readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8"),
+    ).resolves.toBe("from sandbox\n");
 
     // The bundle rode exactly one native `kind: "file"` mapping into the host
     // restore temp directory; `readFile` never touched the bundle.
     const mappings = bundleFileMappings(capture);
     expect(mappings).toHaveLength(1);
     expect(mappings[0]!.kind).toBe("file");
-    expect(path.posix.basename(mappings[0]!.targetPath)).toBe("git-delta.bundle");
-    expect(capture.readFilePaths.some((remotePath) => remotePath.endsWith("git-delta.bundle"))).toBe(false);
+    expect(path.posix.basename(mappings[0]!.targetPath)).toBe(
+      "git-delta.bundle",
+    );
+    expect(
+      capture.readFilePaths.some((remotePath) =>
+        remotePath.endsWith("git-delta.bundle"),
+      ),
+    ).toBe(false);
 
     // The small status file stays on `readFile`; the change does not migrate it.
-    expect(capture.readFilePaths.some((remotePath) => remotePath.endsWith("workspace-status.txt"))).toBe(true);
+    expect(
+      capture.readFilePaths.some((remotePath) =>
+        remotePath.endsWith("workspace-status.txt"),
+      ),
+    ).toBe(true);
   });
 
   it("reads the bundle through readFile when the client has no native syncOut", async () => {
-    const capture: TransportCapture = { syncOutOperations: [], readFilePaths: [] };
-    const { localWorkspaceDir, remoteWorkspaceDir } = await setupGitBackedWorkspace("taskcore-bundle-fallback-");
+    const capture: TransportCapture = {
+      syncOutOperations: [],
+      readFilePaths: [],
+    };
+    const { localWorkspaceDir, remoteWorkspaceDir } =
+      await setupGitBackedWorkspace("taskcore-bundle-fallback-");
     const client = makeTransportClient(false, capture);
     const prepared = await prepareSandboxManagedRuntime({
       spec: gitSpec(remoteWorkspaceDir),
@@ -4534,19 +6307,32 @@ describe("sandbox git-bundle export transport", () => {
     await commitInSandbox(remoteWorkspaceDir);
     await prepared.restoreWorkspace();
 
-    expect(await git(localWorkspaceDir, ["log", "-1", "--pretty=%s"])).toBe("sandbox update");
-    await expect(readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8")).resolves.toBe("from sandbox\n");
+    expect(await git(localWorkspaceDir, ["log", "-1", "--pretty=%s"])).toBe(
+      "sandbox update",
+    );
+    await expect(
+      readFile(path.join(localWorkspaceDir, "remote-only.txt"), "utf8"),
+    ).resolves.toBe("from sandbox\n");
 
     // Without native `syncOut` the fallback path is unchanged: no sync operation
     // ran and the bundle came back through `readFile`.
     expect(client.syncOut).toBeUndefined();
     expect(capture.syncOutOperations).toHaveLength(0);
-    expect(capture.readFilePaths.some((remotePath) => remotePath.endsWith("git-delta.bundle"))).toBe(true);
+    expect(
+      capture.readFilePaths.some((remotePath) =>
+        remotePath.endsWith("git-delta.bundle"),
+      ),
+    ).toBe(true);
   });
 
   it("retries the full bundle through the native branch when the delta misses its prerequisite", async () => {
-    const capture: TransportCapture = { syncOutOperations: [], readFilePaths: [] };
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), "taskcore-bundle-retry-"));
+    const capture: TransportCapture = {
+      syncOutOperations: [],
+      readFilePaths: [],
+    };
+    const rootDir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-bundle-retry-"),
+    );
     cleanupDirs.push(rootDir);
     // A standalone host repository, so the test controls object reachability. A
     // linked worktree shares the source object store, and the boundary commit
@@ -4558,11 +6344,19 @@ describe("sandbox git-bundle export transport", () => {
     await git(localWorkspaceDir, ["checkout", "-b", "work"]);
     await git(localWorkspaceDir, ["config", "user.name", "Taskcore Test"]);
     await git(localWorkspaceDir, ["config", "user.email", "test@taskcore.dev"]);
-    await writeFile(path.join(localWorkspaceDir, "tracked.txt"), "base\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "tracked.txt"),
+      "base\n",
+      "utf8",
+    );
     await git(localWorkspaceDir, ["add", "-A"]);
     await git(localWorkspaceDir, ["commit", "-m", "base"]);
     const firstCommit = await git(localWorkspaceDir, ["rev-parse", "HEAD"]);
-    await writeFile(path.join(localWorkspaceDir, "tracked.txt"), "second\n", "utf8");
+    await writeFile(
+      path.join(localWorkspaceDir, "tracked.txt"),
+      "second\n",
+      "utf8",
+    );
     await git(localWorkspaceDir, ["add", "-A"]);
     await git(localWorkspaceDir, ["commit", "-m", "second"]);
     const stagedBase = await git(localWorkspaceDir, ["rev-parse", "HEAD"]);
@@ -4584,7 +6378,9 @@ describe("sandbox git-bundle export transport", () => {
     await git(localWorkspaceDir, ["reset", "--hard", firstCommit]);
     await git(localWorkspaceDir, ["reflog", "expire", "--expire=now", "--all"]);
     await git(localWorkspaceDir, ["gc", "--prune=now"]);
-    await expect(git(localWorkspaceDir, ["cat-file", "-e", `${stagedBase}^{commit}`])).rejects.toThrow();
+    await expect(
+      git(localWorkspaceDir, ["cat-file", "-e", `${stagedBase}^{commit}`]),
+    ).rejects.toThrow();
 
     await prepared.restoreWorkspace();
 
@@ -4593,16 +6389,26 @@ describe("sandbox git-bundle export transport", () => {
     const mappings = bundleFileMappings(capture);
     expect(mappings).toHaveLength(2);
     expect(mappings.every((mapping) => mapping.kind === "file")).toBe(true);
-    expect(capture.readFilePaths.some((remotePath) => remotePath.endsWith("git-delta.bundle"))).toBe(false);
+    expect(
+      capture.readFilePaths.some((remotePath) =>
+        remotePath.endsWith("git-delta.bundle"),
+      ),
+    ).toBe(false);
 
     // The full bundle was self-contained: the host repository now holds the
     // sandbox head commit.
-    await expect(git(localWorkspaceDir, ["cat-file", "-e", `${sandboxHead}^{commit}`])).resolves.toBe("");
+    await expect(
+      git(localWorkspaceDir, ["cat-file", "-e", `${sandboxHead}^{commit}`]),
+    ).resolves.toBe("");
   });
 
   it("reports the real transferred bytes for the native git-history export and workspace restore", async () => {
-    const capture: TransportCapture = { syncOutOperations: [], readFilePaths: [] };
-    const { localWorkspaceDir, remoteWorkspaceDir } = await setupGitBackedWorkspace("taskcore-restore-bytes-");
+    const capture: TransportCapture = {
+      syncOutOperations: [],
+      readFilePaths: [],
+    };
+    const { localWorkspaceDir, remoteWorkspaceDir } =
+      await setupGitBackedWorkspace("taskcore-restore-bytes-");
     const client = makeTransportClient(true, capture);
     const prepared = await prepareSandboxManagedRuntime({
       spec: gitSpec(remoteWorkspaceDir),
@@ -4616,23 +6422,40 @@ describe("sandbox git-bundle export transport", () => {
     // non-trivial bytes well above the 0.1 MB rounding step. Random bytes,
     // not a repeated byte, so git's own pack compression cannot shrink the
     // bundle back down to a trivial size.
-    await writeFile(path.join(remoteWorkspaceDir, "large.bin"), randomBytes(300 * 1024));
+    await writeFile(
+      path.join(remoteWorkspaceDir, "large.bin"),
+      randomBytes(300 * 1024),
+    );
     await commitInSandbox(remoteWorkspaceDir);
 
     const lines: string[] = [];
-    await prepared.restoreWorkspace((line) => { lines.push(line); });
+    await prepared.restoreWorkspace((line) => {
+      lines.push(line);
+    });
 
-    const exportLines = lines.filter((line) => line.includes("Exporting git history from environment"));
-    const restoreLines = lines.filter((line) => line.includes("Restoring workspace from environment"));
+    const exportLines = lines.filter((line) =>
+      line.includes("Exporting git history from environment"),
+    );
+    const restoreLines = lines.filter((line) =>
+      line.includes("Restoring workspace from environment"),
+    );
 
     // Both terminal lines carry the real transferred byte total, not the
     // "0.0 MB" a discarded native `syncOut` result would leave behind.
     expect(exportLines.length).toBeGreaterThan(0);
-    expect(exportLines.some((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line))).toBe(true);
-    expect(exportLines.some((line) => line.includes("(0.0/0.0 MB)"))).toBe(false);
+    expect(
+      exportLines.some((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line)),
+    ).toBe(true);
+    expect(exportLines.some((line) => line.includes("(0.0/0.0 MB)"))).toBe(
+      false,
+    );
 
     expect(restoreLines.length).toBeGreaterThan(0);
-    expect(restoreLines.some((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line))).toBe(true);
-    expect(restoreLines.some((line) => line.includes("(0.0/0.0 MB)"))).toBe(false);
+    expect(
+      restoreLines.some((line) => /\(\d+\.\d\/\d+\.\d MB\)/.test(line)),
+    ).toBe(true);
+    expect(restoreLines.some((line) => line.includes("(0.0/0.0 MB)"))).toBe(
+      false,
+    );
   });
 });

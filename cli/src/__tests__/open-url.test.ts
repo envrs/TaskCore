@@ -6,7 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ spawn: vi.fn() }));
 
 vi.mock("node:child_process", async () => {
-  const actual = await vi.importActual<typeof import("node:child_process")>("node:child_process");
+  const actual =
+    await vi.importActual<typeof import("node:child_process")>(
+      "node:child_process",
+    );
   return { ...actual, spawn: mocks.spawn };
 });
 
@@ -39,7 +42,9 @@ describe("openUrl", () => {
     // resolve false rather than letting an unhandled 'error' abort the process.
     mocks.spawn.mockImplementation(() => {
       const child = fakeChild();
-      const error = Object.assign(new Error("spawn xdg-open ENOENT"), { code: "ENOENT" });
+      const error = Object.assign(new Error("spawn xdg-open ENOENT"), {
+        code: "ENOENT",
+      });
       queueMicrotask(() => child.emit("error", error));
       return child;
     });

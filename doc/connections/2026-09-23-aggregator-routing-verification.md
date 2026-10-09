@@ -25,12 +25,12 @@ recertify all four providers' production OAuth or underlying-app integration flo
 - Production UI and Storybook builds passed. Token gates and `git diff --check`
   passed. No repository-wide test suite was run.
 
-| Browser + real-agent case | Observed result | Evidence campaign |
-|---|---|---|
-| Native Jira, primary Codex | Passed: native card, no provider chooser; decline remained durable | `local-2026-09-23T16-26-56-470Z` |
-| HubSpot, choose None, Codex Mini | Passed: ranked disclosure, restart/reload, saved decline, no connection or execution | `local-2026-09-23T16-14-57-848Z` |
+| Browser + real-agent case             | Observed result                                                                                                                                                     | Evidence campaign                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Native Jira, primary Codex            | Passed: native card, no provider chooser; decline remained durable                                                                                                  | `local-2026-09-23T16-26-56-470Z` |
+| HubSpot, choose None, Codex Mini      | Passed: ranked disclosure, restart/reload, saved decline, no connection or execution                                                                                | `local-2026-09-23T16-14-57-848Z` |
 | HubSpot, choose Arcade, primary Codex | Passed: restart/reload, second provider selected, existing connection reused, exactly one gateway call, independently generated contact verification code delivered | `local-2026-09-23T16-25-21-770Z` |
-| HubSpot, choose Arcade, Codex Mini | Passed after clarifying search-before-installed-tool guidance; same saved-choice, restart, reuse, call-count and delivered-marker assertions | `local-2026-09-23T16-31-03-488Z` |
+| HubSpot, choose Arcade, Codex Mini    | Passed after clarifying search-before-installed-tool guidance; same saved-choice, restart, reuse, call-count and delivered-marker assertions                        | `local-2026-09-23T16-31-03-488Z` |
 
 Inspectable evidence lives under `tests/runner-e2e/results/<campaign>/`, including
 `result.json`, `evidence-manifest.json`, screenshots, traces, run ledger, saved

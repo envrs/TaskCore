@@ -64,7 +64,6 @@ The native and legacy connection browser suites separately cover setup and
 continuation, while the live-provider journey report records actual authorization
 and data-read coverage.
 
-
 ## Custom targets, readiness and recovery
 
 Catalog slugs remain stable. Search also returns `connection:<uuid>` for configured custom connections whose active identity grants authorize the responsible person, their company, or the requesting agent. Identifiers are never interpreted as URLs. Configured metadata and tool descriptions, including catalog-provider descriptions, are read only after the company and identity audience checks. Setup choices expose only display and selection metadata; they never include connection configuration, transport settings, or credential fields. Discovery reads the stored index without refreshing providers. Search is ranked with exact provider matches first and capped at 20 results.

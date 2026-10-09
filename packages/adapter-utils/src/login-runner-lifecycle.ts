@@ -13,7 +13,8 @@
  * The terminal outcome of a login runner. A runner reports exactly one value.
  * The value is a fixed, non-secret status.
  */
-export type LoginRunnerOutcome = "success" | "failure" | "timeout" | "cancelled";
+export type LoginRunnerOutcome =
+  "success" | "failure" | "timeout" | "cancelled";
 
 /**
  * The base result of a login runner. Every runner returns at least these three
@@ -105,11 +106,15 @@ export function raceLoginRunnerExit(
       cleanup();
       run();
     };
-    const timer = setTimeout(() => finish(() => resolve({ kind: "timeout" })), timeoutMs);
+    const timer = setTimeout(
+      () => finish(() => resolve({ kind: "timeout" })),
+      timeoutMs,
+    );
     const onAbort = () => finish(() => resolve({ kind: "cancelled" }));
     if (signal) signal.addEventListener("abort", onAbort, { once: true });
     work.then(
-      (value) => finish(() => resolve({ kind: "exit", exitCode: value.exitCode })),
+      (value) =>
+        finish(() => resolve({ kind: "exit", exitCode: value.exitCode })),
       (error) => finish(() => reject(error)),
     );
   });

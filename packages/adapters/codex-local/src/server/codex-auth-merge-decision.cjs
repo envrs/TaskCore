@@ -15,7 +15,10 @@ function parseAuth(filePath) {
     return { kind: "unusable" };
   }
 
-  if (typeof parsed.OPENAI_API_KEY === "string" && parsed.OPENAI_API_KEY.trim().length > 0) {
+  if (
+    typeof parsed.OPENAI_API_KEY === "string" &&
+    parsed.OPENAI_API_KEY.trim().length > 0
+  ) {
     return { kind: "apikey" };
   }
 
@@ -24,16 +27,22 @@ function parseAuth(filePath) {
     return { kind: "unusable" };
   }
 
-  const accountId = typeof tokens.account_id === "string" ? tokens.account_id.trim() : "";
-  const hasTokenMaterial = ["id_token", "access_token", "refresh_token"].some((key) => {
-    const value = tokens[key];
-    return typeof value === "string" && value.trim().length > 0;
-  });
+  const accountId =
+    typeof tokens.account_id === "string" ? tokens.account_id.trim() : "";
+  const hasTokenMaterial = ["id_token", "access_token", "refresh_token"].some(
+    (key) => {
+      const value = tokens[key];
+      return typeof value === "string" && value.trim().length > 0;
+    },
+  );
   if (!accountId || !hasTokenMaterial) {
     return { kind: "unusable" };
   }
 
-  const lastRefresh = typeof parsed.last_refresh === "string" ? Date.parse(parsed.last_refresh) : NaN;
+  const lastRefresh =
+    typeof parsed.last_refresh === "string"
+      ? Date.parse(parsed.last_refresh)
+      : NaN;
   return {
     kind: "subscription",
     accountId,
@@ -154,10 +163,14 @@ function decide(source, destination, nowMs, seedIfDestAbsent) {
 if (require.main === module) {
   const rawArgs = process.argv.slice(2);
   const seedIfDestAbsent = rawArgs[0] === SEED_IF_DEST_ABSENT_FLAG;
-  const [sourceAuthPath, destinationAuthPath] = seedIfDestAbsent ? rawArgs.slice(1) : rawArgs;
+  const [sourceAuthPath, destinationAuthPath] = seedIfDestAbsent
+    ? rawArgs.slice(1)
+    : rawArgs;
   const sourceAuth = parseAuth(sourceAuthPath);
   const destinationAuth = parseAuth(destinationAuthPath);
-  process.exit(decide(sourceAuth, destinationAuth, Date.now(), seedIfDestAbsent));
+  process.exit(
+    decide(sourceAuth, destinationAuth, Date.now(), seedIfDestAbsent),
+  );
 }
 
 module.exports = {

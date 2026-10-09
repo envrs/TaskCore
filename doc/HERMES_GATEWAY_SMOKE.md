@@ -44,6 +44,7 @@ and the non-loopback HTTP guard.
   This writes only `model`, `providers: {}`, and
   `command_allowlist: [execute_code]` into the temporary Hermes home. Provider
   keys still come from environment variables and are redacted from diagnostics.
+
 - The E2E helper always seeds `command_allowlist: [execute_code]` in the fresh
   Hermes config so non-interactive gateway/API runs do not wait for a manual
   execute-code approval prompt. Do not copy a host `~/.hermes` directory into

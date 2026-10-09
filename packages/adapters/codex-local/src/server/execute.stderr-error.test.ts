@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const YOLO_WARNING = "YOLO mode is enabled. All tool calls will be automatically approved.";
+const YOLO_WARNING =
+  "YOLO mode is enabled. All tool calls will be automatically approved.";
 
 const {
   ensureAdapterExecutionTargetCommandResolvable,
@@ -12,8 +13,13 @@ const {
   tempCodexHome,
 } = vi.hoisted(() => ({
   ensureAdapterExecutionTargetCommandResolvable: vi.fn(async () => undefined),
-  ensureAdapterExecutionTargetRuntimeCommandInstalled: vi.fn(async () => undefined),
-  prepareCodexRuntimeConfig: vi.fn(async () => ({ cleanup: vi.fn(async () => undefined), notes: [] })),
+  ensureAdapterExecutionTargetRuntimeCommandInstalled: vi.fn(
+    async () => undefined,
+  ),
+  prepareCodexRuntimeConfig: vi.fn(async () => ({
+    cleanup: vi.fn(async () => undefined),
+    notes: [],
+  })),
   readTaskcoreRuntimeSkillEntries: vi.fn(async () => []),
   resolveAdapterExecutionTargetCommandForLogs: vi.fn(async () => "codex"),
   runAdapterExecutionTargetProcess: vi.fn(),
@@ -24,13 +30,16 @@ vi.mock("./acp.js", () => ({
   createCodexAcpExecutor: () => vi.fn(),
   formatCodexAcpFallbackMessage: (reason: string) =>
     `[taskcore] Codex ACP default unavailable; falling back to Codex CLI. ${reason} Set engine=acp to require ACP or engine=cli to silence this fallback.\n`,
-  resolveCodexExecutionEngineForRun: async () => ({ engine: "cli", explicit: true }),
+  resolveCodexExecutionEngineForRun: async () => ({
+    engine: "cli",
+    explicit: true,
+  }),
 }));
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     ensureAdapterExecutionTargetCommandResolvable,
@@ -41,9 +50,9 @@ vi.mock("@taskcore/adapter-utils/execution-target", async () => {
 });
 
 vi.mock("@taskcore/adapter-utils/server-utils", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/server-utils")>(
-    "@taskcore/adapter-utils/server-utils",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/server-utils")
+  >("@taskcore/adapter-utils/server-utils");
   return {
     ...actual,
     readTaskcoreRuntimeSkillEntries,
@@ -51,7 +60,8 @@ vi.mock("@taskcore/adapter-utils/server-utils", async () => {
 });
 
 vi.mock("./codex-home.js", async () => {
-  const actual = await vi.importActual<typeof import("./codex-home.js")>("./codex-home.js");
+  const actual =
+    await vi.importActual<typeof import("./codex-home.js")>("./codex-home.js");
   return {
     ...actual,
     evaluateCodexCredentialReadiness: vi.fn(async () => ({
@@ -62,14 +72,22 @@ vi.mock("./codex-home.js", async () => {
       sharedSourceHome: tempCodexHome,
     })),
     isManagedCodexHomePath: vi.fn(() => true),
-    prepareManagedCodexHome: vi.fn(async () => ({ status: "seeded", home: tempCodexHome })),
+    prepareManagedCodexHome: vi.fn(async () => ({
+      status: "seeded",
+      home: tempCodexHome,
+    })),
     resolveManagedCodexHomeDir: vi.fn(() => tempCodexHome),
-    seedManagedCodexHome: vi.fn(async () => ({ status: "seeded", home: tempCodexHome })),
+    seedManagedCodexHome: vi.fn(async () => ({
+      status: "seeded",
+      home: tempCodexHome,
+    })),
   };
 });
 
 vi.mock("./runtime-config.js", async () => {
-  const actual = await vi.importActual<typeof import("./runtime-config.js")>("./runtime-config.js");
+  const actual = await vi.importActual<typeof import("./runtime-config.js")>(
+    "./runtime-config.js",
+  );
   return {
     ...actual,
     prepareCodexRuntimeConfig,
@@ -125,7 +143,7 @@ describe("codex_local stderr fallback error derivation", () => {
     mockFailedProcess(
       [
         YOLO_WARNING,
-        "Error: unexpected status 400 Bad Request: {\"error\":{\"message\":\"The requested model 'gpt-5.3-codex-spark' does not exist.\",\"code\":\"model_not_found\"}}",
+        'Error: unexpected status 400 Bad Request: {"error":{"message":"The requested model \'gpt-5.3-codex-spark\' does not exist.","code":"model_not_found"}}',
       ].join("\n"),
     );
 
@@ -147,7 +165,9 @@ describe("codex_local stderr fallback error derivation", () => {
 
     const result = await execute(buildContext() as never);
 
-    expect(result.errorMessage).toBe("Error: stream disconnected before completion");
+    expect(result.errorMessage).toBe(
+      "Error: stream disconnected before completion",
+    );
   });
 
   it("falls back to the first non-empty stderr line when every line is benign", async () => {
@@ -169,14 +189,20 @@ describe("codex_local stderr fallback error derivation", () => {
 
 describe("firstMeaningfulStderrLine", () => {
   it("returns the first line that is not a known benign warning", () => {
-    expect(firstMeaningfulStderrLine(`${YOLO_WARNING}\nError: boom`)).toBe("Error: boom");
-    expect(firstMeaningfulStderrLine("[taskcore] Confining Codex with workspace scope.\nError: boom")).toBe(
+    expect(firstMeaningfulStderrLine(`${YOLO_WARNING}\nError: boom`)).toBe(
       "Error: boom",
     );
+    expect(
+      firstMeaningfulStderrLine(
+        "[taskcore] Confining Codex with workspace scope.\nError: boom",
+      ),
+    ).toBe("Error: boom");
   });
 
   it("keeps the first non-empty line when all lines are benign", () => {
-    expect(firstMeaningfulStderrLine(`${YOLO_WARNING}\n[taskcore] note\n`)).toBe(YOLO_WARNING);
+    expect(
+      firstMeaningfulStderrLine(`${YOLO_WARNING}\n[taskcore] note\n`),
+    ).toBe(YOLO_WARNING);
   });
 
   it("returns an empty string for blank input", () => {

@@ -21,7 +21,7 @@ method is saved on the connection and reused for reconnects.
 
 This curated connection is the polished route: it provides branding, optional
 project pinning and read-only controls, field validation, and tailored
-guidance. None of it is *required* to reach Neon's server. Neon can also be
+guidance. None of it is _required_ to reach Neon's server. Neon can also be
 connected generically from **Connect your own MCP server** by pasting
 `https://mcp.neon.tech/mcp`, with no Taskcore-specific code involved. See
 [Connecting any remote MCP server](./GENERIC-REMOTE-MCP.md).
@@ -58,16 +58,16 @@ sequenceDiagram
 
 The hosted endpoints retrieved on 2026-10-02:
 
-| Purpose | Endpoint |
-| --- | --- |
-| MCP resource (Streamable HTTP) | `https://mcp.neon.tech/mcp` |
-| Protected-resource metadata | `https://mcp.neon.tech/.well-known/oauth-protected-resource/mcp` |
-| Authorization-server metadata | `https://mcp.neon.tech/.well-known/oauth-authorization-server` |
-| Authorize | `https://mcp.neon.tech/api/authorize` |
-| Token | `https://mcp.neon.tech/api/token` |
-| Dynamic client registration | `https://mcp.neon.tech/api/register` |
-| Revoke | `https://mcp.neon.tech/api/revoke` |
-| Taskcore callback | `/api/tools/oauth/callback` |
+| Purpose                        | Endpoint                                                         |
+| ------------------------------ | ---------------------------------------------------------------- |
+| MCP resource (Streamable HTTP) | `https://mcp.neon.tech/mcp`                                      |
+| Protected-resource metadata    | `https://mcp.neon.tech/.well-known/oauth-protected-resource/mcp` |
+| Authorization-server metadata  | `https://mcp.neon.tech/.well-known/oauth-authorization-server`   |
+| Authorize                      | `https://mcp.neon.tech/api/authorize`                            |
+| Token                          | `https://mcp.neon.tech/api/token`                                |
+| Dynamic client registration    | `https://mcp.neon.tech/api/register`                             |
+| Revoke                         | `https://mcp.neon.tech/api/revoke`                               |
+| Taskcore callback              | `/api/tools/oauth/callback`                                      |
 
 The authorization server advertises `code` responses, PKCE `S256`,
 `authorization_code` and `refresh_token` grants, `none` client authentication
@@ -113,15 +113,15 @@ catalog instead.
 The catalog is discovered live from the actual provider schemas. Neon groups
 its tools into these categories:
 
-| Category | What the tools do | Classification |
-| --- | --- | --- |
-| `docs` | Look up Neon documentation | Read |
-| `schema`, `observability` | Inspect tables and columns, compare schemas, query logs, check availability | Read; may expose application data |
-| `projects`, `branches`, `endpoints` | List, create, describe, delete projects and branches; manage roles, databases and computes | Write or destructive |
-| `snapshots` | Create, restore and schedule snapshots | Write or destructive |
-| `querying` | Execute SQL, apply schema changes, run diagnostics | Write; read-only mode limits SQL to `SELECT` |
-| `neon_auth`, `data_api` | Provision Neon Auth, manage OAuth providers, enable or disable the Data API | Write |
-| `functions`, `storage` | Deploy functions, manage buckets and objects | Write or destructive |
+| Category                            | What the tools do                                                                          | Classification                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| `docs`                              | Look up Neon documentation                                                                 | Read                                         |
+| `schema`, `observability`           | Inspect tables and columns, compare schemas, query logs, check availability                | Read; may expose application data            |
+| `projects`, `branches`, `endpoints` | List, create, describe, delete projects and branches; manage roles, databases and computes | Write or destructive                         |
+| `snapshots`                         | Create, restore and schedule snapshots                                                     | Write or destructive                         |
+| `querying`                          | Execute SQL, apply schema changes, run diagnostics                                         | Write; read-only mode limits SQL to `SELECT` |
+| `neon_auth`, `data_api`             | Provision Neon Auth, manage OAuth providers, enable or disable the Data API                | Write                                        |
+| `functions`, `storage`              | Deploy functions, manage buckets and objects                                               | Write or destructive                         |
 
 Neon enforces the account, organization, and project permissions behind the
 credential. The optional project pin and read-only switch are enforced by
@@ -211,8 +211,8 @@ on the light frame. The file is Neon's official touch icon, copied byte-for-byte
 on 2026-10-02 and used unchanged in both themes (Neon's brand colours are
 black and `#34D59A`).
 
-| File | Source | SHA-256 |
-| --- | --- | --- |
+| File                                       | Source                                                                            | SHA-256                                                            |
+| ------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `ui/public/brands/apps/neon.png` (180×180) | `https://neon.com/apple-touch-icon.png`, the icon linked from `https://neon.com/` | `a6cf4b0772b06a5a64ccfefbfb8b7a1af56e0876eb10c9052f43c8624f4a0b61` |
 
 The brand kit at `https://neon.com/brand` publishes the bare logomark as SVG

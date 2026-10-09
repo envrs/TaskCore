@@ -38,7 +38,9 @@ export function buildSkillLibraryManifestMarkdown(input: {
       const enabled = input.desiredSkillKeys.has(entry.key);
       const key = sanitizeManifestText(entry.key, 200);
       if (enabled && entry.sourceStatus === "missing") {
-        const detail = entry.missingDetail ? sanitizeManifestText(entry.missingDetail, 200) : "";
+        const detail = entry.missingDetail
+          ? sanitizeManifestText(entry.missingDetail, 200)
+          : "";
         return `- ${key} — enabled but unavailable${detail ? `: ${detail}` : ""}`;
       }
       return `- ${key} — ${enabled ? "enabled" : "installed, not enabled for you"}`;

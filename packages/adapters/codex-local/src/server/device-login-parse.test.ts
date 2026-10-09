@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { parseDeviceLoginPrompt } from "./device-login-parse.js";
 
-const fixturesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "__fixtures__");
+const fixturesDir = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "__fixtures__",
+);
 
 function readFixture(name: string): string {
   return readFileSync(path.join(fixturesDir, name), "utf8");
@@ -14,7 +17,9 @@ const EXACT_URL = "https://auth.openai.com/codex/device";
 
 describe("parseDeviceLoginPrompt", () => {
   it("parse_returns_url_and_code_from_sample", () => {
-    const result = parseDeviceLoginPrompt(readFixture("device-login-sample.txt"));
+    const result = parseDeviceLoginPrompt(
+      readFixture("device-login-sample.txt"),
+    );
     expect(result).not.toBeNull();
     expect(result?.url).toBe(EXACT_URL);
     // The committed sample keeps the capture-time redaction of the code. The
@@ -133,9 +138,11 @@ describe("parseDeviceLoginPrompt", () => {
     // The platform `URL` parser normalizes an explicit default port and an
     // uppercase host. The parser returns that normalized form.
     const preamble = "2. Enter this one-time code (expires in 15 minutes)";
-    const withPort = [`${EXACT_URL.replace("auth.openai.com", "auth.openai.com:443")}`, preamble, "ABCD-EFGHJ"].join(
-      "\n",
-    );
+    const withPort = [
+      `${EXACT_URL.replace("auth.openai.com", "auth.openai.com:443")}`,
+      preamble,
+      "ABCD-EFGHJ",
+    ].join("\n");
     const withUppercaseHost = [
       `${EXACT_URL.replace("auth.openai.com", "AUTH.OPENAI.COM")}`,
       preamble,
@@ -281,7 +288,9 @@ describe("parseDeviceLoginPrompt", () => {
   it("parse_returns_null_for_edge_sample", () => {
     // The grounded edge row carries a URL, but a wrong path and a wrong origin
     // segment, so the parser rejects it.
-    expect(parseDeviceLoginPrompt(readFixture("device-login-edge.txt"))).toBeNull();
+    expect(
+      parseDeviceLoginPrompt(readFixture("device-login-edge.txt")),
+    ).toBeNull();
   });
 
   it("keeps the url and the code out of a thrown error", () => {

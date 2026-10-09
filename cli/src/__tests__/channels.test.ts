@@ -62,7 +62,9 @@ describe("collectChannelState", () => {
     };
 
     const state = await collectChannelState(flakyRunner);
-    const byChannel = Object.fromEntries(state.map((entry) => [entry.channel, entry.version]));
+    const byChannel = Object.fromEntries(
+      state.map((entry) => [entry.channel, entry.version]),
+    );
 
     expect(byChannel.nightly).toBeNull();
     expect(byChannel.stable).toBe("2026.722.0");

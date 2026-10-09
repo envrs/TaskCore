@@ -30,18 +30,21 @@ const workspacePaths = [
 
 // Workspace packages that should NOT be bundled — they'll be published
 // to npm and resolved at runtime (e.g. @taskcore/server uses dynamic import).
-const externalWorkspacePackages = new Set([
-  "@taskcore/server",
-]);
+const externalWorkspacePackages = new Set(["@taskcore/server"]);
 
 // Collect all external (non-workspace) npm package names
 const externals = new Set();
 for (const p of workspacePaths) {
-  const pkg = JSON.parse(readFileSync(resolve(repoRoot, p, "package.json"), "utf8"));
+  const pkg = JSON.parse(
+    readFileSync(resolve(repoRoot, p, "package.json"), "utf8"),
+  );
   for (const name of Object.keys(pkg.dependencies || {})) {
     if (externalWorkspacePackages.has(name)) {
       externals.add(name);
-    } else if (!name.startsWith("@taskcore/") && !bundledCliNpmDependencies.has(name)) {
+    } else if (
+      !name.startsWith("@taskcore/") &&
+      !bundledCliNpmDependencies.has(name)
+    ) {
       externals.add(name);
     }
   }
@@ -55,12 +58,18 @@ for (const name of externalWorkspacePackages) {
 }
 
 if (bundledCliNpmDependencies.has("embedded-postgres")) {
-  const requireFromDb = createRequire(resolve(repoRoot, "packages/db/package.json"));
-  const embeddedPostgresRoot = dirname(requireFromDb.resolve("embedded-postgres"));
+  const requireFromDb = createRequire(
+    resolve(repoRoot, "packages/db/package.json"),
+  );
+  const embeddedPostgresRoot = dirname(
+    requireFromDb.resolve("embedded-postgres"),
+  );
   const embeddedPostgresPackage = JSON.parse(
     readFileSync(resolve(embeddedPostgresRoot, "..", "package.json"), "utf8"),
   );
-  for (const name of Object.keys(embeddedPostgresPackage.optionalDependencies ?? {})) {
+  for (const name of Object.keys(
+    embeddedPostgresPackage.optionalDependencies ?? {},
+  )) {
     externals.add(name);
   }
 }

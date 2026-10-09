@@ -35,11 +35,19 @@ import {
   resolveCodexAuthCacheEntryPath,
   selectVendCredential,
 } from "./codex-auth-cache.js";
-import { resolveCodexExecutionEngineForRun, testCodexAcpEnvironment } from "./acp.js";
+import {
+  resolveCodexExecutionEngineForRun,
+  testCodexAcpEnvironment,
+} from "./acp.js";
 import { ADAPTER_AUTH_MISSING_CHECK_CODE } from "./auth-check.js";
-import { checkCodexCliVersionForModel, codexHelloProbeModelRejectionCheck } from "./cli-version.js";
+import {
+  checkCodexCliVersionForModel,
+  codexHelloProbeModelRejectionCheck,
+} from "./cli-version.js";
 
-function summarizeStatus(checks: AdapterEnvironmentCheck[]): AdapterEnvironmentTestResult["status"] {
+function summarizeStatus(
+  checks: AdapterEnvironmentCheck[],
+): AdapterEnvironmentTestResult["status"] {
   if (checks.some((check) => check.level === "error")) return "fail";
   if (checks.some((check) => check.level === "warn")) return "warn";
   return "pass";
@@ -60,11 +68,22 @@ function firstNonEmptyLine(text: string): string {
 
 function commandLooksLike(command: string, expected: string): boolean {
   const base = path.basename(command).toLowerCase();
-  return base === expected || base === `${expected}.cmd` || base === `${expected}.exe`;
+  return (
+    base === expected ||
+    base === `${expected}.cmd` ||
+    base === `${expected}.exe`
+  );
 }
 
-function summarizeProbeDetail(stdout: string, stderr: string, parsedError: string | null): string | null {
-  const raw = parsedError?.trim() || firstNonEmptyLine(stderr) || firstNonEmptyLine(stdout);
+function summarizeProbeDetail(
+  stdout: string,
+  stderr: string,
+  parsedError: string | null,
+): string | null {
+  const raw =
+    parsedError?.trim() ||
+    firstNonEmptyLine(stderr) ||
+    firstNonEmptyLine(stdout);
   if (!raw) return null;
   const clean = raw.replace(/\s+/g, " ").trim();
   const max = 240;
@@ -93,17 +112,23 @@ async function prepareCodexHelloProbe(input: {
   env: Record<string, string>;
   cleanup: () => Promise<void>;
 }> {
-  let preparedRuntime: Awaited<ReturnType<typeof prepareAdapterExecutionTargetRuntime>> | null = null;
+  let preparedRuntime: Awaited<
+    ReturnType<typeof prepareAdapterExecutionTargetRuntime>
+  > | null = null;
   let preparedRuntimeWorkspaceLocalDir: string | null = null;
   let probeHomeLocalDir: string | null = null;
 
   const cleanup = async () => {
     await preparedRuntime?.restoreWorkspace().catch(() => {});
     if (preparedRuntimeWorkspaceLocalDir) {
-      await fs.rm(preparedRuntimeWorkspaceLocalDir, { recursive: true, force: true }).catch(() => {});
+      await fs
+        .rm(preparedRuntimeWorkspaceLocalDir, { recursive: true, force: true })
+        .catch(() => {});
     }
     if (probeHomeLocalDir) {
-      await fs.rm(probeHomeLocalDir, { recursive: true, force: true }).catch(() => {});
+      await fs
+        .rm(probeHomeLocalDir, { recursive: true, force: true })
+        .catch(() => {});
     }
   };
 
@@ -126,23 +151,41 @@ async function prepareCodexHelloProbe(input: {
       // Identity-anchored cache vend, exactly as execute runs it before the
       // seeding below. Best-effort: a vend failure never blocks the probe, and
       // the probe then stages the shared credential as-is.
-      const sharedHomeAuthPath = path.join(resolveSharedCodexHomeDir(process.env), "auth.json");
+      const sharedHomeAuthPath = path.join(
+        resolveSharedCodexHomeDir(process.env),
+        "auth.json",
+      );
       await selectVendCredential(
         sharedHomeAuthPath,
-        (accountId) => resolveCodexAuthCacheEntryPath(process.env, accountId, input.companyId),
+        (accountId) =>
+          resolveCodexAuthCacheEntryPath(
+            process.env,
+            accountId,
+            input.companyId,
+          ),
         async () => {},
       ).catch(() => undefined);
     }
     let effectiveHome: string;
     if (configuredCodexHome == null) {
-      effectiveHome = await prepareManagedCodexHome(process.env, async () => {}, input.companyId, {
-        apiKey: null,
-      });
+      effectiveHome = await prepareManagedCodexHome(
+        process.env,
+        async () => {},
+        input.companyId,
+        {
+          apiKey: null,
+        },
+      );
     } else {
       if (configuredHomeIsManaged) {
-        await seedManagedCodexHome(configuredCodexHome, process.env, async () => {}, {
-          apiKey: null,
-        });
+        await seedManagedCodexHome(
+          configuredCodexHome,
+          process.env,
+          async () => {},
+          {
+            apiKey: null,
+          },
+        );
       }
       effectiveHome = configuredCodexHome;
     }
@@ -160,7 +203,9 @@ async function prepareCodexHelloProbe(input: {
     for (const file of ["auth.json", "config.toml"]) {
       // `fs.readFile` follows the home's `auth.json` symlink into the host's
       // `~/.codex`, so we copy the resolved bytes as a plain file.
-      const contents = await fs.readFile(path.join(effectiveHome, file)).catch(() => null);
+      const contents = await fs
+        .readFile(path.join(effectiveHome, file))
+        .catch(() => null);
       if (contents) {
         await fs.writeFile(path.join(probeHomeLocalDir, file), contents);
         if (file === "auth.json") seededAuth = true;
@@ -217,7 +262,12 @@ async function prepareCodexHelloProbe(input: {
 
   if (input.probeApiKey) {
     const probeHome = input.targetIsRemote
-      ? path.posix.join(input.cwd, ".taskcore-runtime", "codex", `probe-home-${input.runId}`)
+      ? path.posix.join(
+          input.cwd,
+          ".taskcore-runtime",
+          "codex",
+          `probe-home-${input.runId}`,
+        )
       : path.join(os.tmpdir(), `taskcore-codex-probe-${input.runId}`);
     // The local finally path retries cleanup independently of the model result.
     if (!input.targetIsRemote) probeHomeLocalDir = probeHome;
@@ -232,7 +282,9 @@ async function prepareCodexHelloProbe(input: {
       env: {
         ...input.env,
         CODEX_HOME: probeHome,
-        _TASKCORE_CODEX_AUTH_JSON: JSON.stringify({ OPENAI_API_KEY: input.probeApiKey }),
+        _TASKCORE_CODEX_AUTH_JSON: JSON.stringify({
+          OPENAI_API_KEY: input.probeApiKey,
+        }),
       },
       cleanup,
     };
@@ -257,14 +309,17 @@ export async function testEnvironment(
     return {
       adapterType: "codex_local",
       status: "fail",
-      checks: [{
-        code: "adapter_engine_unavailable",
-        level: "error",
-        message: engineSelection.unavailableReason,
-        hint: ctx.executionTarget?.kind === "remote"
-          ? "In the agent’s runtime settings, select the CLI engine, or use a sandbox image with the Codex ACP server installed."
-          : undefined,
-      }],
+      checks: [
+        {
+          code: "adapter_engine_unavailable",
+          level: "error",
+          message: engineSelection.unavailableReason,
+          hint:
+            ctx.executionTarget?.kind === "remote"
+              ? "In the agent’s runtime settings, select the CLI engine, or use a sandbox image with the Codex ACP server installed."
+              : undefined,
+        },
+      ],
       testedAt: new Date().toISOString(),
     };
   }
@@ -277,10 +332,15 @@ export async function testEnvironment(
   const command = asString(config.command, "codex");
   const target = ctx.executionTarget ?? null;
   const targetIsRemote = target?.kind === "remote";
-  const targetIsSandbox = target?.kind === "remote" && target.transport === "sandbox";
-  const cwd = resolveAdapterExecutionTargetCwd(target, asString(config.cwd, ""), process.cwd());
+  const targetIsSandbox =
+    target?.kind === "remote" && target.transport === "sandbox";
+  const cwd = resolveAdapterExecutionTargetCwd(
+    target,
+    asString(config.cwd, ""),
+    process.cwd(),
+  );
   const targetLabel = targetIsRemote
-    ? ctx.environmentName ?? describeAdapterExecutionTarget(target)
+    ? (ctx.environmentName ?? describeAdapterExecutionTarget(target))
     : null;
   const runId = `codex-envtest-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
@@ -328,7 +388,12 @@ export async function testEnvironment(
   });
   if (installCheck) checks.push(installCheck);
   try {
-    await ensureAdapterExecutionTargetCommandResolvable(command, target, cwd, runtimeEnv);
+    await ensureAdapterExecutionTargetCommandResolvable(
+      command,
+      target,
+      cwd,
+      runtimeEnv,
+    );
     checks.push({
       code: "codex_command_resolvable",
       level: "info",
@@ -344,8 +409,10 @@ export async function testEnvironment(
   }
 
   const configOpenAiKey = env.OPENAI_API_KEY;
-  const hostOpenAiKey = targetIsRemote || Object.hasOwn(env, "OPENAI_API_KEY")
-    ? undefined : process.env.OPENAI_API_KEY;
+  const hostOpenAiKey =
+    targetIsRemote || Object.hasOwn(env, "OPENAI_API_KEY")
+      ? undefined
+      : process.env.OPENAI_API_KEY;
   if (config.managedAiRouting) {
     checks.push({
       code: "codex_managed_provider_configured",
@@ -353,7 +420,9 @@ export async function testEnvironment(
       message: "Testing the selected connection’s provider and model.",
     });
   } else if (isNonEmpty(configOpenAiKey) || isNonEmpty(hostOpenAiKey)) {
-    const source = isNonEmpty(configOpenAiKey) ? "adapter config env" : "server environment";
+    const source = isNonEmpty(configOpenAiKey)
+      ? "adapter config env"
+      : "server environment";
     checks.push({
       code: "codex_openai_api_key_present",
       level: "info",
@@ -370,20 +439,26 @@ export async function testEnvironment(
         code: "codex_native_auth_present",
         level: "info",
         message: "Codex is authenticated via its own auth configuration.",
-        detail: codexAuth.email ? `Logged in as ${codexAuth.email}.` : `Credentials found in ${path.join(codexHome ?? codexHomeDir(), "auth.json")}.`,
+        detail: codexAuth.email
+          ? `Logged in as ${codexAuth.email}.`
+          : `Credentials found in ${path.join(codexHome ?? codexHomeDir(), "auth.json")}.`,
       });
     } else {
       checks.push({
         code: "codex_openai_api_key_missing",
         level: "warn",
-        message: "OPENAI_API_KEY is not set. Codex runs may fail until authentication is configured.",
+        message:
+          "OPENAI_API_KEY is not set. Codex runs may fail until authentication is configured.",
         hint: "Set OPENAI_API_KEY in adapter env, shell environment, or run `codex auth` to log in.",
       });
     }
   }
 
-  const canRunProbe =
-    checks.every((check) => check.code !== "codex_cwd_invalid" && check.code !== "codex_command_unresolvable");
+  const canRunProbe = checks.every(
+    (check) =>
+      check.code !== "codex_cwd_invalid" &&
+      check.code !== "codex_command_unresolvable",
+  );
   // Models with a verified CLI floor are compared against the installed Codex
   // before the hello probe. A probe on an older CLI only produces the backend's
   // "not supported when using Codex with a ChatGPT account" rejection, which
@@ -409,7 +484,8 @@ export async function testEnvironment(
     checks.push({
       code: "codex_hello_probe_skipped_cli_version",
       level: "info",
-      message: "Skipped hello probe because the installed Codex CLI cannot use the configured model.",
+      message:
+        "Skipped hello probe because the installed Codex CLI cannot use the configured model.",
     });
   } else if (canRunProbe) {
     if (!commandLooksLike(command, "codex")) {
@@ -429,10 +505,15 @@ export async function testEnvironment(
       // repository instructions, or a durable session. Keep provider/model
       // configuration intact while removing unrelated startup work.
       const args = [...execArgs.args];
-      args.splice(args.length - 1, 0,
-        "-c", "features.plugins=false",
-        "-c", "features.remote_plugin=false",
-        "-c", "project_doc_max_bytes=0",
+      args.splice(
+        args.length - 1,
+        0,
+        "-c",
+        "features.plugins=false",
+        "-c",
+        "features.remote_plugin=false",
+        "-c",
+        "project_doc_max_bytes=0",
         ...(args.includes("--ephemeral") ? [] : ["--ephemeral"]),
       );
       if (execArgs.fastModeIgnoredReason) {
@@ -459,11 +540,13 @@ export async function testEnvironment(
       // the command line) to avoid leaking it into process listings.
       // Managed connections already contain their exact auth and provider config.
       // Replacing that home with a native-key probe would test another provider.
-      const probeApiKey = config.managedAiConnection ? null : isNonEmpty(configOpenAiKey)
-        ? configOpenAiKey
-        : isNonEmpty(hostOpenAiKey)
-          ? hostOpenAiKey
-          : null;
+      const probeApiKey = config.managedAiConnection
+        ? null
+        : isNonEmpty(configOpenAiKey)
+          ? configOpenAiKey
+          : isNonEmpty(hostOpenAiKey)
+            ? hostOpenAiKey
+            : null;
       const preparedProbe = await prepareCodexHelloProbe({
         managedAiConnection: Boolean(config.managedAiConnection),
         runId,
@@ -494,16 +577,26 @@ export async function testEnvironment(
         const parsed = parseCodexJsonl(probe.stdout);
         // Plugin-catalog login is separate from model authentication. Its
         // warnings must not explain an unrelated provider/process failure.
-        const providerStderr = probe.stderr.split(/\r?\n/)
-          .filter((line) => !/\bcodex_core_plugins(?:::|:)/.test(line) && !line.includes(PROBE_CLEANUP_WARNING))
+        const providerStderr = probe.stderr
+          .split(/\r?\n/)
+          .filter(
+            (line) =>
+              !/\bcodex_core_plugins(?:::|:)/.test(line) &&
+              !line.includes(PROBE_CLEANUP_WARNING),
+          )
           .join("\n");
-        const detail = summarizeProbeDetail(probe.stdout, providerStderr, parsed.errorMessage);
+        const detail = summarizeProbeDetail(
+          probe.stdout,
+          providerStderr,
+          parsed.errorMessage,
+        );
         const authEvidence = parsed.errorMessage?.trim() || providerStderr;
         if (probe.stderr.includes(PROBE_CLEANUP_WARNING)) {
           checks.push({
             code: "codex_probe_cleanup_incomplete",
             level: "info",
-            message: "Temporary probe files could not be fully removed; this does not change the connection result.",
+            message:
+              "Temporary probe files could not be fully removed; this does not change the connection result.",
           });
         }
 
@@ -518,12 +611,16 @@ export async function testEnvironment(
           const summary = parsed.summary.trim();
           const hasHello = /\bhello\b/i.test(summary);
           checks.push({
-            code: hasHello ? "codex_hello_probe_passed" : "codex_hello_probe_unexpected_output",
+            code: hasHello
+              ? "codex_hello_probe_passed"
+              : "codex_hello_probe_unexpected_output",
             level: hasHello ? "info" : "warn",
             message: hasHello
               ? "Codex hello probe succeeded."
               : "Codex probe ran but did not return `hello` as expected.",
-            ...(summary ? { detail: summary.replace(/\s+/g, " ").trim().slice(0, 240) } : {}),
+            ...(summary
+              ? { detail: summary.replace(/\s+/g, " ").trim().slice(0, 240) }
+              : {}),
             ...(hasHello
               ? {}
               : {
@@ -537,7 +634,7 @@ export async function testEnvironment(
             message: "Codex CLI is installed, but authentication is not ready.",
             ...(detail ? { detail } : {}),
             hint: probeApiKey
-              ? "OPENAI_API_KEY was provided but Codex still rejected the request. Verify the key is valid for the OpenAI Responses API (e.g. `curl -H \"Authorization: Bearer $OPENAI_API_KEY\" https://api.openai.com/v1/models`), or run `codex login` and seed `~/.codex/auth.json`."
+              ? 'OPENAI_API_KEY was provided but Codex still rejected the request. Verify the key is valid for the OpenAI Responses API (e.g. `curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/models`), or run `codex login` and seed `~/.codex/auth.json`.'
               : "Codex CLI does not read OPENAI_API_KEY from the environment; set OPENAI_API_KEY in this adapter's config (so Taskcore writes it to `$CODEX_HOME/auth.json`) or run `codex login` on the host first.",
           });
           if (targetIsSandbox) {
@@ -547,7 +644,8 @@ export async function testEnvironment(
             checks.push({
               code: ADAPTER_AUTH_MISSING_CHECK_CODE,
               level: "warn",
-              message: "This environment has no ready authentication for this adapter.",
+              message:
+                "This environment has no ready authentication for this adapter.",
               ...(detail ? { detail } : {}),
               hint: "Provide credentials for this adapter, or start login in the environment.",
             });
@@ -558,13 +656,15 @@ export async function testEnvironment(
             detectedVersion: detectedCliVersion,
             targetIsSandbox,
           });
-          checks.push(modelRejection ?? {
-            code: "codex_hello_probe_failed",
-            level: "error",
-            message: "Codex hello probe failed.",
-            ...(detail ? { detail } : {}),
-            hint: "Run `codex exec --json -` manually in this working directory and prompt `Respond with hello` to debug.",
-          });
+          checks.push(
+            modelRejection ?? {
+              code: "codex_hello_probe_failed",
+              level: "error",
+              message: "Codex hello probe failed.",
+              ...(detail ? { detail } : {}),
+              hint: "Run `codex exec --json -` manually in this working directory and prompt `Respond with hello` to debug.",
+            },
+          );
         }
       } finally {
         await preparedProbe.cleanup();

@@ -27,8 +27,16 @@ The shared `announcementManifestSchema` defines the format:
     "eyebrow": "New in Taskcore",
     "title": "Your next idea starts here",
     "description": "Bring your agents and work together in a project.",
-    "secondaryLink": { "kind": "external", "label": "Learn more", "url": "https://taskcore.ing" },
-    "primaryAction": { "kind": "route", "label": "Open projects", "path": "/projects" }
+    "secondaryLink": {
+      "kind": "external",
+      "label": "Learn more",
+      "url": "https://taskcore.ing"
+    },
+    "primaryAction": {
+      "kind": "route",
+      "label": "Open projects",
+      "path": "/projects"
+    }
   }
 }
 ```

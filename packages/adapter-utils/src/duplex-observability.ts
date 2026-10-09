@@ -27,13 +27,15 @@ export const DUPLEX_SPAN_REQUEST = "sandbox.duplex.request";
 export const DUPLEX_TRANSPORT_EVENT = "sandbox.duplex.transport";
 
 /** The guarded counter for one successful channel open. */
-export const DUPLEX_COUNTER_CHANNEL_OPEN_TOTAL = "sandbox_duplex_channel_open_total";
+export const DUPLEX_COUNTER_CHANNEL_OPEN_TOTAL =
+  "sandbox_duplex_channel_open_total";
 /** The guarded counter for one fallback to the file bridge. */
 export const DUPLEX_COUNTER_FALLBACK_TOTAL = "sandbox_duplex_fallback_total";
 /** The guarded counter for one terminal channel loss. */
 export const DUPLEX_COUNTER_LOSS_TOTAL = "sandbox_duplex_loss_total";
 /** The guarded counter for one leaked provider session on teardown. */
-export const DUPLEX_COUNTER_SESSION_LEAK_TOTAL = "sandbox_duplex_session_leak_total";
+export const DUPLEX_COUNTER_SESSION_LEAK_TOTAL =
+  "sandbox_duplex_session_leak_total";
 
 /**
  * The closed dimension-key set. Every span attribute, counter label, and event
@@ -120,7 +122,9 @@ const LOSS_REASONS: ReadonlySet<string> = new Set<string>(DUPLEX_LOSS_REASONS);
  * the value when the closed set holds it. Return `other` for any other value or a
  * missing value, so a raw provider string never reaches a sink.
  */
-export function normalizeDuplexLossReason(value: string | null | undefined): DuplexLossReason {
+export function normalizeDuplexLossReason(
+  value: string | null | undefined,
+): DuplexLossReason {
   return typeof value === "string" && LOSS_REASONS.has(value)
     ? (value as DuplexLossReason)
     : "other";
@@ -143,10 +147,13 @@ export const HTTP2_TELEMETRY_EVENT_NAMES = [
 ] as const;
 
 /** One event name from the closed HTTP/2 event set. */
-export type Http2TelemetryEventName = (typeof HTTP2_TELEMETRY_EVENT_NAMES)[number];
+export type Http2TelemetryEventName =
+  (typeof HTTP2_TELEMETRY_EVENT_NAMES)[number];
 
 /** The host-owned closed HTTP/2 event-name set. It backs {@link mapHttp2EventToDuplexLossReason}. */
-const HTTP2_EVENT_NAMES: ReadonlySet<string> = new Set<string>(HTTP2_TELEMETRY_EVENT_NAMES);
+const HTTP2_EVENT_NAMES: ReadonlySet<string> = new Set<string>(
+  HTTP2_TELEMETRY_EVENT_NAMES,
+);
 
 /**
  * The map from one closed HTTP/2 event name to the existing, closed
@@ -154,7 +161,9 @@ const HTTP2_EVENT_NAMES: ReadonlySet<string> = new Set<string>(HTTP2_TELEMETRY_E
  * of a second, HTTP/2-only reason list, so the closed-set pattern stays one
  * set of values across every transport.
  */
-const HTTP2_EVENT_TO_LOSS_REASON: Readonly<Record<Http2TelemetryEventName, DuplexLossReason>> = {
+const HTTP2_EVENT_TO_LOSS_REASON: Readonly<
+  Record<Http2TelemetryEventName, DuplexLossReason>
+> = {
   session_error: "rpc_failure",
   session_goaway: "transport_closed",
   session_stall: "heartbeat_timeout",
@@ -184,17 +193,22 @@ export const DUPLEX_APPROVED_PROVIDER = "daytona";
 export const DUPLEX_PROVIDER_OTHER = "other";
 
 /** The `provider` dimension value after the allowlist map. */
-export type DuplexProviderValue = typeof DUPLEX_APPROVED_PROVIDER | typeof DUPLEX_PROVIDER_OTHER;
+export type DuplexProviderValue =
+  typeof DUPLEX_APPROVED_PROVIDER | typeof DUPLEX_PROVIDER_OTHER;
 
 /** The host-owned closed provider allowlist. It holds one approved public value. */
-const APPROVED_PROVIDERS: ReadonlySet<string> = new Set<string>([DUPLEX_APPROVED_PROVIDER]);
+const APPROVED_PROVIDERS: ReadonlySet<string> = new Set<string>([
+  DUPLEX_APPROVED_PROVIDER,
+]);
 
 /**
  * Map a raw provider key to the closed `provider` dimension value. Return the key
  * when the allowlist holds it. Return `other` for any other value, so a raw
  * plugin key never reaches a sink. A missing key also maps to `other`.
  */
-export function normalizeDuplexProvider(key: string | null | undefined): DuplexProviderValue {
+export function normalizeDuplexProvider(
+  key: string | null | undefined,
+): DuplexProviderValue {
   return typeof key === "string" && APPROVED_PROVIDERS.has(key)
     ? (key as DuplexProviderValue)
     : DUPLEX_PROVIDER_OTHER;
@@ -284,7 +298,10 @@ export interface DuplexObservability {
    */
   recordFallback(reason: DuplexFallbackReason): void;
   /** Record one duplex request span with its latency and outcome. */
-  recordRequest(record: { latencyMs: number; outcome: DuplexOutcomeValue }): void;
+  recordRequest(record: {
+    latencyMs: number;
+    outcome: DuplexOutcomeValue;
+  }): void;
   /**
    * Record one terminal channel loss. The caller passes the loss class and the
    * typed, closed loss reason. The loss counter and the transport loss event carry
@@ -316,7 +333,9 @@ export interface DuplexObservabilityOptions {
  * inside a `try/catch`, so a throwing recorder never breaks the request path. A
  * missing recorder yields a facade whose methods do nothing.
  */
-export function createDuplexObservability(options: DuplexObservabilityOptions = {}): DuplexObservability {
+export function createDuplexObservability(
+  options: DuplexObservabilityOptions = {},
+): DuplexObservability {
   const recorder = options.recorder ?? NOOP_DUPLEX_OBSERVABILITY_RECORDER;
   const provider = normalizeDuplexProvider(options.providerKey);
   const transport: DuplexTransportValue = options.transport ?? "duplex";
@@ -367,7 +386,10 @@ export function createDuplexObservability(options: DuplexObservabilityOptions = 
             outcome: "ok",
           };
           safeSpan({ name: DUPLEX_SPAN_CHANNEL_OPEN, dimensions });
-          safeCounter({ metric: DUPLEX_COUNTER_CHANNEL_OPEN_TOTAL, dimensions });
+          safeCounter({
+            metric: DUPLEX_COUNTER_CHANNEL_OPEN_TOTAL,
+            dimensions,
+          });
           safeEvent({ name: DUPLEX_TRANSPORT_EVENT, dimensions });
         },
         fallback(reason: DuplexFallbackReason): void {
@@ -380,14 +402,22 @@ export function createDuplexObservability(options: DuplexObservabilityOptions = 
           // closed dimension key, so no new key reaches a sink.
           safeSpan({
             name: DUPLEX_SPAN_CHANNEL_OPEN,
-            dimensions: { provider, transport, outcome: "error", fallback_reason: reason },
+            dimensions: {
+              provider,
+              transport,
+              outcome: "error",
+              fallback_reason: reason,
+            },
           });
           recordFallback(reason);
         },
       };
     },
     recordFallback,
-    recordRequest(record: { latencyMs: number; outcome: DuplexOutcomeValue }): void {
+    recordRequest(record: {
+      latencyMs: number;
+      outcome: DuplexOutcomeValue;
+    }): void {
       safeSpan({
         name: DUPLEX_SPAN_REQUEST,
         dimensions: { provider, transport, outcome: record.outcome },

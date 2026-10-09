@@ -34,7 +34,7 @@ or **Paste a config** with no Taskcore code change at all — including servers
 that need browser sign-in. Those two routes are the documented baseline; see
 [Connecting any remote MCP server](./GENERIC-REMOTE-MCP.md).
 
-Write a catalog entry when Taskcore should *promote* a vendor: branding, tailored
+Write a catalog entry when Taskcore should _promote_ a vendor: branding, tailored
 fields, field validation, scoped defaults, and support copy. A definition adds
 those conveniences and nothing else. It must not create a second connection,
 change ownership, or be necessary for health, catalog, or governance — a curated
@@ -150,7 +150,7 @@ A complete connector proposal produces:
 
 ## Optional agent instructions
 
-Some connections need standing guidance: tools tell an agent what it *can* do,
+Some connections need standing guidance: tools tell an agent what it _can_ do,
 while a short paragraph explains when it should use them. Memory is the first
 use case. See [Connection instructions](CONNECTION-INSTRUCTIONS.md) for the
 generic catalog metadata, saved settings, API, runtime, and integration contracts.
@@ -237,13 +237,13 @@ Do not describe a connection as merely "an OAuth connection" or "an MCP
 connection." OAuth is authentication. MCP is transport. A complete method
 chooses all five axes below.
 
-| Axis | Current values | Question |
-| --- | --- | --- |
-| Transport | `mcp_remote`, `local_stdio`, `rest_api` | How does Taskcore reach actions? |
-| Authentication | `oauth`, `api_key`, `none` | How does the provider authorize requests? |
-| OAuth client ownership | `dcr`, `customer`, `platform_shared`, `platform_provisioned` | Who supplies and controls the OAuth client registration? |
-| Credential source | `taskcore_vault`, reviewed `vercel_connect` | Where does durable provider credential material live? |
-| Grant identity | `organization`, `user`, `agent` | Does the credential act for the company, one person, or one dedicated agent? |
+| Axis                   | Current values                                               | Question                                                                     |
+| ---------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Transport              | `mcp_remote`, `local_stdio`, `rest_api`                      | How does Taskcore reach actions?                                             |
+| Authentication         | `oauth`, `api_key`, `none`                                   | How does the provider authorize requests?                                    |
+| OAuth client ownership | `dcr`, `customer`, `platform_shared`, `platform_provisioned` | Who supplies and controls the OAuth client registration?                     |
+| Credential source      | `taskcore_vault`, reviewed `vercel_connect`                  | Where does durable provider credential material live?                        |
+| Grant identity         | `organization`, `user`, `agent`                              | Does the credential act for the company, one person, or one dedicated agent? |
 
 These axes produce combinations such as:
 
@@ -264,11 +264,11 @@ These axes produce combinations such as:
 
 ### Transport support and boundaries
 
-| Transport | Manifest-only? | Runtime status | Authoring rule |
-| --- | --- | --- | --- |
-| `mcp_remote` | Yes | First-class discovery, health, catalog, gateway, test, OAuth, and credential projection. | Default for official hosted MCP servers. |
+| Transport     | Manifest-only?                 | Runtime status                                                                                                                            | Authoring rule                                                                      |
+| ------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `mcp_remote`  | Yes                            | First-class discovery, health, catalog, gateway, test, OAuth, and credential projection.                                                  | Default for official hosted MCP servers.                                            |
 | `local_stdio` | Only with an approved template | First-class only through registered templates and a trusted runtime host. Disabled in authenticated/public deployments without that host. | Never put an arbitrary command in an `AppDefinition`. Register and test a template. |
-| `rest_api` | No, not generally | Not exposed through the connected MCP gateway. Composio is a provider-specific parent that creates MCP-capable children. | Do not add a generic REST/API card until an execution adapter or wrapper exists. |
+| `rest_api`    | No, not generally              | Not exposed through the connected MCP gateway. Composio is a provider-specific parent that creates MCP-capable children.                  | Do not add a generic REST/API card until an execution adapter or wrapper exists.    |
 
 `api_key` in a method means an authentication mode; it does not mean the
 transport is a REST API. Most current API-key catalog entries authenticate a
@@ -291,15 +291,15 @@ fixture. `env` belongs primarily to approved local stdio templates.
 
 ### Authentication support matrix
 
-| Pattern | Definition shape | What the user sees | What Taskcore stores |
-| --- | --- | --- | --- |
-| Automatic OAuth | `auth: "oauth"`, `ownershipModes: ["dcr"]` | Browser sign-in | DCR/CIMD client binding plus token secret refs. |
-| Automatic OAuth with own-app escape hatch | `ownershipModes: ["customer", "dcr"]` | Recommended browser sign-in; own client under **Advanced** | Same as automatic, or supplied client ID plus encrypted client secret. |
-| Customer OAuth only | `ownershipModes: ["customer"]` | Required client ID and optional/required client secret, then browser sign-in | Client ID in redacted config; client secret and provider tokens as secret refs. |
-| Taskcore-managed OAuth | `oauthStrategy: "taskcore_cloud_connector"`, `connectorProfile`, `platform_shared` | Browser sign-in through Taskcore Cloud | Provider tokens still land in the instance vault on a user grant. Cloud handles the fixed provider callback but does not persist plaintext credentials; Taskcore ID remains identity-only. |
-| API key/PAT | `auth: "api_key"`, `credentialFields`, `keyPlacement` | Write-only credential field | Encrypted secret version plus placement-only refs. |
-| Generated URL | `auth: "none"`, no fixed URL/default template | Paste provider-generated MCP URL | Public URL shape in config; full secret-bearing URL in the vault. |
-| No auth | `auth: "none"`, fixed `serverUrl` or validated `serverUrlTemplate` | Zero fields or only required tenant/resource fields | No provider credential. |
+| Pattern                                   | Definition shape                                                                   | What the user sees                                                           | What Taskcore stores                                                                                                                                                                       |
+| ----------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Automatic OAuth                           | `auth: "oauth"`, `ownershipModes: ["dcr"]`                                         | Browser sign-in                                                              | DCR/CIMD client binding plus token secret refs.                                                                                                                                            |
+| Automatic OAuth with own-app escape hatch | `ownershipModes: ["customer", "dcr"]`                                              | Recommended browser sign-in; own client under **Advanced**                   | Same as automatic, or supplied client ID plus encrypted client secret.                                                                                                                     |
+| Customer OAuth only                       | `ownershipModes: ["customer"]`                                                     | Required client ID and optional/required client secret, then browser sign-in | Client ID in redacted config; client secret and provider tokens as secret refs.                                                                                                            |
+| Taskcore-managed OAuth                    | `oauthStrategy: "taskcore_cloud_connector"`, `connectorProfile`, `platform_shared` | Browser sign-in through Taskcore Cloud                                       | Provider tokens still land in the instance vault on a user grant. Cloud handles the fixed provider callback but does not persist plaintext credentials; Taskcore ID remains identity-only. |
+| API key/PAT                               | `auth: "api_key"`, `credentialFields`, `keyPlacement`                              | Write-only credential field                                                  | Encrypted secret version plus placement-only refs.                                                                                                                                         |
+| Generated URL                             | `auth: "none"`, no fixed URL/default template                                      | Paste provider-generated MCP URL                                             | Public URL shape in config; full secret-bearing URL in the vault.                                                                                                                          |
+| No auth                                   | `auth: "none"`, fixed `serverUrl` or validated `serverUrlTemplate`                 | Zero fields or only required tenant/resource fields                          | No provider credential.                                                                                                                                                                    |
 
 ### OAuth client resolution order
 
@@ -1239,57 +1239,57 @@ Suggested PR verification block:
 
 ### App-level fields
 
-| Field | Meaning and rule |
-| --- | --- |
-| `schemaVersion` | Must be `1`. Change only with a versioned migration plan. |
-| `slug` | Stable lowercase kebab-case identity. Never rename after connections exist without a migration. |
-| `name` | Provider/product name shown to users. |
-| `description` | Plain-language outcome, not protocol marketing. |
-| `categories` | One or more supported catalog categories. |
-| `featured` | Optional merchandising signal, not availability. |
-| `branding` | Local official `logoUrl`, optional `darkLogoUrl`; ingestion derives this from provenance. |
-| `urlPatterns` | HTTPS patterns used to recognize pasted/generated provider URLs. Keep narrow enough to reject lookalikes. |
-| `docsUrl` | Current official setup/protocol docs. |
-| `setupPrerequisite` | A prerequisite users must understand or complete before credentials/consent. Includes CTA and optional ordered steps. |
-| `redirectConstraints` | Currently `https-or-loopback-http`; fail before provider navigation when violated. |
-| `methods` | Every genuinely supported connection method. At least one. |
-| `availability` | Instance/provider availability and user-facing reason. Unavailable entries must not expose a dead action. |
-| `ownershipAvailability` | Deployment override for ownership modes. Defaults currently enable `customer` and `dcr`, disable platform modes. |
+| Field                   | Meaning and rule                                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `schemaVersion`         | Must be `1`. Change only with a versioned migration plan.                                                             |
+| `slug`                  | Stable lowercase kebab-case identity. Never rename after connections exist without a migration.                       |
+| `name`                  | Provider/product name shown to users.                                                                                 |
+| `description`           | Plain-language outcome, not protocol marketing.                                                                       |
+| `categories`            | One or more supported catalog categories.                                                                             |
+| `featured`              | Optional merchandising signal, not availability.                                                                      |
+| `branding`              | Local official `logoUrl`, optional `darkLogoUrl`; ingestion derives this from provenance.                             |
+| `urlPatterns`           | HTTPS patterns used to recognize pasted/generated provider URLs. Keep narrow enough to reject lookalikes.             |
+| `docsUrl`               | Current official setup/protocol docs.                                                                                 |
+| `setupPrerequisite`     | A prerequisite users must understand or complete before credentials/consent. Includes CTA and optional ordered steps. |
+| `redirectConstraints`   | Currently `https-or-loopback-http`; fail before provider navigation when violated.                                    |
+| `methods`               | Every genuinely supported connection method. At least one.                                                            |
+| `availability`          | Instance/provider availability and user-facing reason. Unavailable entries must not expose a dead action.             |
+| `ownershipAvailability` | Deployment override for ownership modes. Defaults currently enable `customer` and `dcr`, disable platform modes.      |
 
 ### Method fields
 
-| Field | Meaning and rule |
-| --- | --- |
-| `key` | Stable method key stored on the connection as `connectionMethodKey`. |
-| `label` | User-facing method label. Required in practice when multiple methods exist. |
-| `transport` | `mcp_remote`, `local_stdio`, or specialized `rest_api`. |
-| `auth` | `oauth`, `api_key`, or `none`. |
-| `ownershipModes` | Allowed OAuth client ownership modes; also present for non-OAuth customer configuration. |
-| `oauthStrategy` | Managed broker strategy. New definitions use `taskcore_cloud_connector`; `taskcore_id_connector` is recognized only to require migration when an old grant expires. The protocols and provider clients are not interchangeable. Only valid for OAuth. |
-| `connectorProfile` | Managed connector capability/scope profile, required with `oauthStrategy`. |
-| `capabilityProfile` | User-facing read/write/mode grouping used for method selection. |
-| `grantKinds` | Restricts identity to `organization` and/or `user`; omit for flexible methods. |
-| `whenToUse` | One sentence distinguishing this method from alternatives. |
-| `defaults.serverUrl` | Exact fixed endpoint. For discovery-capable OAuth, omit fixed auth endpoints. |
-| `defaults.serverUrlTemplate` | HTTPS endpoint with placeholders supplied by declared tenant/extension fields. Mutually exclusive with `serverUrl`. |
-| `defaults.discoveryUrl` | Provider-specific discovery override only when reviewed metadata requires it. |
-| `defaults.authorizationEndpoint` / `tokenEndpoint` | Authoritative fixed endpoints. A complete pair bypasses discovery, so ship them only when the provider lacks trustworthy discovery. |
-| `defaults.metadataUrl` | Authorization metadata hint. |
-| `defaults.scopesHint` | Explicit reviewed allowlist. Omit scope when docs do not require one; never copy every discovered scope. |
-| `defaults.oauthAuthorizationParams` | Reviewed `access_type=offline` and/or `prompt=consent` behavior. |
-| `defaults.toolArgumentDefaults` | Server-owned provider protocol arguments, hidden from caller schemas and authoritative on collision. |
-| `tenantFields` | Account/project/region/resource fields. Keep only required boundaries visible by default. |
-| `extensionFields` | Additional method-specific configuration rendered by the same common form. |
-| `configRequirements.atLeastOneOf` | Requires one of named tenant/extension fields. Every key must exist. |
-| `credentialFields` | Write-only secret/non-secret credential inputs. API-key methods require them in practice. |
-| `keyPlacement` | Provider request placement. Remote MCP should use the proven header path unless a new projection is implemented and tested. |
-| `guidanceMd` | Setup and scoping guidance. No secrets or internal environment-variable names. |
-| `consoleLinks` | Official registration, key, settings, and docs destinations. |
-| `warnings` | Plan, preview, admin, financial, production-data, or destructive-action caveats. |
-| `variants` | Legacy/simple variant metadata. Prefer explicit methods plus `capabilityProfile` for materially different endpoints/auth. |
-| `riskTier` | S1-S4 provider/method sensitivity used for review and validation. |
-| `requiredResourceFilters` | Reviewed resource boundaries. Must be backed by enforcement, not only copy. |
-| `credentialSources.vercelConnect` | Reviewed services, principal modes, scopes, and header projection for the Vercel exception. |
+| Field                                              | Meaning and rule                                                                                                                                                                                                                                      |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`                                              | Stable method key stored on the connection as `connectionMethodKey`.                                                                                                                                                                                  |
+| `label`                                            | User-facing method label. Required in practice when multiple methods exist.                                                                                                                                                                           |
+| `transport`                                        | `mcp_remote`, `local_stdio`, or specialized `rest_api`.                                                                                                                                                                                               |
+| `auth`                                             | `oauth`, `api_key`, or `none`.                                                                                                                                                                                                                        |
+| `ownershipModes`                                   | Allowed OAuth client ownership modes; also present for non-OAuth customer configuration.                                                                                                                                                              |
+| `oauthStrategy`                                    | Managed broker strategy. New definitions use `taskcore_cloud_connector`; `taskcore_id_connector` is recognized only to require migration when an old grant expires. The protocols and provider clients are not interchangeable. Only valid for OAuth. |
+| `connectorProfile`                                 | Managed connector capability/scope profile, required with `oauthStrategy`.                                                                                                                                                                            |
+| `capabilityProfile`                                | User-facing read/write/mode grouping used for method selection.                                                                                                                                                                                       |
+| `grantKinds`                                       | Restricts identity to `organization` and/or `user`; omit for flexible methods.                                                                                                                                                                        |
+| `whenToUse`                                        | One sentence distinguishing this method from alternatives.                                                                                                                                                                                            |
+| `defaults.serverUrl`                               | Exact fixed endpoint. For discovery-capable OAuth, omit fixed auth endpoints.                                                                                                                                                                         |
+| `defaults.serverUrlTemplate`                       | HTTPS endpoint with placeholders supplied by declared tenant/extension fields. Mutually exclusive with `serverUrl`.                                                                                                                                   |
+| `defaults.discoveryUrl`                            | Provider-specific discovery override only when reviewed metadata requires it.                                                                                                                                                                         |
+| `defaults.authorizationEndpoint` / `tokenEndpoint` | Authoritative fixed endpoints. A complete pair bypasses discovery, so ship them only when the provider lacks trustworthy discovery.                                                                                                                   |
+| `defaults.metadataUrl`                             | Authorization metadata hint.                                                                                                                                                                                                                          |
+| `defaults.scopesHint`                              | Explicit reviewed allowlist. Omit scope when docs do not require one; never copy every discovered scope.                                                                                                                                              |
+| `defaults.oauthAuthorizationParams`                | Reviewed `access_type=offline` and/or `prompt=consent` behavior.                                                                                                                                                                                      |
+| `defaults.toolArgumentDefaults`                    | Server-owned provider protocol arguments, hidden from caller schemas and authoritative on collision.                                                                                                                                                  |
+| `tenantFields`                                     | Account/project/region/resource fields. Keep only required boundaries visible by default.                                                                                                                                                             |
+| `extensionFields`                                  | Additional method-specific configuration rendered by the same common form.                                                                                                                                                                            |
+| `configRequirements.atLeastOneOf`                  | Requires one of named tenant/extension fields. Every key must exist.                                                                                                                                                                                  |
+| `credentialFields`                                 | Write-only secret/non-secret credential inputs. API-key methods require them in practice.                                                                                                                                                             |
+| `keyPlacement`                                     | Provider request placement. Remote MCP should use the proven header path unless a new projection is implemented and tested.                                                                                                                           |
+| `guidanceMd`                                       | Setup and scoping guidance. No secrets or internal environment-variable names.                                                                                                                                                                        |
+| `consoleLinks`                                     | Official registration, key, settings, and docs destinations.                                                                                                                                                                                          |
+| `warnings`                                         | Plan, preview, admin, financial, production-data, or destructive-action caveats.                                                                                                                                                                      |
+| `variants`                                         | Legacy/simple variant metadata. Prefer explicit methods plus `capabilityProfile` for materially different endpoints/auth.                                                                                                                             |
+| `riskTier`                                         | S1-S4 provider/method sensitivity used for review and validation.                                                                                                                                                                                     |
+| `requiredResourceFilters`                          | Reviewed resource boundaries. Must be backed by enforcement, not only copy.                                                                                                                                                                           |
+| `credentialSources.vercelConnect`                  | Reviewed services, principal modes, scopes, and header projection for the Vercel exception.                                                                                                                                                           |
 
 ### Field definition rules
 
@@ -1313,23 +1313,23 @@ Suggested PR verification block:
 
 ## Troubleshooting And Failure Classification
 
-| Symptom | Likely layer | What to inspect |
-| --- | --- | --- |
-| Store says Coming soon or Connect route is dead | Definition/availability/routing | `CONNECTABLE_APP_SLUGS`, store hidden set, method capability checks, Browse tests. |
-| Direct source link shows generic connection chooser | UI route state | `AppsConnect`, `ConnectionSetupFlow`, source slug lookup, availability. |
-| Finish setup opens Edit config and cannot continue | Draft identity/resume | `resumeConnectionId`, stored `sourceTemplateKey`, `connectionMethodKey`, exact draft status. |
-| OAuth never redirects | Method capability/client resolution | ownership modes, metadata discovery, callback origin, manual-client requirement. |
-| Provider rejects redirect URI | Deployment/provider rule | actual browser origin, `TASKCORE_PUBLIC_URL`, `redirectConstraints`, provider app registration. |
-| OAuth succeeds then connection needs reconnect | Grant/secret sync or refresh | organization versus user grant, token refs, default grant sync, expiry/refresh lease, `invalid_grant`. |
-| Tools list but calls return 401 | Token audience/scope/placement | RFC 8707 resource, `scopesHint`, header prefix/name, provider endpoint path. |
-| Health works but Test call fails | Gateway projection/policy | selected grant, managed headers/arguments, effective profile/policy, catalog entry risk/status. |
-| Required provider boilerplate appears in Test | Managed schema projection | `toolArgumentDefaults` and `projectedConnectionToolInputSchema`. |
-| API key saves but is not sent | Unsupported placement or missing ref | `credentialFieldsFor`, `keyPlacement`, connection/grant refs, gateway header resolution. |
-| Config asks for project ID the provider does not require | Manifest UX | make it optional/advanced, add default, or remove it; test the zero-config path. |
-| Connected card still says Connect | Identity matching | application/source slug, retained app status, connection-to-definition association. |
-| New tool is classified read | Risk inference | annotations, namespaced/camelCase verb normalization, provider exception set, fixture. |
-| Connection from another company is visible | Authorization bug | stop; add company-scope negative tests before any further live testing. |
-| Raw credential appears anywhere | Security incident | stop, revoke/rotate it, remove evidence, trace every response/log/audit path, add a canary regression test. |
+| Symptom                                                  | Likely layer                         | What to inspect                                                                                             |
+| -------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Store says Coming soon or Connect route is dead          | Definition/availability/routing      | `CONNECTABLE_APP_SLUGS`, store hidden set, method capability checks, Browse tests.                          |
+| Direct source link shows generic connection chooser      | UI route state                       | `AppsConnect`, `ConnectionSetupFlow`, source slug lookup, availability.                                     |
+| Finish setup opens Edit config and cannot continue       | Draft identity/resume                | `resumeConnectionId`, stored `sourceTemplateKey`, `connectionMethodKey`, exact draft status.                |
+| OAuth never redirects                                    | Method capability/client resolution  | ownership modes, metadata discovery, callback origin, manual-client requirement.                            |
+| Provider rejects redirect URI                            | Deployment/provider rule             | actual browser origin, `TASKCORE_PUBLIC_URL`, `redirectConstraints`, provider app registration.             |
+| OAuth succeeds then connection needs reconnect           | Grant/secret sync or refresh         | organization versus user grant, token refs, default grant sync, expiry/refresh lease, `invalid_grant`.      |
+| Tools list but calls return 401                          | Token audience/scope/placement       | RFC 8707 resource, `scopesHint`, header prefix/name, provider endpoint path.                                |
+| Health works but Test call fails                         | Gateway projection/policy            | selected grant, managed headers/arguments, effective profile/policy, catalog entry risk/status.             |
+| Required provider boilerplate appears in Test            | Managed schema projection            | `toolArgumentDefaults` and `projectedConnectionToolInputSchema`.                                            |
+| API key saves but is not sent                            | Unsupported placement or missing ref | `credentialFieldsFor`, `keyPlacement`, connection/grant refs, gateway header resolution.                    |
+| Config asks for project ID the provider does not require | Manifest UX                          | make it optional/advanced, add default, or remove it; test the zero-config path.                            |
+| Connected card still says Connect                        | Identity matching                    | application/source slug, retained app status, connection-to-definition association.                         |
+| New tool is classified read                              | Risk inference                       | annotations, namespaced/camelCase verb normalization, provider exception set, fixture.                      |
+| Connection from another company is visible               | Authorization bug                    | stop; add company-scope negative tests before any further live testing.                                     |
+| Raw credential appears anywhere                          | Security incident                    | stop, revoke/rotate it, remove evidence, trace every response/log/audit path, add a canary regression test. |
 
 When a bug appears on one provider, first reproduce it with a fixture or a
 second provider of the same auth/transport type. Fix the shared path when the
@@ -1387,11 +1387,11 @@ Classify the vendor before writing metadata. Use these definitions so rollout
 planning, security review, and QA can compare providers consistently. The
 examples are starting points; confirm current provider capabilities in Phase 1.
 
-| Reuse path | Use when | Typical transport | Examples |
-| --- | --- | --- | --- |
-| MCP-direct | The vendor exposes an official or stable MCP server whose tools map cleanly to Taskcore grants. | `mcp_remote`; `local_stdio` only for approved trusted templates. | Linear, Notion, Sentry, Vercel, Exa, Apify, Context7. |
-| OpenAPI-shim | The vendor has a documented REST/OpenAPI surface but no stable MCP server, and a generated/thin shim can expose safe actions. | Shim service or approved template that presents an MCP-compatible catalog to Taskcore. | Datadog, Apollo, QuickBooks, Ramp/Brex, Zendesk. |
-| Vendor-deep-wrapper | The vendor boundary depends on app-installation tokens, event validation, rich domain semantics, resource grants, or high-risk writes. | Vendor-specific wrapper behind the same connection model. | GitHub, Slack, Google Workspace writes, Atlassian, Microsoft 365, Cloudflare, Figma, Stripe, Salesforce, HubSpot, Intercom, PagerDuty. |
+| Reuse path          | Use when                                                                                                                               | Typical transport                                                                      | Examples                                                                                                                               |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| MCP-direct          | The vendor exposes an official or stable MCP server whose tools map cleanly to Taskcore grants.                                        | `mcp_remote`; `local_stdio` only for approved trusted templates.                       | Linear, Notion, Sentry, Vercel, Exa, Apify, Context7.                                                                                  |
+| OpenAPI-shim        | The vendor has a documented REST/OpenAPI surface but no stable MCP server, and a generated/thin shim can expose safe actions.          | Shim service or approved template that presents an MCP-compatible catalog to Taskcore. | Datadog, Apollo, QuickBooks, Ramp/Brex, Zendesk.                                                                                       |
+| Vendor-deep-wrapper | The vendor boundary depends on app-installation tokens, event validation, rich domain semantics, resource grants, or high-risk writes. | Vendor-specific wrapper behind the same connection model.                              | GitHub, Slack, Google Workspace writes, Atlassian, Microsoft 365, Cloudflare, Figma, Stripe, Salesforce, HubSpot, Intercom, PagerDuty. |
 
 Record the classification in the proposal along with the transport and the
 reason a lighter path is or is not enough. For each method, also record auth
@@ -1533,10 +1533,10 @@ For each action, capture:
 
 Risk classes:
 
-| Risk | Examples | Default |
-| --- | --- | --- |
-| `read` | Search, list, fetch metadata/content inside allowed resources. | Active when profile includes the app or read risk level. |
-| `write` | Create issue, add comment, update status, append block, trigger redeploy. | Allowed under the current new-connection default. Operators may narrow individual actions. |
+| Risk          | Examples                                                                                    | Default                                                                                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `read`        | Search, list, fetch metadata/content inside allowed resources.                              | Active when profile includes the app or read risk level.                                                                                                                                   |
+| `write`       | Create issue, add comment, update status, append block, trigger redeploy.                   | Allowed under the current new-connection default. Operators may narrow individual actions.                                                                                                 |
 | `destructive` | Delete, refund, cancel production deployment, send external message, broad tenant mutation. | Allowed under the current new-connection default. A provider with meaningful destructive capability should receive an explicit security review and may receive a narrower provider policy. |
 
 Changed-action quarantine is available when a connection sets
@@ -1555,11 +1555,11 @@ These paths describe authentication and provisioning. Apply the
 sequence: choose access before authentication, then configure any per-agent
 resource through a separate wizard on the saved connection.
 
-| Auth mode | Operator path | Stored result |
-| --- | --- | --- |
-| OAuth | Gallery card -> Connect -> vendor consent -> callback -> configure filters -> health/catalog -> access defaults. | OAuth token material in `company_secrets`; connection metadata redacted. |
-| API key | Gallery card -> paste key -> configure filters -> health/catalog -> access defaults. | Key material in `company_secrets`; no raw key returned after save. |
-| None | Gallery card -> configure allowed resources -> health/catalog -> access defaults. | No vendor secret; connection row still carries config and audit scope. |
+| Auth mode | Operator path                                                                                                    | Stored result                                                            |
+| --------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| OAuth     | Gallery card -> Connect -> vendor consent -> callback -> configure filters -> health/catalog -> access defaults. | OAuth token material in `company_secrets`; connection metadata redacted. |
+| API key   | Gallery card -> paste key -> configure filters -> health/catalog -> access defaults.                             | Key material in `company_secrets`; no raw key returned after save.       |
+| None      | Gallery card -> configure allowed resources -> health/catalog -> access defaults.                                | No vendor secret; connection row still carries config and audit scope.   |
 
 Provider-generated URLs also use `auth: "none"`, but the complete URL is
 vaulted when it contains credential material. Installation-style providers use
@@ -1613,17 +1613,17 @@ Taskcore behavior; they do not prove provider consent, credential scope, live
 delivery, or revocation. Use the following evidence matrix directly in the
 connector proposal or PR. No separate private validation issue is required.
 
-| Scenario | Required result | Evidence to retain |
-| --- | --- | --- |
-| Setup and consent | The gallery entry opens the correct method; prerequisites, provider handoff, credentials, and back/resume work. | Redacted setup/review screenshots; method, deployment mode, date, commit, and outcome. |
-| Authentication | The selected OAuth/app/key path succeeds and resolves the intended account/resource. | Redacted auth result, scopes, callback origin/path, credential-source and client-ownership mode; no secret values. |
-| Catalog and configuration | Discovery returns the reviewed actions; resource filters and selected access persist. | Tool names/count, schema hashes, risk/default-policy review, and saved filter names. |
-| Allowed execution | A narrow read succeeds through the gateway; writes follow the effective policy. | Tool, actor, decision, redacted result, and correlated call/audit record. Use a disposable resource for an authorized live write; otherwise mark write execution untested. |
-| Denied execution | Ungranted actors, another company, disallowed resources, revoked connections, and declared blocked/quarantined actions cannot execute. | Expected denial and reason code, with the automated or live test that exercised the boundary. Cover listing where the policy requires tools to be hidden. |
-| Runtime delivery | An actual agent/run-scoped gateway call succeeds when runtime logic changes. Chat/email also routes an incoming message and its reply to the same task. | Redacted task/conversation and call correlation; identify live versus simulated events. |
-| Refresh and recovery | Catalog refresh, token refresh/reconnect, and recoverable failures preserve the correct identity and policy. | Before/after outcome, redacted error code, and successful retry; no duplicated connection. |
-| Revoke and reconnect | Revocation blocks subsequent execution; supported reconnect reuses the intended identity/history. | Removal or denial evidence followed by reconnect result. |
-| Activity and secret handling | Activity explains what occurred and why; stored responses, logs, and artifacts contain no credential values. | Actor, run/issue context, resource, decision, reason code, outcome, plus redaction-check result. |
+| Scenario                     | Required result                                                                                                                                         | Evidence to retain                                                                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup and consent            | The gallery entry opens the correct method; prerequisites, provider handoff, credentials, and back/resume work.                                         | Redacted setup/review screenshots; method, deployment mode, date, commit, and outcome.                                                                                     |
+| Authentication               | The selected OAuth/app/key path succeeds and resolves the intended account/resource.                                                                    | Redacted auth result, scopes, callback origin/path, credential-source and client-ownership mode; no secret values.                                                         |
+| Catalog and configuration    | Discovery returns the reviewed actions; resource filters and selected access persist.                                                                   | Tool names/count, schema hashes, risk/default-policy review, and saved filter names.                                                                                       |
+| Allowed execution            | A narrow read succeeds through the gateway; writes follow the effective policy.                                                                         | Tool, actor, decision, redacted result, and correlated call/audit record. Use a disposable resource for an authorized live write; otherwise mark write execution untested. |
+| Denied execution             | Ungranted actors, another company, disallowed resources, revoked connections, and declared blocked/quarantined actions cannot execute.                  | Expected denial and reason code, with the automated or live test that exercised the boundary. Cover listing where the policy requires tools to be hidden.                  |
+| Runtime delivery             | An actual agent/run-scoped gateway call succeeds when runtime logic changes. Chat/email also routes an incoming message and its reply to the same task. | Redacted task/conversation and call correlation; identify live versus simulated events.                                                                                    |
+| Refresh and recovery         | Catalog refresh, token refresh/reconnect, and recoverable failures preserve the correct identity and policy.                                            | Before/after outcome, redacted error code, and successful retry; no duplicated connection.                                                                                 |
+| Revoke and reconnect         | Revocation blocks subsequent execution; supported reconnect reuses the intended identity/history.                                                       | Removal or denial evidence followed by reconnect result.                                                                                                                   |
+| Activity and secret handling | Activity explains what occurred and why; stored responses, logs, and artifacts contain no credential values.                                            | Actor, run/issue context, resource, decision, reason code, outcome, plus redaction-check result.                                                                           |
 
 Chat task links must use the server-resolved public board origin, including the
 current claimed Cloud origin. Supply the exact task URL in fresh and resumed
@@ -1734,7 +1734,7 @@ registers a client on the fly and stores it on the connection:
   `customer` and `dcr` in the method's `ownershipModes` when the vendor
   supports both.
 
-DCR is **one of four** registration tiers, and `ownershipModes` gates only the *curated* path. The broker resolves a
+DCR is **one of four** registration tiers, and `ownershipModes` gates only the _curated_ path. The broker resolves a
 client in this order: a deployment-preconfigured client, then a Client ID
 Metadata Document when the authorization server advertises one (requires a public
 HTTPS `TASKCORE_PUBLIC_URL`), then DCR, then client credentials the operator
@@ -1881,9 +1881,9 @@ Copy this section into a connector proposal or implementation issue.
 
 ## Actions
 
-| Tool | Risk | Default status | Filters | Approval default | Audit fields | Negative case |
-| --- | --- | --- | --- | --- | --- | --- |
-| | read/write/destructive | active/quarantined/disabled | | allow/ask-first/block | | |
+| Tool | Risk                   | Default status              | Filters | Approval default      | Audit fields | Negative case |
+| ---- | ---------------------- | --------------------------- | ------- | --------------------- | ------------ | ------------- |
+|      | read/write/destructive | active/quarantined/disabled |         | allow/ask-first/block |              |               |
 
 ## Wizard Path
 
@@ -1983,13 +1983,13 @@ connection with scoped business-data reads and narrow issue writes.
 
 ### Actions
 
-| Tool | Risk | Default status | Filters | Approval default | Audit fields | Negative case |
-| --- | --- | --- | --- | --- | --- | --- |
-| `linear.search_issues` | read | active after catalog review | workspace, team, project, label, status | allow when profile includes Linear reads | query summary, team/project ids, result count | Granted agent cannot search a disallowed team. |
-| `linear.get_issue` | read | active after catalog review | workspace, team, issue id | allow when profile includes Linear reads | issue id, team/project ids | Ungranted agent cannot list or invoke the tool. |
-| `linear.create_issue` | write | active | workspace, team, project, label | allow under S2 default | team/project ids, title hash, created issue id | Missing project/team filter denies. |
-| `linear.comment_issue` | write | active | workspace, team, issue id | allow under S2 default | issue id, comment body redaction summary | Agent cannot comment on a disallowed issue. |
-| `linear.update_issue_status` | write | active | workspace, team, issue id, allowed statuses | allow under S2 default | issue id, old/new status if returned | Revoked connection blocks retry. |
+| Tool                         | Risk  | Default status              | Filters                                     | Approval default                         | Audit fields                                   | Negative case                                   |
+| ---------------------------- | ----- | --------------------------- | ------------------------------------------- | ---------------------------------------- | ---------------------------------------------- | ----------------------------------------------- |
+| `linear.search_issues`       | read  | active after catalog review | workspace, team, project, label, status     | allow when profile includes Linear reads | query summary, team/project ids, result count  | Granted agent cannot search a disallowed team.  |
+| `linear.get_issue`           | read  | active after catalog review | workspace, team, issue id                   | allow when profile includes Linear reads | issue id, team/project ids                     | Ungranted agent cannot list or invoke the tool. |
+| `linear.create_issue`        | write | active                      | workspace, team, project, label             | allow under S2 default                   | team/project ids, title hash, created issue id | Missing project/team filter denies.             |
+| `linear.comment_issue`       | write | active                      | workspace, team, issue id                   | allow under S2 default                   | issue id, comment body redaction summary       | Agent cannot comment on a disallowed issue.     |
+| `linear.update_issue_status` | write | active                      | workspace, team, issue id, allowed statuses | allow under S2 default                   | issue id, old/new status if returned           | Revoked connection blocks retry.                |
 
 No destructive Linear action should ship in the first pass. If one becomes part
 of the normal catalog, re-evaluate the method tier and changed-tool quarantine
@@ -2031,6 +2031,7 @@ smoke pass should prove:
 - A call against a disallowed team/project is denied.
 - Revocation removes Linear tools and blocks execution.
 - Audit rows include company, connection, run/issue, agent/user actor, tool, decision, reason code, and outcome.
+
 ### AppDefinition catalog authoring
 
 Connector proposals now target the versioned `AppDefinition` contract in `packages/shared/src/types/app-definition.ts`. Seed data is one JSON file per provider under `packages/shared/src/app-definitions/`; regenerate Wave 1 with `pnpm connections:ingest-app-definitions`. The generator parses all 99 captured templates, validates required placeholders, OAuth ownership modes, and API-key placement, and produces deterministic output for review. Review `riskTier` and `requiredResourceFilters` against the method capabilities and resource boundaries described above; managed ownership modes stay data-visible but runtime-hidden until availability is injected.
@@ -2100,17 +2101,17 @@ URI.
 
 Auth endpoints (exact paths, from the live discovery chain):
 
-| Role | Endpoint |
-| --- | --- |
-| MCP server | `https://mcp.notion.com/mcp` |
+| Role                                   | Endpoint                                                          |
+| -------------------------------------- | ----------------------------------------------------------------- |
+| MCP server                             | `https://mcp.notion.com/mcp`                                      |
 | Protected-resource metadata (RFC 9728) | `https://mcp.notion.com/.well-known/oauth-protected-resource/mcp` |
-| AS metadata (RFC 8414) | `https://mcp.notion.com/.well-known/oauth-authorization-server` |
-| Authorize | `https://mcp.notion.com/authorize` |
-| Token (exchange + refresh) | `https://mcp.notion.com/token` |
-| Registration (RFC 7591 DCR) | `https://mcp.notion.com/register` |
-| Taskcore connect (wizard) | `POST /api/companies/:companyId/tools/apps/connect` |
-| Taskcore OAuth start | `POST /api/tools/oauth/:connectionId/start` |
-| Taskcore callback | `GET /api/tools/oauth/callback` |
+| AS metadata (RFC 8414)                 | `https://mcp.notion.com/.well-known/oauth-authorization-server`   |
+| Authorize                              | `https://mcp.notion.com/authorize`                                |
+| Token (exchange + refresh)             | `https://mcp.notion.com/token`                                    |
+| Registration (RFC 7591 DCR)            | `https://mcp.notion.com/register`                                 |
+| Taskcore connect (wizard)              | `POST /api/companies/:companyId/tools/apps/connect`               |
+| Taskcore OAuth start                   | `POST /api/tools/oauth/:connectionId/start`                       |
+| Taskcore callback                      | `GET /api/tools/oauth/callback`                                   |
 
 Redirect constraints (probed): `https-or-loopback-http`.
 
@@ -2168,12 +2169,12 @@ The verified request sequence for a first connect:
 
 Redirect-URI probes against `/register`:
 
-| Probed `redirect_uris` value | Result |
-| --- | --- |
-| `http://taskcore-dev:3100/api/tools/oauth/callback` | 400 `invalid_redirect_uri` — "Redirect URI must use HTTPS unless it is a loopback HTTP URI" |
-| `https://taskcore-dev:3100/api/tools/oauth/callback` | Accepted — private host is fine over HTTPS |
-| `http://localhost:3100/api/tools/oauth/callback` | Accepted |
-| `http://127.0.0.1:3100/api/tools/oauth/callback` | Accepted |
+| Probed `redirect_uris` value                         | Result                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `http://taskcore-dev:3100/api/tools/oauth/callback`  | 400 `invalid_redirect_uri` — "Redirect URI must use HTTPS unless it is a loopback HTTP URI" |
+| `https://taskcore-dev:3100/api/tools/oauth/callback` | Accepted — private host is fine over HTTPS                                                  |
+| `http://localhost:3100/api/tools/oauth/callback`     | Accepted                                                                                    |
+| `http://127.0.0.1:3100/api/tools/oauth/callback`     | Accepted                                                                                    |
 
 Hence `redirectConstraints: "https-or-loopback-http"` in `notion.json`, and
 the broker's fail-fast `oauth_redirect_origin_unsupported` error for
@@ -2268,13 +2269,13 @@ Keep the completed inventory with the connector's accessible review evidence.
 A new delete/archive/bulk tool requires a fresh risk review; it must not inherit
 a read classification from these examples.
 
-| Tool | Risk | Default status | Filters | Approval default | Audit fields | Negative case |
-| --- | --- | --- | --- | --- | --- | --- |
-| `notion-search` | read | active after catalog review; plan-gated by Notion (needs Notion AI) — may list but fail at call time | workspace | allow when profile includes Notion reads | query summary, result count | Ungranted agent cannot invoke. |
-| `notion-fetch` | read | active after catalog review | workspace, page, database | allow when profile includes Notion reads | page/database id | Fetch outside shared pages fails Notion-side and is audited. |
-| `notion-create-pages` | write | active after catalog review | workspace, page, database | allow under S3 default | parent id, title hash, created page id | Missing workspace/page filter denies. |
-| `notion-update-page` | write | active after catalog review | workspace, page | allow under S3 default | page id, redaction summary | Revoked connection blocks retry. |
-| `notion-query-data-sources` | read | active after catalog review | workspace, database | allow when profile includes Notion reads | data-source id, result count | Granted agent cannot query a disallowed database. |
+| Tool                        | Risk  | Default status                                                                                       | Filters                   | Approval default                         | Audit fields                           | Negative case                                                |
+| --------------------------- | ----- | ---------------------------------------------------------------------------------------------------- | ------------------------- | ---------------------------------------- | -------------------------------------- | ------------------------------------------------------------ |
+| `notion-search`             | read  | active after catalog review; plan-gated by Notion (needs Notion AI) — may list but fail at call time | workspace                 | allow when profile includes Notion reads | query summary, result count            | Ungranted agent cannot invoke.                               |
+| `notion-fetch`              | read  | active after catalog review                                                                          | workspace, page, database | allow when profile includes Notion reads | page/database id                       | Fetch outside shared pages fails Notion-side and is audited. |
+| `notion-create-pages`       | write | active after catalog review                                                                          | workspace, page, database | allow under S3 default                   | parent id, title hash, created page id | Missing workspace/page filter denies.                        |
+| `notion-update-page`        | write | active after catalog review                                                                          | workspace, page           | allow under S3 default                   | page id, redaction summary             | Revoked connection blocks retry.                             |
+| `notion-query-data-sources` | read  | active after catalog review                                                                          | workspace, database       | allow when profile includes Notion reads | data-source id, result count           | Granted agent cannot query a disallowed database.            |
 
 No destructive Notion action ships in this worked example. A future
 delete/archive/bulk action needs explicit risk review; normally classify the

@@ -62,6 +62,7 @@ No real login or token was captured in this phase. Implementation should provisi
 ## Smallest proof
 
 `claude --version`; one pipe harness with a synthetic invalid code; and one PTY harness with bracketed-paste input showed the stream split, redacted URL structure, masked echo, HTTP 400 retry behavior, and controlled terminal exits. A literal scan of this document confirms it contains no authorization query values, browser code, or live token.
+
 ## Re-characterization on Claude Code 2.1.226 (2026-08-13)
 
 - Re-characterized: 2026-08-13

@@ -15,22 +15,30 @@
  * enters in the browser. `submitted_browser_code` asks the user to paste a code
  * from the browser back into the login flow.
  */
-export const ADAPTER_LOGIN_PANEL_MODES = ["displayed_code", "submitted_browser_code"] as const;
+export const ADAPTER_LOGIN_PANEL_MODES = [
+  "displayed_code",
+  "submitted_browser_code",
+] as const;
 export type AdapterLoginPanelMode = (typeof ADAPTER_LOGIN_PANEL_MODES)[number];
 
 /**
  * The host-side timeout policy. `caller_bounded` lets the caller set the
  * timeout. `fixed` binds the timeout to a fixed adapter value.
  */
-export const ADAPTER_LOGIN_TIMEOUT_POLICIES = ["caller_bounded", "fixed"] as const;
-export type AdapterLoginTimeoutPolicy = (typeof ADAPTER_LOGIN_TIMEOUT_POLICIES)[number];
+export const ADAPTER_LOGIN_TIMEOUT_POLICIES = [
+  "caller_bounded",
+  "fixed",
+] as const;
+export type AdapterLoginTimeoutPolicy =
+  (typeof ADAPTER_LOGIN_TIMEOUT_POLICIES)[number];
 
 /**
  * The optional completion claim that the login flow records on success.
  * `storedSessionId` marks that the flow stored a session identifier.
  */
 export const ADAPTER_LOGIN_COMPLETION_CLAIMS = ["storedSessionId"] as const;
-export type AdapterLoginCompletionClaim = (typeof ADAPTER_LOGIN_COMPLETION_CLAIMS)[number];
+export type AdapterLoginCompletionClaim =
+  (typeof ADAPTER_LOGIN_COMPLETION_CLAIMS)[number];
 
 /**
  * The normalized login prompt. `url` is the validated authorization URL. `code`
@@ -86,8 +94,14 @@ export interface AdapterLoginCapability {
   completionClaim?: AdapterLoginCompletionClaim;
 }
 
-function isOneOf<T extends readonly string[]>(values: T, candidate: unknown): candidate is T[number] {
-  return typeof candidate === "string" && (values as readonly string[]).includes(candidate);
+function isOneOf<T extends readonly string[]>(
+  values: T,
+  candidate: unknown,
+): candidate is T[number] {
+  return (
+    typeof candidate === "string" &&
+    (values as readonly string[]).includes(candidate)
+  );
 }
 
 /**
@@ -123,8 +137,13 @@ export function assertValidAdapterLoginCapability(
   if (typeof cap.parsePrompt !== "function") {
     throw new Error(`${prefix}: "parsePrompt" must be a function.`);
   }
-  if (cap.captureCredential !== undefined && typeof cap.captureCredential !== "function") {
-    throw new Error(`${prefix}: "captureCredential" must be a function when present.`);
+  if (
+    cap.captureCredential !== undefined &&
+    typeof cap.captureCredential !== "function"
+  ) {
+    throw new Error(
+      `${prefix}: "captureCredential" must be a function when present.`,
+    );
   }
   if (cap.onComplete !== undefined && typeof cap.onComplete !== "function") {
     throw new Error(`${prefix}: "onComplete" must be a function when present.`);
@@ -149,6 +168,7 @@ export function validateAdapterLoginCapability(mod: {
   loginCapability?: unknown;
 }): void {
   if (mod.loginCapability === undefined) return;
-  const adapterType = typeof mod.type === "string" && mod.type.length > 0 ? mod.type : "unknown";
+  const adapterType =
+    typeof mod.type === "string" && mod.type.length > 0 ? mod.type : "unknown";
   assertValidAdapterLoginCapability(mod.loginCapability, adapterType);
 }

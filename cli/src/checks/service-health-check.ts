@@ -2,7 +2,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { TaskcoreConfig } from "../config/schema.js";
 import { resolveTaskcoreInstanceId } from "../config/home.js";
-import { readInstallManifest, resolveInstallStorePaths } from "../install-store.js";
+import {
+  readInstallManifest,
+  resolveInstallStorePaths,
+} from "../install-store.js";
 import {
   detectServiceManager,
   isExecutableFile,
@@ -21,22 +24,30 @@ type ServiceCheckDependencies = {
 
 async function probeHealth(config: TaskcoreConfig): Promise<HealthResult> {
   try {
-    const response = await fetch(buildLocalHealthUrl(config.server.host, config.server.port), {
-      signal: AbortSignal.timeout(2_000),
-    });
+    const response = await fetch(
+      buildLocalHealthUrl(config.server.host, config.server.port),
+      {
+        signal: AbortSignal.timeout(2_000),
+      },
+    );
     const body = (await response.json()) as {
       status?: unknown;
       serverVersion?: unknown;
       version?: unknown;
     };
-    const version = typeof body.serverVersion === "string"
-      ? body.serverVersion
-      : typeof body.version === "string"
-        ? body.version
-        : null;
+    const version =
+      typeof body.serverVersion === "string"
+        ? body.serverVersion
+        : typeof body.version === "string"
+          ? body.version
+          : null;
     return { ok: response.ok && body.status === "ok", version };
   } catch (error) {
-    return { ok: false, version: null, error: error instanceof Error ? error.message : String(error) };
+    return {
+      ok: false,
+      version: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
@@ -55,7 +66,9 @@ export async function serviceHealthChecks(
   const instanceId = resolveTaskcoreInstanceId();
   const detection = await deps.detect(instanceId);
   if (!detection.supported) {
-    return [{ name: "Background service", status: "pass", message: detection.reason }];
+    return [
+      { name: "Background service", status: "pass", message: detection.reason },
+    ];
   }
 
   const manager = detection.manager;
@@ -73,36 +86,51 @@ export async function serviceHealthChecks(
   const results: CheckResult[] = [];
   let definitionCurrent = false;
   try {
-    definitionCurrent = (await fs.readFile(manager.definitionPath, "utf8")) === manager.renderDefinition();
+    definitionCurrent =
+      (await fs.readFile(manager.definitionPath, "utf8")) ===
+      manager.renderDefinition();
   } catch {
     definitionCurrent = false;
   }
   results.push(
     definitionCurrent
-      ? { name: "Service definition", status: "pass", message: manager.definitionPath }
+      ? {
+          name: "Service definition",
+          status: "pass",
+          message: manager.definitionPath,
+        }
       : {
           name: "Service definition",
           status: "fail",
           message: `Missing or drifted definition at ${manager.definitionPath}`,
-          repairHint: "Run `taskcore service install` to regenerate the service definition",
+          repairHint:
+            "Run `taskcore service install` to regenerate the service definition",
         },
   );
 
   const health = await deps.probe(config);
   // The installed definition is the truth about what the service executes;
   // fall back to the environment-derived path only when it is unreadable.
-  const serviceExecutable = (await manager.installedExecutablePath()) ?? resolveServiceShimPath();
-  const shimPresent = status.active ? true : await deps.shimPresent(serviceExecutable);
+  const serviceExecutable =
+    (await manager.installedExecutablePath()) ?? resolveServiceShimPath();
+  const shimPresent = status.active
+    ? true
+    : await deps.shimPresent(serviceExecutable);
   results.push(
     status.active
-      ? { name: "Service runtime", status: "pass", message: `${status.serviceName} is active` }
+      ? {
+          name: "Service runtime",
+          status: "pass",
+          message: `${status.serviceName} is active`,
+        }
       : !shimPresent
         ? {
             name: "Service runtime",
             status: "fail",
             message: `${status.serviceName} cannot start: no executable exists at ${serviceExecutable}`,
             repairHint:
-              path.resolve(serviceExecutable) === path.resolve(resolveInstallStorePaths().shimPath)
+              path.resolve(serviceExecutable) ===
+              path.resolve(resolveInstallStorePaths().shimPath)
                 ? "Run `taskcore install` to restore the managed payload and shim, then `taskcore service start`"
                 : `Restore the executable at ${serviceExecutable}, or unset TASKCORE_SHIM_PATH and run \`taskcore install\` followed by \`taskcore service install\` to re-point the service at the managed shim`,
           }
@@ -111,13 +139,15 @@ export async function serviceHealthChecks(
               name: "Service runtime",
               status: "fail",
               message: `${status.serviceName} is inactive but the configured port is serving another Taskcore process`,
-              repairHint: "Run `taskcore service start`, or stop the conflicting foreground process first",
+              repairHint:
+                "Run `taskcore service start`, or stop the conflicting foreground process first",
             }
           : {
               name: "Service runtime",
               status: "fail",
               message: `${status.serviceName} is ${status.detail ?? "inactive"}`,
-              repairHint: "Run `taskcore service start`; inspect `taskcore service logs` if it does not stay up",
+              repairHint:
+                "Run `taskcore service start`; inspect `taskcore service logs` if it does not stay up",
             },
   );
 
@@ -131,14 +161,18 @@ export async function serviceHealthChecks(
           name: "Service health",
           status: "fail",
           message: health.error ?? "Health endpoint did not report ok",
-          repairHint: "Inspect `taskcore service status` and `taskcore service logs`",
+          repairHint:
+            "Inspect `taskcore service status` and `taskcore service logs`",
         }
       : expectedVersion && health.version !== expectedVersion
         ? {
             name: "Service version",
             status: "fail",
             message: `Running ${health.version ?? "unknown"}; managed install is ${expectedVersion}`,
-            repairHint: "Run `taskcore service restart --expected-version " + expectedVersion + "`",
+            repairHint:
+              "Run `taskcore service restart --expected-version " +
+              expectedVersion +
+              "`",
           }
         : status.active
           ? {
@@ -158,7 +192,8 @@ export async function serviceHealthChecks(
       name: "Service linger",
       status: "warn",
       message: "Start-on-login is enabled but systemd user lingering is off",
-      repairHint: "Re-run `taskcore service install --enable-linger` if the service must survive logout",
+      repairHint:
+        "Re-run `taskcore service install --enable-linger` if the service must survive logout",
     });
   }
 

@@ -72,7 +72,9 @@ export interface StagedWorkspace {
 }
 
 /** The leaf staging primitive the engine injects. It ships one asset set. */
-export type StageWorkspace = (assets: AdapterManagedRuntimeAsset[]) => Promise<PreparedAdapterExecutionTargetRuntime>;
+export type StageWorkspace = (
+  assets: AdapterManagedRuntimeAsset[],
+) => Promise<PreparedAdapterExecutionTargetRuntime>;
 
 /**
  * The managed-home seam result, in the shape the site consumes. The engine maps
@@ -118,16 +120,22 @@ export interface SandboxRunSiteOptions {
    * per-run copy-back. Absent for custom agents and the shared-engine tests, where
    * the site stages the workspace with no home asset.
    */
-  readonly seedManagedHome?: (stage: StageWorkspace) => Promise<ManagedHomeSeamResult>;
+  readonly seedManagedHome?: (
+    stage: StageWorkspace,
+  ) => Promise<ManagedHomeSeamResult>;
   /**
    * Remove a freshly staged in-sandbox runtime after the seam threw. The site
    * fires it when the seam fails after a successful stage.
    */
-  readonly disposeFreshStagedRuntime: (stagedRuntime: PreparedAdapterExecutionTargetRuntime) => Promise<void>;
+  readonly disposeFreshStagedRuntime: (
+    stagedRuntime: PreparedAdapterExecutionTargetRuntime,
+  ) => Promise<void>;
   /** Wrap the `stage.sync` step in the run's startup step timer. */
   readonly measureStageStep: <T>(run: () => Promise<T>) => Promise<T>;
   /** Publish the referenced-project workspace hints after a fresh stage. */
-  readonly publishStagedProjectHints: (stagedProjectDirs: Record<string, string>) => void;
+  readonly publishStagedProjectHints: (
+    stagedProjectDirs: Record<string, string>,
+  ) => void;
   readonly onReuseLog: () => Promise<void>;
 
   /** Start the host-side taskcore callback bridge. */
@@ -140,13 +148,18 @@ export interface SandboxRunSiteOptions {
     launchEnv: () => Promise<Record<string, string>>;
   }) => Promise<AdapterExecutionTargetProcessSessionBridgeHandle | null>;
   /** Wrap each concurrent bridge start in the run's startup step timer. */
-  readonly measureBridgeStep: <T>(step: "bridge.taskcore" | "bridge.process-session", run: () => Promise<T>) => Promise<T>;
+  readonly measureBridgeStep: <T>(
+    step: "bridge.taskcore" | "bridge.process-session",
+    run: () => Promise<T>,
+  ) => Promise<T>;
   /**
    * Finalize the run's branded launch environment from the bridge contribution.
    * The engine owns `finalizeLaunchEnvironment`, so it stays the sole consumer of
    * a contribution; the site calls this capability at the sequencing point.
    */
-  readonly finalizeLaunchEnv: (contributions: readonly LaunchEnvironmentContribution[]) => Record<string, string>;
+  readonly finalizeLaunchEnv: (
+    contributions: readonly LaunchEnvironmentContribution[],
+  ) => Record<string, string>;
   readonly onTaskcoreBridgeLog: () => Promise<void>;
 
   /** Stop both bridges and run the managed-home copy-back on teardown. */
@@ -191,7 +204,9 @@ export interface SandboxRunSite {
 }
 
 /** Create the sandbox run site over the engine's staged-runtime map and ledger. */
-export function createSandboxRunSite(options: SandboxRunSiteOptions): SandboxRunSite {
+export function createSandboxRunSite(
+  options: SandboxRunSiteOptions,
+): SandboxRunSite {
   const store = createSessionReuseStore<StagedRuntimeStoreEntry>({
     entries: options.stagedRuntimes,
     now: options.now,
@@ -214,7 +229,8 @@ export function createSandboxRunSite(options: SandboxRunSiteOptions): SandboxRun
   let leaseRelease: (() => void) | null = null;
   let staged: StagedWorkspace | null = null;
   let controlBridge: AdapterExecutionTargetTaskcoreBridgeHandle | null = null;
-  let agentBridge: AdapterExecutionTargetProcessSessionBridgeHandle | null = null;
+  let agentBridge: AdapterExecutionTargetProcessSessionBridgeHandle | null =
+    null;
 
   return {
     kind: "sandbox",
@@ -231,64 +247,78 @@ export function createSandboxRunSite(options: SandboxRunSiteOptions): SandboxRun
 
     async placeWorkspace(context: AcpRunContext): Promise<PlacedWorkspace> {
       const sessionKey = context.sessionKey;
-      const lease = await withStagingLease(options.stagingLocks, sessionKey, async (): Promise<StagedWorkspace> => {
-        const cached = options.isCompatibleResume ? store.borrow(sessionKey) : undefined;
-        if (cached) {
-          // Reuse the already-staged in-sandbox workspace and managed home.
-          // Re-apply the env keys the seam repointed and reuse the per-run
-          // copy-back so the copy-back cadence stays exactly per run.
-          Object.assign(options.env, cached.envDelta);
-          cached.lastUsedAt = options.now();
-          await options.onReuseLog();
-          return {
-            stagedRuntime: cached.stagedRuntime,
-            teardown: cached.teardown,
-            dispose: cached.dispose,
-            envDelta: cached.envDelta,
-            reused: true,
-          };
-        }
-        // Not a compatible resume: stage fresh. Drop and dispose a stale entry
-        // that collides on this key first, so a fresh stage neither reuses nor
-        // leaks it.
-        const stale = options.stagedRuntimes.get(sessionKey);
-        if (stale) {
-          options.stagedRuntimes.delete(sessionKey);
-          if (stale.dispose) await stale.dispose().catch(() => {});
-        }
-        const envBeforeStage = { ...options.env };
-        let freshlyStaged: PreparedAdapterExecutionTargetRuntime | null = null;
-        const stage: StageWorkspace = async (assets) => {
-          const result = await options.stage(assets);
-          freshlyStaged = result;
-          return result;
-        };
-        const seam = await options.measureStageStep(async (): Promise<ManagedHomeSeamResult> => {
-          if (options.seedManagedHome) {
-            try {
-              return await options.seedManagedHome(stage);
-            } catch (seamErr) {
-              // The seam threw after a possible successful stage. Dispose the fresh
-              // staged runtime so the abandoned in-sandbox managed home never leaks,
-              // then rethrow the seam error.
-              if (freshlyStaged) await options.disposeFreshStagedRuntime(freshlyStaged);
-              throw seamErr;
-            }
+      const lease = await withStagingLease(
+        options.stagingLocks,
+        sessionKey,
+        async (): Promise<StagedWorkspace> => {
+          const cached = options.isCompatibleResume
+            ? store.borrow(sessionKey)
+            : undefined;
+          if (cached) {
+            // Reuse the already-staged in-sandbox workspace and managed home.
+            // Re-apply the env keys the seam repointed and reuse the per-run
+            // copy-back so the copy-back cadence stays exactly per run.
+            Object.assign(options.env, cached.envDelta);
+            cached.lastUsedAt = options.now();
+            await options.onReuseLog();
+            return {
+              stagedRuntime: cached.stagedRuntime,
+              teardown: cached.teardown,
+              dispose: cached.dispose,
+              envDelta: cached.envDelta,
+              reused: true,
+            };
           }
-          return { stagedRuntime: await stage([]), teardown: null, dispose: null };
-        });
-        const envDelta: Record<string, string> = {};
-        for (const [key, value] of Object.entries(options.env)) {
-          if (envBeforeStage[key] !== value) envDelta[key] = value;
-        }
-        return {
-          stagedRuntime: seam.stagedRuntime,
-          teardown: seam.teardown,
-          dispose: seam.dispose,
-          envDelta,
-          reused: false,
-        };
-      });
+          // Not a compatible resume: stage fresh. Drop and dispose a stale entry
+          // that collides on this key first, so a fresh stage neither reuses nor
+          // leaks it.
+          const stale = options.stagedRuntimes.get(sessionKey);
+          if (stale) {
+            options.stagedRuntimes.delete(sessionKey);
+            if (stale.dispose) await stale.dispose().catch(() => {});
+          }
+          const envBeforeStage = { ...options.env };
+          let freshlyStaged: PreparedAdapterExecutionTargetRuntime | null =
+            null;
+          const stage: StageWorkspace = async (assets) => {
+            const result = await options.stage(assets);
+            freshlyStaged = result;
+            return result;
+          };
+          const seam = await options.measureStageStep(
+            async (): Promise<ManagedHomeSeamResult> => {
+              if (options.seedManagedHome) {
+                try {
+                  return await options.seedManagedHome(stage);
+                } catch (seamErr) {
+                  // The seam threw after a possible successful stage. Dispose the fresh
+                  // staged runtime so the abandoned in-sandbox managed home never leaks,
+                  // then rethrow the seam error.
+                  if (freshlyStaged)
+                    await options.disposeFreshStagedRuntime(freshlyStaged);
+                  throw seamErr;
+                }
+              }
+              return {
+                stagedRuntime: await stage([]),
+                teardown: null,
+                dispose: null,
+              };
+            },
+          );
+          const envDelta: Record<string, string> = {};
+          for (const [key, value] of Object.entries(options.env)) {
+            if (envBeforeStage[key] !== value) envDelta[key] = value;
+          }
+          return {
+            stagedRuntime: seam.stagedRuntime,
+            teardown: seam.teardown,
+            dispose: seam.dispose,
+            envDelta,
+            reused: false,
+          };
+        },
+      );
       leaseRelease = lease.release;
       staged = lease.value;
       // Publish the referenced-project workspace hints (known only after staging).
@@ -301,7 +331,10 @@ export function createSandboxRunSite(options: SandboxRunSiteOptions): SandboxRun
       // startup-rollback until a clean turn promotes it.
       options.ledger.register({
         id: "staged_runtime",
-        payload: { stagedRuntime: staged.stagedRuntime, disposeStaged: staged.dispose ?? (async () => {}) },
+        payload: {
+          stagedRuntime: staged.stagedRuntime,
+          disposeStaged: staged.dispose ?? (async () => {}),
+        },
         scope: "startup_rollback",
       });
       if (staged.teardown) {
@@ -320,9 +353,12 @@ export function createSandboxRunSite(options: SandboxRunSiteOptions): SandboxRun
         });
       }
       return {
-        referencedProjectStagingFailures: (staged.stagedRuntime.additionalSourceFailures ?? []).map(
-          (failure) => ({ projectId: failure.projectId, error: failure.error }),
-        ),
+        referencedProjectStagingFailures: (
+          staged.stagedRuntime.additionalSourceFailures ?? []
+        ).map((failure) => ({
+          projectId: failure.projectId,
+          error: failure.error,
+        })),
       };
     },
 
@@ -350,19 +386,31 @@ export function createSandboxRunSite(options: SandboxRunSiteOptions): SandboxRun
           // retains nothing.
           const contributions: LaunchEnvironmentContribution[] = [];
           if (taskcore) {
-            contributions.push({ scope: "run", env: taskcore.env } as unknown as RunScopedContribution);
+            contributions.push({
+              scope: "run",
+              env: taskcore.env,
+            } as unknown as RunScopedContribution);
             await options.onTaskcoreBridgeLog();
           }
           launchEnv = options.finalizeLaunchEnv(contributions);
           return launchEnv;
         })());
-      const processSessionStart = options.measureBridgeStep("bridge.process-session", () =>
-        options.startProcessSessionBridge({ runtimeRootDir: stagedRootDir, launchEnv: finalizeLaunchEnv }),
+      const processSessionStart = options.measureBridgeStep(
+        "bridge.process-session",
+        () =>
+          options.startProcessSessionBridge({
+            runtimeRootDir: stagedRootDir,
+            launchEnv: finalizeLaunchEnv,
+          }),
       );
       // Settle BOTH starts, so a partial failure can stop whichever bridge started.
-      const [taskcore, processSession] = await Promise.allSettled([taskcoreStart, processSessionStart]);
+      const [taskcore, processSession] = await Promise.allSettled([
+        taskcoreStart,
+        processSessionStart,
+      ]);
       controlBridge = taskcore.status === "fulfilled" ? taskcore.value : null;
-      agentBridge = processSession.status === "fulfilled" ? processSession.value : null;
+      agentBridge =
+        processSession.status === "fulfilled" ? processSession.value : null;
       const failure =
         taskcore.status === "rejected"
           ? taskcore.reason
@@ -374,10 +422,18 @@ export function createSandboxRunSite(options: SandboxRunSiteOptions): SandboxRun
       // consuming the launch env (memoized, so a no-op if it did).
       await finalizeLaunchEnv();
       if (controlBridge) {
-        options.ledger.register({ id: "control_bridge", payload: controlBridge, scope: "per_run" });
+        options.ledger.register({
+          id: "control_bridge",
+          payload: controlBridge,
+          scope: "per_run",
+        });
       }
       if (agentBridge) {
-        options.ledger.register({ id: "agent_bridge", payload: agentBridge, scope: "per_run" });
+        options.ledger.register({
+          id: "agent_bridge",
+          payload: agentBridge,
+          scope: "per_run",
+        });
       }
       return { controlBridge, agentBridge, launchEnv };
     },
@@ -389,7 +445,9 @@ export function createSandboxRunSite(options: SandboxRunSiteOptions): SandboxRun
     reuseCandidate(resources: ReadyRunResources): SandboxReuseCandidate {
       const stagedResource = resources.get("staged_runtime");
       if (!stagedResource) {
-        throw new Error("sandbox run site cannot name a reuse candidate without a staged_runtime resource");
+        throw new Error(
+          "sandbox run site cannot name a reuse candidate without a staged_runtime resource",
+        );
       }
       // The reuse payload carries the staged files only — no credential material.
       return { stagedRuntime: stagedResource.stagedRuntime };

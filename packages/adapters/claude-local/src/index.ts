@@ -7,14 +7,16 @@ export function resolveClaudeModel(
 ): string {
   const configured = typeof model === "string" ? model.trim() : "";
   if (configured) return configured;
-  const environmentModel = typeof env.ANTHROPIC_MODEL === "string" ? env.ANTHROPIC_MODEL.trim() : "";
+  const environmentModel =
+    typeof env.ANTHROPIC_MODEL === "string" ? env.ANTHROPIC_MODEL.trim() : "";
   if (environmentModel) return environmentModel;
   // These providers use their own model IDs and region-specific defaults.
   const providerFlag = (value: unknown) => value === "1" || value === "true";
   if (
-    providerFlag(env.CLAUDE_CODE_USE_BEDROCK)
-    || providerFlag(env.CLAUDE_CODE_USE_VERTEX)
-    || (typeof env.ANTHROPIC_BEDROCK_BASE_URL === "string" && env.ANTHROPIC_BEDROCK_BASE_URL.trim())
+    providerFlag(env.CLAUDE_CODE_USE_BEDROCK) ||
+    providerFlag(env.CLAUDE_CODE_USE_VERTEX) ||
+    (typeof env.ANTHROPIC_BEDROCK_BASE_URL === "string" &&
+      env.ANTHROPIC_BEDROCK_BASE_URL.trim())
   ) {
     return "";
   }
@@ -23,18 +25,29 @@ export function resolveClaudeModel(
 
 export const type = "claude_local";
 
-export function claudeLocalReasoningEffortsForModel(model: string): readonly string[] {
-  const id = model.trim().replace(/\[1m\]$/, "").replace(/^(?:(?:us|eu|apac|global)\.)?anthropic\./, "");
+export function claudeLocalReasoningEffortsForModel(
+  model: string,
+): readonly string[] {
+  const id = model
+    .trim()
+    .replace(/\[1m\]$/, "")
+    .replace(/^(?:(?:us|eu|apac|global)\.)?anthropic\./, "");
   if (/^claude-haiku-/.test(id)) return [];
-  if (/^claude-(?:opus-5(?:-5)?|opus-4-[78]|sonnet-5(?:-5)?|fable-5(?:-1)?)$/.test(id)) {
+  if (
+    /^claude-(?:opus-5(?:-5)?|opus-4-[78]|sonnet-5(?:-5)?|fable-5(?:-1)?)$/.test(
+      id,
+    )
+  ) {
     return ["low", "medium", "high", "xhigh", "max"];
   }
-  if (/^claude-(?:opus|sonnet)-4-6(?:-v1)?$/.test(id)) return ["low", "medium", "high", "max"];
+  if (/^claude-(?:opus|sonnet)-4-6(?:-v1)?$/.test(id))
+    return ["low", "medium", "high", "max"];
   return ["low", "medium", "high"];
 }
 export const label = "Claude Code";
 
-export const SANDBOX_INSTALL_COMMAND = "npm install -g @anthropic-ai/claude-code";
+export const SANDBOX_INSTALL_COMMAND =
+  "npm install -g @anthropic-ai/claude-code";
 
 // Ordered the way the Claude app orders models (#14877): the newest release of each family
 // first, by decreasing capability, then older releases grouped by family. The server applies the

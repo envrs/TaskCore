@@ -66,11 +66,11 @@ records. It recognizes these evidence families:
 
 Each evidence reference becomes one of:
 
-| Outcome | Meaning |
-| --- | --- |
-| `accepted` | A matching durable record exists and authoritatively supports the claim. |
-| `missing` | The required claim or referenced record does not exist or is still pending. |
-| `rejected` | The record or claim explicitly contradicts completion. |
+| Outcome        | Meaning                                                                          |
+| -------------- | -------------------------------------------------------------------------------- |
+| `accepted`     | A matching durable record exists and authoritatively supports the claim.         |
+| `missing`      | The required claim or referenced record does not exist or is still pending.      |
+| `rejected`     | The record or claim explicitly contradicts completion.                           |
 | `unverifiable` | A record exists, or a string was supplied, but it is not authoritative evidence. |
 
 For example, a model-authored reference such as `task-response` is not trusted
@@ -128,23 +128,23 @@ and effects still enforce their own authorization and approval rules.
 `arbitrateNativeStatus()` is a pure function. It evaluates higher-authority
 conditions before model disposition:
 
-| Condition | Status decision | Important effects/reason |
-| --- | --- | --- |
-| Issue is already `done` or `cancelled` | Preserve | `terminal_status_preserved` |
-| Workspace finalization failed | Preserve | Record a retryable finalization error |
-| Run performs a named native completion review | Preserve | The recorded review decision controls the child; unresolved review records a reviewer recovery action |
-| Run was cancelled | Preserve | Release run resources |
-| Run failed | Preserve | Schedule recovery |
-| Approval, interaction, or execution stage is pending | `in_review` | Materialize/bind the governance gate and notify its owner |
-| Completion satisfies its authority policy | `done` | Release checkout |
-| Runner reports a concrete attention request with a reviewer and decision | `in_review` | Bind the requested reviewer |
-| Runner reports `needs_review` without a decision, or an incomplete completion claim | Keep work with the agent | No automatic human approval; at most one corrective continuation, then a visible recovery action |
-| Runner reports a task-wide blocker | `blocked` | Persist blocker owner and unblock action |
-| Runner reports a current-track blocker | `in_progress` | Enqueue another productive track |
-| Runner reports `yielded` with a valid continuation | `in_progress` | Enqueue the declared continuation |
-| Ordinary task reports `response_wake` and blocking remaining work, without a real wait | `in_progress` | Use the bounded incomplete-work continuation, then a visible recovery error if repair was already used |
-| Completion evidence is incomplete and continuation is forbidden | Preserve | Record a finalization error and named next action |
-| Completion evidence is otherwise incomplete | `in_progress` | Enqueue a bounded, idempotent continuation |
+| Condition                                                                              | Status decision          | Important effects/reason                                                                               |
+| -------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Issue is already `done` or `cancelled`                                                 | Preserve                 | `terminal_status_preserved`                                                                            |
+| Workspace finalization failed                                                          | Preserve                 | Record a retryable finalization error                                                                  |
+| Run performs a named native completion review                                          | Preserve                 | The recorded review decision controls the child; unresolved review records a reviewer recovery action  |
+| Run was cancelled                                                                      | Preserve                 | Release run resources                                                                                  |
+| Run failed                                                                             | Preserve                 | Schedule recovery                                                                                      |
+| Approval, interaction, or execution stage is pending                                   | `in_review`              | Materialize/bind the governance gate and notify its owner                                              |
+| Completion satisfies its authority policy                                              | `done`                   | Release checkout                                                                                       |
+| Runner reports a concrete attention request with a reviewer and decision               | `in_review`              | Bind the requested reviewer                                                                            |
+| Runner reports `needs_review` without a decision, or an incomplete completion claim    | Keep work with the agent | No automatic human approval; at most one corrective continuation, then a visible recovery action       |
+| Runner reports a task-wide blocker                                                     | `blocked`                | Persist blocker owner and unblock action                                                               |
+| Runner reports a current-track blocker                                                 | `in_progress`            | Enqueue another productive track                                                                       |
+| Runner reports `yielded` with a valid continuation                                     | `in_progress`            | Enqueue the declared continuation                                                                      |
+| Ordinary task reports `response_wake` and blocking remaining work, without a real wait | `in_progress`            | Use the bounded incomplete-work continuation, then a visible recovery error if repair was already used |
+| Completion evidence is incomplete and continuation is forbidden                        | Preserve                 | Record a finalization error and named next action                                                      |
+| Completion evidence is otherwise incomplete                                            | `in_progress`            | Enqueue a bounded, idempotent continuation                                                             |
 
 The output is a `NativeStatusDecision` containing:
 
@@ -331,7 +331,6 @@ run's result, with the same task status/version and completion contract and no
 newer execution owner. It applies normal governance and dependency checks and
 appends a decision; it never marks every affected task done blindly. A persisted
 withdrawal marker makes restart between cleanup and reassessment retryable.
-
 
 ### Agent review handoff
 

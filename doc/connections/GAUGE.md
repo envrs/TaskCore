@@ -34,14 +34,14 @@ use the same path.
 
 ## Endpoints
 
-| Purpose | URL |
-| --- | --- |
-| MCP resource | `https://app.withgauge.com/mcp` |
-| Protected-resource metadata | `https://app.withgauge.com/.well-known/oauth-protected-resource` |
+| Purpose                       | URL                                                                |
+| ----------------------------- | ------------------------------------------------------------------ |
+| MCP resource                  | `https://app.withgauge.com/mcp`                                    |
+| Protected-resource metadata   | `https://app.withgauge.com/.well-known/oauth-protected-resource`   |
 | Authorization-server metadata | `https://app.withgauge.com/.well-known/oauth-authorization-server` |
-| Authorize | `https://app.withgauge.com/mcp/oauth/authorize` |
-| Token | `https://app.withgauge.com/mcp/oauth/token` |
-| Dynamic client registration | `https://app.withgauge.com/mcp/oauth/register` |
+| Authorize                     | `https://app.withgauge.com/mcp/oauth/authorize`                    |
+| Token                         | `https://app.withgauge.com/mcp/oauth/token`                        |
+| Dynamic client registration   | `https://app.withgauge.com/mcp/oauth/register`                     |
 
 The authorization server supports `authorization_code` and `refresh_token`,
 PKCE `S256`, and public clients (`token_endpoint_auth_method: none`). It
@@ -125,15 +125,15 @@ with per-action policies.
 
 ## Manifest
 
-| Field | Value |
-| --- | --- |
-| Slug | `gauge` |
-| Category | `analytics` |
-| Methods | `mcp-oauth` (`dcr`, S3, scope `mcp`); `mcp-api-key` (`customer`, S3) |
-| Server URL | `https://app.withgauge.com/mcp` |
-| Credential | `authorization`, password, required |
-| Key placement | header `Authorization`, prefix `Bearer ` |
-| Console links | docs `https://docs.withgauge.com/help/mcp` |
+| Field         | Value                                                                |
+| ------------- | -------------------------------------------------------------------- |
+| Slug          | `gauge`                                                              |
+| Category      | `analytics`                                                          |
+| Methods       | `mcp-oauth` (`dcr`, S3, scope `mcp`); `mcp-api-key` (`customer`, S3) |
+| Server URL    | `https://app.withgauge.com/mcp`                                      |
+| Credential    | `authorization`, password, required                                  |
+| Key placement | header `Authorization`, prefix `Bearer `                             |
+| Console links | docs `https://docs.withgauge.com/help/mcp`                           |
 
 The definition is generated from the `gauge` row in
 `packages/shared/src/self-serve-mcp-research.json` and the `gauge` branch of
@@ -166,8 +166,8 @@ organization (`withgauge`, whose profile links `https://withgauge.com/`),
 published as a 460×460 transparent PNG. That file is used unchanged in both
 themes.
 
-| File | Source | SHA-256 |
-| --- | --- | --- |
+| File                                        | Source                                                        | SHA-256                                                            |
+| ------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `ui/public/brands/apps/gauge.png` (460×460) | `https://avatars.githubusercontent.com/u/213101673?v=4&s=512` | `bf1f63a5d30b7f6af1064b74f5f66bf5ea6454d6036a068bf8b0c926fa3f37a6` |
 
 ## Validation hook

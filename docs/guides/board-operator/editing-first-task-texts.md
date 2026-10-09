@@ -7,14 +7,14 @@ The text for a new organization's first task lives in `server/src/onboarding-ass
 
 ## Files and placeholders
 
-| File | Purpose |
-| --- | --- |
-| `greeting.md` | The welcome the user sees. |
-| `brief.md` | The hidden `/first-task` skill invocation. Contains `{{proposalMode}}`. |
-| `skills/first-task/SKILL.md` | The first-task instructions, including both proposal modes. |
-| `opening-question.json` | The opening card: its prompt and two options. |
-| `chief-of-staff/AGENTS.md` | The first agent's chief-of-staff persona. |
-| `README.md` | A maintainer reference for the files, placeholders, toggle, and update behavior. |
+| File                         | Purpose                                                                          |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| `greeting.md`                | The welcome the user sees.                                                       |
+| `brief.md`                   | The hidden `/first-task` skill invocation. Contains `{{proposalMode}}`.          |
+| `skills/first-task/SKILL.md` | The first-task instructions, including both proposal modes.                      |
+| `opening-question.json`      | The opening card: its prompt and two options.                                    |
+| `chief-of-staff/AGENTS.md`   | The first agent's chief-of-staff persona.                                        |
+| `README.md`                  | A maintainer reference for the files, placeholders, toggle, and update behavior. |
 
 The templates support `{{agentName}}`, `{{organizationName}}`, and `{{proposalMode}}`. Taskcore fills them when it creates the first agent and first task. The proposal mode is `confirmation` or `plan`; the full policy lives in the skill.
 

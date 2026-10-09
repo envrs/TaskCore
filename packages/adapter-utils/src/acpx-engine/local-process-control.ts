@@ -13,7 +13,8 @@ channel("child_process").subscribe((message) => {
     if (child.pid) children.set(child.pid, child);
   });
   const remove = () => {
-    if (child.pid && children.get(child.pid) === child) children.delete(child.pid);
+    if (child.pid && children.get(child.pid) === child)
+      children.delete(child.pid);
   };
   child.once("exit", remove);
   child.once("close", remove);
@@ -23,11 +24,21 @@ export function captureLocalProcess(pid: number): ChildProcess | undefined {
   return children.get(pid);
 }
 
-export function capturedProcessExited(child: Pick<ChildProcess, "exitCode" | "signalCode"> | undefined): boolean {
-  return Boolean(child && (child.exitCode !== null || child.signalCode !== null));
+export function capturedProcessExited(
+  child: Pick<ChildProcess, "exitCode" | "signalCode"> | undefined,
+): boolean {
+  return Boolean(
+    child && (child.exitCode !== null || child.signalCode !== null),
+  );
 }
 
-export function killCapturedLocalProcess(child: Pick<ChildProcess, "exitCode" | "signalCode" | "kill"> | undefined): boolean {
+export function killCapturedLocalProcess(
+  child: Pick<ChildProcess, "exitCode" | "signalCode" | "kill"> | undefined,
+): boolean {
   if (!child || capturedProcessExited(child)) return false;
-  try { return child.kill("SIGKILL"); } catch { return false; }
+  try {
+    return child.kill("SIGKILL");
+  } catch {
+    return false;
+  }
 }

@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { buildCodexLocalConfig, buildTaskcoreRunnerConfig } from "./build-config.js";
+import {
+  buildCodexLocalConfig,
+  buildTaskcoreRunnerConfig,
+} from "./build-config.js";
 import type { CreateConfigValues } from "@taskcore/adapter-utils";
 
-function makeValues(overrides: Partial<CreateConfigValues> = {}): CreateConfigValues {
+function makeValues(
+  overrides: Partial<CreateConfigValues> = {},
+): CreateConfigValues {
   return {
     adapterType: "codex_local",
     cwd: "",
@@ -36,14 +41,26 @@ function makeValues(overrides: Partial<CreateConfigValues> = {}): CreateConfigVa
 }
 
 describe("buildCodexLocalConfig", () => {
-  it.each([undefined, "approve-all", "approve-taskcore", "approve-reads", "deny-all"])(
+  it.each([
+    undefined,
+    "approve-all",
+    "approve-taskcore",
+    "approve-reads",
+    "deny-all",
+  ])(
     "defaults Grok to full auto while preserving an explicit %s permission mode",
     (acpxPermissionMode) => {
-      const config = buildTaskcoreRunnerConfig(makeValues({
-        adapterType: "taskcore_runner",
-        model: "",
-        adapterSchemaValues: { provider: "acpx", acpxAgent: "grok", acpxPermissionMode },
-      }));
+      const config = buildTaskcoreRunnerConfig(
+        makeValues({
+          adapterType: "taskcore_runner",
+          model: "",
+          adapterSchemaValues: {
+            provider: "acpx",
+            acpxAgent: "grok",
+            acpxPermissionMode,
+          },
+        }),
+      );
       expect(config).toMatchObject({
         provider: "acpx",
         acpxAgent: "grok",
@@ -53,19 +70,26 @@ describe("buildCodexLocalConfig", () => {
     },
   );
 
-  it.each(["", "grok-4.7-custom"])("retains the Grok harness and its model when normalizing runner fields (%s)", (model) => {
-    const values = makeValues({
-      model,
-      adapterSchemaValues: { provider: "acpx", acpxAgent: "grok", acpxPermissionMode: "approve-taskcore" },
-    });
-    expect(buildTaskcoreRunnerConfig(values)).toMatchObject({
-      provider: "acpx",
-      acpxAgent: "grok",
-      model: model || "grok-4.7",
-      acpxPermissionMode: "approve-taskcore",
-    });
-    expect(values.adapterSchemaValues?.acpxAgent).toBe("grok");
-  });
+  it.each(["", "grok-4.7-custom"])(
+    "retains the Grok harness and its model when normalizing runner fields (%s)",
+    (model) => {
+      const values = makeValues({
+        model,
+        adapterSchemaValues: {
+          provider: "acpx",
+          acpxAgent: "grok",
+          acpxPermissionMode: "approve-taskcore",
+        },
+      });
+      expect(buildTaskcoreRunnerConfig(values)).toMatchObject({
+        provider: "acpx",
+        acpxAgent: "grok",
+        model: model || "grok-4.7",
+        acpxPermissionMode: "approve-taskcore",
+      });
+      expect(values.adapterSchemaValues?.acpxAgent).toBe("grok");
+    },
+  );
 
   it("omits engine for the auto default so runtime fallback remains available", () => {
     const config = buildCodexLocalConfig(makeValues({ codexEngine: "auto" }));
@@ -74,8 +98,12 @@ describe("buildCodexLocalConfig", () => {
   });
 
   it("persists explicit engine pins", () => {
-    expect(buildCodexLocalConfig(makeValues({ codexEngine: "cli" }))).toMatchObject({ engine: "cli" });
-    expect(buildCodexLocalConfig(makeValues({ codexEngine: "acp" }))).toMatchObject({ engine: "acp" });
+    expect(
+      buildCodexLocalConfig(makeValues({ codexEngine: "cli" })),
+    ).toMatchObject({ engine: "cli" });
+    expect(
+      buildCodexLocalConfig(makeValues({ codexEngine: "acp" })),
+    ).toMatchObject({ engine: "acp" });
   });
 
   it("persists the fastMode toggle into adapter config", () => {
@@ -94,7 +122,15 @@ describe("buildCodexLocalConfig", () => {
     });
   });
 
-  it.each([["gpt-6-astra", "ultra"], ["gpt-6.1-sol", "ultra"], ["gpt-6-sol", "ultra"], ["gpt-6-luna", "max"], ["gpt-5.6-sol", "ultra"], ["gpt-5.6-terra", "ultra"], ["gpt-5.6-luna", "max"]])("persists the exact %s model and supported controls", (model, effort) => {
+  it.each([
+    ["gpt-6-astra", "ultra"],
+    ["gpt-6.1-sol", "ultra"],
+    ["gpt-6-sol", "ultra"],
+    ["gpt-6-luna", "max"],
+    ["gpt-5.6-sol", "ultra"],
+    ["gpt-5.6-terra", "ultra"],
+    ["gpt-5.6-luna", "max"],
+  ])("persists the exact %s model and supported controls", (model, effort) => {
     const config = buildCodexLocalConfig(
       makeValues({
         model,
@@ -118,24 +154,37 @@ describe("buildCodexLocalConfig", () => {
 });
 
 describe("buildTaskcoreRunnerConfig", () => {
-  it.each([undefined, false, true])("preserves Dot attachment consent in create/import forms: %s", value => {
-    const config = buildTaskcoreRunnerConfig(makeValues({ adapterType: "taskcore_runner", adapterSchemaValues: { provider: "openai_dot", dotAttachmentAccess: value } }));
-    expect(config.dotAttachmentAccess).toBe(value === true);
-    expect(config.dotWorkspaceAccess).toBe(false);
-  });
+  it.each([undefined, false, true])(
+    "preserves Dot attachment consent in create/import forms: %s",
+    (value) => {
+      const config = buildTaskcoreRunnerConfig(
+        makeValues({
+          adapterType: "taskcore_runner",
+          adapterSchemaValues: {
+            provider: "openai_dot",
+            dotAttachmentAccess: value,
+          },
+        }),
+      );
+      expect(config.dotAttachmentAccess).toBe(value === true);
+      expect(config.dotWorkspaceAccess).toBe(false);
+    },
+  );
   it("keeps only settings implemented by the Codex runner profile", () => {
-    const config = buildTaskcoreRunnerConfig(makeValues({
-      codexEngine: "acp",
-      codexAcpAgentCommand: "custom-acp",
-      codexAcpStateDir: "/tmp/acp",
-      search: true,
-      fastMode: true,
-      dangerouslyBypassSandbox: true,
-      instructionsFilePath: "/tmp/AGENTS.md",
-      thinkingEffort: "high",
-      command: "custom-codex",
-      extraArgs: "--unsafe",
-    }));
+    const config = buildTaskcoreRunnerConfig(
+      makeValues({
+        codexEngine: "acp",
+        codexAcpAgentCommand: "custom-acp",
+        codexAcpStateDir: "/tmp/acp",
+        search: true,
+        fastMode: true,
+        dangerouslyBypassSandbox: true,
+        instructionsFilePath: "/tmp/AGENTS.md",
+        thinkingEffort: "high",
+        command: "custom-codex",
+        extraArgs: "--unsafe",
+      }),
+    );
 
     expect(config).toMatchObject({
       provider: "codex",
@@ -161,12 +210,14 @@ describe("buildTaskcoreRunnerConfig", () => {
   });
 
   it("persists bounded Codex permission and warm lifecycle values", () => {
-    const config = buildTaskcoreRunnerConfig(makeValues({
-      adapterType: "taskcore_runner",
-      codexPermissionMode: "never",
-      taskcoreRunnerLifecycleMode: "warm",
-      taskcoreRunnerIdleTimeoutMs: 45_000,
-    }));
+    const config = buildTaskcoreRunnerConfig(
+      makeValues({
+        adapterType: "taskcore_runner",
+        codexPermissionMode: "never",
+        taskcoreRunnerLifecycleMode: "warm",
+        taskcoreRunnerIdleTimeoutMs: 45_000,
+      }),
+    );
 
     expect(config).toMatchObject({
       provider: "codex",
@@ -177,25 +228,33 @@ describe("buildTaskcoreRunnerConfig", () => {
   });
 
   it("rejects an unsupported persisted Codex permission instead of coercing it", () => {
-    expect(() => buildTaskcoreRunnerConfig(makeValues({
-      adapterSchemaValues: {
-        provider: "unknown",
-        codexPermissionMode: "unrestricted",
-        lifecycleMode: "forever",
-        idleTimeoutMs: -1,
-      },
-    }))).toThrow("Select Full auto (never ask) before saving");
+    expect(() =>
+      buildTaskcoreRunnerConfig(
+        makeValues({
+          adapterSchemaValues: {
+            provider: "unknown",
+            codexPermissionMode: "unrestricted",
+            lifecycleMode: "forever",
+            idleTimeoutMs: -1,
+          },
+        }),
+      ),
+    ).toThrow("Select Full auto (never ask) before saving");
   });
 
   it("builds a qualified OpenCode profile from schema-backed values", () => {
-    expect(buildTaskcoreRunnerConfig(makeValues({
-      adapterType: "taskcore_runner",
-      model: "",
-      adapterSchemaValues: {
-        provider: "opencode",
-        opencodePermissionMode: "allow",
-      },
-    }))).toMatchObject({
+    expect(
+      buildTaskcoreRunnerConfig(
+        makeValues({
+          adapterType: "taskcore_runner",
+          model: "",
+          adapterSchemaValues: {
+            provider: "opencode",
+            opencodePermissionMode: "allow",
+          },
+        }),
+      ),
+    ).toMatchObject({
       provider: "opencode",
       model: "openrouter/deepseek/deepseek-v4-flash-0731",
       opencodePermissionMode: "allow",
@@ -205,71 +264,125 @@ describe("buildTaskcoreRunnerConfig", () => {
   });
 
   it("does not let a stale schema model override the active Codex model", () => {
-    expect(buildTaskcoreRunnerConfig(makeValues({
-      adapterType: "taskcore_runner",
-      model: "gpt-5.6-sol",
-      adapterSchemaValues: {
-        provider: "codex",
-        model: "openrouter/stale-model",
-        codexPermissionMode: "never",
-      },
-    }))).toMatchObject({
+    expect(
+      buildTaskcoreRunnerConfig(
+        makeValues({
+          adapterType: "taskcore_runner",
+          model: "gpt-5.6-sol",
+          adapterSchemaValues: {
+            provider: "codex",
+            model: "openrouter/stale-model",
+            codexPermissionMode: "never",
+          },
+        }),
+      ),
+    ).toMatchObject({
       provider: "codex",
       model: "gpt-5.6-sol",
       codexPermissionMode: "never",
     });
   });
 
-  it.each(["claude-opus-5", "my-custom-model"])("preserves the selected ACPX Claude model %s", (model) => {
-    expect(buildTaskcoreRunnerConfig(makeValues({ model, adapterSchemaValues: { provider: "acpx" } })))
-      .toMatchObject({ provider: "acpx", acpxAgent: "claude", model });
-  });
+  it.each(["claude-opus-5", "my-custom-model"])(
+    "preserves the selected ACPX Claude model %s",
+    (model) => {
+      expect(
+        buildTaskcoreRunnerConfig(
+          makeValues({ model, adapterSchemaValues: { provider: "acpx" } }),
+        ),
+      ).toMatchObject({ provider: "acpx", acpxAgent: "claude", model });
+    },
+  );
 
   it("normalizes the removed ACPX Codex configuration to native Codex", () => {
-    const config = buildTaskcoreRunnerConfig(makeValues({ model: "gpt-5.6-sol", adapterSchemaValues: { provider: "acpx", acpxAgent: "codex" } }));
+    const config = buildTaskcoreRunnerConfig(
+      makeValues({
+        model: "gpt-5.6-sol",
+        adapterSchemaValues: { provider: "acpx", acpxAgent: "codex" },
+      }),
+    );
     expect(config).toMatchObject({ provider: "codex", model: "gpt-5.6-sol" });
     expect(config).not.toHaveProperty("acpxAgent");
   });
 
-  it.each(["pi", "copilot"])("rejects unavailable ACPX %s without selecting another provider", (acpxAgent) => {
-    expect(() => buildTaskcoreRunnerConfig(makeValues({
-      adapterType: "taskcore_runner",
-      model: "explicit-provider-model",
-      adapterSchemaValues: {
-        provider: "acpx",
-        acpxAgent,
-      },
-    }))).toThrow(/is not enabled for production/);
-  });
+  it.each(["pi", "copilot"])(
+    "rejects unavailable ACPX %s without selecting another provider",
+    (acpxAgent) => {
+      expect(() =>
+        buildTaskcoreRunnerConfig(
+          makeValues({
+            adapterType: "taskcore_runner",
+            model: "explicit-provider-model",
+            adapterSchemaValues: {
+              provider: "acpx",
+              acpxAgent,
+            },
+          }),
+        ),
+      ).toThrow(/is not enabled for production/);
+    },
+  );
 
-  it.each(["agent", "plan", "ask"])("preserves Cursor's explicit model and %s mode", (mode) => {
-    expect(buildTaskcoreRunnerConfig(makeValues({
-      model: "explicit-cursor-model",
-      adapterSchemaValues: { provider: "acpx", acpxAgent: "cursor", acpxSessionMode: mode },
-    }))).toMatchObject({ provider: "acpx", acpxAgent: "cursor", model: "explicit-cursor-model", acpxSessionMode: mode });
-  });
+  it.each(["agent", "plan", "ask"])(
+    "preserves Cursor's explicit model and %s mode",
+    (mode) => {
+      expect(
+        buildTaskcoreRunnerConfig(
+          makeValues({
+            model: "explicit-cursor-model",
+            adapterSchemaValues: {
+              provider: "acpx",
+              acpxAgent: "cursor",
+              acpxSessionMode: mode,
+            },
+          }),
+        ),
+      ).toMatchObject({
+        provider: "acpx",
+        acpxAgent: "cursor",
+        model: "explicit-cursor-model",
+        acpxSessionMode: mode,
+      });
+    },
+  );
 
   it("defaults Cursor to Agent and requires an explicit model", () => {
-    expect(buildTaskcoreRunnerConfig(makeValues({
-      model: "explicit-cursor-model", adapterSchemaValues: { provider: "acpx", acpxAgent: "cursor" },
-    }))).toMatchObject({ acpxAgent: "cursor", acpxSessionMode: "agent", model: "explicit-cursor-model" });
-    expect(() => buildTaskcoreRunnerConfig(makeValues({
-      model: "", adapterSchemaValues: { provider: "acpx", acpxAgent: "cursor" },
-    }))).toThrow("cursor requires an explicit provider model");
+    expect(
+      buildTaskcoreRunnerConfig(
+        makeValues({
+          model: "explicit-cursor-model",
+          adapterSchemaValues: { provider: "acpx", acpxAgent: "cursor" },
+        }),
+      ),
+    ).toMatchObject({
+      acpxAgent: "cursor",
+      acpxSessionMode: "agent",
+      model: "explicit-cursor-model",
+    });
+    expect(() =>
+      buildTaskcoreRunnerConfig(
+        makeValues({
+          model: "",
+          adapterSchemaValues: { provider: "acpx", acpxAgent: "cursor" },
+        }),
+      ),
+    ).toThrow("cursor requires an explicit provider model");
   });
 
   it("builds a Claude Managed profile reference with explicit retention and spend controls", () => {
-    const config = buildTaskcoreRunnerConfig(makeValues({
-      adapterType: "taskcore_runner",
-      model: "claude-sonnet-5",
-      adapterSchemaValues: {
-        provider: "claude_managed",
-        managedProfileId: "managed-primary",
-        managedAgentsRetentionAcknowledged: true,
-        maxSessionListCostUsd: 0.5,
-        anthropicAgentId: "editable-resource-id-must-not-survive",
-      },
-    }));
+    const config = buildTaskcoreRunnerConfig(
+      makeValues({
+        adapterType: "taskcore_runner",
+        model: "claude-sonnet-5",
+        adapterSchemaValues: {
+          provider: "claude_managed",
+          managedProfileId: "managed-primary",
+          managedAgentsRetentionAcknowledged: true,
+          maxSessionListCostUsd: 0.5,
+          anthropicAgentId: "editable-resource-id-must-not-survive",
+        },
+      }),
+    );
     expect(config).toMatchObject({
       provider: "claude_managed",
       managedProfileId: "managed-primary",
@@ -281,19 +394,23 @@ describe("buildTaskcoreRunnerConfig", () => {
   });
 
   it("builds an AgentCore profile reference with bounded invocation controls", () => {
-    expect(buildTaskcoreRunnerConfig(makeValues({
-      adapterType: "taskcore_runner",
-      model: "",
-      adapterSchemaValues: {
-        provider: "aws_agentcore",
-        agentCoreProfileId: "agentcore-primary",
-        agentCoreRetentionAcknowledged: true,
-        maxEstimatedSessionCostUsd: 0.75,
-        maxIterations: 8,
-        maxOutputTokens: 2_048,
-        timeoutSeconds: 45,
-      },
-    }))).toMatchObject({
+    expect(
+      buildTaskcoreRunnerConfig(
+        makeValues({
+          adapterType: "taskcore_runner",
+          model: "",
+          adapterSchemaValues: {
+            provider: "aws_agentcore",
+            agentCoreProfileId: "agentcore-primary",
+            agentCoreRetentionAcknowledged: true,
+            maxEstimatedSessionCostUsd: 0.75,
+            maxIterations: 8,
+            maxOutputTokens: 2_048,
+            timeoutSeconds: 45,
+          },
+        }),
+      ),
+    ).toMatchObject({
       provider: "aws_agentcore",
       agentCoreProfileId: "agentcore-primary",
       model: "global.anthropic.claude-sonnet-4-6",
@@ -312,15 +429,19 @@ describe("buildTaskcoreRunnerConfig", () => {
     ["maxOutputTokens", 4_097],
     ["timeoutSeconds", 301],
   ])("rejects an unsafe AgentCore %s value", (field, value) => {
-    expect(() => buildTaskcoreRunnerConfig(makeValues({
-      adapterType: "taskcore_runner",
-      adapterSchemaValues: {
-        provider: "aws_agentcore",
-        agentCoreProfileId: "agentcore-primary",
-        agentCoreRetentionAcknowledged: true,
-        [field]: value,
-      },
-    }))).toThrow("must be an integer between");
+    expect(() =>
+      buildTaskcoreRunnerConfig(
+        makeValues({
+          adapterType: "taskcore_runner",
+          adapterSchemaValues: {
+            provider: "aws_agentcore",
+            agentCoreProfileId: "agentcore-primary",
+            agentCoreRetentionAcknowledged: true,
+            [field]: value,
+          },
+        }),
+      ),
+    ).toThrow("must be an integer between");
   });
 
   it("uses the Codex default when no model was selected", () => {
@@ -331,20 +452,26 @@ describe("buildTaskcoreRunnerConfig", () => {
   });
 
   it("bounds warm lifecycle values to the shared safe default", () => {
-    expect(buildTaskcoreRunnerConfig(makeValues({
-      taskcoreRunnerLifecycleMode: "warm",
-      taskcoreRunnerIdleTimeoutMs: 86_400_001,
-    }))).toMatchObject({
+    expect(
+      buildTaskcoreRunnerConfig(
+        makeValues({
+          taskcoreRunnerLifecycleMode: "warm",
+          taskcoreRunnerIdleTimeoutMs: 86_400_001,
+        }),
+      ),
+    ).toMatchObject({
       lifecycleMode: "warm",
       idleTimeoutMs: 300_000,
     });
   });
 
   it("omits an idle timeout for turn-by-turn sessions", () => {
-    const config = buildTaskcoreRunnerConfig(makeValues({
-      taskcoreRunnerLifecycleMode: "per_turn",
-      taskcoreRunnerIdleTimeoutMs: 45_000,
-    }));
+    const config = buildTaskcoreRunnerConfig(
+      makeValues({
+        taskcoreRunnerLifecycleMode: "per_turn",
+        taskcoreRunnerIdleTimeoutMs: 45_000,
+      }),
+    );
 
     expect(config).not.toHaveProperty("idleTimeoutMs");
   });

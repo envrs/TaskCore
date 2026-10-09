@@ -36,17 +36,17 @@ connecting. Loopback consent succeeded locally; HTTPS still needs live proof.
 
 ## Capabilities and policy
 
-| Action | Scope and limits | Classification |
-| --- | --- | --- |
-| Hosted project/service listing and feature-flag reads | Actual discovered schemas; provider credential scope | Read for reviewed names |
-| Other hosted actions | Actual discovered schemas; provider credential scope | Write or destructive |
-| Hosted `railway-agent` and `accept-deploy` | Disabled at discovery and denied at dispatch, including normalized aliases | Destructive; unavailable |
-| `taskcore-railway-list-projects`, `list-services`, `list-environments` | Explicit workspace ID for projects, project ID for services/environments; 1–100 results per page, cursor ≤512 characters | Read |
-| `service-status`, `list-deployments`, `deployment-status` | Explicit project/environment/service IDs; deployment ID where applicable | Read |
-| `read-logs` | Build/runtime; ≤500 lines; time bounds/filter; ≤64 KiB of log entries | Read; sensitive application data |
-| `redeploy`, `restart`, `rollback` | Exact deployment membership checked before mutation | Destructive |
-| `deploy-revision` | Unavailable: the provider mutation cannot atomically bind the approved repository and commit; old catalog entries and calls are blocked | Destructive; unavailable |
-| `run-command` | Exact running deployment/container instance, ≤60 seconds, ≤64 KiB combined output | Destructive; broad privileged access |
+| Action                                                                 | Scope and limits                                                                                                                        | Classification                       |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Hosted project/service listing and feature-flag reads                  | Actual discovered schemas; provider credential scope                                                                                    | Read for reviewed names              |
+| Other hosted actions                                                   | Actual discovered schemas; provider credential scope                                                                                    | Write or destructive                 |
+| Hosted `railway-agent` and `accept-deploy`                             | Disabled at discovery and denied at dispatch, including normalized aliases                                                              | Destructive; unavailable             |
+| `taskcore-railway-list-projects`, `list-services`, `list-environments` | Explicit workspace ID for projects, project ID for services/environments; 1–100 results per page, cursor ≤512 characters                | Read                                 |
+| `service-status`, `list-deployments`, `deployment-status`              | Explicit project/environment/service IDs; deployment ID where applicable                                                                | Read                                 |
+| `read-logs`                                                            | Build/runtime; ≤500 lines; time bounds/filter; ≤64 KiB of log entries                                                                   | Read; sensitive application data     |
+| `redeploy`, `restart`, `rollback`                                      | Exact deployment membership checked before mutation                                                                                     | Destructive                          |
+| `deploy-revision`                                                      | Unavailable: the provider mutation cannot atomically bind the approved repository and commit; old catalog entries and calls are blocked | Destructive; unavailable             |
+| `run-command`                                                          | Exact running deployment/container instance, ≤60 seconds, ≤64 KiB combined output                                                       | Destructive; broad privileged access |
 
 Direct tool names have the `taskcore-railway-` prefix. Railway may not shadow
 this reserved namespace. These are fixed first-party gateway operations, not a
@@ -128,21 +128,21 @@ Railway. Revocation does not recall commands already running remotely.
 
 Public probes and official documentation checked 2026-09-13:
 
-| Property | Evidence / remaining qualification |
-| --- | --- |
-| Endpoint | Exact `https://mcp.railway.com` or root slash; other paths, query strings and lookalike hosts are not bridged |
-| Transport | Provider documents hosted MCP; unauthenticated Streamable HTTP initialize POST with JSON/SSE Accept returns HTTP 401 |
-| Challenge | `Bearer realm="mcp", resource_metadata="https://mcp.railway.com/.well-known/oauth-protected-resource"` |
-| Protected resource | Resource `https://mcp.railway.com`, issuer `https://backboard.railway.com`, header bearer |
-| Authorization | `/oauth/auth?resource=https%3A%2F%2Fbackboard.railway.com` on issuer; generic OAuth flow binds the requested MCP resource |
-| Token / registration | `/oauth/token`, `/oauth/register` advertised on issuer |
-| Revocation endpoint | Not advertised in observed metadata; local gateway revocation is enforced independently |
-| Registration | DCR advertised, customer client supported by docs; no CIMD advertisement. Loopback automatic consent succeeded; public HTTPS and customer-client consent unproven |
-| PKCE | S256 advertised and exercised by deterministic fixture |
-| Scopes | Advertised: openid, profile, email, offline_access, workspace:member. Request openid/offline_access/workspace:member with prompt=consent |
-| Refresh | Refresh grant advertised; docs require offline_access and explicit consent. Fixture covers failure; live refresh pending |
-| Tool schemas | Live tools/list captured locally: 46 hosted actions, including narrow `get-status` and `get-logs`; 44 active after the two blocked opaque actions |
-| Plan / approval | Account and appropriate workspace permissions required; plan limits, app approval and SSH enrollment permissions need verification on the test account |
+| Property             | Evidence / remaining qualification                                                                                                                                |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Endpoint             | Exact `https://mcp.railway.com` or root slash; other paths, query strings and lookalike hosts are not bridged                                                     |
+| Transport            | Provider documents hosted MCP; unauthenticated Streamable HTTP initialize POST with JSON/SSE Accept returns HTTP 401                                              |
+| Challenge            | `Bearer realm="mcp", resource_metadata="https://mcp.railway.com/.well-known/oauth-protected-resource"`                                                            |
+| Protected resource   | Resource `https://mcp.railway.com`, issuer `https://backboard.railway.com`, header bearer                                                                         |
+| Authorization        | `/oauth/auth?resource=https%3A%2F%2Fbackboard.railway.com` on issuer; generic OAuth flow binds the requested MCP resource                                         |
+| Token / registration | `/oauth/token`, `/oauth/register` advertised on issuer                                                                                                            |
+| Revocation endpoint  | Not advertised in observed metadata; local gateway revocation is enforced independently                                                                           |
+| Registration         | DCR advertised, customer client supported by docs; no CIMD advertisement. Loopback automatic consent succeeded; public HTTPS and customer-client consent unproven |
+| PKCE                 | S256 advertised and exercised by deterministic fixture                                                                                                            |
+| Scopes               | Advertised: openid, profile, email, offline_access, workspace:member. Request openid/offline_access/workspace:member with prompt=consent                          |
+| Refresh              | Refresh grant advertised; docs require offline_access and explicit consent. Fixture covers failure; live refresh pending                                          |
+| Tool schemas         | Live tools/list captured locally: 46 hosted actions, including narrow `get-status` and `get-logs`; 44 active after the two blocked opaque actions                 |
+| Plan / approval      | Account and appropriate workspace permissions required; plan limits, app approval and SSH enrollment permissions need verification on the test account            |
 
 Sources: [hosted MCP](https://docs.railway.com/ai/mcp-server),
 [OAuth](https://docs.railway.com/integrations/oauth),

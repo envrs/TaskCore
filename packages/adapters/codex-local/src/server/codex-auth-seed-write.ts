@@ -2,7 +2,10 @@ import { open, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { withDirectoryMergeLock } from "@taskcore/adapter-utils/workspace-restore-merge";
-import { USE_SOURCE_EXIT, decideCodexAuthMerge } from "./codex-auth-merge-decision.js";
+import {
+  USE_SOURCE_EXIT,
+  decideCodexAuthMerge,
+} from "./codex-auth-merge-decision.js";
 
 // The one atomic credential writer. It stages the source bytes into a private
 // (0600) temp next to the destination, runs the shared decision predicate, and
@@ -61,10 +64,14 @@ export async function writeCredentialSeedOrNewer(
       try {
         await handle.writeFile(input.sourceBytes);
         await handle.close();
-        const decision = await decideCodexAuthMerge(stagedTempPath, input.destinationPath, {
-          seedIfDestAbsent: input.seedIfDestAbsent,
-          errorLabel: input.errorLabel,
-        });
+        const decision = await decideCodexAuthMerge(
+          stagedTempPath,
+          input.destinationPath,
+          {
+            seedIfDestAbsent: input.seedIfDestAbsent,
+            errorLabel: input.errorLabel,
+          },
+        );
         if (decision === USE_SOURCE_EXIT) {
           await rename(stagedTempPath, input.destinationPath);
           await input.log(input.writtenLine);

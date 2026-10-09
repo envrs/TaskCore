@@ -13,8 +13,12 @@ describe("Taskcore Runner permission defaults", () => {
     expect(resolveTaskcoreRunnerPermissionMode("codex", undefined)).toBe(
       "never",
     );
-    expect(resolveTaskcoreRunnerPermissionMode("codex", "on-request")).toBe("never");
-    expect(resolveTaskcoreRunnerPermissionMode("codex", "untrusted")).toBe("never");
+    expect(resolveTaskcoreRunnerPermissionMode("codex", "on-request")).toBe(
+      "never",
+    );
+    expect(resolveTaskcoreRunnerPermissionMode("codex", "untrusted")).toBe(
+      "never",
+    );
   });
 
   it("defaults Claude and OpenCode to full auto", () => {
@@ -26,17 +30,25 @@ describe("Taskcore Runner permission defaults", () => {
     );
   });
 
-  it.each(["approve-taskcore", "approve-reads", "deny-all", "approve-all"])("preserves explicit Claude %s settings", (mode) => {
-    expect(resolveTaskcoreRunnerPermissionMode("acpx", mode)).toBe(mode);
-  });
+  it.each(["approve-taskcore", "approve-reads", "deny-all", "approve-all"])(
+    "preserves explicit Claude %s settings",
+    (mode) => {
+      expect(resolveTaskcoreRunnerPermissionMode("acpx", mode)).toBe(mode);
+    },
+  );
 
   it.each([
     ["claude_local", "acpxPermissionMode", "approve-all"],
     ["codex_local", "codexPermissionMode", "never"],
     ["opencode_local", "opencodePermissionMode", "allow"],
-  ])("uses full auto when converting %s to the new runner", (adapter, key, value) => {
-    expect(taskcoreRunnerTransitionConfig(adapter, undefined)).toMatchObject({ [key]: value });
-  });
+  ])(
+    "uses full auto when converting %s to the new runner",
+    (adapter, key, value) => {
+      expect(taskcoreRunnerTransitionConfig(adapter, undefined)).toMatchObject({
+        [key]: value,
+      });
+    },
+  );
 
   it("recognizes only exact provider identifiers", () => {
     expect(isTaskcoreRunnerProvider("codex")).toBe(true);
@@ -49,10 +61,12 @@ describe("Taskcore Runner permission defaults", () => {
   });
 
   it("keeps managed provider permissions under the qualified profile", () => {
-    expect(resolveTaskcoreRunnerPermissionMode("claude_managed", "never"))
-      .toBe("provider-managed");
-    expect(resolveTaskcoreRunnerPermissionMode("aws_agentcore", "approve-all"))
-      .toBe("provider-managed");
+    expect(resolveTaskcoreRunnerPermissionMode("claude_managed", "never")).toBe(
+      "provider-managed",
+    );
+    expect(
+      resolveTaskcoreRunnerPermissionMode("aws_agentcore", "approve-all"),
+    ).toBe("provider-managed");
   });
 
   it("uses the Codex default for missing or blank models", () => {

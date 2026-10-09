@@ -86,7 +86,12 @@ it("retains a typed ACP failure as diagnostics without making it assistant outpu
       mode: "oneshot",
       stateDir: path.join(root, "state"),
       cwd: repoRoot,
-      env: { TASKCORE_ACPX_TYPED_FAILURE_FILE: await writeFailureFile(root, providerText) },
+      env: {
+        TASKCORE_ACPX_TYPED_FAILURE_FILE: await writeFailureFile(
+          root,
+          providerText,
+        ),
+      },
     },
     context: {},
     onLog: async (_stream: string, text: string) => logs.push(text),
@@ -96,7 +101,9 @@ it("retains a typed ACP failure as diagnostics without making it assistant outpu
   expect(result.exitCode).toBe(1);
   expect(result.errorCode).toBe("acpx_turn_failed");
   expect(result.errorMessage).toContain(providerText);
-  expect(result.resultJson?.terminalSessionFailure).toMatchObject({ title: providerText });
+  expect(result.resultJson?.terminalSessionFailure).toMatchObject({
+    title: providerText,
+  });
   expect(result.summary).not.toContain(providerText);
   expect(logs.join("\n")).toContain(providerText);
   expect(result.summary).toContain("terminal request failure");
@@ -122,7 +129,12 @@ it("fails closed on a typed ACP session failure in persistent mode", async () =>
       warmHandleIdleMs: 0,
       stateDir: path.join(root, "state"),
       cwd: repoRoot,
-      env: { TASKCORE_ACPX_TYPED_FAILURE_FILE: await writeFailureFile(root, providerText) },
+      env: {
+        TASKCORE_ACPX_TYPED_FAILURE_FILE: await writeFailureFile(
+          root,
+          providerText,
+        ),
+      },
     },
     context: {},
     onLog: async (_stream: string, text: string) => logs.push(text),
@@ -132,7 +144,9 @@ it("fails closed on a typed ACP session failure in persistent mode", async () =>
   expect(result.exitCode).toBe(1);
   expect(result.errorCode).toBe("acpx_turn_failed");
   expect(result.errorMessage).toContain(providerText);
-  expect(result.resultJson?.terminalSessionFailure).toMatchObject({ title: providerText });
+  expect(result.resultJson?.terminalSessionFailure).toMatchObject({
+    title: providerText,
+  });
   expect(result.summary).not.toContain(providerText);
   expect(logs.join("\n")).toContain(providerText);
   expect(result.summary).toContain("terminal request failure");

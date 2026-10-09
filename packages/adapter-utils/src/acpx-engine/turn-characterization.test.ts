@@ -2,7 +2,10 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { AdapterExecutionContext, AdapterRuntimeMcpAccess } from "@taskcore/adapter-utils";
+import type {
+  AdapterExecutionContext,
+  AdapterRuntimeMcpAccess,
+} from "@taskcore/adapter-utils";
 import {
   prepareAdapterExecutionTargetRuntime,
   startAdapterExecutionTargetTaskcoreBridge,
@@ -13,12 +16,21 @@ import {
 // still delegate to the real implementations. This mirrors the execute.test.ts
 // harness so the turn characterization tests share the same mocked module graph.
 vi.mock("@taskcore/adapter-utils/execution-target", async (importActual) => {
-  const actual = await importActual<typeof import("@taskcore/adapter-utils/execution-target")>();
+  const actual =
+    await importActual<
+      typeof import("@taskcore/adapter-utils/execution-target")
+    >();
   return {
     ...actual,
-    prepareAdapterExecutionTargetRuntime: vi.fn(actual.prepareAdapterExecutionTargetRuntime),
-    startAdapterExecutionTargetTaskcoreBridge: vi.fn(actual.startAdapterExecutionTargetTaskcoreBridge),
-    startAdapterExecutionTargetProcessSessionBridge: vi.fn(actual.startAdapterExecutionTargetProcessSessionBridge),
+    prepareAdapterExecutionTargetRuntime: vi.fn(
+      actual.prepareAdapterExecutionTargetRuntime,
+    ),
+    startAdapterExecutionTargetTaskcoreBridge: vi.fn(
+      actual.startAdapterExecutionTargetTaskcoreBridge,
+    ),
+    startAdapterExecutionTargetProcessSessionBridge: vi.fn(
+      actual.startAdapterExecutionTargetProcessSessionBridge,
+    ),
   };
 });
 import {
@@ -31,7 +43,9 @@ import { runChildProcess } from "../server-utils.js";
 const tempRoots: string[] = [];
 
 async function makeTempRoot() {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-acpx-skills-"));
+  const root = await fs.mkdtemp(
+    path.join(os.tmpdir(), "taskcore-acpx-skills-"),
+  );
   tempRoots.push(root);
   return root;
 }
@@ -45,9 +59,16 @@ afterEach(async () => {
   // `ENOTEMPTY`. `maxRetries`/`retryDelay` make the cleanup ride out that window the
   // same way production tolerates it, instead of failing the just-passed test.
   await Promise.all(
-    tempRoots.splice(0).map((root) =>
-      fs.rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }),
-    ),
+    tempRoots
+      .splice(0)
+      .map((root) =>
+        fs.rm(root, {
+          recursive: true,
+          force: true,
+          maxRetries: 5,
+          retryDelay: 50,
+        }),
+      ),
   );
 });
 
@@ -74,17 +95,26 @@ function createLocalSandboxRunner(
       counter += 1;
       onExecute?.(input);
       const command = input.command === "bash" ? "/bin/bash" : input.command;
-      return await runChildProcess(`acpx-sandbox-run-${counter}`, command, input.args ?? [], {
-        cwd: input.cwd ?? process.cwd(),
-        env: input.env ?? {},
-        stdin: input.stdin,
-        timeoutSec: Math.max(1, Math.ceil((input.timeoutMs ?? 30_000) / 1000)),
-        graceSec: 5,
-        onLog: input.onLog ?? (async () => {}),
-        onSpawn: input.onSpawn
-          ? async (meta) => input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
-          : undefined,
-      });
+      return await runChildProcess(
+        `acpx-sandbox-run-${counter}`,
+        command,
+        input.args ?? [],
+        {
+          cwd: input.cwd ?? process.cwd(),
+          env: input.env ?? {},
+          stdin: input.stdin,
+          timeoutSec: Math.max(
+            1,
+            Math.ceil((input.timeoutMs ?? 30_000) / 1000),
+          ),
+          graceSec: 5,
+          onLog: input.onLog ?? (async () => {}),
+          onSpawn: input.onSpawn
+            ? async (meta) =>
+                input.onSpawn?.({ pid: meta.pid, startedAt: meta.startedAt })
+            : undefined,
+        },
+      );
     },
   };
 }
@@ -96,11 +126,11 @@ function buildRuntime(
   return {
     ensureSession: async (input: Record<string, unknown>) => {
       onEnsureSession?.(input);
-      return ({
-      backendSessionId: "backend-session",
-      agentSessionId: "agent-session",
-      runtimeSessionName: "runtime-session",
-      });
+      return {
+        backendSessionId: "backend-session",
+        agentSessionId: "agent-session",
+        runtimeSessionName: "runtime-session",
+      };
     },
     startTurn: () => ({
       events: (async function* () {
@@ -133,7 +163,10 @@ async function runExecutor(
   const sessionInputs: Record<string, unknown>[] = [];
   const meta: Record<string, unknown>[] = [];
   const logs: Array<{ stream: string; text: string }> = [];
-  const events: Array<{ eventType: string; payload?: Record<string, unknown> }> = [];
+  const events: Array<{
+    eventType: string;
+    payload?: Record<string, unknown>;
+  }> = [];
   const execute = createAcpxEngineExecutor({
     ...(options.prepareRemoteManagedHome
       ? { prepareRemoteManagedHome: options.prepareRemoteManagedHome }
@@ -153,27 +186,38 @@ async function runExecutor(
       id: "agent-1",
       companyId: "company-1",
     },
-      runtime: {},
-      config,
-      context: options.context ?? {},
-      executionTransport: options.executionTransport,
-      authToken: options.authToken,
-      executionTarget: options.executionTarget,
-      runtimeMcp: options.runtimeMcp,
-      startupTraceContext: options.startupTraceContext,
-      onLog: async (stream: "stdout" | "stderr", text: string) => {
-        logs.push({ stream, text });
-      },
+    runtime: {},
+    config,
+    context: options.context ?? {},
+    executionTransport: options.executionTransport,
+    authToken: options.authToken,
+    executionTarget: options.executionTarget,
+    runtimeMcp: options.runtimeMcp,
+    startupTraceContext: options.startupTraceContext,
+    onLog: async (stream: "stdout" | "stderr", text: string) => {
+      logs.push({ stream, text });
+    },
     onMeta: async (payload: unknown) => {
       meta.push(payload as Record<string, unknown>);
     },
-    onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
+    onEvent: async (event: {
+      eventType: string;
+      payload?: Record<string, unknown>;
+    }) => {
       events.push(event);
     },
   } as never);
 
   expect(result.exitCode).toBe(0);
-  return { logs, meta, events, runtimeOptions, configOptions, sessionInputs, result };
+  return {
+    logs,
+    meta,
+    events,
+    runtimeOptions,
+    configOptions,
+    sessionInputs,
+    result,
+  };
 }
 
 // A stub ACP runtime that yields a controlled event stream and terminal result.
@@ -187,7 +231,9 @@ function turnRuntime(input: {
   onClose?: () => void;
   getStatus?: () => Promise<Record<string, unknown>>;
   onEnsureSession?: (session: Record<string, unknown>) => void;
-  ensureSession?: (session: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  ensureSession?: (
+    session: Record<string, unknown>,
+  ) => Promise<Record<string, unknown>>;
 }) {
   const runtime: Record<string, unknown> = {
     ensureSession:
@@ -242,7 +288,10 @@ describe("ACPX engine turn characterization", () => {
           events: async function* () {
             yield { type: "done", stopReason: "end_turn" };
           },
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
         }) as never,
     });
 
@@ -250,7 +299,12 @@ describe("ACPX engine turn characterization", () => {
       runId: "run-six-inputs",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, timeoutSec: 120 },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        timeoutSec: 120,
+      },
       context: {},
       onLog: async () => {},
       onMeta: async (payload: { prompt?: string }) => {
@@ -279,7 +333,15 @@ describe("ACPX engine turn characterization", () => {
     // Every adapter receives diagnostics, even without a failure classifier.
     expect(input.onTerminalSessionFailure).toBeTypeOf("function");
     expect(Object.keys(input).sort()).toEqual(
-      ["handle", "mode", "onTerminalSessionFailure", "requestId", "signal", "text", "timeoutMs"].sort(),
+      [
+        "handle",
+        "mode",
+        "onTerminalSessionFailure",
+        "requestId",
+        "signal",
+        "text",
+        "timeoutMs",
+      ].sort(),
     );
   });
 
@@ -291,11 +353,24 @@ describe("ACPX engine turn characterization", () => {
       createRuntime: () =>
         turnRuntime({
           events: async function* () {
-            yield { type: "text_delta", text: "  Hello, ", stream: "output", tag: "agent_message_chunk" };
-            yield { type: "text_delta", text: "world  ", stream: "output", tag: "agent_message_chunk" };
+            yield {
+              type: "text_delta",
+              text: "  Hello, ",
+              stream: "output",
+              tag: "agent_message_chunk",
+            };
+            yield {
+              type: "text_delta",
+              text: "world  ",
+              stream: "output",
+              tag: "agent_message_chunk",
+            };
             yield { type: "done", stopReason: "end_turn" };
           },
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
         }) as never,
     });
 
@@ -324,7 +399,10 @@ describe("ACPX engine turn characterization", () => {
           events: async function* () {
             yield { type: "done", stopReason: "end_turn" };
           },
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
         }) as never,
     });
 
@@ -347,16 +425,27 @@ describe("ACPX engine turn characterization", () => {
     const root = await makeTempRoot();
     const stateDir = path.join(root, "state");
     const logs: Array<{ stream: string; text: string }> = [];
-    const events: Array<{ eventType: string; payload?: Record<string, unknown> }> = [];
+    const events: Array<{
+      eventType: string;
+      payload?: Record<string, unknown>;
+    }> = [];
 
     const execute = createAcpxEngineExecutor({
       createRuntime: () =>
         turnRuntime({
           events: async function* () {
-            yield { type: "text_delta", text: "streamed hello", stream: "output", tag: "agent_message_chunk" };
+            yield {
+              type: "text_delta",
+              text: "streamed hello",
+              stream: "output",
+              tag: "agent_message_chunk",
+            };
             yield { type: "done", stopReason: "end_turn" };
           },
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
         }) as never,
     });
 
@@ -370,7 +459,10 @@ describe("ACPX engine turn characterization", () => {
         logs.push({ stream, text });
       },
       onMeta: async () => {},
-      onEvent: async (event: { eventType: string; payload?: Record<string, unknown> }) => {
+      onEvent: async (event: {
+        eventType: string;
+        payload?: Record<string, unknown>;
+      }) => {
         events.push(event);
       },
     } as never);
@@ -390,7 +482,9 @@ describe("ACPX engine turn characterization", () => {
     expect(result.summary).toBe("streamed hello");
     // Transport 2 — the structured onEvent stream reflects the run bring-up
     // sequence as run.startup.step events, including the acp handshake.
-    const steps = events.filter((event) => event.eventType === "run.startup.step");
+    const steps = events.filter(
+      (event) => event.eventType === "run.startup.step",
+    );
     const stepNames = steps.map((event) => String(event.payload?.step));
     expect(stepNames).toContain("acp.handshake");
     expect(stepNames).toContain("workspace.resolve");
@@ -416,7 +510,10 @@ describe("ACPX engine turn characterization", () => {
           events: async function* () {
             await turnCancelled;
           },
-          result: turnCancelled.then(() => ({ status: "cancelled", stopReason: "cancelled" })),
+          result: turnCancelled.then(() => ({
+            status: "cancelled",
+            stopReason: "cancelled",
+          })),
           onCancel: (reason) => {
             cancelReasons.push(reason);
             releaseTurn?.();
@@ -428,7 +525,13 @@ describe("ACPX engine turn characterization", () => {
       runId: "run-timeout",
       agent: { id: "agent-1", companyId: "company-1" },
       runtime: {},
-      config: { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd, timeoutSec: 1 },
+      config: {
+        agent: "custom",
+        agentCommand: "node ./fake-acp.js",
+        stateDir,
+        cwd,
+        timeoutSec: 1,
+      },
       context: {},
       onLog: async () => {},
       onMeta: async () => {},
@@ -457,7 +560,10 @@ describe("ACPX engine turn characterization", () => {
           events: async function* () {
             throw new Error("turn boom");
           },
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
           onCancel: () => order.push("cancel"),
           onClose: () => order.push("close"),
         }) as never,
@@ -485,7 +591,12 @@ describe("ACPX engine turn characterization", () => {
     const stateDir = path.join(root, "state");
     const cwd = path.join(root, "worktree");
     await fs.mkdir(cwd, { recursive: true });
-    const config = { agent: "custom", agentCommand: "node ./fake-acp.js", stateDir, cwd };
+    const config = {
+      agent: "custom",
+      agentCommand: "node ./fake-acp.js",
+      stateDir,
+      cwd,
+    };
 
     const ensureInputs: Array<Record<string, unknown>> = [];
     let startTurnCalls = 0;
@@ -502,7 +613,10 @@ describe("ACPX engine turn characterization", () => {
           events: async function* () {
             yield { type: "done", stopReason: "end_turn" };
           },
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
         }) as never,
     });
     const first = await firstExecute({
@@ -538,17 +652,23 @@ describe("ACPX engine turn characterization", () => {
           events: async function* () {
             yield { type: "done", stopReason: "end_turn" };
           },
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
         }) as never,
     });
     const second = await secondExecute({
       runId: "run-resume-b",
       agent: { id: "agent-1", companyId: "company-1" },
-      runtime: { sessionParams: (first as { sessionParams?: unknown }).sessionParams },
+      runtime: {
+        sessionParams: (first as { sessionParams?: unknown }).sessionParams,
+      },
       config,
       context: {},
       onLog: async (_stream: string, text: string) => {
-        if (text.includes("is unavailable; retrying with a fresh session")) resumeLogged = true;
+        if (text.includes("is unavailable; retrying with a fresh session"))
+          resumeLogged = true;
       },
       onMeta: async () => {},
     } as never);
@@ -580,11 +700,18 @@ describe("ACPX engine turn characterization", () => {
               text: "usage",
               tag: "usage_update",
               cost: { amount: 0.31, currency: "USD" },
-              breakdown: { inputTokens: 40, outputTokens: 700, cachedReadTokens: 60 },
+              breakdown: {
+                inputTokens: 40,
+                outputTokens: 700,
+                cachedReadTokens: 60,
+              },
             };
             yield { type: "done", stopReason: "failed" };
           },
-          result: Promise.resolve({ status: "failed", error: new Error("boom") }),
+          result: Promise.resolve({
+            status: "failed",
+            error: new Error("boom"),
+          }),
         }) as never,
     });
 
@@ -602,9 +729,15 @@ describe("ACPX engine turn characterization", () => {
     expect(result.errorCode).toBe("acpx_turn_failed");
     // The failed error message becomes the terminal stop reason and the summary.
     expect(result.summary).toBe("boom");
-    expect((result.resultJson as Record<string, unknown>)?.stopReason).toBe("boom");
+    expect((result.resultJson as Record<string, unknown>)?.stopReason).toBe(
+      "boom",
+    );
     // The usage math folds the usage_update event into per-run usage and cost.
-    expect(result.usage).toEqual({ inputTokens: 40, outputTokens: 700, cachedInputTokens: 60 });
+    expect(result.usage).toEqual({
+      inputTokens: 40,
+      outputTokens: 700,
+      cachedInputTokens: 60,
+    });
     expect(result.usageBasis).toBe("per_run");
     expect(result.costUsd).toBeCloseTo(0.31);
   });
@@ -615,10 +748,18 @@ describe("ACPX engine turn characterization", () => {
     const summary = summarizeAcpxTurnUsage({
       preStatus: null,
       postStatus: null,
-      eventBreakdown: { inputTokens: 40, outputTokens: 700, cachedReadTokens: 60 },
+      eventBreakdown: {
+        inputTokens: 40,
+        outputTokens: 700,
+        cachedReadTokens: 60,
+      },
       eventCostUsd: 0.31,
     });
-    expect(summary.usage).toEqual({ inputTokens: 40, outputTokens: 700, cachedInputTokens: 60 });
+    expect(summary.usage).toEqual({
+      inputTokens: 40,
+      outputTokens: 700,
+      cachedInputTokens: 60,
+    });
     expect(summary.costUsd).toBeCloseTo(0.31);
   });
 
@@ -638,7 +779,10 @@ describe("ACPX engine turn characterization", () => {
             closes += 1;
           },
           events: async function* () {},
-          result: Promise.resolve({ status: "completed", stopReason: "end_turn" }),
+          result: Promise.resolve({
+            status: "completed",
+            stopReason: "end_turn",
+          }),
         }) as never,
     });
 
@@ -664,7 +808,9 @@ describe("ACPX engine turn characterization", () => {
 
     expect(result.exitCode).toBe(1);
     // The pre-turn failure reports phase "prepare_turn".
-    expect((result.resultJson as Record<string, unknown>)?.phase).toBe("prepare_turn");
+    expect((result.resultJson as Record<string, unknown>)?.phase).toBe(
+      "prepare_turn",
+    );
     // The turn never started, and the runtime closed once.
     expect(startTurnCalls).toBe(0);
     expect(closes).toBe(1);

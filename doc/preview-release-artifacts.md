@@ -6,13 +6,13 @@ move a source branch, or advance any stable, beta, nightly, or canary alias.
 
 Dispatch `release.yml` on `master` with these inputs:
 
-| Input | Value |
-| --- | --- |
-| `channel` | `preview` |
-| `source_ref` | Full lowercase 40-character commit SHA in this repository |
-| `request_id` | UUID v4 identifying the operator's deployment request |
-| `preview_migrator` | `true` when exact-source DB/shared packages are needed |
-| `dry_run` | `false` |
+| Input              | Value                                                     |
+| ------------------ | --------------------------------------------------------- |
+| `channel`          | `preview`                                                 |
+| `source_ref`       | Full lowercase 40-character commit SHA in this repository |
+| `request_id`       | UUID v4 identifying the operator's deployment request     |
+| `preview_migrator` | `true` when exact-source DB/shared packages are needed    |
+| `dry_run`          | `false`                                                   |
 
 The workflow title is `Stack deploy <request_id> build`. Consumers must find a
 run by this identity, not by the latest run. Preview builds reject workflow

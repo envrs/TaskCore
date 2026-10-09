@@ -1,4 +1,9 @@
-import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import {
+  createHash,
+  randomBytes,
+  randomUUID,
+  timingSafeEqual,
+} from "node:crypto";
 import { promises as fs } from "node:fs";
 import http2 from "node:http2";
 import os from "node:os";
@@ -45,7 +50,8 @@ const DEFAULT_BRIDGE_MAX_QUEUE_DEPTH = 64;
 // covers that framing with a wide margin, so a valid maximum-size attachment
 // never fails at the bridge before the server ever sees it.
 const BRIDGE_MULTIPART_FRAMING_HEADROOM_BYTES = 64 * 1024;
-const DEFAULT_BRIDGE_MAX_BODY_BYTES = 10 * 1024 * 1024 + BRIDGE_MULTIPART_FRAMING_HEADROOM_BYTES;
+const DEFAULT_BRIDGE_MAX_BODY_BYTES =
+  10 * 1024 * 1024 + BRIDGE_MULTIPART_FRAMING_HEADROOM_BYTES;
 // Per-iteration timeout for one poll-loop client call. A healthy control-plane
 // round trip finishes in well under one second, so 10s is far above a normal
 // iteration and never false-fires on a slow-but-live call. It is also well
@@ -102,15 +108,18 @@ export const SANDBOX_CALLBACK_BRIDGE_HTTP2_MODE = "http2_v1";
 
 /** Span name that wraps one Taskcore-API callback request — read the request,
  * write the response, and remove the request file. */
-const CALLBACK_BRIDGE_RELAY_REQUEST_SPAN = "sandbox.callbackBridge.relayRequest";
+const CALLBACK_BRIDGE_RELAY_REQUEST_SPAN =
+  "sandbox.callbackBridge.relayRequest";
 
 /** Span name for a failed or hung bridge worker. The worker runs a throwing
  * function under this span through `input.runtimeSpan`, so the failure lands in
  * the run trace. The run and the orchestrator then see the hang, not only
  * stdout. */
-const CALLBACK_BRIDGE_WORKER_FAILED_SPAN = "sandbox.callbackBridge.workerFailed";
+const CALLBACK_BRIDGE_WORKER_FAILED_SPAN =
+  "sandbox.callbackBridge.workerFailed";
 
-export const DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES = DEFAULT_BRIDGE_MAX_BODY_BYTES;
+export const DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES =
+  DEFAULT_BRIDGE_MAX_BODY_BYTES;
 
 export interface SandboxCallbackBridgeRouteRule {
   method: string;
@@ -122,110 +131,127 @@ export interface SandboxCallbackBridgeRouteRule {
 // exists to bound the surface area a compromised CLI could reach via the
 // reverse bridge. Keep this in sync with the Taskcore skill in
 // `skills/taskcore/SKILL.md` and `references/api-reference.md`.
-export const DEFAULT_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST: readonly SandboxCallbackBridgeRouteRule[] = [
-  // Runtime capability authentication is independently checked by the controller.
-  { method: "POST", path: /^\/runtime-tools\/github\/credentials$/ },
-  // Identity, inbox, agent self-management
-  { method: "GET", path: /^\/api\/agents\/me$/ },
-  { method: "POST", path: /^\/api\/companies\/[^/]+\/agent-commentary$/ },
-  { method: "GET", path: /^\/api\/agents\/me\/inbox-lite$/ },
-  { method: "GET", path: /^\/api\/agents\/me\/inbox\/mine$/ },
-  { method: "GET", path: /^\/api\/agents\/[^/]+$/ },
-  { method: "GET", path: /^\/api\/agents\/[^/]+\/skills$/ },
-  { method: "POST", path: /^\/api\/agents\/[^/]+\/skills\/sync$/ },
-  { method: "PATCH", path: /^\/api\/agents\/[^/]+\/instructions-path$/ },
+export const DEFAULT_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST: readonly SandboxCallbackBridgeRouteRule[] =
+  [
+    // Runtime capability authentication is independently checked by the controller.
+    { method: "POST", path: /^\/runtime-tools\/github\/credentials$/ },
+    // Identity, inbox, agent self-management
+    { method: "GET", path: /^\/api\/agents\/me$/ },
+    { method: "POST", path: /^\/api\/companies\/[^/]+\/agent-commentary$/ },
+    { method: "GET", path: /^\/api\/agents\/me\/inbox-lite$/ },
+    { method: "GET", path: /^\/api\/agents\/me\/inbox\/mine$/ },
+    { method: "GET", path: /^\/api\/agents\/[^/]+$/ },
+    { method: "GET", path: /^\/api\/agents\/[^/]+\/skills$/ },
+    { method: "POST", path: /^\/api\/agents\/[^/]+\/skills\/sync$/ },
+    { method: "PATCH", path: /^\/api\/agents\/[^/]+\/instructions-path$/ },
 
-  // Read-only schema discovery for validated control-plane requests.
-  { method: "GET", path: /^\/api\/openapi\.json$/ },
+    // Read-only schema discovery for validated control-plane requests.
+    { method: "GET", path: /^\/api\/openapi\.json$/ },
 
-  // Company-level reads used to discover work and context
-  { method: "GET", path: /^\/api\/companies\/[^/]+$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/dashboard$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/agents$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/issues$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/projects$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/goals$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/org$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/approvals$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/routines$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/skills$/ },
-  { method: "GET", path: /^\/api\/projects\/[^/]+$/ },
-  { method: "GET", path: /^\/api\/goals\/[^/]+$/ },
+    // Company-level reads used to discover work and context
+    { method: "GET", path: /^\/api\/companies\/[^/]+$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/dashboard$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/agents$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/issues$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/projects$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/goals$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/org$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/approvals$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/routines$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/skills$/ },
+    { method: "GET", path: /^\/api\/projects\/[^/]+$/ },
+    { method: "GET", path: /^\/api\/goals\/[^/]+$/ },
 
-  // Task-bound email actions. Company, inbox ownership, task/run authority,
-  // and action policies are enforced by the controller; mailbox setup stays denied.
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/email\/inboxes$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/email\/tasks\/[^/]+$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/email\/deliveries\/[^/]+$/ },
-  { method: "POST", path: /^\/api\/companies\/[^/]+\/email\/send$/ },
+    // Task-bound email actions. Company, inbox ownership, task/run authority,
+    // and action policies are enforced by the controller; mailbox setup stays denied.
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/email\/inboxes$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/email\/tasks\/[^/]+$/ },
+    {
+      method: "GET",
+      path: /^\/api\/companies\/[^/]+\/email\/deliveries\/[^/]+$/,
+    },
+    { method: "POST", path: /^\/api\/companies\/[^/]+\/email\/send$/ },
 
-  // Issue lifecycle: read context, checkout, update, comment, document, release
-  { method: "GET", path: /^\/api\/issues\/[^/]+$/ },
-  { method: "GET", path: /^\/api\/issues\/[^/]+\/heartbeat-context$/ },
-  { method: "GET", path: /^\/api\/issues\/[^/]+\/comments(?:\/[^/]+)?$/ },
-  { method: "POST", path: /^\/api\/issues\/[^/]+\/comments$/ },
-  { method: "GET", path: /^\/api\/issues\/[^/]+\/documents(?:\/[^/]+)?$/ },
-  { method: "GET", path: /^\/api\/issues\/[^/]+\/documents\/[^/]+\/revisions$/ },
-  { method: "PUT", path: /^\/api\/issues\/[^/]+\/documents\/[^/]+$/ },
-  { method: "POST", path: /^\/api\/issues\/[^/]+\/checkout$/ },
-  { method: "POST", path: /^\/api\/issues\/[^/]+\/release$/ },
-  { method: "PATCH", path: /^\/api\/issues\/[^/]+$/ },
-  { method: "GET", path: /^\/api\/issues\/[^/]+\/approvals$/ },
+    // Issue lifecycle: read context, checkout, update, comment, document, release
+    { method: "GET", path: /^\/api\/issues\/[^/]+$/ },
+    { method: "GET", path: /^\/api\/issues\/[^/]+\/heartbeat-context$/ },
+    { method: "GET", path: /^\/api\/issues\/[^/]+\/comments(?:\/[^/]+)?$/ },
+    { method: "POST", path: /^\/api\/issues\/[^/]+\/comments$/ },
+    { method: "GET", path: /^\/api\/issues\/[^/]+\/documents(?:\/[^/]+)?$/ },
+    {
+      method: "GET",
+      path: /^\/api\/issues\/[^/]+\/documents\/[^/]+\/revisions$/,
+    },
+    { method: "PUT", path: /^\/api\/issues\/[^/]+\/documents\/[^/]+$/ },
+    { method: "POST", path: /^\/api\/issues\/[^/]+\/checkout$/ },
+    { method: "POST", path: /^\/api\/issues\/[^/]+\/release$/ },
+    { method: "PATCH", path: /^\/api\/issues\/[^/]+$/ },
+    { method: "GET", path: /^\/api\/issues\/[^/]+\/approvals$/ },
 
-  // Files: the queue encodes binary bodies; HTTP/2 carries the same bytes directly.
-  { method: "GET", path: /^\/api\/issues\/[^/]+\/attachments$/ },
-  { method: "POST", path: /^\/api\/companies\/[^/]+\/issues\/[^/]+\/attachments$/ },
-  { method: "GET", path: /^\/api\/attachments\/[^/]+\/content$/ },
+    // Files: the queue encodes binary bodies; HTTP/2 carries the same bytes directly.
+    { method: "GET", path: /^\/api\/issues\/[^/]+\/attachments$/ },
+    {
+      method: "POST",
+      path: /^\/api\/companies\/[^/]+\/issues\/[^/]+\/attachments$/,
+    },
+    { method: "GET", path: /^\/api\/attachments\/[^/]+\/content$/ },
 
-  // Work products: publish branch/commit/artifact metadata for completed work.
-  { method: "GET", path: /^\/api\/issues\/[^/]+\/work-products$/ },
-  { method: "POST", path: /^\/api\/issues\/[^/]+\/work-products$/ },
-  { method: "PATCH", path: /^\/api\/work-products\/[^/]+$/ },
+    // Work products: publish branch/commit/artifact metadata for completed work.
+    { method: "GET", path: /^\/api\/issues\/[^/]+\/work-products$/ },
+    { method: "POST", path: /^\/api\/issues\/[^/]+\/work-products$/ },
+    { method: "PATCH", path: /^\/api\/work-products\/[^/]+$/ },
 
-  // Issue-thread interactions (create, resolve, verdict, and withdraw)
-  { method: "GET", path: /^\/api\/issues\/[^/]+\/interactions(?:\/[^/]+)?$/ },
-  { method: "POST", path: /^\/api\/issues\/[^/]+\/interactions$/ },
-  { method: "POST", path: /^\/api\/issues\/[^/]+\/interactions\/[^/]+\/(?:accept|reject|respond|verdicts|withdraw)$/ },
+    // Issue-thread interactions (create, resolve, verdict, and withdraw)
+    { method: "GET", path: /^\/api\/issues\/[^/]+\/interactions(?:\/[^/]+)?$/ },
+    { method: "POST", path: /^\/api\/issues\/[^/]+\/interactions$/ },
+    {
+      method: "POST",
+      path: /^\/api\/issues\/[^/]+\/interactions\/[^/]+\/(?:accept|reject|respond|verdicts|withdraw)$/,
+    },
 
-  // Subtasks / delegation
-  { method: "POST", path: /^\/api\/companies\/[^/]+\/issues$/ },
+    // Subtasks / delegation
+    { method: "POST", path: /^\/api\/companies\/[^/]+\/issues$/ },
 
-  // Hiring (taskcore-create-agent skill): adapter/icon discovery, comparing
-  // existing agent configs, submitting the hire request, and linking the
-  // resulting approval to its source issue. Direct agent creation
-  // (POST /api/companies/:id/agents) stays denied — hires must go through the
-  // approval-gated agent-hires endpoint, which the server still permission-checks.
-  { method: "GET", path: /^\/llms\/agent-configuration\.txt$/ },
-  { method: "GET", path: /^\/llms\/agent-configuration\/[^/]+\.txt$/ },
-  { method: "GET", path: /^\/llms\/agent-icons\.txt$/ },
-  { method: "GET", path: /^\/api\/companies\/[^/]+\/agent-configurations$/ },
-  { method: "POST", path: /^\/api\/companies\/[^/]+\/agent-hires$/ },
-  { method: "POST", path: /^\/api\/issues\/[^/]+\/approvals$/ },
+    // Hiring (taskcore-create-agent skill): adapter/icon discovery, comparing
+    // existing agent configs, submitting the hire request, and linking the
+    // resulting approval to its source issue. Direct agent creation
+    // (POST /api/companies/:id/agents) stays denied — hires must go through the
+    // approval-gated agent-hires endpoint, which the server still permission-checks.
+    { method: "GET", path: /^\/llms\/agent-configuration\.txt$/ },
+    { method: "GET", path: /^\/llms\/agent-configuration\/[^/]+\.txt$/ },
+    { method: "GET", path: /^\/llms\/agent-icons\.txt$/ },
+    { method: "GET", path: /^\/api\/companies\/[^/]+\/agent-configurations$/ },
+    { method: "POST", path: /^\/api\/companies\/[^/]+\/agent-hires$/ },
+    { method: "POST", path: /^\/api\/issues\/[^/]+\/approvals$/ },
 
-  // Approvals (request, read, comment)
-  { method: "GET", path: /^\/api\/approvals\/[^/]+$/ },
-  { method: "GET", path: /^\/api\/approvals\/[^/]+\/issues$/ },
-  { method: "GET", path: /^\/api\/approvals\/[^/]+\/comments$/ },
-  { method: "POST", path: /^\/api\/approvals\/[^/]+\/comments$/ },
-  { method: "POST", path: /^\/api\/companies\/[^/]+\/approvals$/ },
+    // Approvals (request, read, comment)
+    { method: "GET", path: /^\/api\/approvals\/[^/]+$/ },
+    { method: "GET", path: /^\/api\/approvals\/[^/]+\/issues$/ },
+    { method: "GET", path: /^\/api\/approvals\/[^/]+\/comments$/ },
+    { method: "POST", path: /^\/api\/approvals\/[^/]+\/comments$/ },
+    { method: "POST", path: /^\/api\/companies\/[^/]+\/approvals$/ },
 
-  // Execution workspaces and runtime services (start/stop/restart dev servers)
-  { method: "GET", path: /^\/api\/execution-workspaces\/[^/]+$/ },
-  { method: "POST", path: /^\/api\/execution-workspaces\/[^/]+\/runtime-services\/(?:start|stop|restart)$/ },
+    // Execution workspaces and runtime services (start/stop/restart dev servers)
+    { method: "GET", path: /^\/api\/execution-workspaces\/[^/]+$/ },
+    {
+      method: "POST",
+      path: /^\/api\/execution-workspaces\/[^/]+\/runtime-services\/(?:start|stop|restart)$/,
+    },
 
-  // Routines (agents manage their own routines and triggers)
-  { method: "GET", path: /^\/api\/routines\/[^/]+$/ },
-  { method: "GET", path: /^\/api\/routines\/[^/]+\/runs$/ },
-  { method: "POST", path: /^\/api\/companies\/[^/]+\/routines$/ },
-  { method: "PATCH", path: /^\/api\/routines\/[^/]+$/ },
-  { method: "POST", path: /^\/api\/routines\/[^/]+\/run$/ },
-  { method: "POST", path: /^\/api\/routines\/[^/]+\/triggers$/ },
-  { method: "PATCH", path: /^\/api\/routine-triggers\/[^/]+$/ },
-  { method: "DELETE", path: /^\/api\/routine-triggers\/[^/]+$/ },
-] as const;
+    // Routines (agents manage their own routines and triggers)
+    { method: "GET", path: /^\/api\/routines\/[^/]+$/ },
+    { method: "GET", path: /^\/api\/routines\/[^/]+\/runs$/ },
+    { method: "POST", path: /^\/api\/companies\/[^/]+\/routines$/ },
+    { method: "PATCH", path: /^\/api\/routines\/[^/]+$/ },
+    { method: "POST", path: /^\/api\/routines\/[^/]+\/run$/ },
+    { method: "POST", path: /^\/api\/routines\/[^/]+\/triggers$/ },
+    { method: "PATCH", path: /^\/api\/routine-triggers\/[^/]+$/ },
+    { method: "DELETE", path: /^\/api\/routine-triggers\/[^/]+$/ },
+  ] as const;
 
 // Keep the public alias for callers selecting the HTTP/2 transport.
-export const HTTP2_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST = DEFAULT_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST;
+export const HTTP2_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST =
+  DEFAULT_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST;
 
 export const DEFAULT_SANDBOX_CALLBACK_BRIDGE_HEADER_ALLOWLIST = [
   "accept",
@@ -308,11 +334,18 @@ function shellQuote(value: string) {
 }
 
 function normalizeMethod(value: string | null | undefined): string {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim().toUpperCase() : "GET";
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim().toUpperCase()
+    : "GET";
 }
 
-function normalizeTimeoutMs(value: number | null | undefined, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.trunc(value) : fallback;
+function normalizeTimeoutMs(
+  value: number | null | undefined,
+  fallback: number,
+): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? Math.trunc(value)
+    : fallback;
 }
 
 /**
@@ -322,7 +355,11 @@ function normalizeTimeoutMs(value: number | null | undefined, fallback: number):
  * it keeps running in the background, but the caller already moved on through
  * the reject.
  */
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  label: string,
+): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_resolve, reject) => {
     timer = setTimeout(() => {
@@ -342,7 +379,10 @@ function toBuffer(bytes: Buffer | Uint8Array | ArrayBuffer): Buffer {
   return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 }
 
-function buildRunnerFailureMessage(action: string, result: RunProcessResult): string {
+function buildRunnerFailureMessage(
+  action: string,
+  result: RunProcessResult,
+): string {
   const stderr = result.stderr.trim();
   const stdout = result.stdout.trim();
   const detail = stderr || stdout;
@@ -364,8 +404,11 @@ export function runSandboxBridgeControlCommand(
     normalizeTimeoutMs(input.timeoutMs, MAX_BRIDGE_CONTROL_COMMAND_TIMEOUT_MS),
     MAX_BRIDGE_CONTROL_COMMAND_TIMEOUT_MS,
   );
-  return withTimeout(runner.execute({ ...input, timeoutMs: controlTimeoutMs }),
-    controlTimeoutMs, "Sandbox bridge control command");
+  return withTimeout(
+    runner.execute({ ...input, timeoutMs: controlTimeoutMs }),
+    controlTimeoutMs,
+    "Sandbox bridge control command",
+  );
 }
 
 async function runShell(
@@ -395,37 +438,50 @@ async function runShell(
   });
 }
 
-function requireSuccessfulResult(action: string, result: RunProcessResult): RunProcessResult {
+function requireSuccessfulResult(
+  action: string,
+  result: RunProcessResult,
+): RunProcessResult {
   if (!result.timedOut && result.exitCode === 0) return result;
   throw new Error(buildRunnerFailureMessage(action, result));
 }
 
 function base64Chunks(body: string): string[] {
   const out: string[] = [];
-  for (let offset = 0; offset < body.length; offset += REMOTE_WRITE_BASE64_CHUNK_SIZE) {
+  for (
+    let offset = 0;
+    offset < body.length;
+    offset += REMOTE_WRITE_BASE64_CHUNK_SIZE
+  ) {
     out.push(body.slice(offset, offset + REMOTE_WRITE_BASE64_CHUNK_SIZE));
   }
   return out;
 }
 
 async function pathExists(filePath: string): Promise<boolean> {
-  return await fs.stat(filePath).then(() => true).catch(() => false);
+  return await fs
+    .stat(filePath)
+    .then(() => true)
+    .catch(() => false);
 }
 
-function buildRemotePidLockAcquireScript(lockDirExpr: string, timeoutMessage: string): string[] {
+function buildRemotePidLockAcquireScript(
+  lockDirExpr: string,
+  timeoutMessage: string,
+): string[] {
   return [
     "attempts=0",
     `while ! mkdir ${lockDirExpr} 2>/dev/null; do`,
-    "  holder_pid=\"\"",
+    '  holder_pid=""',
     `  if [ -s ${lockDirExpr}/pid ]; then`,
     `    holder_pid="$(cat ${lockDirExpr}/pid 2>/dev/null || true)"`,
     "  fi",
-    "  if [ -n \"$holder_pid\" ] && ! kill -0 \"$holder_pid\" 2>/dev/null; then",
+    '  if [ -n "$holder_pid" ] && ! kill -0 "$holder_pid" 2>/dev/null; then',
     `    rm -rf ${lockDirExpr}`,
     "    continue",
     "  fi",
     "  attempts=$((attempts + 1))",
-    "  if [ \"$attempts\" -ge 600 ]; then",
+    '  if [ "$attempts" -ge 600 ]; then',
     `    echo ${shellQuote(timeoutMessage)} >&2`,
     "    exit 1",
     "  fi",
@@ -435,7 +491,10 @@ function buildRemotePidLockAcquireScript(lockDirExpr: string, timeoutMessage: st
   ];
 }
 
-function buildRemotePidLockCleanupScript(lockDirExpr: string, cleanupLines: string[]): string[] {
+function buildRemotePidLockCleanupScript(
+  lockDirExpr: string,
+  cleanupLines: string[],
+): string[] {
   return [
     "cleanup() {",
     ...cleanupLines.map((line) => `  ${line}`),
@@ -445,7 +504,9 @@ function buildRemotePidLockCleanupScript(lockDirExpr: string, cleanupLines: stri
   ];
 }
 
-export function createSandboxCallbackBridgeToken(bytes = DEFAULT_BRIDGE_TOKEN_BYTES): string {
+export function createSandboxCallbackBridgeToken(
+  bytes = DEFAULT_BRIDGE_TOKEN_BYTES,
+): string {
   return randomBytes(bytes).toString("base64url");
 }
 
@@ -454,7 +515,9 @@ export function authorizeSandboxCallbackBridgeRequestWithRoutes(
   routes: readonly SandboxCallbackBridgeRouteRule[] = DEFAULT_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST,
 ): string | null {
   const method = normalizeMethod(request.method);
-  return routes.some((route) => route.method === method && route.path.test(request.path))
+  return routes.some(
+    (route) => route.method === method && route.path.test(request.path),
+  )
     ? null
     : `Route not allowed: ${method} ${request.path}`;
 }
@@ -469,7 +532,9 @@ export function sanitizeSandboxCallbackBridgeHeaders(
   );
 }
 
-export function sandboxCallbackBridgeDirectories(rootDir: string): SandboxCallbackBridgeDirectories {
+export function sandboxCallbackBridgeDirectories(
+  rootDir: string,
+): SandboxCallbackBridgeDirectories {
   return {
     rootDir,
     requestsDir: path.posix.join(rootDir, "requests"),
@@ -496,12 +561,17 @@ export function buildSandboxCallbackBridgeEnv(input: {
     TASKCORE_BRIDGE_QUEUE_DIR: input.queueDir,
     TASKCORE_BRIDGE_TOKEN: input.bridgeToken,
     TASKCORE_BRIDGE_HOST: input.host?.trim() || "127.0.0.1",
-    TASKCORE_BRIDGE_PORT: String(input.port && input.port > 0 ? Math.trunc(input.port) : 0),
+    TASKCORE_BRIDGE_PORT: String(
+      input.port && input.port > 0 ? Math.trunc(input.port) : 0,
+    ),
     TASKCORE_BRIDGE_POLL_INTERVAL_MS: String(
       normalizeTimeoutMs(input.pollIntervalMs, DEFAULT_BRIDGE_POLL_INTERVAL_MS),
     ),
     TASKCORE_BRIDGE_RESPONSE_TIMEOUT_MS: String(
-      normalizeTimeoutMs(input.responseTimeoutMs, DEFAULT_BRIDGE_RESPONSE_TIMEOUT_MS),
+      normalizeTimeoutMs(
+        input.responseTimeoutMs,
+        DEFAULT_BRIDGE_RESPONSE_TIMEOUT_MS,
+      ),
     ),
     TASKCORE_BRIDGE_MAX_QUEUE_DEPTH: String(
       normalizeTimeoutMs(input.maxQueueDepth, DEFAULT_BRIDGE_MAX_QUEUE_DEPTH),
@@ -513,14 +583,22 @@ export function buildSandboxCallbackBridgeEnv(input: {
 }
 
 export async function createSandboxCallbackBridgeAsset(): Promise<SandboxCallbackBridgeAsset> {
-  const localDir = await fs.mkdtemp(path.join(os.tmpdir(), "taskcore-bridge-asset-"));
+  const localDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), "taskcore-bridge-asset-"),
+  );
   const entrypoint = path.join(localDir, SANDBOX_CALLBACK_BRIDGE_ENTRYPOINT);
-  await fs.writeFile(entrypoint, getSandboxCallbackBridgeServerSource(), "utf8");
+  await fs.writeFile(
+    entrypoint,
+    getSandboxCallbackBridgeServerSource(),
+    "utf8",
+  );
   return {
     localDir,
     entrypoint,
     cleanup: async () => {
-      await fs.rm(localDir, { recursive: true, force: true }).catch(() => undefined);
+      await fs
+        .rm(localDir, { recursive: true, force: true })
+        .catch(() => undefined);
     },
   };
 }
@@ -536,7 +614,9 @@ export function createFileSystemSandboxCallbackBridgeQueueClient(): SandboxCallb
       }
     },
     listJsonFiles: async (remotePath) => {
-      const entries = await fs.readdir(remotePath, { withFileTypes: true }).catch(() => []);
+      const entries = await fs
+        .readdir(remotePath, { withFileTypes: true })
+        .catch(() => []);
       return entries
         .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
         .map((entry) => entry.name)
@@ -548,17 +628,28 @@ export function createFileSystemSandboxCallbackBridgeQueueClient(): SandboxCallb
       const file = await fs.open(remotePath, "r");
       try {
         const stat = await file.stat();
-        if (stat.size > maxBytes) throw new Error("Bridge envelope exceeded the configured size limit.");
+        if (stat.size > maxBytes)
+          throw new Error(
+            "Bridge envelope exceeded the configured size limit.",
+          );
         const bytes = Buffer.alloc(Math.min(stat.size, maxBytes) + 1);
         let length = 0;
         while (length < bytes.length) {
-          const read = await file.read(bytes, length, bytes.length - length, length);
+          const read = await file.read(
+            bytes,
+            length,
+            bytes.length - length,
+            length,
+          );
           if (!read.bytesRead) break;
           length += read.bytesRead;
         }
-        if (length > stat.size) throw new Error("Bridge envelope changed while reading.");
+        if (length > stat.size)
+          throw new Error("Bridge envelope changed while reading.");
         return bytes.subarray(0, length).toString("utf8");
-      } finally { await file.close(); }
+      } finally {
+        await file.close();
+      }
     },
     writeTextFile: async (remotePath, body) => {
       await fs.mkdir(path.posix.dirname(remotePath), { recursive: true });
@@ -614,12 +705,16 @@ export function createFileSystemSandboxCallbackBridgeQueueClient(): SandboxCallb
             }
           }
           if (!holderAlive) {
-            await fs.rm(lockDir, { recursive: true, force: true }).catch(() => undefined);
+            await fs
+              .rm(lockDir, { recursive: true, force: true })
+              .catch(() => undefined);
             continue;
           }
           attempts += 1;
           if (attempts >= 600) {
-            throw new Error("Timed out acquiring sandbox callback bridge response lock.");
+            throw new Error(
+              "Timed out acquiring sandbox callback bridge response lock.",
+            );
           }
           await new Promise((resolve) => setTimeout(resolve, 50));
         }
@@ -641,7 +736,9 @@ export function createFileSystemSandboxCallbackBridgeQueueClient(): SandboxCallb
         return { wrote: true };
       } finally {
         await fs.rm(tempPath, { force: true }).catch(() => undefined);
-        await fs.rm(lockDir, { recursive: true, force: true }).catch(() => undefined);
+        await fs
+          .rm(lockDir, { recursive: true, force: true })
+          .catch(() => undefined);
       }
     },
     rename: async (fromPath, toPath) => {
@@ -649,7 +746,9 @@ export function createFileSystemSandboxCallbackBridgeQueueClient(): SandboxCallb
       await fs.rename(fromPath, toPath);
     },
     remove: async (remotePath) => {
-      await fs.rm(remotePath, { recursive: true, force: true }).catch(() => undefined);
+      await fs
+        .rm(remotePath, { recursive: true, force: true })
+        .catch(() => undefined);
     },
   };
 }
@@ -660,21 +759,39 @@ export function createCommandManagedSandboxCallbackBridgeQueueClient(input: {
   timeoutMs?: number | null;
   shellCommand?: "bash" | "sh" | null;
 }): SandboxCallbackBridgeQueueClient {
-  const timeoutMs = normalizeTimeoutMs(input.timeoutMs, DEFAULT_BRIDGE_RESPONSE_TIMEOUT_MS);
+  const timeoutMs = normalizeTimeoutMs(
+    input.timeoutMs,
+    DEFAULT_BRIDGE_RESPONSE_TIMEOUT_MS,
+  );
   const shellCommand = preferredShellForSandbox(input.shellCommand);
   const runChecked = async (action: string, script: string) =>
-    requireSuccessfulResult(action, await runShell(input.runner, input.remoteCwd, script, timeoutMs, shellCommand));
+    requireSuccessfulResult(
+      action,
+      await runShell(
+        input.runner,
+        input.remoteCwd,
+        script,
+        timeoutMs,
+        shellCommand,
+      ),
+    );
 
   return {
     makeDir: async (remotePath) => {
-      await runChecked(`mkdir ${remotePath}`, `mkdir -p ${shellQuote(remotePath)}`);
+      await runChecked(
+        `mkdir ${remotePath}`,
+        `mkdir -p ${shellQuote(remotePath)}`,
+      );
     },
     makeDirs: async (remotePaths) => {
       if (remotePaths.length === 0) {
         return;
       }
       const quoted = remotePaths.map((remotePath) => shellQuote(remotePath));
-      await runChecked(`mkdir ${remotePaths.join(" ")}`, `mkdir -p ${quoted.join(" ")}`);
+      await runChecked(
+        `mkdir ${remotePaths.join(" ")}`,
+        `mkdir -p ${quoted.join(" ")}`,
+      );
     },
     listJsonFiles: async (remotePath) => {
       const result = await runShell(
@@ -684,7 +801,7 @@ export function createCommandManagedSandboxCallbackBridgeQueueClient(input: {
           `if [ -d ${shellQuote(remotePath)} ]; then`,
           `  for file in ${shellQuote(remotePath)}/*.json; do`,
           `    [ -f "$file" ] || continue`,
-          "    basename \"$file\"",
+          '    basename "$file"',
           "  done",
           "fi",
         ].join("\n"),
@@ -699,16 +816,21 @@ export function createCommandManagedSandboxCallbackBridgeQueueClient(input: {
         .sort((left, right) => left.localeCompare(right));
     },
     fileSize: async (remotePath) => {
-      const result = await runChecked(`size ${remotePath}`, `wc -c < ${shellQuote(remotePath)}`);
+      const result = await runChecked(
+        `size ${remotePath}`,
+        `wc -c < ${shellQuote(remotePath)}`,
+      );
       return Number(result.stdout.trim());
     },
     readTextFile: async (remotePath, maxBytes) => {
-      const command = maxBytes === undefined
-        ? `base64 < ${shellQuote(remotePath)}`
-        : `head -c ${Math.trunc(maxBytes) + 1} ${shellQuote(remotePath)} | base64`;
+      const command =
+        maxBytes === undefined
+          ? `base64 < ${shellQuote(remotePath)}`
+          : `head -c ${Math.trunc(maxBytes) + 1} ${shellQuote(remotePath)} | base64`;
       const result = await runChecked(`read ${remotePath}`, command);
       const bytes = Buffer.from(result.stdout.replace(/\s+/g, ""), "base64");
-      if (maxBytes !== undefined && bytes.length > maxBytes) throw new Error("Bridge envelope exceeded the configured size limit.");
+      if (maxBytes !== undefined && bytes.length > maxBytes)
+        throw new Error("Bridge envelope exceeded the configured size limit.");
       return bytes.toString("utf8");
     },
     writeTextFile: async (remotePath, body) => {
@@ -729,7 +851,9 @@ export function createCommandManagedSandboxCallbackBridgeQueueClient(input: {
           `prepare upload ${remotePath}`,
           `mkdir -p ${shellQuote(remoteDir)} && rm -f ${shellQuote(tempPath)} ${shellQuote(decodedPath)} && : > ${shellQuote(tempPath)}`,
         );
-        const base64Body = toBuffer(Buffer.from(body, "utf8")).toString("base64");
+        const base64Body = toBuffer(Buffer.from(body, "utf8")).toString(
+          "base64",
+        );
         for (const chunk of base64Chunks(base64Body)) {
           await runChecked(
             `append upload chunk ${remotePath}`,
@@ -769,21 +893,24 @@ export function createCommandManagedSandboxCallbackBridgeQueueClient(input: {
           `temp_path=${shellQuote(tempPath)}`,
           `lock_dir=${shellQuote(lockDir)}`,
           `request_path=${shellQuote(requestPath)}`,
-          "mkdir -p \"$response_dir\"",
-          ...buildRemotePidLockAcquireScript("\"$lock_dir\"", "Timed out acquiring sandbox callback bridge response lock."),
-          ...buildRemotePidLockCleanupScript("\"$lock_dir\"", [
-            "rm -f \"$temp_path\"",
+          'mkdir -p "$response_dir"',
+          ...buildRemotePidLockAcquireScript(
+            '"$lock_dir"',
+            "Timed out acquiring sandbox callback bridge response lock.",
+          ),
+          ...buildRemotePidLockCleanupScript('"$lock_dir"', [
+            'rm -f "$temp_path"',
           ]),
-          "if [ -n \"$request_path\" ] && [ ! -f \"$request_path\" ]; then",
+          'if [ -n "$request_path" ] && [ ! -f "$request_path" ]; then',
           "  printf '{\"wrote\":false}\\n'",
           "  exit 0",
           "fi",
-          "if [ -f \"$response_path\" ]; then",
+          'if [ -f "$response_path" ]; then',
           "  printf '{\"wrote\":false}\\n'",
           "  exit 0",
           "fi",
-          "cat > \"$temp_path\"",
-          "mv \"$temp_path\" \"$response_path\"",
+          'cat > "$temp_path"',
+          'mv "$temp_path" "$response_path"',
           "printf '{\"wrote\":true}\\n'",
         ].join("\n"),
         timeoutMs,
@@ -808,7 +935,10 @@ export function createCommandManagedSandboxCallbackBridgeQueueClient(input: {
       );
     },
     remove: async (remotePath) => {
-      await runChecked(`remove ${remotePath}`, `rm -rf ${shellQuote(remotePath)}`);
+      await runChecked(
+        `remove ${remotePath}`,
+        `rm -rf ${shellQuote(remotePath)}`,
+      );
     },
   };
 }
@@ -822,7 +952,11 @@ async function writeBridgeResponse(
 ) {
   const body = `${JSON.stringify(response)}\n`;
   if (client.writeResponseFile) {
-    await client.writeResponseFile(responsePath, body, options.requireRequestPath === false ? {} : { requestPath });
+    await client.writeResponseFile(
+      responsePath,
+      body,
+      options.requireRequestPath === false ? {} : { requestPath },
+    );
     return;
   }
   const tempPath = `${responsePath}.tmp`;
@@ -846,7 +980,9 @@ export async function startSandboxCallbackBridgeWorker(input: {
   // own response before the recovery path writes a non-retryable 504 backstop.
   // Defaults to DEFAULT_BRIDGE_ABORTED_HANDLER_GRACE_MS.
   abortedHandlerGraceMs?: number | null;
-  authorizeRequest?: (request: SandboxCallbackBridgeRequest) => string | null | Promise<string | null>;
+  authorizeRequest?: (
+    request: SandboxCallbackBridgeRequest,
+  ) => string | null | Promise<string | null>;
   // Handle one bridge request. The worker passes an `AbortSignal` through
   // `options.signal`. The per-iteration timeout, the watchdog, and worker
   // failure recovery abort it, so a handler that threads the signal into its
@@ -855,7 +991,9 @@ export async function startSandboxCallbackBridgeWorker(input: {
   // not strand with no response. A handler that ignores the signal keeps its
   // earlier behavior.
   handleRequest: (
-    request: Omit<SandboxCallbackBridgeRequest, "body" | "bodyEncoding"> & { body: string | Buffer },
+    request: Omit<SandboxCallbackBridgeRequest, "body" | "bodyEncoding"> & {
+      body: string | Buffer;
+    },
     options?: { signal: AbortSignal; reservation: BridgeBodyReservation },
   ) => Promise<{
     status: number;
@@ -876,18 +1014,31 @@ export async function startSandboxCallbackBridgeWorker(input: {
   // behavior.
   runtimeSpan?: RuntimeSpanRunner;
 }): Promise<SandboxCallbackBridgeWorkerHandle> {
-  const pollIntervalMs = normalizeTimeoutMs(input.pollIntervalMs, DEFAULT_BRIDGE_POLL_INTERVAL_MS);
-  const iterationTimeoutMs = normalizeTimeoutMs(input.iterationTimeoutMs, DEFAULT_BRIDGE_ITERATION_TIMEOUT_MS);
-  const watchdogTimeoutMs = normalizeTimeoutMs(input.watchdogTimeoutMs, DEFAULT_BRIDGE_WATCHDOG_TIMEOUT_MS);
+  const pollIntervalMs = normalizeTimeoutMs(
+    input.pollIntervalMs,
+    DEFAULT_BRIDGE_POLL_INTERVAL_MS,
+  );
+  const iterationTimeoutMs = normalizeTimeoutMs(
+    input.iterationTimeoutMs,
+    DEFAULT_BRIDGE_ITERATION_TIMEOUT_MS,
+  );
+  const watchdogTimeoutMs = normalizeTimeoutMs(
+    input.watchdogTimeoutMs,
+    DEFAULT_BRIDGE_WATCHDOG_TIMEOUT_MS,
+  );
   const abortedHandlerGraceMs = normalizeTimeoutMs(
     input.abortedHandlerGraceMs,
     DEFAULT_BRIDGE_ABORTED_HANDLER_GRACE_MS,
   );
-  const maxBodyBytes = normalizeTimeoutMs(input.maxBodyBytes, DEFAULT_BRIDGE_MAX_BODY_BYTES);
+  const maxBodyBytes = normalizeTimeoutMs(
+    input.maxBodyBytes,
+    DEFAULT_BRIDGE_MAX_BODY_BYTES,
+  );
   const maxEnvelopeBytes = sandboxBridgeEnvelopeLimit(maxBodyBytes);
   // Load lazily to avoid the HTTP/2 module's constants depending on this module
   // during initialization. Both transports share the host process memory ceiling.
-  const { createBridgeBodyReservation } = await import("./http2-bridge-server.js");
+  const { createBridgeBodyReservation } =
+    await import("./http2-bridge-server.js");
   const directories = sandboxCallbackBridgeDirectories(input.queueDir);
   const queueDirectories = [
     directories.rootDir,
@@ -913,8 +1064,10 @@ export async function startSandboxCallbackBridgeWorker(input: {
   const settledPromise = new Promise<void>((resolve) => {
     settleResolve = resolve;
   });
-  const authorizeRequest = input.authorizeRequest ??
-    ((request: SandboxCallbackBridgeRequest) => authorizeSandboxCallbackBridgeRequestWithRoutes(request));
+  const authorizeRequest =
+    input.authorizeRequest ??
+    ((request: SandboxCallbackBridgeRequest) =>
+      authorizeSandboxCallbackBridgeRequestWithRoutes(request));
   const buildWorkerFailureMessage = (error: unknown) =>
     `Sandbox callback bridge worker failed: ${error instanceof Error ? error.message : String(error)}`;
 
@@ -1031,23 +1184,36 @@ export async function startSandboxCallbackBridgeWorker(input: {
       // hung sandbox channel never strands the caller until its own generic
       // deadline. Retry a transient write failure, exactly like the 504 backstop
       // write.
-      let lastWriteError = "Sandbox callback bridge could not write the handler response.";
-      for (let attempt = 1; attempt <= MAX_BACKSTOP_WRITE_ATTEMPTS; attempt += 1) {
+      let lastWriteError =
+        "Sandbox callback bridge could not write the handler response.";
+      for (
+        let attempt = 1;
+        attempt <= MAX_BACKSTOP_WRITE_ATTEMPTS;
+        attempt += 1
+      ) {
         try {
           await withTimeout(
-            writeBridgeResponse(input.client, requestPath, responsePath, response),
+            writeBridgeResponse(
+              input.client,
+              requestPath,
+              responsePath,
+              response,
+            ),
             iterationTimeoutMs,
             `Sandbox callback bridge write response for ${response.id}`,
           );
           await input.client.remove(requestPath).catch(() => undefined);
           return;
         } catch (error) {
-          lastWriteError = error instanceof Error ? error.message : String(error);
+          lastWriteError =
+            error instanceof Error ? error.message : String(error);
           console.warn(
             `[taskcore] sandbox callback bridge failed to write response for ${response.id} (attempt ${attempt}/${MAX_BACKSTOP_WRITE_ATTEMPTS}): ${lastWriteError}`,
           );
           if (attempt < MAX_BACKSTOP_WRITE_ATTEMPTS) {
-            await new Promise((resolve) => setTimeout(resolve, BACKSTOP_WRITE_RETRY_MS));
+            await new Promise((resolve) =>
+              setTimeout(resolve, BACKSTOP_WRITE_RETRY_MS),
+            );
           }
         }
       }
@@ -1070,20 +1236,31 @@ export async function startSandboxCallbackBridgeWorker(input: {
         : maxEnvelopeBytes;
       if (envelopeBytes > maxEnvelopeBytes) {
         await finalize({
-          id: fileName.replace(/\.json$/i, ""), status: 413,
+          id: fileName.replace(/\.json$/i, ""),
+          status: 413,
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ error: "Bridge request envelope exceeded the configured size limit." }),
+          body: JSON.stringify({
+            error:
+              "Bridge request envelope exceeded the configured size limit.",
+          }),
           completedAt: new Date().toISOString(),
         });
         return;
       }
-      const readLimit = Number.isSafeInteger(envelopeBytes) && envelopeBytes >= 0
-        ? Math.min(envelopeBytes, maxEnvelopeBytes) : maxEnvelopeBytes;
+      const readLimit =
+        Number.isSafeInteger(envelopeBytes) && envelopeBytes >= 0
+          ? Math.min(envelopeBytes, maxEnvelopeBytes)
+          : maxEnvelopeBytes;
       if (!envelopeReadReservation.reserve(6 * readLimit)) {
-        await finalize({ id: fileName.replace(/\.json$/i, ""), status: 503,
+        await finalize({
+          id: fileName.replace(/\.json$/i, ""),
+          status: 503,
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ error: "Bridge host body capacity is busy. Retry later." }),
-          completedAt: new Date().toISOString() });
+          body: JSON.stringify({
+            error: "Bridge host body capacity is busy. Retry later.",
+          }),
+          completedAt: new Date().toISOString(),
+        });
         return;
       }
       let raw: string;
@@ -1096,7 +1273,9 @@ export async function startSandboxCallbackBridgeWorker(input: {
         // vanished and skip quietly instead of escalating into a recovery
         // pass. A file that is still listed rethrows, so a real read fault
         // keeps its existing handling.
-        const remaining = await input.client.listJsonFiles(directories.requestsDir).catch(() => null);
+        const remaining = await input.client
+          .listJsonFiles(directories.requestsDir)
+          .catch(() => null);
         if (remaining !== null && !remaining.includes(fileName)) {
           return;
         }
@@ -1104,7 +1283,8 @@ export async function startSandboxCallbackBridgeWorker(input: {
       }
       let request: SandboxCallbackBridgeRequest;
       try {
-        if (Buffer.byteLength(raw) > maxEnvelopeBytes) throw new Error("Bridge envelope too large");
+        if (Buffer.byteLength(raw) > maxEnvelopeBytes)
+          throw new Error("Bridge envelope too large");
         request = JSON.parse(raw) as SandboxCallbackBridgeRequest;
         decodeSandboxBridgeBody(request, maxBodyBytes);
       } catch {
@@ -1122,11 +1302,20 @@ export async function startSandboxCallbackBridgeWorker(input: {
       // Keep only the actual request allocation reserved while forwarding;
       // an abandoned small request must not retain a maximum-sized reservation.
       envelopeReadReservation.release();
-      if (!reservation.reserve(4 * Buffer.byteLength(raw) + 2 * Buffer.byteLength(request.body))) {
-        await finalize({ id: request.id, status: 503,
+      if (
+        !reservation.reserve(
+          4 * Buffer.byteLength(raw) + 2 * Buffer.byteLength(request.body),
+        )
+      ) {
+        await finalize({
+          id: request.id,
+          status: 503,
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ error: "Bridge host body capacity is busy. Retry later." }),
-          completedAt: new Date().toISOString() });
+          body: JSON.stringify({
+            error: "Bridge host body capacity is busy. Retry later.",
+          }),
+          completedAt: new Date().toISOString(),
+        });
         return;
       }
       const denialReason = await authorizeRequest(request);
@@ -1156,16 +1345,31 @@ export async function startSandboxCallbackBridgeWorker(input: {
       let handlerReturned = false;
       try {
         const { bodyEncoding, ...forwardRequest } = request;
-        const result = await input.handleRequest({ ...forwardRequest,
-          body: bodyEncoding === "base64" ? decodeSandboxBridgeBody(request, maxBodyBytes) : request.body,
-        }, { signal: guard.controller.signal, reservation });
+        const result = await input.handleRequest(
+          {
+            ...forwardRequest,
+            body:
+              bodyEncoding === "base64"
+                ? decodeSandboxBridgeBody(request, maxBodyBytes)
+                : request.body,
+          },
+          { signal: guard.controller.signal, reservation },
+        );
         handlerReturned = true;
         const responseBytes = Buffer.byteLength(result.body ?? "");
-        if (responseBytes > maxBodyBytes) throw new Error("Bridge response body exceeded the configured size limit.");
-        if (!reservation.reserve(4 * sandboxBridgeEnvelopeLimit(responseBytes))) {
+        if (responseBytes > maxBodyBytes)
+          throw new Error(
+            "Bridge response body exceeded the configured size limit.",
+          );
+        if (
+          !reservation.reserve(4 * sandboxBridgeEnvelopeLimit(responseBytes))
+        ) {
           throw new Error("Bridge host response body capacity is busy.");
         }
-        const responseBody = encodeSandboxBridgeBody(result.body ?? "", maxBodyBytes);
+        const responseBody = encodeSandboxBridgeBody(
+          result.body ?? "",
+          maxBodyBytes,
+        );
         response = {
           id: request.id,
           status: result.status,
@@ -1187,7 +1391,11 @@ export async function startSandboxCallbackBridgeWorker(input: {
         // the outcome indeterminate. The caller must not retry a 504 from the
         // bridge, unlike the retry-safe 503 that the recovery path writes only
         // before the host operation starts.
-        if (guard.controller.signal.aborted || (handlerReturned && !["GET", "HEAD", "OPTIONS", "TRACE"].includes(request.method))) {
+        if (
+          guard.controller.signal.aborted ||
+          (handlerReturned &&
+            !["GET", "HEAD", "OPTIONS", "TRACE"].includes(request.method))
+        ) {
           response = {
             id: request.id,
             status: 504,
@@ -1225,7 +1433,10 @@ export async function startSandboxCallbackBridgeWorker(input: {
       // so the guard must stay in the map. The poll loop then skips the file and
       // does not re-run a possibly-committed mutation before the backstop writes
       // its 504.
-      if (guard.backstopTimer === undefined && inFlightRequestGuards.get(fileName) === guard) {
+      if (
+        guard.backstopTimer === undefined &&
+        inFlightRequestGuards.get(fileName) === guard
+      ) {
         inFlightRequestGuards.delete(fileName);
       }
     }
@@ -1249,21 +1460,35 @@ export async function startSandboxCallbackBridgeWorker(input: {
     const requestPath = path.posix.join(directories.requestsDir, fileName);
     const responsePath = path.posix.join(directories.responsesDir, fileName);
     const requestId = fileName.replace(/\.json$/i, "") || randomUUID();
-    for (let attempt = 1; attempt <= MAX_BACKSTOP_WRITE_ATTEMPTS; attempt += 1) {
+    for (
+      let attempt = 1;
+      attempt <= MAX_BACKSTOP_WRITE_ATTEMPTS;
+      attempt += 1
+    ) {
       try {
         await withTimeout(
-          writeBridgeResponse(input.client, requestPath, responsePath, {
-            id: requestId,
-            status: 504,
-            headers: {
-              "content-type": "application/json",
-              "x-taskcore-bridge-outcome": "indeterminate",
+          writeBridgeResponse(
+            input.client,
+            requestPath,
+            responsePath,
+            {
+              id: requestId,
+              status: 504,
+              headers: {
+                "content-type": "application/json",
+                "x-taskcore-bridge-outcome": "indeterminate",
+              },
+              body: JSON.stringify({
+                error: message,
+                outcome: "indeterminate",
+                retryable: false,
+              }),
+              completedAt: new Date().toISOString(),
             },
-            body: JSON.stringify({ error: message, outcome: "indeterminate", retryable: false }),
-            completedAt: new Date().toISOString(),
-          }, {
-            requireRequestPath: false,
-          }),
+            {
+              requireRequestPath: false,
+            },
+          ),
           iterationTimeoutMs,
           `Sandbox callback bridge write 504 backstop for ${requestId}`,
         );
@@ -1276,7 +1501,9 @@ export async function startSandboxCallbackBridgeWorker(input: {
           `[taskcore] sandbox callback bridge failed to write 504 backstop for ${requestId} (attempt ${attempt}/${MAX_BACKSTOP_WRITE_ATTEMPTS}): ${error instanceof Error ? error.message : String(error)}`,
         );
         if (attempt < MAX_BACKSTOP_WRITE_ATTEMPTS) {
-          await new Promise((resolve) => setTimeout(resolve, BACKSTOP_WRITE_RETRY_MS));
+          await new Promise((resolve) =>
+            setTimeout(resolve, BACKSTOP_WRITE_RETRY_MS),
+          );
         }
       }
     }
@@ -1361,7 +1588,11 @@ export async function startSandboxCallbackBridgeWorker(input: {
     ).catch(() => [] as string[]);
     for (const fileName of fileNames) {
       const guard = inFlightRequestGuards.get(fileName);
-      if (guard && guard.claim === "handler" && (options.abandonInFlight || guard.controller.signal.aborted)) {
+      if (
+        guard &&
+        guard.claim === "handler" &&
+        (options.abandonInFlight || guard.controller.signal.aborted)
+      ) {
         // The handler already started this request's host operation, or it already
         // finalized the request. The timeout and watchdog cannot cancel a host
         // operation that is in flight. A competing 503 here makes the caller retry
@@ -1414,31 +1645,45 @@ export async function startSandboxCallbackBridgeWorker(input: {
       // request is unclaimed or abandoned, so its host mutation never ran; a later
       // 503 stays exactly-once.
       let wrote503 = false;
-      let lastWriteError = "Sandbox callback bridge could not write the recovery 503.";
-      for (let attempt = 1; attempt <= MAX_BACKSTOP_WRITE_ATTEMPTS; attempt += 1) {
+      let lastWriteError =
+        "Sandbox callback bridge could not write the recovery 503.";
+      for (
+        let attempt = 1;
+        attempt <= MAX_BACKSTOP_WRITE_ATTEMPTS;
+        attempt += 1
+      ) {
         try {
           await withTimeout(
-            writeBridgeResponse(input.client, requestPath, responsePath, {
-              id: responseId,
-              status: 503,
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ error: message }),
-              completedAt: new Date().toISOString(),
-            }, {
-              requireRequestPath: false,
-            }),
+            writeBridgeResponse(
+              input.client,
+              requestPath,
+              responsePath,
+              {
+                id: responseId,
+                status: 503,
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ error: message }),
+                completedAt: new Date().toISOString(),
+              },
+              {
+                requireRequestPath: false,
+              },
+            ),
             iterationTimeoutMs,
             `Sandbox callback bridge write 503 for ${requestId}`,
           );
           wrote503 = true;
           break;
         } catch (error) {
-          lastWriteError = error instanceof Error ? error.message : String(error);
+          lastWriteError =
+            error instanceof Error ? error.message : String(error);
           console.warn(
             `[taskcore] sandbox callback bridge failed to write recovery 503 for ${requestId} (attempt ${attempt}/${MAX_BACKSTOP_WRITE_ATTEMPTS}): ${lastWriteError}`,
           );
           if (attempt < MAX_BACKSTOP_WRITE_ATTEMPTS) {
-            await new Promise((resolve) => setTimeout(resolve, BACKSTOP_WRITE_RETRY_MS));
+            await new Promise((resolve) =>
+              setTimeout(resolve, BACKSTOP_WRITE_RETRY_MS),
+            );
           }
         }
       }
@@ -1463,9 +1708,12 @@ export async function startSandboxCallbackBridgeWorker(input: {
   const surfaceRunError = async (error: Error) => {
     if (input.runtimeSpan) {
       try {
-        await input.runtimeSpan(CALLBACK_BRIDGE_WORKER_FAILED_SPAN, async () => {
-          throw error;
-        });
+        await input.runtimeSpan(
+          CALLBACK_BRIDGE_WORKER_FAILED_SPAN,
+          async () => {
+            throw error;
+          },
+        );
       } catch {
         // `runtimeSpan` re-throws after it records the failed span. The error is
         // now on the trace; swallow it here so the worker recovery continues.
@@ -1482,7 +1730,10 @@ export async function startSandboxCallbackBridgeWorker(input: {
   let watchdogTripInFlight = false;
   // Check often enough to fire soon after the threshold, but not so often that
   // the check adds load. One fifth of the threshold, with a 10ms floor.
-  const watchdogCheckIntervalMs = Math.max(10, Math.floor(watchdogTimeoutMs / 5));
+  const watchdogCheckIntervalMs = Math.max(
+    10,
+    Math.floor(watchdogTimeoutMs / 5),
+  );
 
   const handleWatchdogTrip = async (idleMs: number) => {
     const message = `Sandbox callback bridge made no successful poll iteration for ${idleMs}ms; the sandbox connection is unresponsive.`;
@@ -1502,161 +1753,173 @@ export async function startSandboxCallbackBridgeWorker(input: {
   // so each loop `sandbox.exec` span must not parent to the ended step or copy
   // its `criticalPath` flag. `runWithoutActiveStep` empties the store for the
   // loop only; Node keeps the empty store on every later poll continuation.
-  const loop = runWithoutActiveStep(() => (async () => {
-    // The watchdog runs on its own timer, so it fires even while the loop is
-    // stuck on an awaited client call. It is the backstop for a hang the
-    // per-iteration timeout does not catch. `unref` keeps it from holding the
-    // process open. The loop `finally` clears it on every exit.
-    const watchdogTimer = setInterval(() => {
-      if (settled || stopping) return;
-      const idleMs = Date.now() - lastSuccessfulIterationAt;
-      if (idleMs < watchdogTimeoutMs) return;
-      // Fire once per hang period. Re-arm only after the loop advances
-      // `lastSuccessfulIterationAt` past the last trip (a new successful
-      // iteration), so a persistent hang never fires the watchdog repeatedly.
-      if (watchdogTrippedAt !== null && watchdogTrippedAt >= lastSuccessfulIterationAt) return;
-      if (watchdogTripInFlight) return;
-      watchdogTrippedAt = Date.now();
-      watchdogTripInFlight = true;
-      void handleWatchdogTrip(idleMs).finally(() => {
-        watchdogTripInFlight = false;
-      });
-    }, watchdogCheckIntervalMs);
-    if (typeof watchdogTimer.unref === "function") {
-      watchdogTimer.unref();
-    }
-    try {
-      // Consecutive transient poll failures. A single failed list call — one
-      // reset or slow sandbox exec — must not end the relay for the rest of the
-      // run: the in-sandbox gateway keeps queueing requests, so a dead loop
-      // strands every later API call from the agent (its status writes then look
-      // like connection failures and the issue loses its disposition). Back off
-      // and retry the poll instead. The watchdog stays the escalation path for a
-      // sustained outage — it fires after `watchdogTimeoutMs` without a
-      // successful iteration and fails the queued requests fast, while this loop
-      // keeps probing for recovery.
-      let consecutivePollFailures = 0;
-      while (true) {
-        let fileNames: string[];
-        try {
-          fileNames = await withTimeout(
-            input.client.listJsonFiles(directories.requestsDir),
-            iterationTimeoutMs,
-            "Sandbox callback bridge list requests",
-          );
-          consecutivePollFailures = 0;
-        } catch (error) {
-          if (stopping) {
-            break;
-          }
-          consecutivePollFailures += 1;
-          const message = `${buildWorkerFailureMessage(error)} (transient poll failure ${consecutivePollFailures}; retrying)`;
-          if (consecutivePollFailures === 1) {
-            // Put the first failure of a streak on the run trace; later repeats
-            // only warn, so a flapping channel does not spam failed spans.
-            await surfaceRunError(new Error(message));
-          } else {
-            console.warn(`[taskcore] ${message}`);
-          }
-          const backoffMs = Math.min(
-            pollIntervalMs * 2 ** consecutivePollFailures,
-            MAX_TRANSIENT_ITERATION_BACKOFF_MS,
-          );
-          await new Promise((resolve) => setTimeout(resolve, backoffMs));
-          continue;
-        }
-        // A file whose attempt is still in flight (or waiting on its 504
-        // backstop) is not actionable: `processRequestFile` would skip it via
-        // the guard map. Treat an all-guarded listing like an empty one and
-        // sleep a poll interval. Re-listing immediately would spin the loop —
-        // an exec storm against a real sandbox channel, and with an in-memory
-        // client a pure-microtask loop that starves every timer in the process
-        // (including the guard's own backstop and abort timers).
-        const actionableFileNames = fileNames.filter((fileName) => !inFlightRequestGuards.has(fileName));
-        if (actionableFileNames.length === 0) {
-          lastSuccessfulIterationAt = Date.now();
-          if (stopping) {
-            break;
-          }
-          await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
-          continue;
-        }
-        for (const fileName of actionableFileNames) {
-          if (stopping && Date.now() >= stopDeadline) break;
-          inFlight += 1;
-          try {
-            // A request is run-time work, not startup work. Wrap it in a
-            // `sandbox.callbackBridge.relayRequest` span, so its read, write, and
-            // remove execs group under one named span that parents to the live
-            // run span. The span runner reads the run parent per request: the
-            // live parent switches to `agent.turn` during the turn and back to
-            // `task.run` after it. Without a runner, the request runs under the
-            // run parent with no wrapper span, exactly like the earlier behavior.
-            // The per-iteration timeout wraps the whole request, so a hung
-            // request rejects and the catch below runs the recovery pass.
-            await withTimeout(
-              input.runtimeSpan
-                ? input.runtimeSpan(CALLBACK_BRIDGE_RELAY_REQUEST_SPAN, () =>
-                    processRequestFile(fileName),
-                  )
-                : runWithRuntimeParent(input.getRuntimeParentContext?.(), () =>
-                    processRequestFile(fileName),
-                  ),
-              iterationTimeoutMs,
-              `Sandbox callback bridge process request ${fileName}`,
-            );
-            lastSuccessfulIterationAt = Date.now();
-          } catch (error) {
-            // A single request attempt failed or hung. Run the same recovery
-            // pass the loop previously died on — abort the in-flight handler
-            // (its 504 backstop keeps the caller from stranding) and 503 the
-            // unclaimed queued requests — but keep the loop alive afterward. A
-            // caller that sees the retry-safe 503 re-queues, and the recovered
-            // loop serves the retry; the old terminal catch left every later
-            // request to strand instead.
-            const message = buildWorkerFailureMessage(error);
-            await surfaceRunError(new Error(message));
-            try {
-              await failPendingRequests(message, { abandonInFlight: true });
-            } catch (failPendingError) {
-              console.warn(
-                `[taskcore] sandbox callback bridge failed to abort queued requests after a request failure: ${failPendingError instanceof Error ? failPendingError.message : String(failPendingError)}`,
-              );
-            }
-          } finally {
-            inFlight -= 1;
-          }
-        }
-        lastSuccessfulIterationAt = Date.now();
-        if (stopping && Date.now() >= stopDeadline) {
-          break;
-        }
+  const loop = runWithoutActiveStep(() =>
+    (async () => {
+      // The watchdog runs on its own timer, so it fires even while the loop is
+      // stuck on an awaited client call. It is the backstop for a hang the
+      // per-iteration timeout does not catch. `unref` keeps it from holding the
+      // process open. The loop `finally` clears it on every exit.
+      const watchdogTimer = setInterval(() => {
+        if (settled || stopping) return;
+        const idleMs = Date.now() - lastSuccessfulIterationAt;
+        if (idleMs < watchdogTimeoutMs) return;
+        // Fire once per hang period. Re-arm only after the loop advances
+        // `lastSuccessfulIterationAt` past the last trip (a new successful
+        // iteration), so a persistent hang never fires the watchdog repeatedly.
+        if (
+          watchdogTrippedAt !== null &&
+          watchdogTrippedAt >= lastSuccessfulIterationAt
+        )
+          return;
+        if (watchdogTripInFlight) return;
+        watchdogTrippedAt = Date.now();
+        watchdogTripInFlight = true;
+        void handleWatchdogTrip(idleMs).finally(() => {
+          watchdogTripInFlight = false;
+        });
+      }, watchdogCheckIntervalMs);
+      if (typeof watchdogTimer.unref === "function") {
+        watchdogTimer.unref();
       }
-    } catch (error) {
-      const message = buildWorkerFailureMessage(error);
-      await surfaceRunError(new Error(message));
       try {
-        await failPendingRequests(message, { abandonInFlight: true });
-      } catch (failPendingError) {
-        console.warn(
-          `[taskcore] sandbox callback bridge failed to abort queued requests after worker failure: ${failPendingError instanceof Error ? failPendingError.message : String(failPendingError)}`,
-        );
+        // Consecutive transient poll failures. A single failed list call — one
+        // reset or slow sandbox exec — must not end the relay for the rest of the
+        // run: the in-sandbox gateway keeps queueing requests, so a dead loop
+        // strands every later API call from the agent (its status writes then look
+        // like connection failures and the issue loses its disposition). Back off
+        // and retry the poll instead. The watchdog stays the escalation path for a
+        // sustained outage — it fires after `watchdogTimeoutMs` without a
+        // successful iteration and fails the queued requests fast, while this loop
+        // keeps probing for recovery.
+        let consecutivePollFailures = 0;
+        while (true) {
+          let fileNames: string[];
+          try {
+            fileNames = await withTimeout(
+              input.client.listJsonFiles(directories.requestsDir),
+              iterationTimeoutMs,
+              "Sandbox callback bridge list requests",
+            );
+            consecutivePollFailures = 0;
+          } catch (error) {
+            if (stopping) {
+              break;
+            }
+            consecutivePollFailures += 1;
+            const message = `${buildWorkerFailureMessage(error)} (transient poll failure ${consecutivePollFailures}; retrying)`;
+            if (consecutivePollFailures === 1) {
+              // Put the first failure of a streak on the run trace; later repeats
+              // only warn, so a flapping channel does not spam failed spans.
+              await surfaceRunError(new Error(message));
+            } else {
+              console.warn(`[taskcore] ${message}`);
+            }
+            const backoffMs = Math.min(
+              pollIntervalMs * 2 ** consecutivePollFailures,
+              MAX_TRANSIENT_ITERATION_BACKOFF_MS,
+            );
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+            continue;
+          }
+          // A file whose attempt is still in flight (or waiting on its 504
+          // backstop) is not actionable: `processRequestFile` would skip it via
+          // the guard map. Treat an all-guarded listing like an empty one and
+          // sleep a poll interval. Re-listing immediately would spin the loop —
+          // an exec storm against a real sandbox channel, and with an in-memory
+          // client a pure-microtask loop that starves every timer in the process
+          // (including the guard's own backstop and abort timers).
+          const actionableFileNames = fileNames.filter(
+            (fileName) => !inFlightRequestGuards.has(fileName),
+          );
+          if (actionableFileNames.length === 0) {
+            lastSuccessfulIterationAt = Date.now();
+            if (stopping) {
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+            continue;
+          }
+          for (const fileName of actionableFileNames) {
+            if (stopping && Date.now() >= stopDeadline) break;
+            inFlight += 1;
+            try {
+              // A request is run-time work, not startup work. Wrap it in a
+              // `sandbox.callbackBridge.relayRequest` span, so its read, write, and
+              // remove execs group under one named span that parents to the live
+              // run span. The span runner reads the run parent per request: the
+              // live parent switches to `agent.turn` during the turn and back to
+              // `task.run` after it. Without a runner, the request runs under the
+              // run parent with no wrapper span, exactly like the earlier behavior.
+              // The per-iteration timeout wraps the whole request, so a hung
+              // request rejects and the catch below runs the recovery pass.
+              await withTimeout(
+                input.runtimeSpan
+                  ? input.runtimeSpan(CALLBACK_BRIDGE_RELAY_REQUEST_SPAN, () =>
+                      processRequestFile(fileName),
+                    )
+                  : runWithRuntimeParent(
+                      input.getRuntimeParentContext?.(),
+                      () => processRequestFile(fileName),
+                    ),
+                iterationTimeoutMs,
+                `Sandbox callback bridge process request ${fileName}`,
+              );
+              lastSuccessfulIterationAt = Date.now();
+            } catch (error) {
+              // A single request attempt failed or hung. Run the same recovery
+              // pass the loop previously died on — abort the in-flight handler
+              // (its 504 backstop keeps the caller from stranding) and 503 the
+              // unclaimed queued requests — but keep the loop alive afterward. A
+              // caller that sees the retry-safe 503 re-queues, and the recovered
+              // loop serves the retry; the old terminal catch left every later
+              // request to strand instead.
+              const message = buildWorkerFailureMessage(error);
+              await surfaceRunError(new Error(message));
+              try {
+                await failPendingRequests(message, { abandonInFlight: true });
+              } catch (failPendingError) {
+                console.warn(
+                  `[taskcore] sandbox callback bridge failed to abort queued requests after a request failure: ${failPendingError instanceof Error ? failPendingError.message : String(failPendingError)}`,
+                );
+              }
+            } finally {
+              inFlight -= 1;
+            }
+          }
+          lastSuccessfulIterationAt = Date.now();
+          if (stopping && Date.now() >= stopDeadline) {
+            break;
+          }
+        }
+      } catch (error) {
+        const message = buildWorkerFailureMessage(error);
+        await surfaceRunError(new Error(message));
+        try {
+          await failPendingRequests(message, { abandonInFlight: true });
+        } catch (failPendingError) {
+          console.warn(
+            `[taskcore] sandbox callback bridge failed to abort queued requests after worker failure: ${failPendingError instanceof Error ? failPendingError.message : String(failPendingError)}`,
+          );
+        }
+      } finally {
+        clearInterval(watchdogTimer);
+        settled = true;
+        if (settleResolve) {
+          settleResolve();
+        }
       }
-    } finally {
-      clearInterval(watchdogTimer);
-      settled = true;
-      if (settleResolve) {
-        settleResolve();
-      }
-    }
-  })());
+    })(),
+  );
 
   void loop;
 
   return {
     stop: async (options = {}) => {
       stopping = true;
-      const drainMs = normalizeTimeoutMs(options.drainTimeoutMs, DEFAULT_BRIDGE_STOP_TIMEOUT_MS);
+      const drainMs = normalizeTimeoutMs(
+        options.drainTimeoutMs,
+        DEFAULT_BRIDGE_STOP_TIMEOUT_MS,
+      );
       stopDeadline = Date.now() + drainMs;
       if (!settled) {
         await Promise.race([
@@ -1664,7 +1927,9 @@ export async function startSandboxCallbackBridgeWorker(input: {
           new Promise<void>((resolve) => setTimeout(resolve, drainMs)),
         ]);
       }
-      await failPendingRequests("Bridge worker stopped before request could be handled.");
+      await failPendingRequests(
+        "Bridge worker stopped before request could be handled.",
+      );
     },
   };
 }
@@ -1700,11 +1965,16 @@ export async function syncRemoteTextFileWithHashSkip(input: {
   timeoutMs?: number | null;
   shellCommand?: "bash" | "sh" | null;
 }): Promise<{ uploaded: boolean; sha256: string }> {
-  const timeoutMs = normalizeTimeoutMs(input.timeoutMs, DEFAULT_BRIDGE_RESPONSE_TIMEOUT_MS);
+  const timeoutMs = normalizeTimeoutMs(
+    input.timeoutMs,
+    DEFAULT_BRIDGE_RESPONSE_TIMEOUT_MS,
+  );
   const shellCommand = preferredShellForSandbox(input.shellCommand);
   const remotePartial = `${input.remotePath}.partial`;
   const remoteUploadPath = `${input.remotePath}.taskcore-upload.b64`;
-  const base64Body = toBuffer(Buffer.from(input.body, "utf8")).toString("base64");
+  const base64Body = toBuffer(Buffer.from(input.body, "utf8")).toString(
+    "base64",
+  );
   const sha256 = createHash("sha256").update(input.body, "utf8").digest("hex");
 
   const syncResult = await runShell(
@@ -1729,35 +1999,38 @@ export async function syncRemoteTextFileWithHashSkip(input: {
       "  fi",
       "  return 127",
       "}",
-      "mkdir -p \"$remote_dir\"",
-      ...buildRemotePidLockAcquireScript("\"$lock_dir\"", `Timed out acquiring ${input.label} upload lock.`),
-      ...buildRemotePidLockCleanupScript("\"$lock_dir\"", [
-        "rm -f \"$remote_upload\" \"$remote_partial\"",
+      'mkdir -p "$remote_dir"',
+      ...buildRemotePidLockAcquireScript(
+        '"$lock_dir"',
+        `Timed out acquiring ${input.label} upload lock.`,
+      ),
+      ...buildRemotePidLockCleanupScript('"$lock_dir"', [
+        'rm -f "$remote_upload" "$remote_partial"',
       ]),
-      "current_sha=\"\"",
-      "if [ -f \"$remote_path\" ]; then",
-      "  current_sha=\"$(hash_file \"$remote_path\" 2>/dev/null)\" || current_sha=\"\"",
+      'current_sha=""',
+      'if [ -f "$remote_path" ]; then',
+      '  current_sha="$(hash_file "$remote_path" 2>/dev/null)" || current_sha=""',
       "fi",
-      "if [ -n \"$current_sha\" ] && [ \"$current_sha\" = \"$expected_sha\" ]; then",
+      'if [ -n "$current_sha" ] && [ "$current_sha" = "$expected_sha" ]; then',
       "  printf '{\"uploaded\":false}\\n'",
       "  exit 0",
       "fi",
-      "rm -f \"$remote_upload\" \"$remote_partial\"",
-      "cat > \"$remote_upload\"",
-      "base64 -d < \"$remote_upload\" > \"$remote_partial\"",
+      'rm -f "$remote_upload" "$remote_partial"',
+      'cat > "$remote_upload"',
+      'base64 -d < "$remote_upload" > "$remote_partial"',
       // Verify upload integrity. If neither sha256sum nor shasum is on PATH
       // (minimal Alpine/scratch images), surface the missing-tool error
       // instead of a misleading "sha mismatch" — the verify step is then
       // best-effort and we trust base64-decode + atomic rename below.
-      "if partial_sha=\"$(hash_file \"$remote_partial\" 2>/dev/null)\"; then",
-      "  if [ \"$partial_sha\" != \"$expected_sha\" ]; then",
+      'if partial_sha="$(hash_file "$remote_partial" 2>/dev/null)"; then',
+      '  if [ "$partial_sha" != "$expected_sha" ]; then',
       `    echo ${shellQuote(`${input.label} upload sha mismatch.`)} >&2`,
       "    exit 1",
       "  fi",
       "else",
       `  echo ${shellQuote(`${input.label} sha verify skipped: no sha256sum/shasum on remote.`)} >&2`,
       "fi",
-      "mv \"$remote_partial\" \"$remote_path\"",
+      'mv "$remote_partial" "$remote_path"',
       "printf '{\"uploaded\":true}\\n'",
     ].join("\n"),
     timeoutMs,
@@ -1786,8 +2059,14 @@ export async function syncSandboxCallbackBridgeEntrypoint(input: {
   timeoutMs?: number | null;
   shellCommand?: "bash" | "sh" | null;
 }): Promise<{ remoteEntrypoint: string; sha256: string; uploaded: boolean }> {
-  const remoteEntrypoint = path.posix.join(input.assetRemoteDir, SANDBOX_CALLBACK_BRIDGE_ENTRYPOINT);
-  const entrypointSource = await fs.readFile(input.bridgeAsset.entrypoint, "utf8");
+  const remoteEntrypoint = path.posix.join(
+    input.assetRemoteDir,
+    SANDBOX_CALLBACK_BRIDGE_ENTRYPOINT,
+  );
+  const entrypointSource = await fs.readFile(
+    input.bridgeAsset.entrypoint,
+    "utf8",
+  );
   const { uploaded, sha256 } = await syncRemoteTextFileWithHashSkip({
     runner: input.runner,
     remoteCwd: input.remoteCwd,
@@ -1796,7 +2075,10 @@ export async function syncSandboxCallbackBridgeEntrypoint(input: {
     body: entrypointSource,
     label: "Sandbox callback bridge entrypoint",
     action: "sync sandbox callback bridge entrypoint",
-    lockDir: path.posix.join(input.assetRemoteDir, ".taskcore-bridge-upload.lock"),
+    lockDir: path.posix.join(
+      input.assetRemoteDir,
+      ".taskcore-bridge-upload.lock",
+    ),
     timeoutMs: input.timeoutMs,
     shellCommand: input.shellCommand,
   });
@@ -1825,10 +2107,16 @@ export async function startSandboxCallbackBridgeServer(input: {
   maxQueueDepth?: number | null;
   maxBodyBytes?: number | null;
 }): Promise<StartedSandboxCallbackBridgeServer> {
-  const timeoutMs = normalizeTimeoutMs(input.timeoutMs, DEFAULT_BRIDGE_RESPONSE_TIMEOUT_MS);
+  const timeoutMs = normalizeTimeoutMs(
+    input.timeoutMs,
+    DEFAULT_BRIDGE_RESPONSE_TIMEOUT_MS,
+  );
   const shellCommand = preferredShellForSandbox(input.shellCommand);
   const directories = sandboxCallbackBridgeDirectories(input.queueDir);
-  let remoteEntrypoint = path.posix.join(input.assetRemoteDir, SANDBOX_CALLBACK_BRIDGE_ENTRYPOINT);
+  let remoteEntrypoint = path.posix.join(
+    input.assetRemoteDir,
+    SANDBOX_CALLBACK_BRIDGE_ENTRYPOINT,
+  );
   if (input.bridgeAsset) {
     const assetSync = await syncSandboxCallbackBridgeEntrypoint({
       runner: input.runner,
@@ -1861,7 +2149,7 @@ export async function startSandboxCallbackBridgeServer(input: {
           `>> ${shellQuote(directories.logFile)} 2>&1 < /dev/null &`,
         "pid=$!",
         `printf '%s\\n' \"$pid\" > ${shellQuote(directories.pidFile)}`,
-        "printf '{\"pid\":%s}\\n' \"$pid\"",
+        'printf \'{"pid":%s}\\n\' "$pid"',
       ].join("\n"),
     ),
     cwd: input.remoteCwd,
@@ -1897,21 +2185,38 @@ export async function startSandboxCallbackBridgeServer(input: {
     timeoutMs,
     shellCommand,
   );
-  requireSuccessfulResult("wait for sandbox callback bridge readiness", readyResult);
+  requireSuccessfulResult(
+    "wait for sandbox callback bridge readiness",
+    readyResult,
+  );
 
-  let readyData: { host?: string; port?: number; baseUrl?: string; pid?: number };
+  let readyData: {
+    host?: string;
+    port?: number;
+    baseUrl?: string;
+    pid?: number;
+  };
   try {
-    readyData = JSON.parse(readyResult.stdout.trim()) as { host?: string; port?: number; baseUrl?: string; pid?: number };
+    readyData = JSON.parse(readyResult.stdout.trim()) as {
+      host?: string;
+      port?: number;
+      baseUrl?: string;
+      pid?: number;
+    };
   } catch (error) {
     throw new Error(
       `Sandbox callback bridge wrote invalid readiness JSON: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 
-  const host = typeof readyData.host === "string" && readyData.host.trim().length > 0
-    ? readyData.host.trim()
-    : "127.0.0.1";
-  const port = typeof readyData.port === "number" && Number.isFinite(readyData.port) ? readyData.port : 0;
+  const host =
+    typeof readyData.host === "string" && readyData.host.trim().length > 0
+      ? readyData.host.trim()
+      : "127.0.0.1";
+  const port =
+    typeof readyData.port === "number" && Number.isFinite(readyData.port)
+      ? readyData.port
+      : 0;
   if (!port) {
     throw new Error("Sandbox callback bridge did not report a listening port.");
   }
@@ -1924,7 +2229,10 @@ export async function startSandboxCallbackBridgeServer(input: {
     baseUrl,
     host,
     port,
-    pid: typeof readyData.pid === "number" && Number.isFinite(readyData.pid) ? readyData.pid : 0,
+    pid:
+      typeof readyData.pid === "number" && Number.isFinite(readyData.pid)
+        ? readyData.pid
+        : 0,
     directories,
     stop: async () => {
       const stopResult = await runSandboxBridgeControlCommand(input.runner, {
@@ -1933,9 +2241,9 @@ export async function startSandboxCallbackBridgeServer(input: {
           [
             `if [ -s ${shellQuote(directories.pidFile)} ]; then`,
             `  pid="$(cat ${shellQuote(directories.pidFile)})"`,
-            "  kill \"$pid\" 2>/dev/null || true",
+            '  kill "$pid" 2>/dev/null || true',
             "  i=0",
-            "  while kill -0 \"$pid\" 2>/dev/null && [ \"$i\" -lt 40 ]; do",
+            '  while kill -0 "$pid" 2>/dev/null && [ "$i" -lt 40 ]; do',
             "    i=$((i + 1))",
             "    sleep 0.05",
             "  done",
@@ -1950,7 +2258,9 @@ export async function startSandboxCallbackBridgeServer(input: {
         timeoutMs,
       });
       if (stopResult.timedOut) {
-        throw new Error(buildRunnerFailureMessage("stop sandbox callback bridge", stopResult));
+        throw new Error(
+          buildRunnerFailureMessage("stop sandbox callback bridge", stopResult),
+        );
       }
     },
   };
@@ -1979,7 +2289,10 @@ export function compareBridgeTokensConstantTime(
   received: string | null | undefined,
 ): boolean {
   const expectedBytes = Buffer.from(expected, "utf8");
-  const receivedBytes = Buffer.from(typeof received === "string" ? received : "", "utf8");
+  const receivedBytes = Buffer.from(
+    typeof received === "string" ? received : "",
+    "utf8",
+  );
   if (expectedBytes.length !== receivedBytes.length) return false;
   return timingSafeEqual(expectedBytes, receivedBytes);
 }
@@ -2059,7 +2372,9 @@ function forwardOneHttp2Request(
   return new Promise((resolve, reject) => {
     const query = request.query.trim();
     const pathWithQuery =
-      query.length === 0 ? request.path : `${request.path}${query.startsWith("?") ? query : `?${query}`}`;
+      query.length === 0
+        ? request.path
+        : `${request.path}${query.startsWith("?") ? query : `?${query}`}`;
     const requestHeaders: http2.OutgoingHttpHeaders = {
       ":method": request.method,
       ":path": pathWithQuery,
@@ -2068,7 +2383,9 @@ function forwardOneHttp2Request(
     };
     let stream: http2.ClientHttp2Stream;
     try {
-      stream = session.request(requestHeaders, { endStream: request.body.length === 0 });
+      stream = session.request(requestHeaders, {
+        endStream: request.body.length === 0,
+      });
     } catch (error) {
       reject(error instanceof Error ? error : new Error(String(error)));
       return;
@@ -2084,19 +2401,34 @@ function forwardOneHttp2Request(
     };
     stream.on("response", (headers) => {
       const rawStatus = headers[":status"];
-      status = typeof rawStatus === "number" ? rawStatus : Number(rawStatus) || 502;
+      status =
+        typeof rawStatus === "number" ? rawStatus : Number(rawStatus) || 502;
       responseHeaders = {};
       for (const [key, value] of Object.entries(headers)) {
         if (key.startsWith(":") || value == null) continue;
-        responseHeaders[key] = Array.isArray(value) ? value.join(", ") : String(value);
+        responseHeaders[key] = Array.isArray(value)
+          ? value.join(", ")
+          : String(value);
       }
     });
     stream.on("data", (chunk: Buffer) => chunks.push(chunk));
-    stream.once("end", () => settle(() => resolve({ status, headers: responseHeaders, body: Buffer.concat(chunks) })));
-    stream.once("error", (error) =>
-      settle(() => reject(error instanceof Error ? error : new Error(String(error)))),
+    stream.once("end", () =>
+      settle(() =>
+        resolve({
+          status,
+          headers: responseHeaders,
+          body: Buffer.concat(chunks),
+        }),
+      ),
     );
-    stream.once("aborted", () => settle(() => reject(new Error("Bridge HTTP/2 stream aborted."))));
+    stream.once("error", (error) =>
+      settle(() =>
+        reject(error instanceof Error ? error : new Error(String(error))),
+      ),
+    );
+    stream.once("aborted", () =>
+      settle(() => reject(new Error("Bridge HTTP/2 stream aborted."))),
+    );
     if (request.body.length > 0) {
       stream.end(request.body);
     } else if (!stream.writableEnded) {
@@ -2116,8 +2448,10 @@ function forwardOneHttp2Request(
 export function createSandboxHttp2BridgeGateway(
   options: CreateSandboxHttp2BridgeGatewayOptions,
 ): SandboxHttp2BridgeGateway {
-  const authority = options.authority?.trim() || SANDBOX_HTTP2_GATEWAY_DEFAULT_AUTHORITY;
-  const headerAllowlist = options.headerAllowlist ?? DEFAULT_SANDBOX_CALLBACK_BRIDGE_HEADER_ALLOWLIST;
+  const authority =
+    options.authority?.trim() || SANDBOX_HTTP2_GATEWAY_DEFAULT_AUTHORITY;
+  const headerAllowlist =
+    options.headerAllowlist ?? DEFAULT_SANDBOX_CALLBACK_BRIDGE_HEADER_ALLOWLIST;
   const session = http2.connect(`http://${authority}`, {
     createConnection: options.createConnection,
   });
@@ -2130,11 +2464,18 @@ export function createSandboxHttp2BridgeGateway(
   });
 
   return {
-    forwardRequest(request: SandboxHttp2BridgeGatewayRequest): Promise<SandboxHttp2BridgeGatewayResponse> {
+    forwardRequest(
+      request: SandboxHttp2BridgeGatewayRequest,
+    ): Promise<SandboxHttp2BridgeGatewayResponse> {
       // The gateway check (accepted security fix 4 keeps this as well as the
       // independent host-side check): a request whose token does not match
       // the per-run bridge token never opens a stream.
-      if (!compareBridgeTokensConstantTime(options.bridgeToken, request.receivedToken)) {
+      if (
+        !compareBridgeTokensConstantTime(
+          options.bridgeToken,
+          request.receivedToken,
+        )
+      ) {
         return Promise.reject(new Error("Invalid bridge token."));
       }
       return forwardOneHttp2Request(session, {
@@ -2142,7 +2483,10 @@ export function createSandboxHttp2BridgeGateway(
         method: request.method,
         path: request.path,
         query: request.query,
-        headers: sanitizeSandboxCallbackBridgeHeaders(request.headers, headerAllowlist),
+        headers: sanitizeSandboxCallbackBridgeHeaders(
+          request.headers,
+          headerAllowlist,
+        ),
         body: request.body,
       });
     },

@@ -92,7 +92,6 @@ finalization ownership. Ownership loss, transport failures, missing sandboxes,
 and other unrelated errors retain their existing handling. No unsafe archive is
 extracted. No host path or link target is copied into the informational run event.
 
-
 ## Repairing a failed workspace export without rerunning the agent
 
 Transient export failures retry three times, then produce

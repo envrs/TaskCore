@@ -23,7 +23,7 @@ Either way: launch `claude` from inside that directory, type `/goal`, paste the 
 
 ## What to expect
 
-- Mostly unattended, roughly a day. Unlike Run 1, small visible deltas are *expected* (a border tone here, 1px of padding there) — the guardrails force every one to be exported for your review and individually revertable.
+- Mostly unattended, roughly a day. Unlike Run 1, small visible deltas are _expected_ (a border tone here, 1px of padding there) — the guardrails force every one to be exported for your review and individually revertable.
 - After the goal clears: open `doc/design/run3-review/` (before/after images for every story the run changed), skim, and revert any commit whose look you reject. Each conversion is its own commit.
 
 ## The /goal paste block

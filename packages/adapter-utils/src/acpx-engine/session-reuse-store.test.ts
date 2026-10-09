@@ -16,14 +16,21 @@ interface Entry {
   cleanupTimer?: ReturnType<typeof setTimeout>;
 }
 
-function hostConfig(entries: Map<string, Entry>, released: Entry[], idleMs: number) {
+function hostConfig(
+  entries: Map<string, Entry>,
+  released: Entry[],
+  idleMs: number,
+) {
   return {
     entries,
     now: () => Date.now(),
     idleMs,
     lastUsedAt: (entry: Entry) => entry.lastUsedAt,
     getTimer: (entry: Entry) => entry.cleanupTimer,
-    setTimer: (entry: Entry, timer: ReturnType<typeof setTimeout> | undefined) => {
+    setTimer: (
+      entry: Entry,
+      timer: ReturnType<typeof setTimeout> | undefined,
+    ) => {
       entry.cleanupTimer = timer;
     },
     perEntryTimer: true,
@@ -44,7 +51,9 @@ describe("session reuse store", () => {
   it("test_borrow_reads_without_removal_and_clears_the_per_entry_idle_timer", async () => {
     const entries = new Map<string, Entry>();
     const released: Entry[] = [];
-    const store = createSessionReuseStore<Entry>(hostConfig(entries, released, 1000));
+    const store = createSessionReuseStore<Entry>(
+      hostConfig(entries, released, 1000),
+    );
 
     const entry: Entry = { id: "a", lastUsedAt: Date.now() };
     store.save("k", entry);
@@ -100,7 +109,9 @@ describe("session reuse store", () => {
   it("test_save_arms_a_per_entry_idle_timer_that_discards_without_a_run", async () => {
     const entries = new Map<string, Entry>();
     const released: Entry[] = [];
-    const store = createSessionReuseStore<Entry>(hostConfig(entries, released, 1000));
+    const store = createSessionReuseStore<Entry>(
+      hostConfig(entries, released, 1000),
+    );
 
     const entry: Entry = { id: "a", lastUsedAt: Date.now() };
     store.save("k", entry);

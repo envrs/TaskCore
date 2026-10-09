@@ -87,7 +87,13 @@ function createFakeDriver(options: FakeDriverOptions = {}) {
       disposes.count += 1;
     },
   };
-  return { driver, writes, stops, disposes, resolveExit: (code: number) => resolveExit({ exitCode: code }) };
+  return {
+    driver,
+    writes,
+    stops,
+    disposes,
+    resolveExit: (code: number) => resolveExit({ exitCode: code }),
+  };
 }
 
 // Lets the pending microtasks run, so the code-input routine writes to the PTY.
@@ -99,7 +105,10 @@ describe("runSetupTokenLogin", () => {
   it("sends one login URL through onPrompt", async () => {
     // A success stream and a resolving sink, so the run reports success after the
     // runner delivers the credential.
-    const fake = createFakeDriver({ chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT], exitCode: 0 });
+    const fake = createFakeDriver({
+      chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT],
+      exitCode: 0,
+    });
     const onPrompt = vi.fn();
     const result = await runSetupTokenLogin(fake.driver, {
       onPrompt,
@@ -110,7 +119,10 @@ describe("runSetupTokenLogin", () => {
     expect(result.outcome).toBe("success");
     expect(result.promptSurfaced).toBe(true);
     expect(onPrompt).toHaveBeenCalledTimes(1);
-    expect(onPrompt).toHaveBeenCalledWith({ url: VALID_URL, prompt: SETUP_TOKEN_PROMPT });
+    expect(onPrompt).toHaveBeenCalledWith({
+      url: VALID_URL,
+      prompt: SETUP_TOKEN_PROMPT,
+    });
   });
 
   it("accepts one browser code and sends it to the prompt", async () => {
@@ -141,7 +153,10 @@ describe("runSetupTokenLogin", () => {
   it("never writes the code before it matches the prompt", async () => {
     // The driver streams noise with no prompt, then exits. The runner must never
     // send the code, because it never matched the prompt.
-    const fake = createFakeDriver({ chunks: ["unrelated output\n"], exitCode: 0 });
+    const fake = createFakeDriver({
+      chunks: ["unrelated output\n"],
+      exitCode: 0,
+    });
     const provideCode = vi.fn(async () => BROWSER_CODE);
     const result = await runSetupTokenLogin(fake.driver, {
       onPrompt: () => {},
@@ -241,7 +256,10 @@ describe("runSetupTokenLogin", () => {
     const trailingNoise = "unrelated output line\n".repeat(
       Math.ceil(CLAUDE_SETUP_TOKEN_MAX_BUFFER_CHARS / 10),
     );
-    const fake = createFakeDriver({ chunks: [`${PROMPT_OUTPUT}${trailingNoise}`], exitCode: 0 });
+    const fake = createFakeDriver({
+      chunks: [`${PROMPT_OUTPUT}${trailingNoise}`],
+      exitCode: 0,
+    });
     const onPrompt = vi.fn();
     const result = await runSetupTokenLogin(fake.driver, {
       onPrompt,
@@ -250,7 +268,10 @@ describe("runSetupTokenLogin", () => {
     });
     expect(result.promptSurfaced).toBe(true);
     expect(onPrompt).toHaveBeenCalledTimes(1);
-    expect(onPrompt).toHaveBeenCalledWith({ url: VALID_URL, prompt: SETUP_TOKEN_PROMPT });
+    expect(onPrompt).toHaveBeenCalledWith({
+      url: VALID_URL,
+      prompt: SETUP_TOKEN_PROMPT,
+    });
   });
 
   it("fails when a clean exit has no token block, even with a sink present", async () => {
@@ -273,7 +294,10 @@ describe("runSetupTokenLogin", () => {
   });
 
   it("delivers the de-wrapped token once through onCredential and zeros it after", async () => {
-    const fake = createFakeDriver({ chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT], exitCode: 0 });
+    const fake = createFakeDriver({
+      chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT],
+      exitCode: 0,
+    });
     // The sink copies the token value, because the runner zeros the buffer after
     // the delivery. The test reads the copy for the value and the original for the
     // zeroing proof.
@@ -299,7 +323,10 @@ describe("runSetupTokenLogin", () => {
 
   it("keeps the token out of every log, result, and error field", async () => {
     const logs: string[] = [];
-    const fake = createFakeDriver({ chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT], exitCode: 0 });
+    const fake = createFakeDriver({
+      chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT],
+      exitCode: 0,
+    });
     const result = await runSetupTokenLogin(fake.driver, {
       onPrompt: () => {},
       provideCode: async () => BROWSER_CODE,
@@ -319,7 +346,10 @@ describe("runSetupTokenLogin", () => {
     // The sink is mandatory for a successful run. With no sink the runner never
     // scans for the token and treats the clean exit as a failure, even when the
     // success block is present.
-    const fake = createFakeDriver({ chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT], exitCode: 0 });
+    const fake = createFakeDriver({
+      chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT],
+      exitCode: 0,
+    });
     const result = await runSetupTokenLogin(fake.driver, {
       onPrompt: () => {},
       provideCode: async () => BROWSER_CODE,
@@ -330,7 +360,10 @@ describe("runSetupTokenLogin", () => {
   });
 
   it("fails and zeros the token when the sink throws synchronously", async () => {
-    const fake = createFakeDriver({ chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT], exitCode: 0 });
+    const fake = createFakeDriver({
+      chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT],
+      exitCode: 0,
+    });
     let seen: Buffer | null = null;
     const result = await runSetupTokenLogin(fake.driver, {
       onPrompt: () => {},
@@ -350,7 +383,10 @@ describe("runSetupTokenLogin", () => {
   });
 
   it("fails and zeros the token when the sink rejects asynchronously", async () => {
-    const fake = createFakeDriver({ chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT], exitCode: 0 });
+    const fake = createFakeDriver({
+      chunks: [PROMPT_OUTPUT, SUCCESS_OUTPUT],
+      exitCode: 0,
+    });
     let seen: Buffer | null = null;
     const result = await runSetupTokenLogin(fake.driver, {
       onPrompt: () => {},

@@ -1,9 +1,11 @@
 # Expand Taskcore’s assistant MCP tools
 
 ## Outcome
+
 Outside assistants manage work and configuration as the connected person through the existing experimental MCP endpoint. Human attribution, company isolation, revocation, approval gates, native execution ownership and scheduling remain authoritative.
 
 ## Implementation plan
+
 - Add task update, finish and block tools; document writes and revisions; attachment upload/download links; deliverable registration/update; agent configuration and instructions; project creation/update/repositories; skill metadata/files; and explicitly registered API search/call.
 - Reuse domain routes and validation. Reject task transitions that bypass execution review. Documents and instruction/skill files use revision checks. Binary replacement creates a new attachment and updates the deliverable reference.
 - Keep taskcore:configure for agent/project/skill configuration internally. Per the subsequent user revision, one write-access checkbox approves both requested mutation scopes (checked by default for eligible roles). Existing grants do not gain authority. Exclude credentials, arbitrary commands, permission policies, agent creation, public skill sharing, approval decisions and runner lifecycle operations.
@@ -14,6 +16,7 @@ Outside assistants manage work and configuration as the connected person through
 - Narrow Cloud tenant transfer routing preserves host validation, header stripping and standby protection. Ordinary REST endpoints do not accept MCP tokens.
 
 ## Verification and delivery
+
 - Fresh core and Cloud worktrees. Preserve the existing experimental setting.
 - Cover company/role/scope restrictions, configure consent, feature off, revocation/expiry, human audit, idempotency and named/generic parity.
 - Cover dependency cycles, reassignment, finish/block, native contention and approval bypass rejection; document/instruction/skill revision conflicts.
@@ -23,6 +26,7 @@ Outside assistants manage work and configuration as the connected person through
 - Full repository checks, token gates, documentation, evidence and green reviewed PRs. Merging is a separate action.
 
 ## Execution record
+
 - Core: codex/expanded-assistant-mcp in the managed expanded-assistant-mcp worktree.
 - Cloud: codex/expanded-assistant-mcp in /private/tmp/taskcore-cloud-expanded-mcp.
 - Core PR: https://github.com/khulnasoft/taskcore/pull/15380; Cloud PR: https://github.com/khulnasoft/taskcore-cloud/pull/678. Neither is merged by this task.
@@ -32,4 +36,5 @@ Outside assistants manage work and configuration as the connected person through
 - Review fixes cover pending native retries, model-specific reasoning configuration and legacy instruction revision safety. Butter staging and final CI are separate delivery gates tracked in the PR verification sections.
 
 ## Consent revision
+
 - User requested one checkbox: **Write all of your Taskcore data**. It controls requested work and configuration scopes together in browser and device consent; there is no separate configuration checkbox. Viewer restrictions and already-issued grant scopes remain unchanged.

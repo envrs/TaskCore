@@ -132,11 +132,7 @@
       "id": "skills-and-teams",
       "title": "Skills, Skill Studio, and teams",
       "status": "partial",
-      "features": [
-        "skills.md",
-        "teams.md",
-        "questions-and-approvals.md"
-      ],
+      "features": ["skills.md", "teams.md", "questions-and-approvals.md"],
       "gap": "Main library/Studio/source/policy and CLI team-install paths are mapped. Full source-provider conflicts, harness sync, and remote package variants remain; catalog UI is not a current top-level route.",
       "paths": [
         "ui/src/pages/CompanySkills.production.tsx",
@@ -184,10 +180,7 @@
         "agents.md"
       ],
       "gap": "Formal board decisions and signoff have recipes; every approval payload/type and actor/host error permutation is not enumerated.",
-      "paths": [
-        "ui/src/pages/ApprovalDetail.tsx",
-        "ui/src/pages/Approvals.tsx"
-      ]
+      "paths": ["ui/src/pages/ApprovalDetail.tsx", "ui/src/pages/Approvals.tsx"]
     },
     {
       "id": "auth-and-access",
@@ -267,13 +260,9 @@
       "id": "artifacts",
       "title": "Artifacts and work products",
       "status": "partial",
-      "features": [
-        "documents-artifacts.md"
-      ],
+      "features": ["documents-artifacts.md"],
       "gap": "Document/attachment/library/work-product journeys are mapped; every media preview type, storage backend, annotation conflict, and runtime-resource lifecycle variant remains separate.",
-      "paths": [
-        "ui/src/pages/Artifacts.tsx"
-      ]
+      "paths": ["ui/src/pages/Artifacts.tsx"]
     },
     {
       "id": "routines-and-pipelines",
@@ -308,11 +297,7 @@
       "id": "secrets",
       "title": "Secrets and secret proposals",
       "status": "partial",
-      "features": [
-        "secrets.md",
-        "access.md",
-        "app-permissions.md"
-      ],
+      "features": ["secrets.md", "access.md", "app-permissions.md"],
       "gap": "Company/user/proposal/vault and runtime-binding paths are mapped; every secret provider, rotation scenario, and delivery context needs separate validation.",
       "paths": [
         "ui/src/pages/Secrets.tsx",
@@ -378,10 +363,7 @@
       "id": "labs-and-fallbacks",
       "title": "Developer labs and fallback pages",
       "status": "partial",
-      "features": [
-        "developer-labs.md",
-        "navigation-preferences.md"
-      ],
+      "features": ["developer-labs.md", "navigation-preferences.md"],
       "gap": "Developer and fallback surfaces are identified. Each synthetic fixture and performance budget is not a production journey and needs its own measurement.",
       "paths": [
         "ui/src/pages/BootstrapSetupUxLab.tsx",

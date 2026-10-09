@@ -9,7 +9,7 @@ write a wireframe, run QA acceptance, draft a release announcement. The Store is
 people (and agents) discover those skills, install them into a company, and manage them
 over time.
 
-If you want to *author* a skill, read [Writing a Skill](writing-a-skill). This page is
+If you want to _author_ a skill, read [Writing a Skill](writing-a-skill). This page is
 about the **store around** skills: where they come from, how they get into your company,
 and how you keep them current.
 
@@ -17,10 +17,10 @@ and how you keep them current.
 
 There are two distinct things people loosely call "the skills store":
 
-| Layer | What it is | Lives in |
-|---|---|---|
-| **The catalog** | A curated, read-only set of skills that ships with Taskcore | The `@taskcore/skills-catalog` package |
-| **Your company library** | The skills actually installed in *your* company, which agents can run | The `company_skills` database table |
+| Layer                    | What it is                                                            | Lives in                               |
+| ------------------------ | --------------------------------------------------------------------- | -------------------------------------- |
+| **The catalog**          | A curated, read-only set of skills that ships with Taskcore           | The `@taskcore/skills-catalog` package |
+| **Your company library** | The skills actually installed in _your_ company, which agents can run | The `company_skills` database table    |
 
 The catalog is the shelf you browse. Your company library is the cart you've checked
 out. Installing a catalog skill copies it into your company library, where you can edit,
@@ -57,11 +57,11 @@ Every catalog skill carries metadata used for discovery and safety:
 Because a skill can bundle more than prose, every skill is classified by how much trust
 its contents require. The level is **derived from the files**, not self-declared:
 
-| Trust level | Contains | Notes |
-|---|---|---|
-| `markdown_only` | Only `.md` files | Safest — pure instructions |
-| `assets` | Markdown plus images/PDFs/other static files | No executable code |
-| `scripts_executables` | Any script (`.sh`, `.js`, `.py`, `.ts`, …) | Highest scrutiny |
+| Trust level           | Contains                                     | Notes                      |
+| --------------------- | -------------------------------------------- | -------------------------- |
+| `markdown_only`       | Only `.md` files                             | Safest — pure instructions |
+| `assets`              | Markdown plus images/PDFs/other static files | No executable code         |
+| `scripts_executables` | Any script (`.sh`, `.js`, `.py`, `.ts`, …)   | Highest scrutiny           |
 
 GitHub sources support scripts after the existing content audit passes. Importing
 never executes scripts, hooks, dependency installers, or builds. Raw URL and
@@ -73,13 +73,13 @@ secrets, invalid paths, and oversized files are still rejected.
 A skill in your company library records where it originated. The Store shows this as a
 **source badge**:
 
-| Source type | Badge | Meaning |
-|---|---|---|
-| `catalog` | Taskcore / catalog | Installed from the bundled catalog |
-| `github` | GitHub | Imported from a GitHub repo (pinned to a commit) |
-| `skills_sh` | skills.sh | Imported via the [skills.sh](https://skills.sh) registry (resolves to GitHub) |
-| `url` | URL | Imported from a raw markdown URL |
-| `local_path` | Local | Created in-app or scanned from a project workspace on disk |
+| Source type  | Badge              | Meaning                                                                       |
+| ------------ | ------------------ | ----------------------------------------------------------------------------- |
+| `catalog`    | Taskcore / catalog | Installed from the bundled catalog                                            |
+| `github`     | GitHub             | Imported from a GitHub repo (pinned to a commit)                              |
+| `skills_sh`  | skills.sh          | Imported via the [skills.sh](https://skills.sh) registry (resolves to GitHub) |
+| `url`        | URL                | Imported from a raw markdown URL                                              |
+| `local_path` | Local              | Created in-app or scanned from a project workspace on disk                    |
 
 Git-backed sources **must resolve to a pinned 40-character commit SHA** before
 import. A moving branch cannot change what agents run until you refresh its source.
@@ -229,16 +229,16 @@ Progress contains metadata only, never package file contents.
 
 Source APIs live beneath `/api/companies/:companyId/skill-sources`:
 
-| Method/path | Purpose |
-|---|---|
-| `GET /` and `GET /:sourceId` | List sources and entries |
-| `GET /repositories` | Browse repositories through existing GitHub grants |
-| `POST /discover` | Discover and validate packages at one commit |
-| `POST /preview` | Preview an audited package file at an immutable commit using current caller access |
-| `POST /` | Import selected packages at the discovered commit |
-| `PATCH /:sourceId` | Save selection/exclusions and optional connection, with revision check |
-| `POST /:sourceId/refresh` | Refresh selected skills; discover new ones for review |
-| `DELETE /:sourceId` | Disconnect while retaining installed skills |
+| Method/path                  | Purpose                                                                            |
+| ---------------------------- | ---------------------------------------------------------------------------------- |
+| `GET /` and `GET /:sourceId` | List sources and entries                                                           |
+| `GET /repositories`          | Browse repositories through existing GitHub grants                                 |
+| `POST /discover`             | Discover and validate packages at one commit                                       |
+| `POST /preview`              | Preview an audited package file at an immutable commit using current caller access |
+| `POST /`                     | Import selected packages at the discovered commit                                  |
+| `PATCH /:sourceId`           | Save selection/exclusions and optional connection, with revision check             |
+| `POST /:sourceId/refresh`    | Refresh selected skills; discover new ones for review                              |
+| `DELETE /:sourceId`          | Disconnect while retaining installed skills                                        |
 
 ### Import from an external source
 
@@ -289,7 +289,7 @@ roll back.
 
 For skills installed from the catalog or an external source, the Store tracks the origin.
 The **update status** endpoint compares your installed copy against the latest upstream
-and reports whether an update is available, whether *you* have locally modified the skill
+and reports whether an update is available, whether _you_ have locally modified the skill
 (drift), and any hold reason that should block an automatic update.
 
 - Check: `GET /companies/:companyId/skills/:skillId/update-status`
@@ -329,10 +329,10 @@ review.
 
 Every company skill has a **sharing scope** that controls who can see it:
 
-| Scope | Visibility |
-|---|---|
-| `private` | Only the author/owner |
-| `company` | Everyone in the company |
+| Scope         | Visibility                                   |
+| ------------- | -------------------------------------------- |
+| `private`     | Only the author/owner                        |
+| `company`     | Everyone in the company                      |
 | `public_link` | Anyone with the generated public share token |
 
 Scope is set when creating, updating, or forking a skill, and the Store's discovery view
@@ -343,7 +343,7 @@ can filter by it.
 Installing a skill is not the same as an agent running it. At runtime, a company's
 installed skills are materialized into the agent's workspace as `SKILL.md` directories,
 and the agent's harness loads the **frontmatter `name` + `description`** of each skill as
-routing logic. The agent reads those one-line descriptions to decide *whether* a skill is
+routing logic. The agent reads those one-line descriptions to decide _whether_ a skill is
 relevant to the current task, and only then loads the full body. (This is why a skill's
 `description` should read as "what this does and when to use it" — it is the index the
 agent searches.)

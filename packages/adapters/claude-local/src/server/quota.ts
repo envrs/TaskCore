@@ -13,7 +13,8 @@ const CLAUDE_USAGE_SOURCE_CLI = "claude-cli";
 
 export function claudeConfigDir(): string {
   const fromEnv = process.env.CLAUDE_CONFIG_DIR;
-  if (typeof fromEnv === "string" && fromEnv.trim().length > 0) return fromEnv.trim();
+  if (typeof fromEnv === "string" && fromEnv.trim().length > 0)
+    return fromEnv.trim();
   return path.join(os.homedir(), ".claude");
 }
 
@@ -67,7 +68,11 @@ function trimToLatestUsagePanel(text: string): string | null {
   let tail = text.slice(settingsIndex);
   const tailLower = tail.toLowerCase();
   if (!tailLower.includes("usage")) return null;
-  if (!tailLower.includes("current session") && !tailLower.includes("loading usage")) return null;
+  if (
+    !tailLower.includes("current session") &&
+    !tailLower.includes("loading usage")
+  )
+    return null;
   const stopMarkers = [
     "status dialog dismissed",
     "checking for updates",
@@ -86,7 +91,9 @@ function trimToLatestUsagePanel(text: string): string | null {
   return tail;
 }
 
-async function readClaudeTokenFromFile(credPath: string): Promise<string | null> {
+async function readClaudeTokenFromFile(
+  credPath: string,
+): Promise<string | null> {
   let raw: string;
   try {
     raw = await fs.readFile(credPath, "utf8");
@@ -98,7 +105,8 @@ async function readClaudeTokenFromFile(credPath: string): Promise<string | null>
   // On macOS the CLI refreshes the Keychain item, not this file, so a file
   // whose token has expired is a stale leftover. Skip it so the caller can
   // fall through to a live credential instead of failing with a dead token.
-  if (credential.expiresAt != null && credential.expiresAt <= Date.now()) return null;
+  if (credential.expiresAt != null && credential.expiresAt <= Date.now())
+    return null;
   return credential.token;
 }
 
@@ -122,7 +130,13 @@ function parseClaudeCredential(raw: string): ClaudeCredential | null {
   const token = (oauth as Record<string, unknown>)["accessToken"];
   if (typeof token !== "string" || token.length === 0) return null;
   const expiresAt = (oauth as Record<string, unknown>)["expiresAt"];
-  return { token, expiresAt: typeof expiresAt === "number" && Number.isFinite(expiresAt) ? expiresAt : null };
+  return {
+    token,
+    expiresAt:
+      typeof expiresAt === "number" && Number.isFinite(expiresAt)
+        ? expiresAt
+        : null,
+  };
 }
 
 function parseClaudeCredentialToken(raw: string): string | null {
@@ -145,15 +159,21 @@ export async function readClaudeAuthStatus(): Promise<ClaudeAuthStatus | null> {
     const parsed = JSON.parse(stdout) as Record<string, unknown>;
     return {
       loggedIn: parsed.loggedIn === true,
-      authMethod: typeof parsed.authMethod === "string" ? parsed.authMethod : null,
-      subscriptionType: typeof parsed.subscriptionType === "string" ? parsed.subscriptionType : null,
+      authMethod:
+        typeof parsed.authMethod === "string" ? parsed.authMethod : null,
+      subscriptionType:
+        typeof parsed.subscriptionType === "string"
+          ? parsed.subscriptionType
+          : null,
     };
   } catch {
     return null;
   }
 }
 
-function describeClaudeSubscriptionAuth(status: ClaudeAuthStatus | null): string | null {
+function describeClaudeSubscriptionAuth(
+  status: ClaudeAuthStatus | null,
+): string | null {
   if (!status?.loggedIn || status.authMethod !== "claude.ai") return null;
   return status.subscriptionType
     ? `Claude is logged in via claude.ai (${status.subscriptionType})`
@@ -170,11 +190,19 @@ function isolatedKeychainService(configDir: string): string {
   return `Claude Code-credentials-${createHash("sha256").update(configDir).digest("hex").slice(0, 8)}`;
 }
 
-async function readClaudeTokenFromKeychain(service: string): Promise<string | null> {
+async function readClaudeTokenFromKeychain(
+  service: string,
+): Promise<string | null> {
   try {
-    const { stdout } = await execFileAsync("/usr/bin/security", ["find-generic-password", "-s", service, "-w"], { timeout: 10000, maxBuffer: 1024 * 1024 });
+    const { stdout } = await execFileAsync(
+      "/usr/bin/security",
+      ["find-generic-password", "-s", service, "-w"],
+      { timeout: 10000, maxBuffer: 1024 * 1024 },
+    );
     return parseClaudeCredentialToken(stdout);
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -183,12 +211,16 @@ async function readClaudeTokenFromKeychain(service: string): Promise<string | nu
  * consulted — never the unsuffixed item that holds the server operator's
  * machine-level login. Returns null off macOS.
  */
-export async function readIsolatedClaudeKeychainToken(loginHome: string): Promise<string | null> {
+export async function readIsolatedClaudeKeychainToken(
+  loginHome: string,
+): Promise<string | null> {
   if (process.platform !== "darwin") return null;
   return readClaudeTokenFromKeychain(isolatedKeychainService(loginHome));
 }
 
-export async function readClaudeToken(options: { allowKeychain?: boolean } = {}): Promise<string | null> {
+export async function readClaudeToken(
+  options: { allowKeychain?: boolean } = {},
+): Promise<string | null> {
   const configDir = claudeConfigDir();
   for (const filename of [".credentials.json", "credentials.json"]) {
     const token = await readClaudeTokenFromFile(path.join(configDir, filename));
@@ -229,8 +261,14 @@ interface AnthropicUsageResponse {
   extra_usage?: AnthropicExtraUsage | null;
 }
 
-function formatCurrencyAmount(value: number, currency: string | null | undefined): string {
-  const code = typeof currency === "string" && currency.trim().length > 0 ? currency.trim().toUpperCase() : "USD";
+function formatCurrencyAmount(
+  value: number,
+  currency: string | null | undefined,
+): string {
+  const code =
+    typeof currency === "string" && currency.trim().length > 0
+      ? currency.trim().toUpperCase()
+      : "USD";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: code,
@@ -255,30 +293,50 @@ function formatExtraUsageLabel(extraUsage: AnthropicExtraUsage): string | null {
 
 /** Convert a utilization value to a 0-100 integer percent. Returns null for null/undefined input.
  *  Handles both 0-1 fractions (legacy) and 0-100 percentages (current API). */
-export function toPercent(utilization: number | null | undefined): number | null {
+export function toPercent(
+  utilization: number | null | undefined,
+): number | null {
   if (utilization == null) return null;
-  return Math.min(100, Math.round(utilization < 1 ? utilization * 100 : utilization));
+  return Math.min(
+    100,
+    Math.round(utilization < 1 ? utilization * 100 : utilization),
+  );
 }
 
 /** fetch with an abort-based timeout so a hanging provider api doesn't block the response indefinitely */
-export async function fetchWithTimeout(url: string, init: RequestInit, ms = 8000): Promise<Response> {
+export async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  ms = 8000,
+): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
-    return await fetch(url, { ...init, signal: init.signal ? AbortSignal.any([init.signal, controller.signal]) : controller.signal });
+    return await fetch(url, {
+      ...init,
+      signal: init.signal
+        ? AbortSignal.any([init.signal, controller.signal])
+        : controller.signal,
+    });
   } finally {
     clearTimeout(timer);
   }
 }
 
-export async function fetchClaudeQuota(token: string, signal?: AbortSignal): Promise<QuotaWindow[]> {
-  const resp = await fetchWithTimeout("https://api.anthropic.com/api/oauth/usage", {
-    signal,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "anthropic-beta": "oauth-2025-04-20",
+export async function fetchClaudeQuota(
+  token: string,
+  signal?: AbortSignal,
+): Promise<QuotaWindow[]> {
+  const resp = await fetchWithTimeout(
+    "https://api.anthropic.com/api/oauth/usage",
+    {
+      signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "anthropic-beta": "oauth-2025-04-20",
+      },
     },
-  });
+  );
   if (!resp.ok) throw new Error(`anthropic usage api returned ${resp.status}`);
   const body = (await resp.json()) as AnthropicUsageResponse;
   const windows: QuotaWindow[] = [];
@@ -322,7 +380,10 @@ export async function fetchClaudeQuota(token: string, signal?: AbortSignal): Pro
   if (body.extra_usage != null) {
     windows.push({
       label: "Extra usage",
-      usedPercent: body.extra_usage.is_enabled === false ? null : toPercent(body.extra_usage.utilization),
+      usedPercent:
+        body.extra_usage.is_enabled === false
+          ? null
+          : toPercent(body.extra_usage.utilization),
       resetsAt: null,
       valueLabel:
         body.extra_usage.is_enabled === false
@@ -339,28 +400,32 @@ export async function fetchClaudeQuota(token: string, signal?: AbortSignal): Pro
 
 function usageOutputLooksRelevant(text: string): boolean {
   const normalized = normalizeForLabelSearch(text);
-  return normalized.includes("currentsession")
-    || normalized.includes("currentweek")
-    || normalized.includes("loadingusage")
-    || normalized.includes("failedtoloadusagedata")
-    || normalized.includes("tokenexpired")
-    || normalized.includes("authenticationerror")
-    || normalized.includes("ratelimited");
+  return (
+    normalized.includes("currentsession") ||
+    normalized.includes("currentweek") ||
+    normalized.includes("loadingusage") ||
+    normalized.includes("failedtoloadusagedata") ||
+    normalized.includes("tokenexpired") ||
+    normalized.includes("authenticationerror") ||
+    normalized.includes("ratelimited")
+  );
 }
 
 function usageOutputLooksComplete(text: string): boolean {
   const normalized = normalizeForLabelSearch(text);
   if (
-    normalized.includes("failedtoloadusagedata")
-    || normalized.includes("tokenexpired")
-    || normalized.includes("authenticationerror")
-    || normalized.includes("ratelimited")
+    normalized.includes("failedtoloadusagedata") ||
+    normalized.includes("tokenexpired") ||
+    normalized.includes("authenticationerror") ||
+    normalized.includes("ratelimited")
   ) {
     return true;
   }
-  return normalized.includes("currentsession")
-    && (normalized.includes("currentweek") || normalized.includes("extrausage"))
-    && /[0-9]{1,3}(?:\.[0-9]+)?%/i.test(text);
+  return (
+    normalized.includes("currentsession") &&
+    (normalized.includes("currentweek") || normalized.includes("extrausage")) &&
+    /[0-9]{1,3}(?:\.[0-9]+)?%/i.test(text)
+  );
 }
 
 function extractUsageError(text: string): string | null {
@@ -372,10 +437,17 @@ function extractUsageError(text: string): string | null {
   if (lower.includes("authentication_error")) {
     return "Claude CLI authentication error. Run `claude login`.";
   }
-  if (lower.includes("rate_limit_error") || lower.includes("rate limited") || compact.includes("ratelimited")) {
+  if (
+    lower.includes("rate_limit_error") ||
+    lower.includes("rate limited") ||
+    compact.includes("ratelimited")
+  ) {
     return "Claude CLI usage endpoint is rate limited right now. Please try again later.";
   }
-  if (lower.includes("failed to load usage data") || compact.includes("failedtoloadusagedata")) {
+  if (
+    lower.includes("failed to load usage data") ||
+    compact.includes("failedtoloadusagedata")
+  ) {
     return "Claude CLI could not load usage data. Open the CLI and retry `/usage`.";
   }
   return null;
@@ -388,7 +460,11 @@ function percentFromLine(line: string): number | null {
   if (!Number.isFinite(rawValue)) return null;
   const clamped = Math.min(100, Math.max(0, rawValue));
   const lower = line.toLowerCase();
-  if (lower.includes("remaining") || lower.includes("left") || lower.includes("available")) {
+  if (
+    lower.includes("remaining") ||
+    lower.includes("left") ||
+    lower.includes("available")
+  ) {
     return Math.max(0, Math.min(100, Math.round(100 - clamped)));
   }
   return Math.round(clamped);
@@ -396,13 +472,15 @@ function percentFromLine(line: string): number | null {
 
 function isQuotaLabel(line: string): boolean {
   const normalized = normalizeForLabelSearch(line);
-  return normalized === "currentsession"
-    || normalized === "currentweekallmodels"
-    || normalized === "currentweeksonnetonly"
-    || normalized === "currentweeksonnet"
-    || normalized === "currentweekopusonly"
-    || normalized === "currentweekopus"
-    || normalized === "extrausage";
+  return (
+    normalized === "currentsession" ||
+    normalized === "currentweekallmodels" ||
+    normalized === "currentweeksonnetonly" ||
+    normalized === "currentweeksonnet" ||
+    normalized === "currentweekopusonly" ||
+    normalized === "currentweekopus" ||
+    normalized === "extrausage"
+  );
 }
 
 function canonicalQuotaLabel(line: string): string {
@@ -435,7 +513,11 @@ function formatClaudeCliDetail(label: string, lines: string[]): string | null {
     return firstLine;
   }
 
-  const resetLine = lines.find((line) => /^resets/i.test(line) || normalizeForLabelSearch(line).startsWith("resets"));
+  const resetLine = lines.find(
+    (line) =>
+      /^resets/i.test(line) ||
+      normalizeForLabelSearch(line).startsWith("resets"),
+  );
   if (!resetLine) return null;
   return resetLine
     .replace(/^Resets/i, "Resets ")
@@ -448,7 +530,8 @@ function formatClaudeCliDetail(label: string, lines: string[]): string | null {
 }
 
 export function parseClaudeCliUsageText(text: string): QuotaWindow[] {
-  const cleaned = trimToLatestUsagePanel(cleanTerminalText(text)) ?? cleanTerminalText(text);
+  const cleaned =
+    trimToLatestUsagePanel(cleanTerminalText(text)) ?? cleanTerminalText(text);
   const usageError = extractUsageError(cleaned);
   if (usageError) throw new Error(usageError);
 
@@ -471,7 +554,8 @@ export function parseClaudeCliUsageText(text: string): QuotaWindow[] {
   if (current) sections.push(current);
 
   const windows = sections.map<QuotaWindow>((section) => {
-    const usedPercent = section.lines.map(percentFromLine).find((value) => value != null) ?? null;
+    const usedPercent =
+      section.lines.map(percentFromLine).find((value) => value != null) ?? null;
     return {
       label: section.label,
       usedPercent,
@@ -481,7 +565,11 @@ export function parseClaudeCliUsageText(text: string): QuotaWindow[] {
     };
   });
 
-  if (!windows.some((window) => normalizeForLabelSearch(window.label) === "currentsession")) {
+  if (
+    !windows.some(
+      (window) => normalizeForLabelSearch(window.label) === "currentsession",
+    )
+  ) {
     throw new Error("Could not parse Claude CLI usage output.");
   }
   return windows;
@@ -492,15 +580,18 @@ function quoteForShell(value: string): string {
 }
 
 function buildClaudeCliShellProbeCommand(): string {
-  const feed = "(sleep 2; printf '/usage\\r'; sleep 6; printf '\\033'; sleep 1; printf '\\003')";
-  const claudeCommand = "claude --tools \"\"";
+  const feed =
+    "(sleep 2; printf '/usage\\r'; sleep 6; printf '\\033'; sleep 1; printf '\\003')";
+  const claudeCommand = 'claude --tools ""';
   if (process.platform === "darwin") {
     return `${feed} | script -q /dev/null ${claudeCommand}`;
   }
   return `${feed} | script -q -e -f -c ${quoteForShell(claudeCommand)} /dev/null`;
 }
 
-export async function captureClaudeCliUsageText(timeoutMs = 12_000): Promise<string> {
+export async function captureClaudeCliUsageText(
+  timeoutMs = 12_000,
+): Promise<string> {
   const command = buildClaudeCliShellProbeCommand();
   try {
     const { stdout, stderr } = await execFileAsync("sh", ["-c", command], {
@@ -514,11 +605,17 @@ export async function captureClaudeCliUsageText(timeoutMs = 12_000): Promise<str
     throw new Error("Claude CLI usage probe ended before rendering usage.");
   } catch (error) {
     const stdout =
-      typeof error === "object" && error !== null && "stdout" in error && typeof error.stdout === "string"
+      typeof error === "object" &&
+      error !== null &&
+      "stdout" in error &&
+      typeof error.stdout === "string"
         ? error.stdout
         : "";
     const stderr =
-      typeof error === "object" && error !== null && "stderr" in error && typeof error.stderr === "string"
+      typeof error === "object" &&
+      error !== null &&
+      "stderr" in error &&
+      typeof error.stderr === "string"
         ? error.stderr
         : "";
     const output = `${stdout}${stderr}`;
@@ -559,7 +656,12 @@ export async function getQuotaWindows(): Promise<ProviderQuotaResult> {
   if (token) {
     try {
       const windows = await fetchClaudeQuota(token);
-      return { provider: "anthropic", source: CLAUDE_USAGE_SOURCE_OAUTH, ok: true, windows };
+      return {
+        provider: "anthropic",
+        source: CLAUDE_USAGE_SOURCE_OAUTH,
+        ok: true,
+        windows,
+      };
     } catch (error) {
       errors.push(formatProviderError("Anthropic OAuth usage", error));
     }
@@ -567,7 +669,12 @@ export async function getQuotaWindows(): Promise<ProviderQuotaResult> {
 
   try {
     const windows = await fetchClaudeCliQuota();
-    return { provider: "anthropic", source: CLAUDE_USAGE_SOURCE_CLI, ok: true, windows };
+    return {
+      provider: "anthropic",
+      source: CLAUDE_USAGE_SOURCE_CLI,
+      ok: true,
+      windows,
+    };
   } catch (error) {
     errors.push(formatProviderError("Claude CLI /usage", error));
   }
@@ -577,8 +684,8 @@ export async function getQuotaWindows(): Promise<ProviderQuotaResult> {
       provider: "anthropic",
       ok: false,
       error:
-        errors[0]
-        ?? "ANTHROPIC_API_KEY is set and no local Claude subscription session is available for quota polling",
+        errors[0] ??
+        "ANTHROPIC_API_KEY is set and no local Claude subscription session is available for quota polling",
       windows: [],
     };
   }

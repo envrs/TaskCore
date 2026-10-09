@@ -86,7 +86,9 @@ function itEmbeddedPostgres(name: string, fn: () => Promise<void>): void {
   }
   it(name, fn, EMBEDDED_POSTGRES_TEST_TIMEOUT_MS);
 }
-const describeEmbeddedPostgres = embeddedPostgresSupport.supported ? describe : describe.skip;
+const describeEmbeddedPostgres = embeddedPostgresSupport.supported
+  ? describe
+  : describe.skip;
 
 function mockVerifiedSeedResult() {
   return {
@@ -185,7 +187,10 @@ if (!embeddedPostgresSupport.supported) {
   );
 }
 
-async function reserveTestPort(): Promise<{ port: number; release: () => Promise<void> }> {
+async function reserveTestPort(): Promise<{
+  port: number;
+  release: () => Promise<void>;
+}> {
   const server = createServer();
   server.unref();
   await new Promise<void>((resolve, reject) => {
@@ -203,14 +208,15 @@ async function reserveTestPort(): Promise<{ port: number; release: () => Promise
   let released = false;
   return {
     port: address.port,
-    release: () => new Promise<void>((resolve, reject) => {
-      if (released) {
-        resolve();
-        return;
-      }
-      released = true;
-      server.close((error) => (error ? reject(error) : resolve()));
-    }),
+    release: () =>
+      new Promise<void>((resolve, reject) => {
+        if (released) {
+          resolve();
+          return;
+        }
+        released = true;
+        server.close((error) => (error ? reject(error) : resolve()));
+      }),
   };
 }
 
@@ -287,7 +293,9 @@ function buildSourceConfig(): TaskcoreConfig {
 
 describe("worktree helpers", () => {
   it("uses the repo-local config for the current worktree", () => {
-    const targetRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-current-worktree-"));
+    const targetRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-current-worktree-"),
+    );
     try {
       const localConfig = path.join(targetRoot, ".taskcore", "config.json");
       fs.mkdirSync(path.dirname(localConfig), { recursive: true });
@@ -307,10 +315,17 @@ describe("worktree helpers", () => {
   });
 
   it("uses the repository config from a nested working directory", () => {
-    const targetRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-current-worktree-nested-"));
+    const targetRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-current-worktree-nested-"),
+    );
     try {
       execFileSync("git", ["init", "-q"], { cwd: targetRoot });
-      const nestedDirectory = path.join(targetRoot, "packages", "example", "src");
+      const nestedDirectory = path.join(
+        targetRoot,
+        "packages",
+        "example",
+        "src",
+      );
       const localConfig = path.join(targetRoot, ".taskcore", "config.json");
       fs.mkdirSync(nestedDirectory, { recursive: true });
       fs.mkdirSync(path.dirname(localConfig), { recursive: true });
@@ -330,7 +345,9 @@ describe("worktree helpers", () => {
   });
 
   it("sanitizes instance ids", () => {
-    expect(sanitizeWorktreeInstanceId("feature/worktree-support")).toBe("feature-worktree-support");
+    expect(sanitizeWorktreeInstanceId("feature/worktree-support")).toBe(
+      "feature-worktree-support",
+    );
     expect(sanitizeWorktreeInstanceId("  ")).toBe("worktree");
   });
 
@@ -383,7 +400,14 @@ describe("worktree helpers", () => {
         targetPath: "/tmp/feature-branch",
         branchExists: false,
       }),
-    ).toEqual(["worktree", "add", "-b", "feature-branch", "/tmp/feature-branch", "HEAD"]);
+    ).toEqual([
+      "worktree",
+      "add",
+      "-b",
+      "feature-branch",
+      "/tmp/feature-branch",
+      "HEAD",
+    ]);
 
     expect(
       resolveGitWorktreeAddArgs({
@@ -402,7 +426,14 @@ describe("worktree helpers", () => {
         branchExists: false,
         startPoint: "public-gh/master",
       }),
-    ).toEqual(["worktree", "add", "-b", "my-worktree", "/tmp/my-worktree", "public-gh/master"]);
+    ).toEqual([
+      "worktree",
+      "add",
+      "-b",
+      "my-worktree",
+      "/tmp/my-worktree",
+      "public-gh/master",
+    ]);
   });
 
   it("uses start point even when a local branch with the same name exists", () => {
@@ -413,13 +444,26 @@ describe("worktree helpers", () => {
         branchExists: true,
         startPoint: "origin/main",
       }),
-    ).toEqual(["worktree", "add", "-b", "my-worktree", "/tmp/my-worktree", "origin/main"]);
+    ).toEqual([
+      "worktree",
+      "add",
+      "-b",
+      "my-worktree",
+      "/tmp/my-worktree",
+      "origin/main",
+    ]);
   });
 
   it("rewrites auth URLs only when they already include a port", () => {
-    expect(rewriteLocalUrlPort("http://127.0.0.1:3100", 3110)).toBe("http://127.0.0.1:3110/");
-    expect(rewriteLocalUrlPort("http://my-host.ts.net:3100", 3110)).toBe("http://my-host.ts.net:3110/");
-    expect(rewriteLocalUrlPort("https://taskcore.example", 3110)).toBe("https://taskcore.example");
+    expect(rewriteLocalUrlPort("http://127.0.0.1:3100", 3110)).toBe(
+      "http://127.0.0.1:3110/",
+    );
+    expect(rewriteLocalUrlPort("http://my-host.ts.net:3100", 3110)).toBe(
+      "http://my-host.ts.net:3110/",
+    );
+    expect(rewriteLocalUrlPort("https://taskcore.example", 3110)).toBe(
+      "https://taskcore.example",
+    );
   });
 
   it("builds isolated config and env paths for a worktree", () => {
@@ -437,14 +481,25 @@ describe("worktree helpers", () => {
     });
 
     expect(config.database.embeddedPostgresDataDir).toBe(
-      path.resolve("/tmp/taskcore-worktrees", "instances", "feature-worktree-support", "db"),
+      path.resolve(
+        "/tmp/taskcore-worktrees",
+        "instances",
+        "feature-worktree-support",
+        "db",
+      ),
     );
     expect(config.database.embeddedPostgresPort).toBe(54339);
     expect(config.database.backup.enabled).toBe(false);
     expect(config.server.port).toBe(3110);
     expect(config.auth.publicBaseUrl).toBe("http://127.0.0.1:3110/");
     expect(config.storage.localDisk.baseDir).toBe(
-      path.resolve("/tmp/taskcore-worktrees", "instances", "feature-worktree-support", "data", "storage"),
+      path.resolve(
+        "/tmp/taskcore-worktrees",
+        "instances",
+        "feature-worktree-support",
+        "data",
+        "storage",
+      ),
     );
 
     const env = buildWorktreeEnvEntries(paths, {
@@ -457,7 +512,9 @@ describe("worktree helpers", () => {
     expect(env.TASKCORE_DB_BACKUP_ENABLED).toBe("false");
     expect(env.TASKCORE_WORKTREE_NAME).toBe("feature-worktree-support");
     expect(env.TASKCORE_WORKTREE_COLOR).toBe("#3abf7a");
-    expect(formatShellExports(env)).toContain("export TASKCORE_INSTANCE_ID='feature-worktree-support'");
+    expect(formatShellExports(env)).toContain(
+      "export TASKCORE_INSTANCE_ID='feature-worktree-support'",
+    );
   });
 
   it("falls back across storage roots before skipping a missing attachment object", async () => {
@@ -488,7 +545,11 @@ describe("worktree helpers", () => {
             getObject: vi.fn().mockRejectedValue(missingErr),
           },
           {
-            getObject: vi.fn().mockRejectedValue(Object.assign(new Error("missing"), { status: 404 })),
+            getObject: vi
+              .fn()
+              .mockRejectedValue(
+                Object.assign(new Error("missing"), { status: 404 }),
+              ),
           },
         ],
         "company-1",
@@ -509,7 +570,10 @@ describe("worktree helpers", () => {
     expect(minimal.excludedTables).toContain("heartbeat_run_events");
     expect(minimal.excludedTables).toContain("workspace_runtime_services");
     expect(minimal.excludedTables).toContain("agent_task_sessions");
-    expect(minimal.nullifyColumns.issues).toEqual(["checkout_run_id", "execution_run_id"]);
+    expect(minimal.nullifyColumns.issues).toEqual([
+      "checkout_run_id",
+      "execution_run_id",
+    ]);
 
     expect(full.excludedTables).toEqual(["agent_identity_keys"]);
     expect(minimal.excludedTables).toContain("agent_identity_keys");
@@ -517,40 +581,51 @@ describe("worktree helpers", () => {
   });
 
   it("requires the seed process to own the target embedded Postgres lifecycle", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-live-target-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-live-target-"),
+    );
     try {
       fs.writeFileSync(
         path.join(tempRoot, "postmaster.pid"),
         `${process.pid}\n${tempRoot}\n0\n55432\n`,
       );
 
-      await expect(ensureEmbeddedPostgres(tempRoot, 55432, { allowExisting: false }))
-        .rejects.toThrow("while it is already running");
+      await expect(
+        ensureEmbeddedPostgres(tempRoot, 55432, { allowExisting: false }),
+      ).rejects.toThrow("while it is already running");
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("surfaces a credential-safe diagnostic when the target shuts down during restore", () => {
-    expect(formatWorktreeSeedFailureDiagnostic(
-      "restore",
-      new Error(
-        "Failed to restore seed.sql.gz: FATAL: the database system is shutting down; psql error: write EPIPE",
+    expect(
+      formatWorktreeSeedFailureDiagnostic(
+        "restore",
+        new Error(
+          "Failed to restore seed.sql.gz: FATAL: the database system is shutting down; psql error: write EPIPE",
+        ),
       ),
-    )).toBe(
+    ).toBe(
       "Target embedded PostgreSQL shut down during restore. Stop any competing worktree service and retry the seed.",
     );
-    expect(formatWorktreeSeedFailureDiagnostic("migrations", new Error("secret connection failure")))
-      .toBe("Seed failed during migrations.");
+    expect(
+      formatWorktreeSeedFailureDiagnostic(
+        "migrations",
+        new Error("secret connection failure"),
+      ),
+    ).toBe("Seed failed during migrations.");
   });
 
   it("surfaces the missing credential artifact for authenticated seed validation", () => {
-    expect(formatWorktreeSeedFailureDiagnostic(
-      "source_validation",
-      new Error(
-        "No auth user has a non-empty credential account, instance-admin role, and active company membership. Authenticated worktree seeding requires a credential-backed instance administrator.",
+    expect(
+      formatWorktreeSeedFailureDiagnostic(
+        "source_validation",
+        new Error(
+          "No auth user has a non-empty credential account, instance-admin role, and active company membership. Authenticated worktree seeding requires a credential-backed instance administrator.",
+        ),
       ),
-    )).toBe(
+    ).toBe(
       "Seed validation could not find a credential-backed instance administrator with an active company membership. Authenticated instances must create or sign in an administrator before seeding.",
     );
   });
@@ -561,94 +636,124 @@ describe("worktree helpers", () => {
   });
 
   it("rejects a source migration journal that diverges from the code journal", () => {
-    expect(() => resolveWorktreeSeedMigrationRevision({
-      status: "upToDate",
-      tableCount: 1,
-      availableMigrations: ["0001_initial.sql", "0002_current.sql"],
-      appliedMigrations: ["0001_initial.sql", "0003_unknown.sql"],
-      journalEntryCount: 3,
-    }, "sourcePrefix")).toThrow("Migration journal is not a prefix of this Taskcore checkout");
+    expect(() =>
+      resolveWorktreeSeedMigrationRevision(
+        {
+          status: "upToDate",
+          tableCount: 1,
+          availableMigrations: ["0001_initial.sql", "0002_current.sql"],
+          appliedMigrations: ["0001_initial.sql", "0003_unknown.sql"],
+          journalEntryCount: 3,
+        },
+        "sourcePrefix",
+      ),
+    ).toThrow("Migration journal is not a prefix of this Taskcore checkout");
   });
 
   it("accepts a current source whose migration application order differs from filename order", () => {
-    expect(resolveWorktreeSeedMigrationRevision({
-      status: "upToDate",
-      tableCount: 1,
-      availableMigrations: [
-        "0001_initial.sql",
-        "0002_renumbered.sql",
-        "0003_applied_earlier.sql",
-        "0004_current.sql",
-      ],
-      appliedMigrations: [
-        "0001_initial.sql",
-        "0003_applied_earlier.sql",
-        "0002_renumbered.sql",
-        "0004_current.sql",
-      ],
-      journalEntryCount: 6,
-    }, "upToDate")).toBe("0004_current.sql");
+    expect(
+      resolveWorktreeSeedMigrationRevision(
+        {
+          status: "upToDate",
+          tableCount: 1,
+          availableMigrations: [
+            "0001_initial.sql",
+            "0002_renumbered.sql",
+            "0003_applied_earlier.sql",
+            "0004_current.sql",
+          ],
+          appliedMigrations: [
+            "0001_initial.sql",
+            "0003_applied_earlier.sql",
+            "0002_renumbered.sql",
+            "0004_current.sql",
+          ],
+          journalEntryCount: 6,
+        },
+        "upToDate",
+      ),
+    ).toBe("0004_current.sql");
   });
 
   it("accepts a source migration journal that is multiple revisions behind", () => {
-    expect(resolveWorktreeSeedMigrationRevision({
-      status: "needsMigrations",
-      tableCount: 1,
-      availableMigrations: [
-        "0001_initial.sql",
-        "0002_applied.sql",
-        "0003_pending.sql",
-        "0004_pending.sql",
-      ],
-      appliedMigrations: ["0002_applied.sql", "0001_initial.sql"],
-      pendingMigrations: ["0003_pending.sql", "0004_pending.sql"],
-      journalEntryCount: 3,
-      reason: "pending-migrations",
-    }, "sourcePrefix")).toBe("0002_applied.sql");
-  });
-
-  itEmbeddedPostgres("recognizes positive legacy database schema evidence", async () => {
-    const tempDb = await startEmbeddedPostgresTestDatabase("taskcore-worktree-legacy-evidence-");
-    onTestFinished(() => tempDb.cleanup());
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-legacy-config-"));
-    try {
-      const configPath = path.join(tempRoot, "config.json");
-      const sourceConfig = buildSourceConfig();
-      const config: TaskcoreConfig = {
-        ...sourceConfig,
-        database: {
-          ...sourceConfig.database,
-          mode: "postgres",
-          connectionString: tempDb.connectionString,
-          backup: {
-            ...sourceConfig.database.backup,
-            enabled: false,
-            intervalMinutes: 60,
-            retentionDays: 30,
-            dir: path.join(tempRoot, "backups"),
-          },
+    expect(
+      resolveWorktreeSeedMigrationRevision(
+        {
+          status: "needsMigrations",
+          tableCount: 1,
+          availableMigrations: [
+            "0001_initial.sql",
+            "0002_applied.sql",
+            "0003_pending.sql",
+            "0004_pending.sql",
+          ],
+          appliedMigrations: ["0002_applied.sql", "0001_initial.sql"],
+          pendingMigrations: ["0003_pending.sql", "0004_pending.sql"],
+          journalEntryCount: 3,
+          reason: "pending-migrations",
         },
-      };
-      fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`);
-      fs.writeFileSync(
-        path.join(tempRoot, ".env"),
-        `TASKCORE_INSTANCE_ID=legacy-target\nDATABASE_URL=${JSON.stringify(tempDb.connectionString)}\n`,
-      );
-
-      await expect(inspectLegacyWorktreeDatabase(configPath)).resolves.toEqual({
-        migrationRevision: expect.stringMatching(/\.sql$/),
-      });
-    } finally {
-      fs.rmSync(tempRoot, { recursive: true, force: true });
-    }
+        "sourcePrefix",
+      ),
+    ).toBe("0002_applied.sql");
   });
+
+  itEmbeddedPostgres(
+    "recognizes positive legacy database schema evidence",
+    async () => {
+      const tempDb = await startEmbeddedPostgresTestDatabase(
+        "taskcore-worktree-legacy-evidence-",
+      );
+      onTestFinished(() => tempDb.cleanup());
+      const tempRoot = fs.mkdtempSync(
+        path.join(os.tmpdir(), "taskcore-worktree-legacy-config-"),
+      );
+      try {
+        const configPath = path.join(tempRoot, "config.json");
+        const sourceConfig = buildSourceConfig();
+        const config: TaskcoreConfig = {
+          ...sourceConfig,
+          database: {
+            ...sourceConfig.database,
+            mode: "postgres",
+            connectionString: tempDb.connectionString,
+            backup: {
+              ...sourceConfig.database.backup,
+              enabled: false,
+              intervalMinutes: 60,
+              retentionDays: 30,
+              dir: path.join(tempRoot, "backups"),
+            },
+          },
+        };
+        fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`);
+        fs.writeFileSync(
+          path.join(tempRoot, ".env"),
+          `TASKCORE_INSTANCE_ID=legacy-target\nDATABASE_URL=${JSON.stringify(tempDb.connectionString)}\n`,
+        );
+
+        await expect(
+          inspectLegacyWorktreeDatabase(configPath),
+        ).resolves.toEqual({
+          migrationRevision: expect.stringMatching(/\.sql$/),
+        });
+      } finally {
+        fs.rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  );
 
   it("ensure-seeded seeds once and fast-exits on the verified manifest", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-ensure-seeded-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-ensure-seeded-"),
+    );
     try {
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
       const targetRoot = path.join(tempRoot, "worktree");
-      const targetConfigPath = path.join(targetRoot, ".taskcore", "config.json");
+      const targetConfigPath = path.join(
+        targetRoot,
+        ".taskcore",
+        "config.json",
+      );
       const targetPaths = resolveWorktreeLocalPaths({
         cwd: targetRoot,
         homeDir: path.join(tempRoot, "worktree-home"),
@@ -664,13 +769,19 @@ describe("worktree helpers", () => {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
       fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
       fs.writeFileSync(sourceConfigPath, `${JSON.stringify(sourceConfig)}\n`);
-      fs.writeFileSync(path.join(path.dirname(sourceConfigPath), ".env"), "TASKCORE_INSTANCE_ID=source\n");
+      fs.writeFileSync(
+        path.join(path.dirname(sourceConfigPath), ".env"),
+        "TASKCORE_INSTANCE_ID=source\n",
+      );
       fs.writeFileSync(targetConfigPath, `${JSON.stringify(targetConfig)}\n`);
       fs.writeFileSync(
         path.join(targetRoot, ".taskcore", ".env"),
         `TASKCORE_HOME=${targetPaths.homeDir}\nTASKCORE_INSTANCE_ID=${targetPaths.instanceId}\n`,
       );
-      markWorktreeSeedPending({ configPath: targetConfigPath, sourceConfigPath });
+      markWorktreeSeedPending({
+        configPath: targetConfigPath,
+        sourceConfigPath,
+      });
 
       const seedDatabase = vi.fn().mockResolvedValue({
         ...mockVerifiedSeedResult(),
@@ -688,20 +799,29 @@ describe("worktree helpers", () => {
       });
 
       await expect(
-        ensureWorktreeSeeded({ config: targetConfigPath, fromConfig: sourceConfigPath }, { seedDatabase }),
+        ensureWorktreeSeeded(
+          { config: targetConfigPath, fromConfig: sourceConfigPath },
+          { seedDatabase },
+        ),
       ).resolves.toMatchObject({ seeded: true, reason: "seeded" });
       await expect(
         ensureWorktreeSeeded({ config: targetConfigPath }, { seedDatabase }),
       ).resolves.toEqual({ seeded: false, reason: "verified_manifest" });
 
       expect(seedDatabase).toHaveBeenCalledTimes(1);
-      expect(seedDatabase).toHaveBeenCalledWith(expect.objectContaining({
-        sourceConfigPath,
-        seedMode: "minimal",
-        instanceId: "ensure-seeded-test",
-      }));
-      expect(fs.existsSync(path.join(targetRoot, ".taskcore", "seed-pending"))).toBe(false);
-      expect(fs.existsSync(path.join(targetRoot, ".taskcore", "seed-complete"))).toBe(false);
+      expect(seedDatabase).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceConfigPath,
+          seedMode: "minimal",
+          instanceId: "ensure-seeded-test",
+        }),
+      );
+      expect(
+        fs.existsSync(path.join(targetRoot, ".taskcore", "seed-pending")),
+      ).toBe(false);
+      expect(
+        fs.existsSync(path.join(targetRoot, ".taskcore", "seed-complete")),
+      ).toBe(false);
       expect(readWorktreeSeedManifest(targetConfigPath)).toMatchObject({
         version: 2,
         state: "verified",
@@ -715,7 +835,9 @@ describe("worktree helpers", () => {
   });
 
   it("treats an unregistered markerless config as a normal non-worktree boot", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-unregistered-markerless-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-unregistered-markerless-"),
+    );
     try {
       const configPath = path.join(tempRoot, "config.json");
       fs.writeFileSync(configPath, `${JSON.stringify(buildSourceConfig())}\n`);
@@ -726,10 +848,12 @@ describe("worktree helpers", () => {
       const inspectLegacyDatabase = vi.fn();
       const seedDatabase = vi.fn();
 
-      await expect(ensureWorktreeSeeded(
-        { config: configPath },
-        { inspectLegacyDatabase, seedDatabase },
-      )).resolves.toEqual({ seeded: false, reason: "legacy_unmarked" });
+      await expect(
+        ensureWorktreeSeeded(
+          { config: configPath },
+          { inspectLegacyDatabase, seedDatabase },
+        ),
+      ).resolves.toEqual({ seeded: false, reason: "legacy_unmarked" });
 
       expect(inspectLegacyDatabase).not.toHaveBeenCalled();
       expect(seedDatabase).not.toHaveBeenCalled();
@@ -740,7 +864,9 @@ describe("worktree helpers", () => {
   });
 
   it("honors a legacy complete marker without resolving a seed source", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-complete-marker-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-complete-marker-"),
+    );
     try {
       const configPath = path.join(tempRoot, "config.json");
       fs.writeFileSync(configPath, `${JSON.stringify(buildSourceConfig())}\n`);
@@ -750,10 +876,12 @@ describe("worktree helpers", () => {
       const inspectLegacyDatabase = vi.fn();
       const seedDatabase = vi.fn();
 
-      await expect(ensureWorktreeSeeded(
-        { config: configPath },
-        { inspectLegacyDatabase, seedDatabase },
-      )).resolves.toEqual({ seeded: false, reason: "complete_marker" });
+      await expect(
+        ensureWorktreeSeeded(
+          { config: configPath },
+          { inspectLegacyDatabase, seedDatabase },
+        ),
+      ).resolves.toEqual({ seeded: false, reason: "complete_marker" });
 
       expect(inspectLegacyDatabase).not.toHaveBeenCalled();
       expect(seedDatabase).not.toHaveBeenCalled();
@@ -763,11 +891,17 @@ describe("worktree helpers", () => {
   });
 
   it("seeds a configured worktree with no seed markers when no legacy database is present", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-unmarked-empty-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-unmarked-empty-"),
+    );
     try {
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
       const targetRoot = path.join(tempRoot, "worktree");
-      const targetConfigPath = path.join(targetRoot, ".taskcore", "config.json");
+      const targetConfigPath = path.join(
+        targetRoot,
+        ".taskcore",
+        "config.json",
+      );
       const targetPaths = resolveWorktreeLocalPaths({
         cwd: targetRoot,
         homeDir: path.join(tempRoot, "worktree-home"),
@@ -783,7 +917,10 @@ describe("worktree helpers", () => {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
       fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
       fs.writeFileSync(sourceConfigPath, `${JSON.stringify(sourceConfig)}\n`);
-      fs.writeFileSync(path.join(path.dirname(sourceConfigPath), ".env"), "TASKCORE_INSTANCE_ID=source\n");
+      fs.writeFileSync(
+        path.join(path.dirname(sourceConfigPath), ".env"),
+        "TASKCORE_INSTANCE_ID=source\n",
+      );
       fs.writeFileSync(targetConfigPath, `${JSON.stringify(targetConfig)}\n`);
       fs.writeFileSync(
         path.join(targetRoot, ".taskcore", ".env"),
@@ -792,10 +929,12 @@ describe("worktree helpers", () => {
       const inspectLegacyDatabase = vi.fn().mockResolvedValue(null);
       const seedDatabase = vi.fn().mockResolvedValue(mockVerifiedSeedResult());
 
-      await expect(ensureWorktreeSeeded(
-        { config: targetConfigPath, fromConfig: sourceConfigPath },
-        { inspectLegacyDatabase, seedDatabase },
-      )).resolves.toMatchObject({ seeded: true, reason: "seeded" });
+      await expect(
+        ensureWorktreeSeeded(
+          { config: targetConfigPath, fromConfig: sourceConfigPath },
+          { inspectLegacyDatabase, seedDatabase },
+        ),
+      ).resolves.toMatchObject({ seeded: true, reason: "seeded" });
 
       expect(inspectLegacyDatabase).toHaveBeenCalledWith(targetConfigPath);
       expect(seedDatabase).toHaveBeenCalledTimes(1);
@@ -810,11 +949,17 @@ describe("worktree helpers", () => {
   });
 
   it("adopts a markerless legacy worktree only after validating its database schema", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-unmarked-legacy-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-unmarked-legacy-"),
+    );
     try {
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
       const targetRoot = path.join(tempRoot, "worktree");
-      const targetConfigPath = path.join(targetRoot, ".taskcore", "config.json");
+      const targetConfigPath = path.join(
+        targetRoot,
+        ".taskcore",
+        "config.json",
+      );
       const targetPaths = resolveWorktreeLocalPaths({
         cwd: targetRoot,
         homeDir: path.join(tempRoot, "worktree-home"),
@@ -830,7 +975,10 @@ describe("worktree helpers", () => {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
       fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
       fs.writeFileSync(sourceConfigPath, `${JSON.stringify(sourceConfig)}\n`);
-      fs.writeFileSync(path.join(path.dirname(sourceConfigPath), ".env"), "TASKCORE_INSTANCE_ID=source\n");
+      fs.writeFileSync(
+        path.join(path.dirname(sourceConfigPath), ".env"),
+        "TASKCORE_INSTANCE_ID=source\n",
+      );
       fs.writeFileSync(targetConfigPath, `${JSON.stringify(targetConfig)}\n`);
       fs.writeFileSync(
         path.join(targetRoot, ".taskcore", ".env"),
@@ -838,13 +986,17 @@ describe("worktree helpers", () => {
       );
       const seedDatabase = vi.fn();
 
-      await expect(ensureWorktreeSeeded(
-        { config: targetConfigPath, fromConfig: sourceConfigPath },
-        {
-          inspectLegacyDatabase: vi.fn().mockResolvedValue({ migrationRevision: "0141_legacy.sql" }),
-          seedDatabase,
-        },
-      )).resolves.toEqual({ seeded: false, reason: "legacy_database" });
+      await expect(
+        ensureWorktreeSeeded(
+          { config: targetConfigPath, fromConfig: sourceConfigPath },
+          {
+            inspectLegacyDatabase: vi
+              .fn()
+              .mockResolvedValue({ migrationRevision: "0141_legacy.sql" }),
+            seedDatabase,
+          },
+        ),
+      ).resolves.toEqual({ seeded: false, reason: "legacy_database" });
 
       expect(seedDatabase).not.toHaveBeenCalled();
       expect(readWorktreeSeedManifest(targetConfigPath)).toMatchObject({
@@ -858,12 +1010,18 @@ describe("worktree helpers", () => {
   });
 
   it("managed ensure-seeded derives a valid source from the registered base workspace", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-managed-seed-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-managed-seed-"),
+    );
     try {
       const baseRoot = path.join(tempRoot, "base");
       const sourceConfigPath = path.join(baseRoot, ".taskcore", "config.json");
       const targetRoot = path.join(tempRoot, "worktree");
-      const targetConfigPath = path.join(targetRoot, ".taskcore", "config.json");
+      const targetConfigPath = path.join(
+        targetRoot,
+        ".taskcore",
+        "config.json",
+      );
       const targetPaths = resolveWorktreeLocalPaths({
         cwd: targetRoot,
         homeDir: path.join(tempRoot, "worktree-home"),
@@ -879,63 +1037,101 @@ describe("worktree helpers", () => {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
       fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
       fs.writeFileSync(sourceConfigPath, `${JSON.stringify(sourceConfig)}\n`);
-      fs.writeFileSync(path.join(path.dirname(sourceConfigPath), ".env"), "TASKCORE_INSTANCE_ID=managed-source\n");
+      fs.writeFileSync(
+        path.join(path.dirname(sourceConfigPath), ".env"),
+        "TASKCORE_INSTANCE_ID=managed-source\n",
+      );
       fs.writeFileSync(targetConfigPath, `${JSON.stringify(targetConfig)}\n`);
       fs.writeFileSync(
         path.join(path.dirname(targetConfigPath), ".env"),
         `TASKCORE_HOME=${targetPaths.homeDir}\nTASKCORE_INSTANCE_ID=managed-target\n`,
       );
-      markWorktreeSeedPending({ configPath: targetConfigPath, sourceConfigPath });
+      markWorktreeSeedPending({
+        configPath: targetConfigPath,
+        sourceConfigPath,
+      });
       const seedDatabase = vi.fn().mockResolvedValue(mockVerifiedSeedResult());
 
-      await expect(ensureWorktreeSeeded({
-        config: targetConfigPath,
-        registeredBaseWorkspaceCwd: baseRoot,
-        registeredProjectWorkspaceId: "project-workspace-1",
-        expectedCompanyId: "company-1",
-      }, { seedDatabase })).resolves.toMatchObject({ seeded: true, reason: "seeded" });
+      await expect(
+        ensureWorktreeSeeded(
+          {
+            config: targetConfigPath,
+            registeredBaseWorkspaceCwd: baseRoot,
+            registeredProjectWorkspaceId: "project-workspace-1",
+            expectedCompanyId: "company-1",
+          },
+          { seedDatabase },
+        ),
+      ).resolves.toMatchObject({ seeded: true, reason: "seeded" });
 
-      expect(seedDatabase).toHaveBeenCalledWith(expect.objectContaining({
-        sourceConfigPath,
-        expectedCompanyId: "company-1",
-      }));
+      expect(seedDatabase).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceConfigPath,
+          expectedCompanyId: "company-1",
+        }),
+      );
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
-  it.each(["sibling", "foreign_instance", "symlink", "instance_mismatch"] as const)(
+  it.each([
+    "sibling",
+    "foreign_instance",
+    "symlink",
+    "instance_mismatch",
+  ] as const)(
     "managed ensure-seeded re-derives a stale %s manifest source from registration",
     async (variant) => {
-      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), `taskcore-worktree-managed-${variant}-`));
+      const tempRoot = fs.mkdtempSync(
+        path.join(os.tmpdir(), `taskcore-worktree-managed-${variant}-`),
+      );
       try {
         const baseRoot = path.join(tempRoot, "base");
         const canonicalSource = path.join(baseRoot, ".taskcore", "config.json");
         const targetRoot = path.join(tempRoot, "worktree");
-        const targetConfigPath = path.join(targetRoot, ".taskcore", "config.json");
+        const targetConfigPath = path.join(
+          targetRoot,
+          ".taskcore",
+          "config.json",
+        );
         const attackerRoot = path.join(tempRoot, variant);
         const attackerConfig = path.join(attackerRoot, "config.json");
         fs.mkdirSync(path.dirname(canonicalSource), { recursive: true });
         fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
         fs.mkdirSync(attackerRoot, { recursive: true });
-        fs.writeFileSync(canonicalSource, `${JSON.stringify(buildSourceConfig())}\n`);
-        fs.writeFileSync(path.join(path.dirname(canonicalSource), ".env"), "TASKCORE_INSTANCE_ID=registered-source\n");
-        fs.writeFileSync(targetConfigPath, `${JSON.stringify(buildSourceConfig())}\n`);
+        fs.writeFileSync(
+          canonicalSource,
+          `${JSON.stringify(buildSourceConfig())}\n`,
+        );
+        fs.writeFileSync(
+          path.join(path.dirname(canonicalSource), ".env"),
+          "TASKCORE_INSTANCE_ID=registered-source\n",
+        );
+        fs.writeFileSync(
+          targetConfigPath,
+          `${JSON.stringify(buildSourceConfig())}\n`,
+        );
         fs.writeFileSync(
           path.join(path.dirname(targetConfigPath), ".env"),
           `TASKCORE_HOME=${path.join(tempRoot, "worktree-home")}\nTASKCORE_INSTANCE_ID=managed-target\n`,
         );
-        fs.writeFileSync(attackerConfig, `${JSON.stringify(buildSourceConfig())}\n`);
+        fs.writeFileSync(
+          attackerConfig,
+          `${JSON.stringify(buildSourceConfig())}\n`,
+        );
         fs.writeFileSync(
           path.join(attackerRoot, ".env"),
           `TASKCORE_INSTANCE_ID=${variant === "foreign_instance" ? "foreign" : "registered-source"}\n`,
         );
-        const diagnosticPath = variant === "instance_mismatch"
-          ? canonicalSource
-          : variant === "symlink"
-          ? path.join(attackerRoot, "source-link.json")
-          : attackerConfig;
-        if (variant === "symlink") fs.symlinkSync(canonicalSource, diagnosticPath);
+        const diagnosticPath =
+          variant === "instance_mismatch"
+            ? canonicalSource
+            : variant === "symlink"
+              ? path.join(attackerRoot, "source-link.json")
+              : attackerConfig;
+        if (variant === "symlink")
+          fs.symlinkSync(canonicalSource, diagnosticPath);
         markWorktreeSeedPending({
           configPath: targetConfigPath,
           sourceConfigPath: diagnosticPath,
@@ -945,22 +1141,34 @@ describe("worktree helpers", () => {
           const manifest = readWorktreeSeedManifest(targetConfigPath)!;
           fs.writeFileSync(
             path.join(path.dirname(targetConfigPath), "seed-manifest.json"),
-            JSON.stringify({ ...manifest, source: { ...manifest.source, instanceId: "foreign" } }),
+            JSON.stringify({
+              ...manifest,
+              source: { ...manifest.source, instanceId: "foreign" },
+            }),
           );
         }
-        const seedDatabase = vi.fn().mockResolvedValue(mockVerifiedSeedResult());
+        const seedDatabase = vi
+          .fn()
+          .mockResolvedValue(mockVerifiedSeedResult());
 
-        await expect(ensureWorktreeSeeded({
-          config: targetConfigPath,
-          registeredBaseWorkspaceCwd: baseRoot,
-          registeredProjectWorkspaceId: "project-workspace-1",
-          expectedCompanyId: "company-1",
-        }, { seedDatabase })).resolves.toMatchObject({ seeded: true, reason: "seeded" });
+        await expect(
+          ensureWorktreeSeeded(
+            {
+              config: targetConfigPath,
+              registeredBaseWorkspaceCwd: baseRoot,
+              registeredProjectWorkspaceId: "project-workspace-1",
+              expectedCompanyId: "company-1",
+            },
+            { seedDatabase },
+          ),
+        ).resolves.toMatchObject({ seeded: true, reason: "seeded" });
 
-        expect(seedDatabase).toHaveBeenCalledWith(expect.objectContaining({
-          sourceConfigPath: canonicalSource,
-          expectedCompanyId: "company-1",
-        }));
+        expect(seedDatabase).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sourceConfigPath: canonicalSource,
+            expectedCompanyId: "company-1",
+          }),
+        );
         expect(readWorktreeSeedManifest(targetConfigPath)).toMatchObject({
           source: {
             configPath: canonicalSource,
@@ -969,11 +1177,14 @@ describe("worktree helpers", () => {
           state: "verified",
           diagnostics: expect.arrayContaining([
             expect.objectContaining({
-              message: "Re-derived seed source diagnostics from the registered canonical source.",
+              message:
+                "Re-derived seed source diagnostics from the registered canonical source.",
             }),
           ]),
         });
-        expect(fs.existsSync(path.join(targetRoot, ".taskcore", "seed.lock"))).toBe(false);
+        expect(
+          fs.existsSync(path.join(targetRoot, ".taskcore", "seed.lock")),
+        ).toBe(false);
       } finally {
         fs.rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -981,11 +1192,17 @@ describe("worktree helpers", () => {
   );
 
   it("ensure-seeded records a target shutdown diagnostic when restore fails", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-ensure-seeded-failure-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-ensure-seeded-failure-"),
+    );
     try {
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
       const targetRoot = path.join(tempRoot, "worktree");
-      const targetConfigPath = path.join(targetRoot, ".taskcore", "config.json");
+      const targetConfigPath = path.join(
+        targetRoot,
+        ".taskcore",
+        "config.json",
+      );
       const targetPaths = resolveWorktreeLocalPaths({
         cwd: targetRoot,
         homeDir: path.join(tempRoot, "worktree-home"),
@@ -1001,13 +1218,19 @@ describe("worktree helpers", () => {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
       fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
       fs.writeFileSync(sourceConfigPath, `${JSON.stringify(sourceConfig)}\n`);
-      fs.writeFileSync(path.join(path.dirname(sourceConfigPath), ".env"), "TASKCORE_INSTANCE_ID=source\n");
+      fs.writeFileSync(
+        path.join(path.dirname(sourceConfigPath), ".env"),
+        "TASKCORE_INSTANCE_ID=source\n",
+      );
       fs.writeFileSync(targetConfigPath, `${JSON.stringify(targetConfig)}\n`);
       fs.writeFileSync(
         path.join(targetRoot, ".taskcore", ".env"),
         `TASKCORE_HOME=${targetPaths.homeDir}\nTASKCORE_INSTANCE_ID=${targetPaths.instanceId}\n`,
       );
-      markWorktreeSeedPending({ configPath: targetConfigPath, sourceConfigPath });
+      markWorktreeSeedPending({
+        configPath: targetConfigPath,
+        sourceConfigPath,
+      });
 
       await expect(
         ensureWorktreeSeeded(
@@ -1035,20 +1258,32 @@ describe("worktree helpers", () => {
           }),
         ]),
       });
-      expect(fs.existsSync(path.join(targetRoot, ".taskcore", "seed-pending"))).toBe(false);
-      expect(fs.existsSync(path.join(targetRoot, ".taskcore", "seed-complete"))).toBe(false);
-      expect(fs.existsSync(path.join(targetRoot, ".taskcore", "seed.lock"))).toBe(false);
+      expect(
+        fs.existsSync(path.join(targetRoot, ".taskcore", "seed-pending")),
+      ).toBe(false);
+      expect(
+        fs.existsSync(path.join(targetRoot, ".taskcore", "seed-complete")),
+      ).toBe(false);
+      expect(
+        fs.existsSync(path.join(targetRoot, ".taskcore", "seed.lock")),
+      ).toBe(false);
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("serializes concurrent ensure-seeded calls across the seed marker lock", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-ensure-seeded-lock-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-ensure-seeded-lock-"),
+    );
     try {
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
       const targetRoot = path.join(tempRoot, "worktree");
-      const targetConfigPath = path.join(targetRoot, ".taskcore", "config.json");
+      const targetConfigPath = path.join(
+        targetRoot,
+        ".taskcore",
+        "config.json",
+      );
       const targetPaths = resolveWorktreeLocalPaths({
         cwd: targetRoot,
         homeDir: path.join(tempRoot, "worktree-home"),
@@ -1064,13 +1299,19 @@ describe("worktree helpers", () => {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
       fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
       fs.writeFileSync(sourceConfigPath, `${JSON.stringify(sourceConfig)}\n`);
-      fs.writeFileSync(path.join(path.dirname(sourceConfigPath), ".env"), "TASKCORE_INSTANCE_ID=source\n");
+      fs.writeFileSync(
+        path.join(path.dirname(sourceConfigPath), ".env"),
+        "TASKCORE_INSTANCE_ID=source\n",
+      );
       fs.writeFileSync(targetConfigPath, `${JSON.stringify(targetConfig)}\n`);
       fs.writeFileSync(
         path.join(targetRoot, ".taskcore", ".env"),
         `TASKCORE_HOME=${targetPaths.homeDir}\nTASKCORE_INSTANCE_ID=${targetPaths.instanceId}\n`,
       );
-      markWorktreeSeedPending({ configPath: targetConfigPath, sourceConfigPath });
+      markWorktreeSeedPending({
+        configPath: targetConfigPath,
+        sourceConfigPath,
+      });
 
       const seedDatabase = vi.fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -1078,27 +1319,43 @@ describe("worktree helpers", () => {
       });
 
       const results = await Promise.all([
-        ensureWorktreeSeeded({ config: targetConfigPath, fromConfig: sourceConfigPath }, { seedDatabase }),
-        ensureWorktreeSeeded({ config: targetConfigPath, fromConfig: sourceConfigPath }, { seedDatabase }),
+        ensureWorktreeSeeded(
+          { config: targetConfigPath, fromConfig: sourceConfigPath },
+          { seedDatabase },
+        ),
+        ensureWorktreeSeeded(
+          { config: targetConfigPath, fromConfig: sourceConfigPath },
+          { seedDatabase },
+        ),
       ]);
 
-      expect(results).toEqual(expect.arrayContaining([
-        expect.objectContaining({ seeded: true, reason: "seeded" }),
-        { seeded: false, reason: "verified_manifest" },
-      ]));
+      expect(results).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ seeded: true, reason: "seeded" }),
+          { seeded: false, reason: "verified_manifest" },
+        ]),
+      );
       expect(seedDatabase).toHaveBeenCalledTimes(1);
-      expect(fs.existsSync(path.join(targetRoot, ".taskcore", "seed.lock"))).toBe(false);
+      expect(
+        fs.existsSync(path.join(targetRoot, ".taskcore", "seed.lock")),
+      ).toBe(false);
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("records an interrupted phase before retrying to a verified terminal state", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-interrupted-seed-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-interrupted-seed-"),
+    );
     try {
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
       const targetRoot = path.join(tempRoot, "worktree");
-      const targetConfigPath = path.join(targetRoot, ".taskcore", "config.json");
+      const targetConfigPath = path.join(
+        targetRoot,
+        ".taskcore",
+        "config.json",
+      );
       const targetPaths = resolveWorktreeLocalPaths({
         cwd: targetRoot,
         homeDir: path.join(tempRoot, "worktree-home"),
@@ -1114,40 +1371,53 @@ describe("worktree helpers", () => {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
       fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
       fs.writeFileSync(sourceConfigPath, `${JSON.stringify(sourceConfig)}\n`);
-      fs.writeFileSync(path.join(path.dirname(sourceConfigPath), ".env"), "TASKCORE_INSTANCE_ID=source\n");
+      fs.writeFileSync(
+        path.join(path.dirname(sourceConfigPath), ".env"),
+        "TASKCORE_INSTANCE_ID=source\n",
+      );
       fs.writeFileSync(targetConfigPath, `${JSON.stringify(targetConfig)}\n`);
       fs.writeFileSync(
         path.join(targetRoot, ".taskcore", ".env"),
         `TASKCORE_HOME=${targetPaths.homeDir}\nTASKCORE_INSTANCE_ID=${targetPaths.instanceId}\n`,
       );
-      markWorktreeSeedPending({ configPath: targetConfigPath, sourceConfigPath });
+      markWorktreeSeedPending({
+        configPath: targetConfigPath,
+        sourceConfigPath,
+      });
       const interrupted = readWorktreeSeedManifest(targetConfigPath)!;
       fs.writeFileSync(
         path.join(targetRoot, ".taskcore", "seed-manifest.json"),
         `${JSON.stringify({ ...interrupted, state: "running", phase: "restore" }, null, 2)}\n`,
       );
 
-      await expect(ensureWorktreeSeeded(
-        { config: targetConfigPath, fromConfig: sourceConfigPath },
-        { seedDatabase: vi.fn().mockResolvedValue(mockVerifiedSeedResult()) },
-      )).resolves.toMatchObject({ seeded: true, reason: "seeded" });
+      await expect(
+        ensureWorktreeSeeded(
+          { config: targetConfigPath, fromConfig: sourceConfigPath },
+          { seedDatabase: vi.fn().mockResolvedValue(mockVerifiedSeedResult()) },
+        ),
+      ).resolves.toMatchObject({ seeded: true, reason: "seeded" });
 
       const verified = readWorktreeSeedManifest(targetConfigPath)!;
       expect(verified.state).toBe("verified");
-      expect(verified.diagnostics).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          phase: "restore",
-          status: "failed",
-          message: "The previous seed attempt ended without a terminal result.",
-        }),
-      ]));
+      expect(verified.diagnostics).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            phase: "restore",
+            status: "failed",
+            message:
+              "The previous seed attempt ended without a terminal result.",
+          }),
+        ]),
+      );
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("fails closed instead of racing to reclaim a stale seed lock", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-ensure-seeded-stale-lock-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-ensure-seeded-stale-lock-"),
+    );
     try {
       const targetConfigPath = path.join(tempRoot, ".taskcore", "config.json");
       const lockPath = path.join(tempRoot, ".taskcore", "seed.lock");
@@ -1174,254 +1444,291 @@ describe("worktree helpers", () => {
     }
   });
 
-  itEmbeddedPostgres("quarantines copied live execution state in seeded worktree databases", async () => {
-    const tempDb = await startEmbeddedPostgresTestDatabase("taskcore-worktree-quarantine-");
-    onTestFinished(() => tempDb.cleanup());
-    const db = createDb(tempDb.connectionString);
-    const companyId = randomUUID();
-    const agentId = randomUUID();
-    const idleAgentId = randomUUID();
-    const inProgressIssueId = randomUUID();
-    const todoIssueId = randomUUID();
-    const reviewIssueId = randomUUID();
-    const userIssueId = randomUUID();
-    const projectId = randomUUID();
-    const projectWorkspaceId = randomUUID();
-    const executionWorkspaceId = randomUUID();
-    const runtimeServiceId = randomUUID();
+  itEmbeddedPostgres(
+    "quarantines copied live execution state in seeded worktree databases",
+    async () => {
+      const tempDb = await startEmbeddedPostgresTestDatabase(
+        "taskcore-worktree-quarantine-",
+      );
+      onTestFinished(() => tempDb.cleanup());
+      const db = createDb(tempDb.connectionString);
+      const companyId = randomUUID();
+      const agentId = randomUUID();
+      const idleAgentId = randomUUID();
+      const inProgressIssueId = randomUUID();
+      const todoIssueId = randomUUID();
+      const reviewIssueId = randomUUID();
+      const userIssueId = randomUUID();
+      const projectId = randomUUID();
+      const projectWorkspaceId = randomUUID();
+      const executionWorkspaceId = randomUUID();
+      const runtimeServiceId = randomUUID();
 
-    try {
-      await db.insert(companies).values({
-        id: companyId,
-        name: "Taskcore",
-        issuePrefix: "WTQ",
-        requireBoardApprovalForNewAgents: false,
-      });
-      await db.insert(agents).values([
-        {
-          id: agentId,
-          companyId,
-          name: "CodexCoder",
-          role: "engineer",
-          status: "running",
-          adapterType: "codex_local",
-          adapterConfig: {},
-          runtimeConfig: {
-            heartbeat: { enabled: true, intervalSec: 60 },
-            wakeOnDemand: true,
+      try {
+        await db.insert(companies).values({
+          id: companyId,
+          name: "Taskcore",
+          issuePrefix: "WTQ",
+          requireBoardApprovalForNewAgents: false,
+        });
+        await db.insert(agents).values([
+          {
+            id: agentId,
+            companyId,
+            name: "CodexCoder",
+            role: "engineer",
+            status: "running",
+            adapterType: "codex_local",
+            adapterConfig: {},
+            runtimeConfig: {
+              heartbeat: { enabled: true, intervalSec: 60 },
+              wakeOnDemand: true,
+            },
+            permissions: {},
           },
-          permissions: {},
-        },
-        {
-          id: idleAgentId,
+          {
+            id: idleAgentId,
+            companyId,
+            name: "Reviewer",
+            role: "reviewer",
+            status: "idle",
+            adapterType: "codex_local",
+            adapterConfig: {},
+            runtimeConfig: { heartbeat: { enabled: false, intervalSec: 300 } },
+            permissions: {},
+          },
+        ]);
+        await db.insert(projects).values({
+          id: projectId,
           companyId,
-          name: "Reviewer",
-          role: "reviewer",
-          status: "idle",
-          adapterType: "codex_local",
-          adapterConfig: {},
-          runtimeConfig: { heartbeat: { enabled: false, intervalSec: 300 } },
-          permissions: {},
-        },
-      ]);
-      await db.insert(projects).values({
-        id: projectId,
-        companyId,
-        name: "Runtime quarantine",
-        status: "in_progress",
-      });
-      await db.insert(projectWorkspaces).values({
-        id: projectWorkspaceId,
-        companyId,
-        projectId,
-        name: "Primary workspace",
-        cwd: "/source/project",
-        metadata: {
+          name: "Runtime quarantine",
+          status: "in_progress",
+        });
+        await db.insert(projectWorkspaces).values({
+          id: projectWorkspaceId,
+          companyId,
+          projectId,
+          name: "Primary workspace",
+          cwd: "/source/project",
+          metadata: {
+            keep: "project-metadata",
+            runtimeConfig: {
+              workspaceRuntime: { services: [{ name: "taskcore-dev" }] },
+              desiredState: "running",
+              serviceStates: { "0": "running", "1": "manual" },
+            },
+          },
+        });
+        await db.insert(executionWorkspaces).values({
+          id: executionWorkspaceId,
+          companyId,
+          projectId,
+          projectWorkspaceId,
+          mode: "isolated_workspace",
+          strategyType: "git_worktree",
+          name: "Copied runtime workspace",
+          cwd: "/source/worktree",
+          providerType: "git_worktree",
+          metadata: {
+            keep: "execution-metadata",
+            config: {
+              environmentId: "environment-1",
+              desiredState: "running",
+              serviceStates: { "0": "running" },
+            },
+          },
+        });
+        await db.insert(workspaceRuntimeServices).values({
+          id: runtimeServiceId,
+          companyId,
+          projectId,
+          projectWorkspaceId,
+          executionWorkspaceId,
+          scopeType: "project_workspace",
+          scopeId: projectWorkspaceId,
+          serviceName: "taskcore-dev",
+          status: "running",
+          lifecycle: "shared",
+          provider: "local_process",
+          providerRef: "12345",
+          ownerAgentId: agentId,
+          port: 42013,
+          url: "https://taskcore-dev.example.test:42013",
+          healthStatus: "healthy",
+        });
+        await db.insert(issues).values([
+          {
+            id: inProgressIssueId,
+            companyId,
+            title: "Copied in-flight issue",
+            status: "in_progress",
+            priority: "medium",
+            assigneeAgentId: agentId,
+            issueNumber: 1,
+            identifier: "WTQ-1",
+            executionAgentNameKey: "codexcoder",
+            executionLockedAt: new Date("2026-04-18T00:00:00.000Z"),
+          },
+          {
+            id: todoIssueId,
+            companyId,
+            title: "Copied assigned todo issue",
+            status: "todo",
+            priority: "medium",
+            assigneeAgentId: agentId,
+            issueNumber: 2,
+            identifier: "WTQ-2",
+          },
+          {
+            id: reviewIssueId,
+            companyId,
+            title: "Copied assigned review issue",
+            status: "in_review",
+            priority: "medium",
+            assigneeAgentId: idleAgentId,
+            issueNumber: 3,
+            identifier: "WTQ-3",
+          },
+          {
+            id: userIssueId,
+            companyId,
+            title: "Copied user issue",
+            status: "todo",
+            priority: "medium",
+            assigneeUserId: "user-1",
+            issueNumber: 4,
+            identifier: "WTQ-4",
+          },
+        ]);
+
+        await expect(
+          quarantineSeededWorktreeExecutionState(tempDb.connectionString),
+        ).resolves.toEqual({
+          disabledTimerHeartbeats: 1,
+          resetRunningAgents: 1,
+          quarantinedInProgressIssues: 1,
+          unassignedTodoIssues: 1,
+          unassignedReviewIssues: 1,
+          stoppedProjectWorkspaceRuntimes: 1,
+          stoppedExecutionWorkspaceRuntimes: 1,
+          stoppedRuntimeServices: 1,
+        });
+
+        const [quarantinedAgent] = await db
+          .select()
+          .from(agents)
+          .where(eq(agents.id, agentId));
+        expect(quarantinedAgent?.status).toBe("idle");
+        expect(quarantinedAgent?.runtimeConfig).toMatchObject({
+          heartbeat: { enabled: false, intervalSec: 60 },
+          wakeOnDemand: true,
+        });
+
+        const [inProgressIssue] = await db
+          .select()
+          .from(issues)
+          .where(eq(issues.id, inProgressIssueId));
+        expect(inProgressIssue?.status).toBe("blocked");
+        expect(inProgressIssue?.assigneeAgentId).toBeNull();
+        expect(inProgressIssue?.executionAgentNameKey).toBeNull();
+        expect(inProgressIssue?.executionLockedAt).toBeNull();
+
+        const [todoIssue] = await db
+          .select()
+          .from(issues)
+          .where(eq(issues.id, todoIssueId));
+        expect(todoIssue?.status).toBe("todo");
+        expect(todoIssue?.assigneeAgentId).toBeNull();
+
+        const [reviewIssue] = await db
+          .select()
+          .from(issues)
+          .where(eq(issues.id, reviewIssueId));
+        expect(reviewIssue?.status).toBe("in_review");
+        expect(reviewIssue?.assigneeAgentId).toBeNull();
+
+        const [userIssue] = await db
+          .select()
+          .from(issues)
+          .where(eq(issues.id, userIssueId));
+        expect(userIssue?.status).toBe("todo");
+        expect(userIssue?.assigneeUserId).toBe("user-1");
+
+        const comments = await db
+          .select()
+          .from(issueComments)
+          .where(eq(issueComments.issueId, inProgressIssueId));
+        expect(comments).toHaveLength(1);
+        expect(comments[0]?.body).toContain("Quarantined during worktree seed");
+
+        const [projectWorkspace] = await db
+          .select()
+          .from(projectWorkspaces)
+          .where(eq(projectWorkspaces.id, projectWorkspaceId));
+        expect(projectWorkspace?.metadata).toEqual({
           keep: "project-metadata",
           runtimeConfig: {
             workspaceRuntime: { services: [{ name: "taskcore-dev" }] },
-            desiredState: "running",
-            serviceStates: { "0": "running", "1": "manual" },
+            desiredState: "stopped",
+            serviceStates: { "0": "stopped", "1": "manual" },
           },
-        },
-      });
-      await db.insert(executionWorkspaces).values({
-        id: executionWorkspaceId,
-        companyId,
-        projectId,
-        projectWorkspaceId,
-        mode: "isolated_workspace",
-        strategyType: "git_worktree",
-        name: "Copied runtime workspace",
-        cwd: "/source/worktree",
-        providerType: "git_worktree",
-        metadata: {
+        });
+
+        const [executionWorkspace] = await db
+          .select()
+          .from(executionWorkspaces)
+          .where(eq(executionWorkspaces.id, executionWorkspaceId));
+        expect(executionWorkspace?.metadata).toMatchObject({
           keep: "execution-metadata",
           config: {
             environmentId: "environment-1",
-            desiredState: "running",
-            serviceStates: { "0": "running" },
+            desiredState: "stopped",
+            serviceStates: { "0": "stopped" },
           },
-        },
-      });
-      await db.insert(workspaceRuntimeServices).values({
-        id: runtimeServiceId,
-        companyId,
-        projectId,
-        projectWorkspaceId,
-        executionWorkspaceId,
-        scopeType: "project_workspace",
-        scopeId: projectWorkspaceId,
-        serviceName: "taskcore-dev",
-        status: "running",
-        lifecycle: "shared",
-        provider: "local_process",
-        providerRef: "12345",
-        ownerAgentId: agentId,
-        port: 42013,
-        url: "https://taskcore-dev.example.test:42013",
-        healthStatus: "healthy",
-      });
-      await db.insert(issues).values([
-        {
-          id: inProgressIssueId,
-          companyId,
-          title: "Copied in-flight issue",
-          status: "in_progress",
-          priority: "medium",
-          assigneeAgentId: agentId,
-          issueNumber: 1,
-          identifier: "WTQ-1",
-          executionAgentNameKey: "codexcoder",
-          executionLockedAt: new Date("2026-04-18T00:00:00.000Z"),
-        },
-        {
-          id: todoIssueId,
-          companyId,
-          title: "Copied assigned todo issue",
-          status: "todo",
-          priority: "medium",
-          assigneeAgentId: agentId,
-          issueNumber: 2,
-          identifier: "WTQ-2",
-        },
-        {
-          id: reviewIssueId,
-          companyId,
-          title: "Copied assigned review issue",
-          status: "in_review",
-          priority: "medium",
-          assigneeAgentId: idleAgentId,
-          issueNumber: 3,
-          identifier: "WTQ-3",
-        },
-        {
-          id: userIssueId,
-          companyId,
-          title: "Copied user issue",
-          status: "todo",
-          priority: "medium",
-          assigneeUserId: "user-1",
-          issueNumber: 4,
-          identifier: "WTQ-4",
-        },
-      ]);
+        });
 
-      await expect(quarantineSeededWorktreeExecutionState(tempDb.connectionString)).resolves.toEqual({
-        disabledTimerHeartbeats: 1,
-        resetRunningAgents: 1,
-        quarantinedInProgressIssues: 1,
-        unassignedTodoIssues: 1,
-        unassignedReviewIssues: 1,
-        stoppedProjectWorkspaceRuntimes: 1,
-        stoppedExecutionWorkspaceRuntimes: 1,
-        stoppedRuntimeServices: 1,
-      });
-
-      const [quarantinedAgent] = await db.select().from(agents).where(eq(agents.id, agentId));
-      expect(quarantinedAgent?.status).toBe("idle");
-      expect(quarantinedAgent?.runtimeConfig).toMatchObject({
-        heartbeat: { enabled: false, intervalSec: 60 },
-        wakeOnDemand: true,
-      });
-
-      const [inProgressIssue] = await db.select().from(issues).where(eq(issues.id, inProgressIssueId));
-      expect(inProgressIssue?.status).toBe("blocked");
-      expect(inProgressIssue?.assigneeAgentId).toBeNull();
-      expect(inProgressIssue?.executionAgentNameKey).toBeNull();
-      expect(inProgressIssue?.executionLockedAt).toBeNull();
-
-      const [todoIssue] = await db.select().from(issues).where(eq(issues.id, todoIssueId));
-      expect(todoIssue?.status).toBe("todo");
-      expect(todoIssue?.assigneeAgentId).toBeNull();
-
-      const [reviewIssue] = await db.select().from(issues).where(eq(issues.id, reviewIssueId));
-      expect(reviewIssue?.status).toBe("in_review");
-      expect(reviewIssue?.assigneeAgentId).toBeNull();
-
-      const [userIssue] = await db.select().from(issues).where(eq(issues.id, userIssueId));
-      expect(userIssue?.status).toBe("todo");
-      expect(userIssue?.assigneeUserId).toBe("user-1");
-
-      const comments = await db.select().from(issueComments).where(eq(issueComments.issueId, inProgressIssueId));
-      expect(comments).toHaveLength(1);
-      expect(comments[0]?.body).toContain("Quarantined during worktree seed");
-
-      const [projectWorkspace] = await db
-        .select()
-        .from(projectWorkspaces)
-        .where(eq(projectWorkspaces.id, projectWorkspaceId));
-      expect(projectWorkspace?.metadata).toEqual({
-        keep: "project-metadata",
-        runtimeConfig: {
-          workspaceRuntime: { services: [{ name: "taskcore-dev" }] },
-          desiredState: "stopped",
-          serviceStates: { "0": "stopped", "1": "manual" },
-        },
-      });
-
-      const [executionWorkspace] = await db
-        .select()
-        .from(executionWorkspaces)
-        .where(eq(executionWorkspaces.id, executionWorkspaceId));
-      expect(executionWorkspace?.metadata).toMatchObject({
-        keep: "execution-metadata",
-        config: {
-          environmentId: "environment-1",
-          desiredState: "stopped",
-          serviceStates: { "0": "stopped" },
-        },
-      });
-
-      const [runtimeService] = await db
-        .select()
-        .from(workspaceRuntimeServices)
-        .where(eq(workspaceRuntimeServices.id, runtimeServiceId));
-      expect(runtimeService).toMatchObject({
-        status: "stopped",
-        healthStatus: "unknown",
-        providerRef: null,
-        ownerAgentId: null,
-        startedByRunId: null,
-        port: null,
-        url: null,
-      });
-      expect(runtimeService?.stoppedAt).toBeInstanceOf(Date);
-    } finally {
-      await db.$client?.end?.({ timeout: 5 }).catch(() => undefined);
-    }
-  });
+        const [runtimeService] = await db
+          .select()
+          .from(workspaceRuntimeServices)
+          .where(eq(workspaceRuntimeServices.id, runtimeServiceId));
+        expect(runtimeService).toMatchObject({
+          status: "stopped",
+          healthStatus: "unknown",
+          providerRef: null,
+          ownerAgentId: null,
+          startedByRunId: null,
+          port: null,
+          url: null,
+        });
+        expect(runtimeService?.stoppedAt).toBeInstanceOf(Date);
+      } finally {
+        await db.$client?.end?.({ timeout: 5 }).catch(() => undefined);
+      }
+    },
+  );
 
   it("copies the source local_encrypted secrets key into the seeded worktree instance", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-secrets-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-secrets-"),
+    );
     const originalInlineMasterKey = process.env.TASKCORE_SECRETS_MASTER_KEY;
     const originalKeyFile = process.env.TASKCORE_SECRETS_MASTER_KEY_FILE;
     try {
       delete process.env.TASKCORE_SECRETS_MASTER_KEY;
       delete process.env.TASKCORE_SECRETS_MASTER_KEY_FILE;
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
-      const sourceKeyPath = path.join(tempRoot, "source", "secrets", "master.key");
-      const targetKeyPath = path.join(tempRoot, "target", "secrets", "master.key");
+      const sourceKeyPath = path.join(
+        tempRoot,
+        "source",
+        "secrets",
+        "master.key",
+      );
+      const targetKeyPath = path.join(
+        tempRoot,
+        "target",
+        "secrets",
+        "master.key",
+      );
       fs.mkdirSync(path.dirname(sourceKeyPath), { recursive: true });
       fs.writeFileSync(sourceKeyPath, "source-master-key", "utf8");
 
@@ -1452,10 +1759,17 @@ describe("worktree helpers", () => {
   });
 
   it("writes the source inline secrets master key into the seeded worktree instance", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-secrets-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-secrets-"),
+    );
     try {
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
-      const targetKeyPath = path.join(tempRoot, "target", "secrets", "master.key");
+      const targetKeyPath = path.join(
+        tempRoot,
+        "target",
+        "secrets",
+        "master.key",
+      );
 
       copySeededSecretsKey({
         sourceConfigPath,
@@ -1466,14 +1780,18 @@ describe("worktree helpers", () => {
         targetKeyFilePath: targetKeyPath,
       });
 
-      expect(fs.readFileSync(targetKeyPath, "utf8")).toBe("inline-source-master-key");
+      expect(fs.readFileSync(targetKeyPath, "utf8")).toBe(
+        "inline-source-master-key",
+      );
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("creates an explicitly empty worktree without inherited signing secrets or deferred copying", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-empty-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-empty-"),
+    );
     const originalCwd = process.cwd();
     const originalJwt = process.env.TASKCORE_AGENT_JWT_SECRET;
     const originalSigning = process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET;
@@ -1483,36 +1801,67 @@ describe("worktree helpers", () => {
       process.chdir(repoRoot);
       process.env.TASKCORE_AGENT_JWT_SECRET = "source-jwt-secret";
       process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET = "source-signing-secret";
-      await worktreeInitCommand({ empty: true, fromConfig: path.join(tempRoot, "missing.json"), home: path.join(tempRoot, "instances") });
-      const env = fs.readFileSync(path.join(repoRoot, ".taskcore/.env"), "utf8");
+      await worktreeInitCommand({
+        empty: true,
+        fromConfig: path.join(tempRoot, "missing.json"),
+        home: path.join(tempRoot, "instances"),
+      });
+      const env = fs.readFileSync(
+        path.join(repoRoot, ".taskcore/.env"),
+        "utf8",
+      );
       expect(env).not.toContain("source-jwt-secret");
       expect(env).not.toContain("source-signing-secret");
       expect(env).toContain("TASKCORE_AGENT_JWT_SECRET=");
-      expect(fs.existsSync(path.join(repoRoot, ".taskcore/seed-manifest.json"))).toBe(false);
-      expect(fs.existsSync(path.join(repoRoot, ".taskcore/seed-pending"))).toBe(false);
-      expect(fs.existsSync(path.join(repoRoot, ".taskcore/seed-empty"))).toBe(true);
-      await worktreeInitCommand({ seed: false, force: true, fromConfig: path.join(tempRoot, "missing.json"), home: path.join(tempRoot, "instances") });
-      expect(fs.existsSync(path.join(repoRoot, ".taskcore/seed-empty"))).toBe(false);
-      expect(readWorktreeSeedManifest(path.join(repoRoot, ".taskcore/config.json"))?.state).toBe("pending");
+      expect(
+        fs.existsSync(path.join(repoRoot, ".taskcore/seed-manifest.json")),
+      ).toBe(false);
+      expect(fs.existsSync(path.join(repoRoot, ".taskcore/seed-pending"))).toBe(
+        false,
+      );
+      expect(fs.existsSync(path.join(repoRoot, ".taskcore/seed-empty"))).toBe(
+        true,
+      );
+      await worktreeInitCommand({
+        seed: false,
+        force: true,
+        fromConfig: path.join(tempRoot, "missing.json"),
+        home: path.join(tempRoot, "instances"),
+      });
+      expect(fs.existsSync(path.join(repoRoot, ".taskcore/seed-empty"))).toBe(
+        false,
+      );
+      expect(
+        readWorktreeSeedManifest(path.join(repoRoot, ".taskcore/config.json"))
+          ?.state,
+      ).toBe("pending");
     } finally {
       process.chdir(originalCwd);
-      if (originalJwt === undefined) delete process.env.TASKCORE_AGENT_JWT_SECRET; else process.env.TASKCORE_AGENT_JWT_SECRET = originalJwt;
-      if (originalSigning === undefined) delete process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET; else process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET = originalSigning;
+      if (originalJwt === undefined)
+        delete process.env.TASKCORE_AGENT_JWT_SECRET;
+      else process.env.TASKCORE_AGENT_JWT_SECRET = originalJwt;
+      if (originalSigning === undefined)
+        delete process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET;
+      else process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET = originalSigning;
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("persists the current agent jwt secret into the worktree env file", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-jwt-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-jwt-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const originalCwd = process.cwd();
     const originalJwtSecret = process.env.TASKCORE_AGENT_JWT_SECRET;
-    const originalToolActionSigningSecret = process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET;
+    const originalToolActionSigningSecret =
+      process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET;
 
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
       process.env.TASKCORE_AGENT_JWT_SECRET = "worktree-shared-secret";
-      process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET = "worktree-tool-action-secret";
+      process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET =
+        "worktree-tool-action-secret";
       process.chdir(repoRoot);
 
       await worktreeInitCommand({
@@ -1523,8 +1872,12 @@ describe("worktree helpers", () => {
 
       const envPath = path.join(repoRoot, ".taskcore", ".env");
       const envContents = fs.readFileSync(envPath, "utf8");
-      expect(envContents).toContain("TASKCORE_AGENT_JWT_SECRET=worktree-shared-secret");
-      expect(envContents).toContain("TASKCORE_TOOL_ACTION_SIGNING_SECRET=worktree-tool-action-secret");
+      expect(envContents).toContain(
+        "TASKCORE_AGENT_JWT_SECRET=worktree-shared-secret",
+      );
+      expect(envContents).toContain(
+        "TASKCORE_TOOL_ACTION_SIGNING_SECRET=worktree-tool-action-secret",
+      );
       expect(envContents).toContain("TASKCORE_WORKTREE_NAME=repo");
       expect(envContents).toMatch(/TASKCORE_WORKTREE_COLOR=\"#[0-9a-f]{6}\"/);
     } finally {
@@ -1537,14 +1890,17 @@ describe("worktree helpers", () => {
       if (originalToolActionSigningSecret === undefined) {
         delete process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET;
       } else {
-        process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET = originalToolActionSigningSecret;
+        process.env.TASKCORE_TOOL_ACTION_SIGNING_SECRET =
+          originalToolActionSigningSecret;
       }
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("preserves repo-managed worktree checkouts when --force re-runs from the source repo", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-force-preserve-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-force-preserve-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const originalCwd = process.cwd();
 
@@ -1552,7 +1908,11 @@ describe("worktree helpers", () => {
       fs.mkdirSync(repoRoot, { recursive: true });
       const repoConfigDir = path.join(repoRoot, ".taskcore");
       fs.mkdirSync(repoConfigDir, { recursive: true });
-      fs.writeFileSync(path.join(repoConfigDir, "config.json"), "stale", "utf8");
+      fs.writeFileSync(
+        path.join(repoConfigDir, "config.json"),
+        "stale",
+        "utf8",
+      );
       fs.writeFileSync(path.join(repoConfigDir, ".env"), "STALE=1", "utf8");
 
       // Simulate the repo-managed worktrees subfolder that holds every
@@ -1575,7 +1935,9 @@ describe("worktree helpers", () => {
       expect(fs.existsSync(sentinelPath)).toBe(true);
       expect(fs.readFileSync(sentinelPath, "utf8")).toBe("do-not-delete");
       expect(fs.existsSync(path.join(repoConfigDir, "config.json"))).toBe(true);
-      expect(fs.readFileSync(path.join(repoConfigDir, "config.json"), "utf8")).not.toBe("stale");
+      expect(
+        fs.readFileSync(path.join(repoConfigDir, "config.json"), "utf8"),
+      ).not.toBe("stale");
     } finally {
       process.chdir(originalCwd);
       fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -1585,7 +1947,9 @@ describe("worktree helpers", () => {
   itEmbeddedPostgres(
     "seeds a local-trusted implicit board user without a credential account",
     async () => {
-      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-local-board-seed-"));
+      const tempRoot = fs.mkdtempSync(
+        path.join(os.tmpdir(), "taskcore-worktree-local-board-seed-"),
+      );
       const originalCwd = process.cwd();
       onTestFinished(() => {
         process.chdir(originalCwd);
@@ -1596,7 +1960,9 @@ describe("worktree helpers", () => {
       const sourceConfigPath = path.join(sourceConfigDir, "config.json");
       const sourceKeyPath = path.join(sourceConfigDir, "secrets", "master.key");
       const worktreeHome = path.join(tempRoot, ".taskcore-worktrees");
-      const sourceDb = await startEmbeddedPostgresTestDatabase("taskcore-worktree-local-board-source-");
+      const sourceDb = await startEmbeddedPostgresTestDatabase(
+        "taskcore-worktree-local-board-source-",
+      );
       onTestFinished(() => sourceDb.cleanup());
 
       await seedValidWorktreeSource(sourceDb.connectionString, {
@@ -1618,7 +1984,11 @@ describe("worktree helpers", () => {
       delete sourceConfig.auth.publicBaseUrl;
       sourceConfig.secrets.localEncrypted.keyFilePath = sourceKeyPath;
 
-      fs.writeFileSync(sourceConfigPath, `${JSON.stringify(sourceConfig, null, 2)}\n`, "utf8");
+      fs.writeFileSync(
+        sourceConfigPath,
+        `${JSON.stringify(sourceConfig, null, 2)}\n`,
+        "utf8",
+      );
       fs.writeFileSync(sourceKeyPath, "source-master-key", "utf8");
 
       process.chdir(worktreeRoot);
@@ -1629,8 +1999,14 @@ describe("worktree helpers", () => {
         force: true,
       });
 
-      const targetConfigPath = path.join(worktreeRoot, ".taskcore", "config.json");
-      const targetConfig = JSON.parse(fs.readFileSync(targetConfigPath, "utf8")) as TaskcoreConfig;
+      const targetConfigPath = path.join(
+        worktreeRoot,
+        ".taskcore",
+        "config.json",
+      );
+      const targetConfig = JSON.parse(
+        fs.readFileSync(targetConfigPath, "utf8"),
+      ) as TaskcoreConfig;
       expect(readWorktreeSeedManifest(targetConfigPath)).toMatchObject({
         state: "verified",
         phase: "complete",
@@ -1667,7 +2043,9 @@ describe("worktree helpers", () => {
   itEmbeddedPostgres(
     "seeds a lagging source whose migration application order differs from filename order",
     async () => {
-      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-auth-seed-"));
+      const tempRoot = fs.mkdtempSync(
+        path.join(os.tmpdir(), "taskcore-worktree-auth-seed-"),
+      );
       const originalCwd = process.cwd();
       onTestFinished(() => {
         process.chdir(originalCwd);
@@ -1680,7 +2058,9 @@ describe("worktree helpers", () => {
       const sourceEnvPath = path.join(sourceConfigDir, ".env");
       const sourceKeyPath = path.join(sourceConfigDir, "secrets", "master.key");
       const worktreeHome = path.join(tempRoot, ".taskcore-worktrees");
-      const sourceCluster = await startEmbeddedPostgresTestDatabase("taskcore-worktree-auth-source-");
+      const sourceCluster = await startEmbeddedPostgresTestDatabase(
+        "taskcore-worktree-auth-source-",
+      );
       const sourceUrl = new URL(sourceCluster.connectionString);
       sourceUrl.pathname = "/lagging_source";
       const sourceDb = { connectionString: sourceUrl.toString() };
@@ -1688,25 +2068,43 @@ describe("worktree helpers", () => {
         await closeRegisteredClients(sourceDb.connectionString);
         await sourceCluster.cleanup();
       });
-      await ensurePostgresDatabase(sourceCluster.connectionString, "lagging_source");
+      await ensurePostgresDatabase(
+        sourceCluster.connectionString,
+        "lagging_source",
+      );
       // A lagging source must also have the prior schema. Deleting only the
       // newest receipt from a fully migrated schema relied on that particular
       // migration being idempotent and breaks when the new migration creates a
       // table. Build the schema before the identity-repair migration, so this
       // regression keeps testing that repair as later migrations are added.
-      const migrationsRoot = new URL("../../../packages/db/src/migrations/", import.meta.url);
-      const journal = JSON.parse(fs.readFileSync(new URL("meta/_journal.json", migrationsRoot), "utf8"));
-      const repairIndex = journal.entries.findIndex((entry: { tag: string }) => entry.tag === "0309_loving_the_hood");
+      const migrationsRoot = new URL(
+        "../../../packages/db/src/migrations/",
+        import.meta.url,
+      );
+      const journal = JSON.parse(
+        fs.readFileSync(new URL("meta/_journal.json", migrationsRoot), "utf8"),
+      );
+      const repairIndex = journal.entries.findIndex(
+        (entry: { tag: string }) => entry.tag === "0309_loving_the_hood",
+      );
       expect(repairIndex).toBeGreaterThan(0);
       const priorEntries = journal.entries.slice(0, repairIndex);
       const priorMigrations = path.join(tempRoot, "prior-migrations");
       fs.mkdirSync(path.join(priorMigrations, "meta"), { recursive: true });
-      fs.writeFileSync(path.join(priorMigrations, "meta", "_journal.json"), JSON.stringify({ ...journal, entries: priorEntries }));
+      fs.writeFileSync(
+        path.join(priorMigrations, "meta", "_journal.json"),
+        JSON.stringify({ ...journal, entries: priorEntries }),
+      );
       for (const entry of priorEntries) {
-        fs.copyFileSync(new URL(`${entry.tag}.sql`, migrationsRoot), path.join(priorMigrations, `${entry.tag}.sql`));
+        fs.copyFileSync(
+          new URL(`${entry.tag}.sql`, migrationsRoot),
+          path.join(priorMigrations, `${entry.tag}.sql`),
+        );
       }
       const sourceDbClient = createDb(sourceDb.connectionString);
-      await migrate(drizzle(sourceDbClient.$client), { migrationsFolder: priorMigrations });
+      await migrate(drizzle(sourceDbClient.$client), {
+        migrationsFolder: priorMigrations,
+      });
       const seed = await seedValidWorktreeSource(sourceDb.connectionString);
       // An older filtered JavaScript backup retained event IDs but lost the
       // identity generator. The pending migration must repair that schema.
@@ -1719,7 +2117,9 @@ describe("worktree helpers", () => {
         INSERT INTO resource_lifecycle_events (company_id, resource_type, resource_id, action)
         VALUES (${seed.companyId}, 'agent', ${legacyAgentId}, 'pause')
       `;
-      await sourceDbClient.$client.unsafe('ALTER TABLE resource_lifecycle_events ALTER COLUMN id DROP IDENTITY');
+      await sourceDbClient.$client.unsafe(
+        "ALTER TABLE resource_lifecycle_events ALTER COLUMN id DROP IDENTITY",
+      );
       await sourceDbClient.$client.unsafe(`
         WITH pair AS (
           SELECT
@@ -1745,17 +2145,26 @@ describe("worktree helpers", () => {
         VALUES ('stale-unresolvable-migration-hash', 0)
       `);
       await sourceDbClient.$client.end({ timeout: 5 });
-      const laggingMigrationState = await inspectMigrations(sourceDb.connectionString);
+      const laggingMigrationState = await inspectMigrations(
+        sourceDb.connectionString,
+      );
       expect(laggingMigrationState.status).toBe("needsMigrations");
       if (laggingMigrationState.status !== "needsMigrations") {
-        throw new Error("Expected the source migration journal to lag the code journal");
+        throw new Error(
+          "Expected the source migration journal to lag the code journal",
+        );
       }
-      expect(laggingMigrationState.pendingMigrations).toHaveLength(journal.entries.length - repairIndex);
-      const expectedAppliedPrefix = laggingMigrationState.availableMigrations.slice(
-        0,
-        laggingMigrationState.appliedMigrations.length,
+      expect(laggingMigrationState.pendingMigrations).toHaveLength(
+        journal.entries.length - repairIndex,
       );
-      expect(laggingMigrationState.appliedMigrations).not.toEqual(expectedAppliedPrefix);
+      const expectedAppliedPrefix =
+        laggingMigrationState.availableMigrations.slice(
+          0,
+          laggingMigrationState.appliedMigrations.length,
+        );
+      expect(laggingMigrationState.appliedMigrations).not.toEqual(
+        expectedAppliedPrefix,
+      );
       expect([...laggingMigrationState.appliedMigrations].sort()).toEqual(
         [...expectedAppliedPrefix].sort(),
       );
@@ -1782,10 +2191,17 @@ describe("worktree helpers", () => {
         connectionString: sourceDb.connectionString,
       };
       sourceConfig.logging.logDir = path.join(sourceConfigDir, "logs");
-      sourceConfig.storage.localDisk.baseDir = path.join(sourceConfigDir, "storage");
+      sourceConfig.storage.localDisk.baseDir = path.join(
+        sourceConfigDir,
+        "storage",
+      );
       sourceConfig.secrets.localEncrypted.keyFilePath = sourceKeyPath;
 
-      fs.writeFileSync(sourceConfigPath, JSON.stringify(sourceConfig, null, 2) + "\n", "utf8");
+      fs.writeFileSync(
+        sourceConfigPath,
+        JSON.stringify(sourceConfig, null, 2) + "\n",
+        "utf8",
+      );
       fs.writeFileSync(sourceEnvPath, "", "utf8");
       fs.writeFileSync(sourceKeyPath, "source-master-key", "utf8");
 
@@ -1798,7 +2214,10 @@ describe("worktree helpers", () => {
       });
 
       const targetConfig = JSON.parse(
-        fs.readFileSync(path.join(worktreeRoot, ".taskcore", "config.json"), "utf8"),
+        fs.readFileSync(
+          path.join(worktreeRoot, ".taskcore", "config.json"),
+          "utf8",
+        ),
       ) as TaskcoreConfig;
       const manifestText = fs.readFileSync(
         path.join(worktreeRoot, ".taskcore", "seed-manifest.json"),
@@ -1810,7 +2229,9 @@ describe("worktree helpers", () => {
         state: "verified",
         phase: "complete",
       });
-      expect(manifestText).toContain(`Validated migration ${sourceMigrationRevision}`);
+      expect(manifestText).toContain(
+        `Validated migration ${sourceMigrationRevision}`,
+      );
       expect(manifestText).not.toContain("fixture-password-hash");
       expect(manifestText).not.toContain("source-master-key");
       const { default: EmbeddedPostgres } = await import("embedded-postgres");
@@ -1831,12 +2252,19 @@ describe("worktree helpers", () => {
         `postgres://taskcore:taskcore@127.0.0.1:${targetConfig.database.embeddedPostgresPort}/taskcore`,
       );
       const seededUsers = await targetDb.select().from(authUsers);
-      expect(seededUsers.some((row) => row.email === "existing@taskcore.ing")).toBe(true);
+      expect(
+        seededUsers.some((row) => row.email === "existing@taskcore.ing"),
+      ).toBe(true);
       const restoredEvents = await targetDb.$client`
         SELECT id, action FROM resource_lifecycle_events WHERE resource_id = ${legacyAgentId} ORDER BY id
       `;
-      expect(restoredEvents.map(row => row.action)).toEqual(["pause", "create"]);
-      expect(Number(restoredEvents[1].id)).toBeGreaterThan(Number(restoredEvents[0].id));
+      expect(restoredEvents.map((row) => row.action)).toEqual([
+        "pause",
+        "create",
+      ]);
+      expect(Number(restoredEvents[1].id)).toBeGreaterThan(
+        Number(restoredEvents[0].id),
+      );
       const [identity] = await targetDb.$client`
         SELECT is_identity FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'resource_lifecycle_events' AND column_name = 'id'
@@ -1846,10 +2274,16 @@ describe("worktree helpers", () => {
   );
 
   it("avoids ports already claimed by sibling worktree instance configs", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-claimed-ports-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-claimed-ports-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const homeDir = path.join(tempRoot, ".taskcore-worktrees");
-    const siblingInstanceRoot = path.join(homeDir, "instances", "existing-worktree");
+    const siblingInstanceRoot = path.join(
+      homeDir,
+      "instances",
+      "existing-worktree",
+    );
     const originalCwd = process.cwd();
 
     try {
@@ -1899,7 +2333,11 @@ describe("worktree helpers", () => {
               provider: "local_encrypted",
               strictMode: false,
               localEncrypted: {
-                keyFilePath: path.join(siblingInstanceRoot, "secrets", "master.key"),
+                keyFilePath: path.join(
+                  siblingInstanceRoot,
+                  "secrets",
+                  "master.key",
+                ),
               },
             },
           },
@@ -1915,7 +2353,12 @@ describe("worktree helpers", () => {
         home: homeDir,
       });
 
-      const config = JSON.parse(fs.readFileSync(path.join(repoRoot, ".taskcore", "config.json"), "utf8"));
+      const config = JSON.parse(
+        fs.readFileSync(
+          path.join(repoRoot, ".taskcore", "config.json"),
+          "utf8",
+        ),
+      );
       expect(config.server.port).toBeGreaterThan(3101);
       expect(config.database.embeddedPostgresPort).not.toBe(54330);
       expect(config.database.embeddedPostgresPort).not.toBe(config.server.port);
@@ -1927,14 +2370,24 @@ describe("worktree helpers", () => {
   });
 
   it("reserves distinct ports for postgres-mode siblings under a custom worktree parent", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-custom-parent-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-custom-parent-"),
+    );
     const homeDir = path.join(tempRoot, ".taskcore-worktrees");
     const customParentDir = path.join(tempRoot, "custom", "workspace-lanes");
     const firstWorktreeRoot = path.join(customParentDir, "lane-one");
     const secondWorktreeRoot = path.join(customParentDir, "lane-two");
     const missingSourceConfig = path.join(tempRoot, "missing", "config.json");
-    const firstConfigPath = path.join(firstWorktreeRoot, ".taskcore", "config.json");
-    const secondConfigPath = path.join(secondWorktreeRoot, ".taskcore", "config.json");
+    const firstConfigPath = path.join(
+      firstWorktreeRoot,
+      ".taskcore",
+      "config.json",
+    );
+    const secondConfigPath = path.join(
+      secondWorktreeRoot,
+      ".taskcore",
+      "config.json",
+    );
     const originalCwd = process.cwd();
 
     try {
@@ -1953,9 +2406,14 @@ describe("worktree helpers", () => {
       firstConfig.database = {
         ...firstConfig.database,
         mode: "postgres",
-        connectionString: "postgres://taskcore:taskcore@127.0.0.1:54330/taskcore",
+        connectionString:
+          "postgres://taskcore:taskcore@127.0.0.1:54330/taskcore",
       };
-      fs.writeFileSync(firstConfigPath, `${JSON.stringify(firstConfig, null, 2)}\n`, "utf8");
+      fs.writeFileSync(
+        firstConfigPath,
+        `${JSON.stringify(firstConfig, null, 2)}\n`,
+        "utf8",
+      );
 
       process.chdir(secondWorktreeRoot);
       await worktreeInitCommand({
@@ -1965,16 +2423,23 @@ describe("worktree helpers", () => {
         home: homeDir,
       });
 
-      const secondConfig = JSON.parse(fs.readFileSync(secondConfigPath, "utf8"));
+      const secondConfig = JSON.parse(
+        fs.readFileSync(secondConfigPath, "utf8"),
+      );
       const registry = JSON.parse(
-        fs.readFileSync(path.join(homeDir, "worktree-port-reservations.json"), "utf8"),
+        fs.readFileSync(
+          path.join(homeDir, "worktree-port-reservations.json"),
+          "utf8",
+        ),
       );
 
       expect(secondConfig.server.port).not.toBe(firstConfig.server.port);
       expect(secondConfig.database.embeddedPostgresPort).not.toBe(
         firstConfig.database.embeddedPostgresPort,
       );
-      expect(registry.configPaths).toEqual([firstConfigPath, secondConfigPath].sort());
+      expect(registry.configPaths).toEqual(
+        [firstConfigPath, secondConfigPath].sort(),
+      );
     } finally {
       process.chdir(originalCwd);
       fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -1982,7 +2447,9 @@ describe("worktree helpers", () => {
   });
 
   it("defaults the seed source config to the current repo-local Taskcore config", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-source-config-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-source-config-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const localConfigPath = path.join(repoRoot, ".taskcore", "config.json");
     const originalCwd = process.cwd();
@@ -1990,11 +2457,17 @@ describe("worktree helpers", () => {
 
     try {
       fs.mkdirSync(path.dirname(localConfigPath), { recursive: true });
-      fs.writeFileSync(localConfigPath, JSON.stringify(buildSourceConfig()), "utf8");
+      fs.writeFileSync(
+        localConfigPath,
+        JSON.stringify(buildSourceConfig()),
+        "utf8",
+      );
       delete process.env.TASKCORE_CONFIG;
       process.chdir(repoRoot);
 
-      expect(fs.realpathSync(resolveSourceConfigPath({}))).toBe(fs.realpathSync(localConfigPath));
+      expect(fs.realpathSync(resolveSourceConfigPath({}))).toBe(
+        fs.realpathSync(localConfigPath),
+      );
     } finally {
       process.chdir(originalCwd);
       if (originalTaskcoreConfig === undefined) {
@@ -2007,7 +2480,9 @@ describe("worktree helpers", () => {
   });
 
   it("preserves the source config path across worktree:make cwd changes", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-source-override-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-source-override-"),
+    );
     const sourceConfigPath = path.join(tempRoot, "source", "config.json");
     const targetRoot = path.join(tempRoot, "target");
     const originalCwd = process.cwd();
@@ -2016,13 +2491,17 @@ describe("worktree helpers", () => {
     try {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
       fs.mkdirSync(targetRoot, { recursive: true });
-      fs.writeFileSync(sourceConfigPath, JSON.stringify(buildSourceConfig()), "utf8");
+      fs.writeFileSync(
+        sourceConfigPath,
+        JSON.stringify(buildSourceConfig()),
+        "utf8",
+      );
       delete process.env.TASKCORE_CONFIG;
       process.chdir(targetRoot);
 
-      expect(resolveSourceConfigPath({ sourceConfigPathOverride: sourceConfigPath })).toBe(
-        path.resolve(sourceConfigPath),
-      );
+      expect(
+        resolveSourceConfigPath({ sourceConfigPathOverride: sourceConfigPath }),
+      ).toBe(path.resolve(sourceConfigPath));
     } finally {
       process.chdir(originalCwd);
       if (originalTaskcoreConfig === undefined) {
@@ -2041,16 +2520,20 @@ describe("worktree helpers", () => {
   });
 
   it("rejects mixed reseed source selectors", () => {
-    expect(() => resolveWorktreeReseedSource({
-      from: "current",
-      fromInstance: "default",
-    })).toThrow(
+    expect(() =>
+      resolveWorktreeReseedSource({
+        from: "current",
+        fromInstance: "default",
+      }),
+    ).toThrow(
       "Use either --from <worktree> or --from-config/--from-data-dir/--from-instance, not both.",
     );
   });
 
   it("derives worktree reseed target paths from the adjacent env file", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-reseed-target-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-reseed-target-"),
+    );
     const worktreeRoot = path.join(tempRoot, "repo");
     const configPath = path.join(worktreeRoot, ".taskcore", "config.json");
     const envPath = path.join(worktreeRoot, ".taskcore", ".env");
@@ -2082,137 +2565,189 @@ describe("worktree helpers", () => {
   });
 
   it("rejects reseed targets without worktree env metadata", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-reseed-target-missing-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-reseed-target-missing-"),
+    );
     const worktreeRoot = path.join(tempRoot, "repo");
     const configPath = path.join(worktreeRoot, ".taskcore", "config.json");
 
     try {
       fs.mkdirSync(path.dirname(configPath), { recursive: true });
       fs.writeFileSync(configPath, JSON.stringify(buildSourceConfig()), "utf8");
-      fs.writeFileSync(path.join(worktreeRoot, ".taskcore", ".env"), "", "utf8");
+      fs.writeFileSync(
+        path.join(worktreeRoot, ".taskcore", ".env"),
+        "",
+        "utf8",
+      );
 
       expect(() =>
         resolveWorktreeReseedTargetPaths({
           configPath,
           rootPath: worktreeRoot,
-        })).toThrow("does not look like a worktree-local Taskcore instance");
+        }),
+      ).toThrow("does not look like a worktree-local Taskcore instance");
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("uses transformed backups for both seed modes to omit agent identities", () => {
-    expect(resolveWorktreeSeedBackupEngine(resolveWorktreeSeedPlan("full"))).toBe("javascript");
-    expect(resolveWorktreeSeedBackupEngine(resolveWorktreeSeedPlan("minimal"))).toBe("javascript");
+    expect(
+      resolveWorktreeSeedBackupEngine(resolveWorktreeSeedPlan("full")),
+    ).toBe("javascript");
+    expect(
+      resolveWorktreeSeedBackupEngine(resolveWorktreeSeedPlan("minimal")),
+    ).toBe("javascript");
   });
 
-  itEmbeddedPostgres("reseed preserves the current worktree ports, instance id, and branding", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-reseed-"));
-    const repoRoot = path.join(tempRoot, "repo");
-    const sourceRoot = path.join(tempRoot, "source");
-    const homeDir = path.join(tempRoot, ".taskcore-worktrees");
-    const currentInstanceId = "existing-worktree";
-    const currentPaths = resolveWorktreeLocalPaths({
-      cwd: repoRoot,
-      homeDir,
-      instanceId: currentInstanceId,
-    });
-    const sourcePaths = resolveWorktreeLocalPaths({
-      cwd: sourceRoot,
-      homeDir: path.join(tempRoot, ".taskcore-source"),
-      instanceId: "default",
-    });
-    const originalCwd = process.cwd();
-    const originalTaskcoreConfig = process.env.TASKCORE_CONFIG;
-    const currentDatabaseReservation = await reserveTestPort();
-    const currentDatabasePort = currentDatabaseReservation.port;
-    const sourceDb = await startEmbeddedPostgresTestDatabase("taskcore-worktree-reseed-source-");
-    onTestFinished(() => sourceDb.cleanup());
-
-    try {
-      fs.mkdirSync(path.dirname(currentPaths.configPath), { recursive: true });
-      fs.mkdirSync(path.dirname(sourcePaths.configPath), { recursive: true });
-      fs.mkdirSync(path.dirname(sourcePaths.secretsKeyFilePath), { recursive: true });
-      fs.mkdirSync(repoRoot, { recursive: true });
-      fs.mkdirSync(sourceRoot, { recursive: true });
-
-      const currentConfig = buildWorktreeConfig({
-        sourceConfig: buildSourceConfig(),
-        paths: currentPaths,
-        serverPort: 3114,
-        databasePort: currentDatabasePort,
-      });
-      const sourceConfig = buildSourceConfig();
-      sourceConfig.database = {
-        mode: "postgres",
-        embeddedPostgresDataDir: sourcePaths.embeddedPostgresDataDir,
-        embeddedPostgresPort: 54329,
-        backup: {
-          enabled: true,
-          intervalMinutes: 60,
-          retentionDays: 30,
-          dir: sourcePaths.backupDir,
-        },
-        connectionString: sourceDb.connectionString,
-      };
-      sourceConfig.logging.logDir = sourcePaths.logDir;
-      sourceConfig.storage.localDisk.baseDir = sourcePaths.storageDir;
-      sourceConfig.secrets.localEncrypted.keyFilePath = sourcePaths.secretsKeyFilePath;
-      await seedValidWorktreeSource(sourceDb.connectionString);
-      fs.writeFileSync(currentPaths.configPath, JSON.stringify(currentConfig, null, 2), "utf8");
-      fs.writeFileSync(sourcePaths.configPath, JSON.stringify(sourceConfig, null, 2), "utf8");
-      fs.writeFileSync(sourcePaths.secretsKeyFilePath, "source-secret", "utf8");
-      const worktreeSentinelPath = path.join(repoRoot, "user-worktree-file.txt");
-      fs.writeFileSync(worktreeSentinelPath, "preserve me", "utf8");
-      fs.writeFileSync(
-        currentPaths.envPath,
-        [
-          `TASKCORE_HOME=${homeDir}`,
-          `TASKCORE_INSTANCE_ID=${currentInstanceId}`,
-          "TASKCORE_WORKTREE_NAME=existing-name",
-          "TASKCORE_WORKTREE_COLOR=\"#112233\"",
-        ].join("\n"),
-        "utf8",
+  itEmbeddedPostgres(
+    "reseed preserves the current worktree ports, instance id, and branding",
+    async () => {
+      const tempRoot = fs.mkdtempSync(
+        path.join(os.tmpdir(), "taskcore-worktree-reseed-"),
       );
-
-      delete process.env.TASKCORE_CONFIG;
-      process.chdir(repoRoot);
-
-      await currentDatabaseReservation.release();
-
-      await worktreeReseedCommand({
-        fromConfig: sourcePaths.configPath,
-        yes: true,
-        backupTarget: true,
+      const repoRoot = path.join(tempRoot, "repo");
+      const sourceRoot = path.join(tempRoot, "source");
+      const homeDir = path.join(tempRoot, ".taskcore-worktrees");
+      const currentInstanceId = "existing-worktree";
+      const currentPaths = resolveWorktreeLocalPaths({
+        cwd: repoRoot,
+        homeDir,
+        instanceId: currentInstanceId,
       });
+      const sourcePaths = resolveWorktreeLocalPaths({
+        cwd: sourceRoot,
+        homeDir: path.join(tempRoot, ".taskcore-source"),
+        instanceId: "default",
+      });
+      const originalCwd = process.cwd();
+      const originalTaskcoreConfig = process.env.TASKCORE_CONFIG;
+      const currentDatabaseReservation = await reserveTestPort();
+      const currentDatabasePort = currentDatabaseReservation.port;
+      const sourceDb = await startEmbeddedPostgresTestDatabase(
+        "taskcore-worktree-reseed-source-",
+      );
+      onTestFinished(() => sourceDb.cleanup());
 
-      const rewrittenConfig = JSON.parse(fs.readFileSync(currentPaths.configPath, "utf8"));
-      const rewrittenEnv = fs.readFileSync(currentPaths.envPath, "utf8");
+      try {
+        fs.mkdirSync(path.dirname(currentPaths.configPath), {
+          recursive: true,
+        });
+        fs.mkdirSync(path.dirname(sourcePaths.configPath), { recursive: true });
+        fs.mkdirSync(path.dirname(sourcePaths.secretsKeyFilePath), {
+          recursive: true,
+        });
+        fs.mkdirSync(repoRoot, { recursive: true });
+        fs.mkdirSync(sourceRoot, { recursive: true });
 
-      expect(rewrittenConfig.server.port).toBe(3114);
-      expect(rewrittenConfig.database.embeddedPostgresPort).toBe(currentDatabasePort);
-      expect(rewrittenConfig.database.embeddedPostgresDataDir).toBe(currentPaths.embeddedPostgresDataDir);
-      expect(rewrittenEnv).toContain(`TASKCORE_INSTANCE_ID=${currentInstanceId}`);
-      expect(rewrittenEnv).toContain("TASKCORE_WORKTREE_NAME=existing-name");
-      expect(rewrittenEnv).toContain("TASKCORE_WORKTREE_COLOR=\"#112233\"");
-      expect(fs.readFileSync(worktreeSentinelPath, "utf8")).toBe("preserve me");
-      expect(
-        fs.readdirSync(path.join(currentPaths.backupDir, "repair")).some((name) => name.endsWith(".sql.gz")),
-      ).toBe(true);
-    } finally {
-      await currentDatabaseReservation.release();
-      process.chdir(originalCwd);
-      if (originalTaskcoreConfig === undefined) {
+        const currentConfig = buildWorktreeConfig({
+          sourceConfig: buildSourceConfig(),
+          paths: currentPaths,
+          serverPort: 3114,
+          databasePort: currentDatabasePort,
+        });
+        const sourceConfig = buildSourceConfig();
+        sourceConfig.database = {
+          mode: "postgres",
+          embeddedPostgresDataDir: sourcePaths.embeddedPostgresDataDir,
+          embeddedPostgresPort: 54329,
+          backup: {
+            enabled: true,
+            intervalMinutes: 60,
+            retentionDays: 30,
+            dir: sourcePaths.backupDir,
+          },
+          connectionString: sourceDb.connectionString,
+        };
+        sourceConfig.logging.logDir = sourcePaths.logDir;
+        sourceConfig.storage.localDisk.baseDir = sourcePaths.storageDir;
+        sourceConfig.secrets.localEncrypted.keyFilePath =
+          sourcePaths.secretsKeyFilePath;
+        await seedValidWorktreeSource(sourceDb.connectionString);
+        fs.writeFileSync(
+          currentPaths.configPath,
+          JSON.stringify(currentConfig, null, 2),
+          "utf8",
+        );
+        fs.writeFileSync(
+          sourcePaths.configPath,
+          JSON.stringify(sourceConfig, null, 2),
+          "utf8",
+        );
+        fs.writeFileSync(
+          sourcePaths.secretsKeyFilePath,
+          "source-secret",
+          "utf8",
+        );
+        const worktreeSentinelPath = path.join(
+          repoRoot,
+          "user-worktree-file.txt",
+        );
+        fs.writeFileSync(worktreeSentinelPath, "preserve me", "utf8");
+        fs.writeFileSync(
+          currentPaths.envPath,
+          [
+            `TASKCORE_HOME=${homeDir}`,
+            `TASKCORE_INSTANCE_ID=${currentInstanceId}`,
+            "TASKCORE_WORKTREE_NAME=existing-name",
+            'TASKCORE_WORKTREE_COLOR="#112233"',
+          ].join("\n"),
+          "utf8",
+        );
+
         delete process.env.TASKCORE_CONFIG;
-      } else {
-        process.env.TASKCORE_CONFIG = originalTaskcoreConfig;
+        process.chdir(repoRoot);
+
+        await currentDatabaseReservation.release();
+
+        await worktreeReseedCommand({
+          fromConfig: sourcePaths.configPath,
+          yes: true,
+          backupTarget: true,
+        });
+
+        const rewrittenConfig = JSON.parse(
+          fs.readFileSync(currentPaths.configPath, "utf8"),
+        );
+        const rewrittenEnv = fs.readFileSync(currentPaths.envPath, "utf8");
+
+        expect(rewrittenConfig.server.port).toBe(3114);
+        expect(rewrittenConfig.database.embeddedPostgresPort).toBe(
+          currentDatabasePort,
+        );
+        expect(rewrittenConfig.database.embeddedPostgresDataDir).toBe(
+          currentPaths.embeddedPostgresDataDir,
+        );
+        expect(rewrittenEnv).toContain(
+          `TASKCORE_INSTANCE_ID=${currentInstanceId}`,
+        );
+        expect(rewrittenEnv).toContain("TASKCORE_WORKTREE_NAME=existing-name");
+        expect(rewrittenEnv).toContain('TASKCORE_WORKTREE_COLOR="#112233"');
+        expect(fs.readFileSync(worktreeSentinelPath, "utf8")).toBe(
+          "preserve me",
+        );
+        expect(
+          fs
+            .readdirSync(path.join(currentPaths.backupDir, "repair"))
+            .some((name) => name.endsWith(".sql.gz")),
+        ).toBe(true);
+      } finally {
+        await currentDatabaseReservation.release();
+        process.chdir(originalCwd);
+        if (originalTaskcoreConfig === undefined) {
+          delete process.env.TASKCORE_CONFIG;
+        } else {
+          process.env.TASKCORE_CONFIG = originalTaskcoreConfig;
+        }
+        fs.rmSync(tempRoot, { recursive: true, force: true });
       }
-      fs.rmSync(tempRoot, { recursive: true, force: true });
-    }
-  });
+    },
+  );
 
   it("restores the current worktree config and instance data if reseed fails", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-reseed-rollback-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-reseed-rollback-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const sourceRoot = path.join(tempRoot, "source");
     const homeDir = path.join(tempRoot, ".taskcore-worktrees");
@@ -2234,7 +2769,9 @@ describe("worktree helpers", () => {
       fs.mkdirSync(path.dirname(currentPaths.configPath), { recursive: true });
       fs.mkdirSync(path.dirname(sourcePaths.configPath), { recursive: true });
       fs.mkdirSync(currentPaths.instanceRoot, { recursive: true });
-      fs.mkdirSync(path.dirname(sourcePaths.secretsKeyFilePath), { recursive: true });
+      fs.mkdirSync(path.dirname(sourcePaths.secretsKeyFilePath), {
+        recursive: true,
+      });
       fs.mkdirSync(repoRoot, { recursive: true });
       fs.mkdirSync(sourceRoot, { recursive: true });
 
@@ -2259,27 +2796,54 @@ describe("worktree helpers", () => {
         },
       } as TaskcoreConfig;
 
-      fs.writeFileSync(currentPaths.configPath, JSON.stringify(currentConfig, null, 2), "utf8");
-      fs.writeFileSync(currentPaths.envPath, `TASKCORE_HOME=${homeDir}\nTASKCORE_INSTANCE_ID=${currentInstanceId}\n`, "utf8");
-      fs.writeFileSync(path.join(currentPaths.instanceRoot, "marker.txt"), "keep me", "utf8");
-      fs.writeFileSync(sourcePaths.configPath, JSON.stringify(sourceConfig, null, 2), "utf8");
+      fs.writeFileSync(
+        currentPaths.configPath,
+        JSON.stringify(currentConfig, null, 2),
+        "utf8",
+      );
+      fs.writeFileSync(
+        currentPaths.envPath,
+        `TASKCORE_HOME=${homeDir}\nTASKCORE_INSTANCE_ID=${currentInstanceId}\n`,
+        "utf8",
+      );
+      fs.writeFileSync(
+        path.join(currentPaths.instanceRoot, "marker.txt"),
+        "keep me",
+        "utf8",
+      );
+      fs.writeFileSync(
+        sourcePaths.configPath,
+        JSON.stringify(sourceConfig, null, 2),
+        "utf8",
+      );
       fs.writeFileSync(sourcePaths.secretsKeyFilePath, "source-secret", "utf8");
 
       delete process.env.TASKCORE_CONFIG;
       process.chdir(repoRoot);
 
-      await expect(worktreeReseedCommand({
-        fromConfig: sourcePaths.configPath,
-        yes: true,
-      })).rejects.toThrow("Source instance uses postgres mode but has no connection string");
+      await expect(
+        worktreeReseedCommand({
+          fromConfig: sourcePaths.configPath,
+          yes: true,
+        }),
+      ).rejects.toThrow(
+        "Source instance uses postgres mode but has no connection string",
+      );
 
-      const restoredConfig = JSON.parse(fs.readFileSync(currentPaths.configPath, "utf8"));
+      const restoredConfig = JSON.parse(
+        fs.readFileSync(currentPaths.configPath, "utf8"),
+      );
       const restoredEnv = fs.readFileSync(currentPaths.envPath, "utf8");
-      const restoredMarker = fs.readFileSync(path.join(currentPaths.instanceRoot, "marker.txt"), "utf8");
+      const restoredMarker = fs.readFileSync(
+        path.join(currentPaths.instanceRoot, "marker.txt"),
+        "utf8",
+      );
 
       expect(restoredConfig.server.port).toBe(3114);
       expect(restoredConfig.database.embeddedPostgresPort).toBe(54341);
-      expect(restoredEnv).toContain(`TASKCORE_INSTANCE_ID=${currentInstanceId}`);
+      expect(restoredEnv).toContain(
+        `TASKCORE_INSTANCE_ID=${currentInstanceId}`,
+      );
       expect(restoredMarker).toBe("keep me");
     } finally {
       process.chdir(originalCwd);
@@ -2321,27 +2885,50 @@ describe("worktree helpers", () => {
   });
 
   it("copies shared git hooks into a linked worktree git dir", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-hooks-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-hooks-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const worktreePath = path.join(tempRoot, "repo-feature");
 
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
       execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["config", "user.email", "test@example.com"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["config", "user.name", "Test User"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["add", "README.md"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["commit", "-m", "Initial commit"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
 
       const sourceHooksDir = path.join(repoRoot, ".git", "hooks");
       const sourceHookPath = path.join(sourceHooksDir, "pre-commit");
-      const sourceTokensPath = path.join(sourceHooksDir, "forbidden-tokens.txt");
-      fs.writeFileSync(sourceHookPath, "#!/usr/bin/env bash\nexit 0\n", { encoding: "utf8", mode: 0o755 });
+      const sourceTokensPath = path.join(
+        sourceHooksDir,
+        "forbidden-tokens.txt",
+      );
+      fs.writeFileSync(sourceHookPath, "#!/usr/bin/env bash\nexit 0\n", {
+        encoding: "utf8",
+        mode: 0o755,
+      });
       fs.chmodSync(sourceHookPath, 0o755);
       fs.writeFileSync(sourceTokensPath, "secret-token\n", "utf8");
 
-      execFileSync("git", ["worktree", "add", "--detach", worktreePath], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["worktree", "add", "--detach", worktreePath], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
 
       const copied = copyGitHooksToWorktreeGitDir(worktreePath);
       const worktreeGitDir = execFileSync("git", ["rev-parse", "--git-dir"], {
@@ -2350,26 +2937,38 @@ describe("worktree helpers", () => {
         stdio: ["ignore", "pipe", "ignore"],
       }).trim();
       const resolvedSourceHooksDir = fs.realpathSync(sourceHooksDir);
-      const resolvedTargetHooksDir = fs.realpathSync(path.resolve(worktreePath, worktreeGitDir, "hooks"));
+      const resolvedTargetHooksDir = fs.realpathSync(
+        path.resolve(worktreePath, worktreeGitDir, "hooks"),
+      );
       const targetHookPath = path.join(resolvedTargetHooksDir, "pre-commit");
-      const targetTokensPath = path.join(resolvedTargetHooksDir, "forbidden-tokens.txt");
+      const targetTokensPath = path.join(
+        resolvedTargetHooksDir,
+        "forbidden-tokens.txt",
+      );
 
       expect(copied).toMatchObject({
         sourceHooksPath: resolvedSourceHooksDir,
         targetHooksPath: resolvedTargetHooksDir,
         copied: true,
       });
-      expect(fs.readFileSync(targetHookPath, "utf8")).toBe("#!/usr/bin/env bash\nexit 0\n");
+      expect(fs.readFileSync(targetHookPath, "utf8")).toBe(
+        "#!/usr/bin/env bash\nexit 0\n",
+      );
       expect(fs.statSync(targetHookPath).mode & 0o111).not.toBe(0);
       expect(fs.readFileSync(targetTokensPath, "utf8")).toBe("secret-token\n");
     } finally {
-      execFileSync("git", ["worktree", "remove", "--force", worktreePath], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["worktree", "remove", "--force", worktreePath], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   }, 15_000);
 
   it("creates and initializes a worktree from the top-level worktree:make command", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-make-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-make-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const fakeHome = path.join(tempRoot, "home");
     const worktreePath = path.join(fakeHome, "taskcore-make-test");
@@ -2380,11 +2979,23 @@ describe("worktree helpers", () => {
       fs.mkdirSync(repoRoot, { recursive: true });
       fs.mkdirSync(fakeHome, { recursive: true });
       execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["config", "user.email", "test@example.com"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["config", "user.name", "Test User"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["add", "README.md"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["commit", "-m", "Initial commit"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
 
       process.chdir(repoRoot);
 
@@ -2394,8 +3005,12 @@ describe("worktree helpers", () => {
       });
 
       expect(fs.existsSync(path.join(worktreePath, ".git"))).toBe(true);
-      expect(fs.existsSync(path.join(worktreePath, ".taskcore", "config.json"))).toBe(true);
-      expect(fs.existsSync(path.join(worktreePath, ".taskcore", ".env"))).toBe(true);
+      expect(
+        fs.existsSync(path.join(worktreePath, ".taskcore", "config.json")),
+      ).toBe(true);
+      expect(fs.existsSync(path.join(worktreePath, ".taskcore", ".env"))).toBe(
+        true,
+      );
     } finally {
       process.chdir(originalCwd);
       homedirSpy.mockRestore();
@@ -2404,24 +3019,42 @@ describe("worktree helpers", () => {
   }, 20_000);
 
   it("no-ops on the primary checkout unless --branch is provided", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-repair-primary-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-repair-primary-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const originalCwd = process.cwd();
 
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
       execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["config", "user.email", "test@example.com"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["config", "user.name", "Test User"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["add", "README.md"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["commit", "-m", "Initial commit"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
 
       process.chdir(repoRoot);
       await worktreeRepairCommand({});
 
-      expect(fs.existsSync(path.join(repoRoot, ".taskcore", "config.json"))).toBe(false);
-      expect(fs.existsSync(path.join(repoRoot, ".taskcore", "worktrees"))).toBe(false);
+      expect(
+        fs.existsSync(path.join(repoRoot, ".taskcore", "config.json")),
+      ).toBe(false);
+      expect(fs.existsSync(path.join(repoRoot, ".taskcore", "worktrees"))).toBe(
+        false,
+      );
     } finally {
       process.chdir(originalCwd);
       fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -2429,9 +3062,16 @@ describe("worktree helpers", () => {
   });
 
   it("repairs the current linked worktree when Taskcore metadata is missing", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-repair-current-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-repair-current-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
-    const worktreePath = path.join(repoRoot, ".taskcore", "worktrees", "repair-me");
+    const worktreePath = path.join(
+      repoRoot,
+      ".taskcore",
+      "worktrees",
+      "repair-me",
+    );
     const sourceConfigPath = path.join(tempRoot, "source-config.json");
     const worktreeHome = path.join(tempRoot, ".taskcore-worktrees");
     const worktreePaths = resolveWorktreeLocalPaths({
@@ -2444,20 +3084,44 @@ describe("worktree helpers", () => {
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
       execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
-      fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
-      fs.mkdirSync(path.dirname(worktreePath), { recursive: true });
-      execFileSync("git", ["worktree", "add", "-b", "repair-me", worktreePath, "HEAD"], {
+      execFileSync("git", ["config", "user.email", "test@example.com"], {
         cwd: repoRoot,
         stdio: "ignore",
       });
+      execFileSync("git", ["config", "user.name", "Test User"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
+      execFileSync("git", ["add", "README.md"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["commit", "-m", "Initial commit"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      fs.mkdirSync(path.dirname(worktreePath), { recursive: true });
+      execFileSync(
+        "git",
+        ["worktree", "add", "-b", "repair-me", worktreePath, "HEAD"],
+        {
+          cwd: repoRoot,
+          stdio: "ignore",
+        },
+      );
 
-      fs.writeFileSync(sourceConfigPath, JSON.stringify(buildSourceConfig(), null, 2), "utf8");
+      fs.writeFileSync(
+        sourceConfigPath,
+        JSON.stringify(buildSourceConfig(), null, 2),
+        "utf8",
+      );
       fs.mkdirSync(worktreePaths.instanceRoot, { recursive: true });
-      fs.writeFileSync(path.join(worktreePaths.instanceRoot, "marker.txt"), "stale", "utf8");
+      fs.writeFileSync(
+        path.join(worktreePaths.instanceRoot, "marker.txt"),
+        "stale",
+        "utf8",
+      );
 
       process.chdir(worktreePath);
       await worktreeRepairCommand({
@@ -2466,9 +3130,15 @@ describe("worktree helpers", () => {
         noSeed: true,
       });
 
-      expect(fs.existsSync(path.join(worktreePath, ".taskcore", "config.json"))).toBe(true);
-      expect(fs.existsSync(path.join(worktreePath, ".taskcore", ".env"))).toBe(true);
-      expect(fs.existsSync(path.join(worktreePaths.instanceRoot, "marker.txt"))).toBe(false);
+      expect(
+        fs.existsSync(path.join(worktreePath, ".taskcore", "config.json")),
+      ).toBe(true);
+      expect(fs.existsSync(path.join(worktreePath, ".taskcore", ".env"))).toBe(
+        true,
+      );
+      expect(
+        fs.existsSync(path.join(worktreePaths.instanceRoot, "marker.txt")),
+      ).toBe(false);
     } finally {
       process.chdir(originalCwd);
       fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -2476,22 +3146,45 @@ describe("worktree helpers", () => {
   }, 20_000);
 
   it("creates and repairs a missing branch worktree when --branch is provided", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-worktree-repair-branch-"));
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-worktree-repair-branch-"),
+    );
     const repoRoot = path.join(tempRoot, "repo");
     const sourceConfigPath = path.join(tempRoot, "source-config.json");
     const worktreeHome = path.join(tempRoot, ".taskcore-worktrees");
     const originalCwd = process.cwd();
-    const expectedWorktreePath = path.join(repoRoot, ".taskcore", "worktrees", "feature-repair-me");
+    const expectedWorktreePath = path.join(
+      repoRoot,
+      ".taskcore",
+      "worktrees",
+      "feature-repair-me",
+    );
 
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
       execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execFileSync("git", ["config", "user.email", "test@example.com"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["config", "user.name", "Test User"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
-      fs.writeFileSync(sourceConfigPath, JSON.stringify(buildSourceConfig(), null, 2), "utf8");
+      execFileSync("git", ["add", "README.md"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["commit", "-m", "Initial commit"], {
+        cwd: repoRoot,
+        stdio: "ignore",
+      });
+      fs.writeFileSync(
+        sourceConfigPath,
+        JSON.stringify(buildSourceConfig(), null, 2),
+        "utf8",
+      );
 
       process.chdir(repoRoot);
       await worktreeRepairCommand({
@@ -2502,8 +3195,14 @@ describe("worktree helpers", () => {
       });
 
       expect(fs.existsSync(path.join(expectedWorktreePath, ".git"))).toBe(true);
-      expect(fs.existsSync(path.join(expectedWorktreePath, ".taskcore", "config.json"))).toBe(true);
-      expect(fs.existsSync(path.join(expectedWorktreePath, ".taskcore", ".env"))).toBe(true);
+      expect(
+        fs.existsSync(
+          path.join(expectedWorktreePath, ".taskcore", "config.json"),
+        ),
+      ).toBe(true);
+      expect(
+        fs.existsSync(path.join(expectedWorktreePath, ".taskcore", ".env")),
+      ).toBe(true);
     } finally {
       process.chdir(originalCwd);
       fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -2513,7 +3212,9 @@ describe("worktree helpers", () => {
 
 describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
   it("pauses only routines with enabled schedule triggers", async () => {
-    const tempDb = await startEmbeddedPostgresTestDatabase("taskcore-worktree-routines-");
+    const tempDb = await startEmbeddedPostgresTestDatabase(
+      "taskcore-worktree-routines-",
+    );
     const db = createDb(tempDb.connectionString);
     const companyId = randomUUID();
     const projectId = randomUUID();
@@ -2629,10 +3330,14 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
       ]);
 
-      const pausedCount = await pauseSeededScheduledRoutines(tempDb.connectionString);
+      const pausedCount = await pauseSeededScheduledRoutines(
+        tempDb.connectionString,
+      );
       expect(pausedCount).toBe(1);
 
-      const rows = await db.select({ id: routines.id, status: routines.status }).from(routines);
+      const rows = await db
+        .select({ id: routines.id, status: routines.status })
+        .from(routines);
       const statusById = new Map(rows.map((row) => [row.id, row.status]));
       expect(statusById.get(activeScheduledRoutineId)).toBe("paused");
       expect(statusById.get(activeApiRoutineId)).toBe("active");

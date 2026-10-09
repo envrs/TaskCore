@@ -8,9 +8,13 @@ const {
   runAdapterExecutionTargetProcess,
 } = vi.hoisted(() => ({
   ensureAdapterExecutionTargetCommandResolvable: vi.fn(async () => undefined),
-  ensureAdapterExecutionTargetRuntimeCommandInstalled: vi.fn(async () => undefined),
+  ensureAdapterExecutionTargetRuntimeCommandInstalled: vi.fn(
+    async () => undefined,
+  ),
   executeClaudeAcp: vi.fn(async () => {
-    throw new Error('Transform failed with 1 error: execute.ts:818:0: ERROR: Unexpected "<<"');
+    throw new Error(
+      'Transform failed with 1 error: execute.ts:818:0: ERROR: Unexpected "<<"',
+    );
   }),
   resolveAdapterExecutionTargetCommandForLogs: vi.fn(async () => "claude"),
   runAdapterExecutionTargetProcess: vi.fn(async () => ({
@@ -18,7 +22,12 @@ const {
     signal: null,
     timedOut: false,
     stdout: [
-      JSON.stringify({ type: "system", subtype: "init", session_id: "claude-session-1", model: "claude-sonnet" }),
+      JSON.stringify({
+        type: "system",
+        subtype: "init",
+        session_id: "claude-session-1",
+        model: "claude-sonnet",
+      }),
       JSON.stringify({
         type: "assistant",
         session_id: "claude-session-1",
@@ -28,7 +37,11 @@ const {
         type: "result",
         session_id: "claude-session-1",
         result: "hello",
-        usage: { input_tokens: 1, cache_read_input_tokens: 0, output_tokens: 1 },
+        usage: {
+          input_tokens: 1,
+          cache_read_input_tokens: 0,
+          output_tokens: 1,
+        },
       }),
     ].join("\n"),
     stderr: "",
@@ -39,18 +52,20 @@ const {
 
 vi.mock("./acp.js", () => ({
   createClaudeAcpExecutor: () => executeClaudeAcp,
-  resolveClaudeExecutionEngineForRun: async (ctx: { config: Record<string, unknown> }) =>
+  resolveClaudeExecutionEngineForRun: async (ctx: {
+    config: Record<string, unknown>;
+  }) =>
     ctx.config.engine === "cli"
       ? { engine: "cli", explicit: true }
       : ctx.config.engine === "acp"
-      ? { engine: "acp", explicit: true }
-      : { engine: "acp", explicit: false },
+        ? { engine: "acp", explicit: true }
+        : { engine: "acp", explicit: false },
 }));
 
 vi.mock("@taskcore/adapter-utils/execution-target", async () => {
-  const actual = await vi.importActual<typeof import("@taskcore/adapter-utils/execution-target")>(
-    "@taskcore/adapter-utils/execution-target",
-  );
+  const actual = await vi.importActual<
+    typeof import("@taskcore/adapter-utils/execution-target")
+  >("@taskcore/adapter-utils/execution-target");
   return {
     ...actual,
     ensureAdapterExecutionTargetCommandResolvable,

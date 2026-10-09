@@ -11,7 +11,10 @@ function isInsideOsTmpDir(targetPath: string): boolean {
   return resolved === tmpRoot || resolved.startsWith(`${tmpRoot}${path.sep}`);
 }
 
-export async function databaseCheck(config: TaskcoreConfig, configPath?: string): Promise<CheckResult> {
+export async function databaseCheck(
+  config: TaskcoreConfig,
+  configPath?: string,
+): Promise<CheckResult> {
   if (config.database.mode === "postgres") {
     if (!config.database.connectionString) {
       return {
@@ -38,13 +41,17 @@ export async function databaseCheck(config: TaskcoreConfig, configPath?: string)
         status: "fail",
         message: `Cannot connect to PostgreSQL: ${err instanceof Error ? err.message : String(err)}`,
         canRepair: false,
-        repairHint: "Check your connection string and ensure PostgreSQL is running",
+        repairHint:
+          "Check your connection string and ensure PostgreSQL is running",
       };
     }
   }
 
   if (config.database.mode === "embedded-postgres") {
-    const dataDir = resolveRuntimeLikePath(config.database.embeddedPostgresDataDir, configPath);
+    const dataDir = resolveRuntimeLikePath(
+      config.database.embeddedPostgresDataDir,
+      configPath,
+    );
 
     // A worktree-mode instance whose data dir lives under the OS temp dir is a red
     // flag: this is what happens when TASKCORE_HOME / TASKCORE_IN_WORKTREE leak
@@ -53,7 +60,10 @@ export async function databaseCheck(config: TaskcoreConfig, configPath?: string)
     // ephemeral/CI instances that don't set TASKCORE_IN_WORKTREE are not flagged.)
     // Check BEFORE creating the dir so we don't bootstrap the very temp location
     // we're warning about.
-    if (isInsideOsTmpDir(dataDir) && process.env.TASKCORE_IN_WORKTREE === "true") {
+    if (
+      isInsideOsTmpDir(dataDir) &&
+      process.env.TASKCORE_IN_WORKTREE === "true"
+    ) {
       return {
         name: "Database",
         status: "warn",

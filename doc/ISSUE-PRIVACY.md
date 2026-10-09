@@ -94,7 +94,7 @@ them. The complete inventory of issue-derived reads and their disposition:
   list results, returns `null`/empty on soft reads, and reports "not found"
   (indistinguishable from missing) on document reads.
 - **Subtree / orchestration** — `issues.getSubtree` and
-  `issues.getOrchestrationSummary`: a private *root* reports "not found"; an
+  `issues.getOrchestrationSummary`: a private _root_ reports "not found"; an
   open root drops private descendants **before** any relation, document, run,
   or assignee is fetched, so no private row or its metadata enters the payload.
 - **Relationship metadata** — `issues.getRelations` (and the summaries echoed
@@ -175,20 +175,20 @@ The privacy regression gate is part of the normal server Vitest suite. Its
 surface coverage is intentionally distributed beside the routes and services
 it protects:
 
-| Surface | Non-member regression coverage |
-| --- | --- |
-| Downward sharing, responsible-user intersection, mutation denial, provenance, live revocation | `privacy-production-review.test.ts` |
-| Task detail, list, count, grants, documents, work products | `issue-access-grants-routes.test.ts`, `company-search-service.test.ts` |
-| Search and machine extract | `company-search-service.test.ts`, `company-search-extract-service.test.ts` |
-| Attention feed | `attention-service.test.ts` |
-| Status-card hydrate and dry-run | `status-cards.test.ts` |
-| Activity stream | `activity-service.test.ts`, `activity-routes.test.ts` |
-| Run list, live run, detail, transcript, events, logs, operation history | `heartbeat-run-privacy-routes.test.ts` |
-| Tree holds and tree control | `issue-tree-control-routes.test.ts` |
-| Blocker and mention identifier-only stubs | `issue-access-grants-routes.test.ts` |
-| Attachment content | `issue-attachment-routes.test.ts` |
-| Private-project list and direct read | `projects-list-archived-routes.test.ts` |
-| Plugin issue reads (list, get, comments, attachments, orchestration, subtree, relations, interactions, documents) | `plugin-orchestration-apis.test.ts` |
+| Surface                                                                                                           | Non-member regression coverage                                             |
+| ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Downward sharing, responsible-user intersection, mutation denial, provenance, live revocation                     | `privacy-production-review.test.ts`                                        |
+| Task detail, list, count, grants, documents, work products                                                        | `issue-access-grants-routes.test.ts`, `company-search-service.test.ts`     |
+| Search and machine extract                                                                                        | `company-search-service.test.ts`, `company-search-extract-service.test.ts` |
+| Attention feed                                                                                                    | `attention-service.test.ts`                                                |
+| Status-card hydrate and dry-run                                                                                   | `status-cards.test.ts`                                                     |
+| Activity stream                                                                                                   | `activity-service.test.ts`, `activity-routes.test.ts`                      |
+| Run list, live run, detail, transcript, events, logs, operation history                                           | `heartbeat-run-privacy-routes.test.ts`                                     |
+| Tree holds and tree control                                                                                       | `issue-tree-control-routes.test.ts`                                        |
+| Blocker and mention identifier-only stubs                                                                         | `issue-access-grants-routes.test.ts`                                       |
+| Attachment content                                                                                                | `issue-attachment-routes.test.ts`                                          |
+| Private-project list and direct read                                                                              | `projects-list-archived-routes.test.ts`                                    |
+| Plugin issue reads (list, get, comments, attachments, orchestration, subtree, relations, interactions, documents) | `plugin-orchestration-apis.test.ts`                                        |
 
 Adding a new task-derived read surface requires a non-member fixture in this
 gate before the surface can ship.

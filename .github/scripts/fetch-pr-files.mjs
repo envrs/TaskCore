@@ -4,13 +4,18 @@
  * Fetches the full changed-file list for a PR across GitHub pagination.
  */
 
-export async function fetchAllPullRequestFiles(ghFetchFn, repo, prNumber, token) {
+export async function fetchAllPullRequestFiles(
+  ghFetchFn,
+  repo,
+  prNumber,
+  token,
+) {
   const files = [];
 
   for (let page = 1; ; page += 1) {
     const batch = await ghFetchFn(
       `/repos/${repo}/pulls/${prNumber}/files?per_page=100&page=${page}`,
-      token
+      token,
     );
     files.push(...batch);
 

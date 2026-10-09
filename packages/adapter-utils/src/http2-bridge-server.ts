@@ -150,7 +150,9 @@ export const HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES = 1024 * 1024 * 1024;
  * comment for the full accounting.
  */
 export const HTTP2_BRIDGE_MAX_ROUTE_BODY_BYTES =
-  HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS * 4 * DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES;
+  HTTP2_BRIDGE_MAX_CONCURRENT_STREAMS *
+  4 *
+  DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES;
 
 // The process-wide running total, in bytes, every `BridgeBodyReservation`
 // owner reserves against. Module-scope state is correct here: one host
@@ -234,13 +236,18 @@ export interface BridgeBodyReservation {
  * isolate (a test filling only the process-wide total, for example) omits
  * it, and this owner checks the process-wide ceiling alone.
  */
-export function createBridgeBodyReservation(routeLedger?: BridgeRouteBodyLedger): BridgeBodyReservation {
+export function createBridgeBodyReservation(
+  routeLedger?: BridgeRouteBodyLedger,
+): BridgeBodyReservation {
   let heldBytes = 0;
   let released = false;
   return {
     reserve(byteCount: number): boolean {
       if (released) return false;
-      if (reservedProcessBodyBytes + byteCount > HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES) {
+      if (
+        reservedProcessBodyBytes + byteCount >
+        HTTP2_BRIDGE_MAX_PROCESS_BODY_BYTES
+      ) {
         return false;
       }
       if (routeLedger && !routeLedger.reserve(byteCount)) {
@@ -271,7 +278,9 @@ export function createBridgeBodyReservation(routeLedger?: BridgeRouteBodyLedger)
  */
 export class BridgeProcessCapacityError extends Error {
   constructor() {
-    super("The bridge host reached its reserved process body byte ceiling. Retry later.");
+    super(
+      "The bridge host reached its reserved process body byte ceiling. Retry later.",
+    );
     this.name = "BridgeProcessCapacityError";
   }
 }
@@ -356,11 +365,17 @@ export const DEFAULT_HTTP2_BRIDGE_READ_BACKPRESSURE_STALL_MS = 30_000;
  */
 export function wrapDuplexChannelAsNodeDuplex(
   channel: CommandManagedDuplexChannel,
-  options: { maxBufferedReadBytes?: number; readBackpressureStallMs?: number } = {},
+  options: {
+    maxBufferedReadBytes?: number;
+    readBackpressureStallMs?: number;
+  } = {},
 ): Duplex {
-  const maxBufferedReadBytes = options.maxBufferedReadBytes ?? DEFAULT_HTTP2_BRIDGE_MAX_BUFFERED_READ_BYTES;
+  const maxBufferedReadBytes =
+    options.maxBufferedReadBytes ??
+    DEFAULT_HTTP2_BRIDGE_MAX_BUFFERED_READ_BYTES;
   const readBackpressureStallMs =
-    options.readBackpressureStallMs ?? DEFAULT_HTTP2_BRIDGE_READ_BACKPRESSURE_STALL_MS;
+    options.readBackpressureStallMs ??
+    DEFAULT_HTTP2_BRIDGE_READ_BACKPRESSURE_STALL_MS;
   // Chunks `onData` already delivered that `push()` has not yet accepted,
   // in arrival order. `read()` drains this queue before it lets Node pull
   // any new bytes, so the delivery order the channel used stays intact.
@@ -430,7 +445,9 @@ export function wrapDuplexChannelAsNodeDuplex(
       endReadableIfDrained();
     },
     write(chunk: unknown, _encoding, callback) {
-      const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as ArrayBufferLike);
+      const bytes = Buffer.isBuffer(chunk)
+        ? chunk
+        : Buffer.from(chunk as ArrayBufferLike);
       let settleResult: unknown;
       try {
         settleResult = channel.write(bytes);
@@ -444,16 +461,19 @@ export function wrapDuplexChannelAsNodeDuplex(
       ) {
         (settleResult as Promise<void>).then(
           () => callback(),
-          (error) => callback(error instanceof Error ? error : new Error(String(error))),
+          (error) =>
+            callback(error instanceof Error ? error : new Error(String(error))),
         );
       } else {
         callback();
       }
     },
     final(callback) {
-      channel
-        .close()
-        .then(() => callback(), (error) => callback(error instanceof Error ? error : new Error(String(error))));
+      channel.close().then(
+        () => callback(),
+        (error) =>
+          callback(error instanceof Error ? error : new Error(String(error))),
+      );
     },
   });
   channel.onData((chunk) => {
@@ -531,7 +551,12 @@ export type CanonicalBridgeRequestPathResult =
   | { ok: false; reason: CanonicalBridgeRequestPathRejection };
 
 /** The request pseudo-headers HTTP/2 allows exactly one of, per request. */
-const REQUEST_PSEUDO_HEADER_NAMES = [":method", ":scheme", ":authority", ":path"] as const;
+const REQUEST_PSEUDO_HEADER_NAMES = [
+  ":method",
+  ":scheme",
+  ":authority",
+  ":path",
+] as const;
 
 /**
  * Parse the `:path` pseudo-header exactly one time. The caller passes the
@@ -558,7 +583,11 @@ export function parseCanonicalBridgeRequestPath(
   }
   // Origin-form only: a single leading "/", never "//" (network-path form) and
   // never an absolute-form URI ("scheme://...").
-  if (!rawPath.startsWith("/") || rawPath.startsWith("//") || rawPath.includes("://")) {
+  if (
+    !rawPath.startsWith("/") ||
+    rawPath.startsWith("//") ||
+    rawPath.includes("://")
+  ) {
     return { ok: false, reason: "non_origin_form" };
   }
   if (/%2f/i.test(rawPath)) {
@@ -571,7 +600,8 @@ export function parseCanonicalBridgeRequestPath(
     return { ok: false, reason: "nul_byte" };
   }
   const queryIndex = rawPath.indexOf("?");
-  const rawPathname = queryIndex === -1 ? rawPath : rawPath.slice(0, queryIndex);
+  const rawPathname =
+    queryIndex === -1 ? rawPath : rawPath.slice(0, queryIndex);
   for (const segment of rawPathname.split("/")) {
     let decoded: string;
     try {
@@ -663,7 +693,11 @@ export const DEFAULT_HTTP2_BRIDGE_RESPONSE_WRITE_SETTLE_DEADLINE_MS = 30_000;
 
 function startHttp2BridgePingWatchdog(
   session: http2.ServerHttp2Session,
-  input: { intervalMs: number; stallMs: number; onStall: (error: Error) => void },
+  input: {
+    intervalMs: number;
+    stallMs: number;
+    onStall: (error: Error) => void;
+  },
 ): () => void {
   let stopped = false;
   let pingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -674,7 +708,11 @@ function startHttp2BridgePingWatchdog(
     stallTimer = setTimeout(() => {
       if (stopped) return;
       stopped = true;
-      input.onStall(new Error("HTTP/2 bridge session stalled: no PING ack within the stall bound."));
+      input.onStall(
+        new Error(
+          "HTTP/2 bridge session stalled: no PING ack within the stall bound.",
+        ),
+      );
     }, input.stallMs);
     stallTimer.unref?.();
     try {
@@ -683,7 +721,9 @@ function startHttp2BridgePingWatchdog(
         if (stallTimer) clearTimeout(stallTimer);
         if (error) {
           stopped = true;
-          input.onStall(error instanceof Error ? error : new Error(String(error)));
+          input.onStall(
+            error instanceof Error ? error : new Error(String(error)),
+          );
           return;
         }
         pingTimer = setTimeout(sendOnePing, input.intervalMs);
@@ -843,20 +883,28 @@ export interface Http2BridgeServerHandle {
 }
 
 function normalizeStreamMethod(value: string | string[] | undefined): string {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim().toUpperCase() : "GET";
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim().toUpperCase()
+    : "GET";
 }
 
-function readBridgeTokenHeader(headers: http2.IncomingHttpHeaders): string | undefined {
+function readBridgeTokenHeader(
+  headers: http2.IncomingHttpHeaders,
+): string | undefined {
   const raw = headers.authorization;
   if (typeof raw !== "string" || !raw.startsWith("Bearer ")) return undefined;
   return raw.slice("Bearer ".length);
 }
 
-function toOutboundHeaderRecord(headers: http2.IncomingHttpHeaders): Record<string, string> {
+function toOutboundHeaderRecord(
+  headers: http2.IncomingHttpHeaders,
+): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [key, value] of Object.entries(headers)) {
     if (key.startsWith(":") || value == null) continue;
-    out[key.toLowerCase()] = Array.isArray(value) ? value.join(", ") : String(value);
+    out[key.toLowerCase()] = Array.isArray(value)
+      ? value.join(", ")
+      : String(value);
   }
   return out;
 }
@@ -911,7 +959,9 @@ function readOrDrainHttp2StreamBody<T>(
     const armIdleTimer = () => {
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
-        settle(() => reject(new Error("Bridge request body stalled before it completed.")));
+        settle(() =>
+          reject(new Error("Bridge request body stalled before it completed.")),
+        );
         stream.destroy();
       }, bounds.idleTimeoutMs);
       idleTimer.unref?.();
@@ -920,7 +970,11 @@ function readOrDrainHttp2StreamBody<T>(
     // DEFAULT_HTTP2_BRIDGE_REQUEST_BODY_LIFETIME_CEILING_MS for why the
     // ceiling must stay independent of progress.
     lifetimeCeilingTimer = setTimeout(() => {
-      settle(() => reject(new Error("Bridge request body passed the total lifetime ceiling.")));
+      settle(() =>
+        reject(
+          new Error("Bridge request body passed the total lifetime ceiling."),
+        ),
+      );
       stream.destroy();
     }, bounds.lifetimeCeilingMs);
     lifetimeCeilingTimer.unref?.();
@@ -928,14 +982,22 @@ function readOrDrainHttp2StreamBody<T>(
     stream.on("data", (chunk: Buffer) => {
       totalBytes += chunk.byteLength;
       if (totalBytes > bounds.maxBodyBytes) {
-        settle(() => reject(new Error("Bridge request body exceeded the configured size limit.")));
+        settle(() =>
+          reject(
+            new Error(
+              "Bridge request body exceeded the configured size limit.",
+            ),
+          ),
+        );
         stream.destroy();
         return;
       }
       try {
         onChunk(chunk, totalBytes);
       } catch (error) {
-        settle(() => reject(error instanceof Error ? error : new Error(String(error))));
+        settle(() =>
+          reject(error instanceof Error ? error : new Error(String(error))),
+        );
         // A denied reservation answers 503 through the caller's own
         // `respondJson` call, after this promise rejects — destroying the
         // stream here, before that call runs, would make it a no-op (a
@@ -957,14 +1019,26 @@ function readOrDrainHttp2StreamBody<T>(
       try {
         result = onEnd();
       } catch (error) {
-        settle(() => reject(error instanceof Error ? error : new Error(String(error))));
+        settle(() =>
+          reject(error instanceof Error ? error : new Error(String(error))),
+        );
         return;
       }
       settle(() => resolve(result));
     });
-    stream.once("error", (error) => settle(() => reject(error instanceof Error ? error : new Error(String(error)))));
-    stream.once("aborted", () => settle(() => reject(new Error("Bridge request stream aborted."))));
-    stream.once("close", () => settle(() => reject(new Error("Bridge request stream closed before it completed."))));
+    stream.once("error", (error) =>
+      settle(() =>
+        reject(error instanceof Error ? error : new Error(String(error))),
+      ),
+    );
+    stream.once("aborted", () =>
+      settle(() => reject(new Error("Bridge request stream aborted."))),
+    );
+    stream.once("close", () =>
+      settle(() =>
+        reject(new Error("Bridge request stream closed before it completed.")),
+      ),
+    );
   });
 }
 
@@ -1010,7 +1084,10 @@ function readHttp2StreamBody(
  * {@link readHttp2StreamBody}, so a stream that never carries a valid bridge
  * token cannot retain a full body buffer merely by sending one.
  */
-function drainHttp2StreamBody(stream: http2.ServerHttp2Stream, bounds: Http2BridgeBodyBounds): Promise<void> {
+function drainHttp2StreamBody(
+  stream: http2.ServerHttp2Stream,
+  bounds: Http2BridgeBodyBounds,
+): Promise<void> {
   return readOrDrainHttp2StreamBody(
     stream,
     bounds,
@@ -1058,7 +1135,8 @@ function waitForHttp2StreamWriteToSettle(
   stream: http2.ServerHttp2Stream,
   deadlineMs?: number,
 ): Promise<{ settled: boolean }> {
-  if (stream.writableFinished || stream.destroyed || stream.closed) return Promise.resolve({ settled: true });
+  if (stream.writableFinished || stream.destroyed || stream.closed)
+    return Promise.resolve({ settled: true });
   return new Promise((resolve) => {
     let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
     const onSettle = (settled: boolean): void => {
@@ -1079,7 +1157,11 @@ function waitForHttp2StreamWriteToSettle(
   });
 }
 
-function respondJson(stream: http2.ServerHttp2Stream, status: number, body: unknown): void {
+function respondJson(
+  stream: http2.ServerHttp2Stream,
+  status: number,
+  body: unknown,
+): void {
   if (stream.destroyed || stream.closed) return;
   try {
     stream.respond({ ":status": status, "content-type": "application/json" });
@@ -1124,23 +1206,38 @@ function denyRequest(
  * own: a caller wraps one duplex channel through {@link Http2BridgeServerHandle.bindChannel}
  * per sandbox session.
  */
-export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions): Http2BridgeServerHandle {
-  const routes = options.routes ?? DEFAULT_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST;
-  const headerAllowlist = options.headerAllowlist ?? DEFAULT_SANDBOX_CALLBACK_BRIDGE_HEADER_ALLOWLIST;
-  const maxBodyBytes = options.maxBodyBytes ?? DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES;
-  const pingIntervalMs = options.pingIntervalMs ?? DEFAULT_HTTP2_BRIDGE_PING_INTERVAL_MS;
+export function createHttp2BridgeServer(
+  options: CreateHttp2BridgeServerOptions,
+): Http2BridgeServerHandle {
+  const routes =
+    options.routes ?? DEFAULT_SANDBOX_CALLBACK_BRIDGE_ROUTE_ALLOWLIST;
+  const headerAllowlist =
+    options.headerAllowlist ?? DEFAULT_SANDBOX_CALLBACK_BRIDGE_HEADER_ALLOWLIST;
+  const maxBodyBytes =
+    options.maxBodyBytes ?? DEFAULT_SANDBOX_CALLBACK_BRIDGE_MAX_BODY_BYTES;
+  const pingIntervalMs =
+    options.pingIntervalMs ?? DEFAULT_HTTP2_BRIDGE_PING_INTERVAL_MS;
   const pingStallMs = options.pingStallMs ?? DEFAULT_HTTP2_BRIDGE_PING_STALL_MS;
-  const requestBodyTimeoutMs = options.requestBodyTimeoutMs ?? DEFAULT_HTTP2_BRIDGE_REQUEST_BODY_TIMEOUT_MS;
+  const requestBodyTimeoutMs =
+    options.requestBodyTimeoutMs ??
+    DEFAULT_HTTP2_BRIDGE_REQUEST_BODY_TIMEOUT_MS;
   const requestBodyLifetimeCeilingMs =
-    options.requestBodyLifetimeCeilingMs ?? DEFAULT_HTTP2_BRIDGE_REQUEST_BODY_LIFETIME_CEILING_MS;
-  const closeGraceMs = options.closeGraceMs ?? DEFAULT_HTTP2_BRIDGE_CLOSE_GRACE_MS;
+    options.requestBodyLifetimeCeilingMs ??
+    DEFAULT_HTTP2_BRIDGE_REQUEST_BODY_LIFETIME_CEILING_MS;
+  const closeGraceMs =
+    options.closeGraceMs ?? DEFAULT_HTTP2_BRIDGE_CLOSE_GRACE_MS;
   const capacityDenialSettleDeadlineMs =
-    options.capacityDenialSettleDeadlineMs ?? DEFAULT_HTTP2_BRIDGE_CAPACITY_DENIAL_SETTLE_DEADLINE_MS;
+    options.capacityDenialSettleDeadlineMs ??
+    DEFAULT_HTTP2_BRIDGE_CAPACITY_DENIAL_SETTLE_DEADLINE_MS;
   const responseWriteSettleDeadlineMs =
-    options.responseWriteSettleDeadlineMs ?? DEFAULT_HTTP2_BRIDGE_RESPONSE_WRITE_SETTLE_DEADLINE_MS;
-  const maxBufferedReadBytes = options.maxBufferedReadBytes ?? DEFAULT_HTTP2_BRIDGE_MAX_BUFFERED_READ_BYTES;
+    options.responseWriteSettleDeadlineMs ??
+    DEFAULT_HTTP2_BRIDGE_RESPONSE_WRITE_SETTLE_DEADLINE_MS;
+  const maxBufferedReadBytes =
+    options.maxBufferedReadBytes ??
+    DEFAULT_HTTP2_BRIDGE_MAX_BUFFERED_READ_BYTES;
   const readBackpressureStallMs =
-    options.readBackpressureStallMs ?? DEFAULT_HTTP2_BRIDGE_READ_BACKPRESSURE_STALL_MS;
+    options.readBackpressureStallMs ??
+    DEFAULT_HTTP2_BRIDGE_READ_BACKPRESSURE_STALL_MS;
   // Built one time and passed to every readHttp2StreamBody() and
   // denyRequest() call below, so every stream on this server enforces the
   // same bounds.
@@ -1189,8 +1286,18 @@ export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions)
       // Accepted security fix 4: the constant-time bridge-token compare runs
       // before route processing and before header processing. This host check
       // is independent of the gateway's own token check on the sandbox side.
-      if (!compareBridgeTokensConstantTime(options.bridgeToken, readBridgeTokenHeader(headers))) {
-        denyRequest(stream, 401, { error: "Invalid bridge token." }, bodyBounds);
+      if (
+        !compareBridgeTokensConstantTime(
+          options.bridgeToken,
+          readBridgeTokenHeader(headers),
+        )
+      ) {
+        denyRequest(
+          stream,
+          401,
+          { error: "Invalid bridge token." },
+          bodyBounds,
+        );
         return;
       }
 
@@ -1198,7 +1305,12 @@ export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions)
       // allowlist and the forward request below read this one result.
       const parsedPath = parseCanonicalBridgeRequestPath(headers);
       if (!parsedPath.ok) {
-        denyRequest(stream, 400, { error: `Invalid request path: ${parsedPath.reason}` }, bodyBounds);
+        denyRequest(
+          stream,
+          400,
+          { error: `Invalid request path: ${parsedPath.reason}` },
+          bodyBounds,
+        );
         return;
       }
       const method = normalizeStreamMethod(headers[":method"]);
@@ -1233,11 +1345,16 @@ export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions)
           // never settle the write, holding this stream's reservation and
           // slot open forever.
           respondJson(stream, 503, { error: error.message });
-          await waitForHttp2StreamWriteToSettle(stream, capacityDenialSettleDeadlineMs);
+          await waitForHttp2StreamWriteToSettle(
+            stream,
+            capacityDenialSettleDeadlineMs,
+          );
           if (!stream.destroyed) stream.destroy();
           return;
         }
-        respondJson(stream, 413, { error: error instanceof Error ? error.message : String(error) });
+        respondJson(stream, 413, {
+          error: error instanceof Error ? error.message : String(error),
+        });
         return;
       }
 
@@ -1263,16 +1380,23 @@ export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions)
           // stream's reservation and slot open forever), then destroy to
           // free the slot.
           respondJson(stream, 503, { error: error.message });
-          await waitForHttp2StreamWriteToSettle(stream, capacityDenialSettleDeadlineMs);
+          await waitForHttp2StreamWriteToSettle(
+            stream,
+            capacityDenialSettleDeadlineMs,
+          );
           if (!stream.destroyed) stream.destroy();
           return;
         }
-        respondJson(stream, 502, { error: error instanceof Error ? error.message : String(error) });
+        respondJson(stream, 502, {
+          error: error instanceof Error ? error.message : String(error),
+        });
         return;
       }
 
       if (stream.destroyed || stream.closed) return;
-      const responseHeaders: http2.OutgoingHttpHeaders = { ":status": result.status };
+      const responseHeaders: http2.OutgoingHttpHeaders = {
+        ":status": result.status,
+      };
       for (const [key, value] of Object.entries(result.headers ?? {})) {
         if (key.toLowerCase() === "content-length") continue;
         responseHeaders[key] = value;
@@ -1293,7 +1417,10 @@ export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions)
         // deadline passes; a stream that settled on its own (`finish`,
         // `close`, or `error`) is left alone, since it is already ending or
         // ended.
-        const { settled } = await waitForHttp2StreamWriteToSettle(stream, responseWriteSettleDeadlineMs);
+        const { settled } = await waitForHttp2StreamWriteToSettle(
+          stream,
+          responseWriteSettleDeadlineMs,
+        );
         if (!settled && !stream.destroyed) stream.destroy();
       } catch {
         // The peer reset the stream (RST_STREAM) between dispatch and response.
@@ -1336,7 +1463,9 @@ export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions)
     });
     session.on("error", (error) => {
       stopWatchdog();
-      options.onSessionError?.(error instanceof Error ? error : new Error(String(error)));
+      options.onSessionError?.(
+        error instanceof Error ? error : new Error(String(error)),
+      );
     });
   });
 
@@ -1346,7 +1475,9 @@ export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions)
       // stream-body rejection, both already caught above) is a defensive
       // last resort. Destroy only this stream; the session stays open.
       if (!stream.destroyed) {
-        stream.destroy(error instanceof Error ? error : new Error(String(error)));
+        stream.destroy(
+          error instanceof Error ? error : new Error(String(error)),
+        );
       }
     });
   });
@@ -1354,7 +1485,10 @@ export function createHttp2BridgeServer(options: CreateHttp2BridgeServerOptions)
   return {
     server,
     bindChannel(channel: CommandManagedDuplexChannel): Duplex {
-      const duplex = wrapDuplexChannelAsNodeDuplex(channel, { maxBufferedReadBytes, readBackpressureStallMs });
+      const duplex = wrapDuplexChannelAsNodeDuplex(channel, {
+        maxBufferedReadBytes,
+        readBackpressureStallMs,
+      });
       server.emit("connection", duplex);
       return duplex;
     },

@@ -33,7 +33,11 @@ export {
   type DeviceLoginResult,
   type RunDeviceLoginOptions,
 } from "./device-login-runner.js";
-export { DEVICE_LOGIN_URL, parseDeviceLoginPrompt, type DeviceLoginPrompt } from "./device-login-parse.js";
+export {
+  DEVICE_LOGIN_URL,
+  parseDeviceLoginPrompt,
+  type DeviceLoginPrompt,
+} from "./device-login-parse.js";
 export {
   promoteDeviceLoginCredential,
   checkStagedCredentialReadiness,
@@ -51,7 +55,13 @@ export {
   isCodexAuthCachePath,
   readSubscriptionAccountId,
 } from "./codex-auth-cache.js";
-export { parseCodexJsonl, isCodexHarnessCrash, isCodexProviderQuotaError, isCodexTransientUpstreamError, isCodexUnknownSessionError } from "./parse.js";
+export {
+  parseCodexJsonl,
+  isCodexHarnessCrash,
+  isCodexProviderQuotaError,
+  isCodexTransientUpstreamError,
+  isCodexUnknownSessionError,
+} from "./parse.js";
 export {
   getQuotaWindows,
   readCodexAuthInfo,
@@ -67,22 +77,31 @@ import type { AdapterSessionCodec } from "@taskcore/adapter-utils";
 import { sessionCodec as acpxSessionCodec } from "@taskcore/adapter-utils/acpx-engine/session-codec";
 
 function readNonEmptyString(value: unknown): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 export const sessionCodec: AdapterSessionCodec = {
   deserialize(raw: unknown) {
-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw))
+      return null;
     const record = raw as Record<string, unknown>;
-    const sessionId = readNonEmptyString(record.sessionId) ?? readNonEmptyString(record.session_id);
+    const sessionId =
+      readNonEmptyString(record.sessionId) ??
+      readNonEmptyString(record.session_id);
     if (!sessionId) return acpxSessionCodec.deserialize(raw);
     const cwd =
       readNonEmptyString(record.cwd) ??
       readNonEmptyString(record.workdir) ??
       readNonEmptyString(record.folder);
-    const workspaceId = readNonEmptyString(record.workspaceId) ?? readNonEmptyString(record.workspace_id);
-    const repoUrl = readNonEmptyString(record.repoUrl) ?? readNonEmptyString(record.repo_url);
-    const repoRef = readNonEmptyString(record.repoRef) ?? readNonEmptyString(record.repo_ref);
+    const workspaceId =
+      readNonEmptyString(record.workspaceId) ??
+      readNonEmptyString(record.workspace_id);
+    const repoUrl =
+      readNonEmptyString(record.repoUrl) ?? readNonEmptyString(record.repo_url);
+    const repoRef =
+      readNonEmptyString(record.repoRef) ?? readNonEmptyString(record.repo_ref);
     return {
       sessionId,
       ...(cwd ? { cwd } : {}),
@@ -93,15 +112,21 @@ export const sessionCodec: AdapterSessionCodec = {
   },
   serialize(params: Record<string, unknown> | null) {
     if (!params) return null;
-    const sessionId = readNonEmptyString(params.sessionId) ?? readNonEmptyString(params.session_id);
+    const sessionId =
+      readNonEmptyString(params.sessionId) ??
+      readNonEmptyString(params.session_id);
     if (!sessionId) return acpxSessionCodec.serialize(params);
     const cwd =
       readNonEmptyString(params.cwd) ??
       readNonEmptyString(params.workdir) ??
       readNonEmptyString(params.folder);
-    const workspaceId = readNonEmptyString(params.workspaceId) ?? readNonEmptyString(params.workspace_id);
-    const repoUrl = readNonEmptyString(params.repoUrl) ?? readNonEmptyString(params.repo_url);
-    const repoRef = readNonEmptyString(params.repoRef) ?? readNonEmptyString(params.repo_ref);
+    const workspaceId =
+      readNonEmptyString(params.workspaceId) ??
+      readNonEmptyString(params.workspace_id);
+    const repoUrl =
+      readNonEmptyString(params.repoUrl) ?? readNonEmptyString(params.repo_url);
+    const repoRef =
+      readNonEmptyString(params.repoRef) ?? readNonEmptyString(params.repo_ref);
     return {
       sessionId,
       ...(cwd ? { cwd } : {}),

@@ -8,29 +8,29 @@ No agent defaults or saved model selections are migrated.
 
 ## Model changes
 
-| Adapter | Changes from the audit |
-| --- | --- |
-| Codex and the Codex runner catalog | Add GPT-6.1 Sol (`gpt-6.1-sol`). Expose efforts through Ultra and Fast mode, as documented. Keep `gpt-5.6-sol` as the default. Follow-up (October 6, 2026): with ChatGPT sign-in the Codex backend accepts `gpt-6.1-sol` only from Codex CLI 0.159.0 or newer (0.156.1 and older are rejected with "The 'gpt-6.1-sol' model is not supported when using Codex with a ChatGPT account."), and `gpt-6-sol` / `gpt-6-luna` entered the bundled catalog in 0.157.0. The adapter now records these floors; the environment Test and the remote runner compare the installed `codex --version` against them, so a sandbox image baked before the pin moved reports the stale CLI instead of an account error. |
-| Claude on Bedrock | Add Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`), using the catalog's existing US inference-profile convention. Sonnet 5.5 IDs (direct or Bedrock-qualified) get the documented `xhigh` and `max` efforts and require Claude Code 2.1.284 or later on the CLI lane. |
-| OpenCode | Add `openai/gpt-6.1-sol` and `anthropic/claude-sonnet-5-5` to the static fallback used by remote environments. Both IDs are present in the OpenCode model registry. |
-| Claude Code (direct) | No change in this audit. [#14993](https://github.com/khulnasoft/taskcore/pull/14993) (merged October 5, 2026, superseding #14816) adds Sonnet 5.5 (`claude-sonnet-5-5`, Claude Code 2.1.284 or later) and refreshes the Claude runtime. |
-| Grok Build, Gemini CLI, Kimi Code, Cursor | No new verified model IDs. Grok 4.7, Gemini 3.8 Flash, and Kimi K3 remain the newest documented models. |
+| Adapter                                   | Changes from the audit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex and the Codex runner catalog        | Add GPT-6.1 Sol (`gpt-6.1-sol`). Expose efforts through Ultra and Fast mode, as documented. Keep `gpt-5.6-sol` as the default. Follow-up (October 6, 2026): with ChatGPT sign-in the Codex backend accepts `gpt-6.1-sol` only from Codex CLI 0.159.0 or newer (0.156.1 and older are rejected with "The 'gpt-6.1-sol' model is not supported when using Codex with a ChatGPT account."), and `gpt-6-sol` / `gpt-6-luna` entered the bundled catalog in 0.157.0. The adapter now records these floors; the environment Test and the remote runner compare the installed `codex --version` against them, so a sandbox image baked before the pin moved reports the stale CLI instead of an account error. |
+| Claude on Bedrock                         | Add Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`), using the catalog's existing US inference-profile convention. Sonnet 5.5 IDs (direct or Bedrock-qualified) get the documented `xhigh` and `max` efforts and require Claude Code 2.1.284 or later on the CLI lane.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| OpenCode                                  | Add `openai/gpt-6.1-sol` and `anthropic/claude-sonnet-5-5` to the static fallback used by remote environments. Both IDs are present in the OpenCode model registry.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Claude Code (direct)                      | No change in this audit. [#14993](https://github.com/khulnasoft/taskcore/pull/14993) (merged October 5, 2026, superseding #14816) adds Sonnet 5.5 (`claude-sonnet-5-5`, Claude Code 2.1.284 or later) and refreshes the Claude runtime.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Grok Build, Gemini CLI, Kimi Code, Cursor | No new verified model IDs. Grok 4.7, Gemini 3.8 Flash, and Kimi K3 remain the newest documented models.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ## Harness changes
 
-| Harness | Before | After |
-| --- | --- | --- |
-| Codex CLI (shared provider pack) | 0.156.0 | 0.160.0 |
-| OpenCode (shared provider pack) | 1.18.32 | 1.18.34 |
-| Grok CLI (`@xai-official/grok`) | 1.0.41 | 1.0.46 |
-| Gemini CLI | 0.60.0 | 0.62.0 |
-| Kimi Code CLI | 2.0.2 | 2.1.1 |
-| Cursor CLI | 2026.09.18-9a7762b | 2026.10.01-e373342 |
-| GitHub CLI | 2.101.0 | 2.102.0 |
-| Claude Agent SDK / Claude Code | 0.3.280 / 2.1.280 | 0.3.286 / 2.1.286 via #14993 (merged); this branch keeps that pin |
-| Hermes | 0.19.0 | 0.19.0 (current) |
-| ACPX, `claude-agent-acp`, `codex-acp` bridges | 0.13.1 / 0.73.0 / 1.6.2 | Unchanged; separately qualified |
-| Pi (`@earendil-works/pi-coding-agent`) | 0.87.1 (fleet image) | Unchanged; Pi 1.0 is qualified upstream in the Pi runner stack |
+| Harness                                       | Before                  | After                                                             |
+| --------------------------------------------- | ----------------------- | ----------------------------------------------------------------- |
+| Codex CLI (shared provider pack)              | 0.156.0                 | 0.160.0                                                           |
+| OpenCode (shared provider pack)               | 1.18.32                 | 1.18.34                                                           |
+| Grok CLI (`@xai-official/grok`)               | 1.0.41                  | 1.0.46                                                            |
+| Gemini CLI                                    | 0.60.0                  | 0.62.0                                                            |
+| Kimi Code CLI                                 | 2.0.2                   | 2.1.1                                                             |
+| Cursor CLI                                    | 2026.09.18-9a7762b      | 2026.10.01-e373342                                                |
+| GitHub CLI                                    | 2.101.0                 | 2.102.0                                                           |
+| Claude Agent SDK / Claude Code                | 0.3.280 / 2.1.280       | 0.3.286 / 2.1.286 via #14993 (merged); this branch keeps that pin |
+| Hermes                                        | 0.19.0                  | 0.19.0 (current)                                                  |
+| ACPX, `claude-agent-acp`, `codex-acp` bridges | 0.13.1 / 0.73.0 / 1.6.2 | Unchanged; separately qualified                                   |
+| Pi (`@earendil-works/pi-coding-agent`)        | 0.87.1 (fleet image)    | Unchanged; Pi 1.0 is qualified upstream in the Pi runner stack    |
 
 The remote Codex compatibility window moves to `>=0.149.0 <0.161.0`. The
 minimum stays fixed. See
@@ -43,8 +43,7 @@ minimum stays fixed. See
   Standard and Fast modes at launch. The bundled Codex 0.160.0 model metadata
   also contains `gpt-6.1-sol`. The same page records that `gpt-5.4` and
   `gpt-5.4-mini` retired from Codex with ChatGPT sign-in on August 31, 2026,
-  and that `gpt-5.5` retires from Codex with ChatGPT sign-in on October 14,
-  2026. Neither retirement applies to the OpenAI API, so the picker keeps
+  and that `gpt-5.5` retires from Codex with ChatGPT sign-in on October 14, 2026. Neither retirement applies to the OpenAI API, so the picker keeps
   those IDs for API-key users; see "Deferred items".
 - [Codex CLI releases](https://github.com/openai/codex/releases) 0.157.0
   through 0.160.0 add GPT-6 Sol and Luna metadata, app-server pagination, and

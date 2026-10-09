@@ -8,16 +8,23 @@ interface ClaudePermissionInput {
 // A tool allowlist is not equivalent to full bypass: it misses MCP tools and
 // tools added by later provider releases. Let Claude enforce its own launch
 // requirements rather than silently downgrading the requested permission mode.
-export function buildClaudeExecutionPermissionArgs(input: ClaudePermissionInput): string[] {
-  return input.dangerouslySkipPermissions ? ["--dangerously-skip-permissions"] : [];
+export function buildClaudeExecutionPermissionArgs(
+  input: ClaudePermissionInput,
+): string[] {
+  return input.dangerouslySkipPermissions
+    ? ["--dangerously-skip-permissions"]
+    : [];
 }
 
-export const buildClaudeProbePermissionArgs = buildClaudeExecutionPermissionArgs;
+export const buildClaudeProbePermissionArgs =
+  buildClaudeExecutionPermissionArgs;
 
 /** Claude permits full bypass as root only inside an identified sandbox. */
 export function claudeSandboxPermissionEnv(input: {
   dangerouslySkipPermissions: boolean;
   targetIsSandbox: boolean;
 }): Record<string, string> {
-  return input.dangerouslySkipPermissions && input.targetIsSandbox ? { IS_SANDBOX: "1" } : {};
+  return input.dangerouslySkipPermissions && input.targetIsSandbox
+    ? { IS_SANDBOX: "1" }
+    : {};
 }

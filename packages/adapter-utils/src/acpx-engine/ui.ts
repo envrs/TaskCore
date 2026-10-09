@@ -3,7 +3,8 @@ import type { TranscriptEntry } from "@taskcore/adapter-utils";
 function parseJson(line: string): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(line);
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+      return null;
     return parsed as Record<string, unknown>;
   } catch {
     return null;
@@ -37,7 +38,8 @@ function pickToolUseId(parsed: Record<string, unknown>): string {
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return null;
   return value as Record<string, unknown>;
 }
 
@@ -53,7 +55,10 @@ function statusText(parsed: Record<string, unknown>): string {
   return parts.join(" ") || tag || "status";
 }
 
-export function parseAcpxStdoutLine(line: string, ts: string): TranscriptEntry[] {
+export function parseAcpxStdoutLine(
+  line: string,
+  ts: string,
+): TranscriptEntry[] {
   const parsed = parseJson(line);
   if (!parsed) return [{ kind: "stdout", ts, text: line }];
 
@@ -63,27 +68,34 @@ export function parseAcpxStdoutLine(line: string, ts: string): TranscriptEntry[]
     const mode = asString(parsed.mode);
     const permissionMode = asString(parsed.permissionMode);
     const tail = [mode, permissionMode].filter(Boolean).join(" / ");
-    return [{
-      kind: "init",
-      ts,
-      model: tail ? `${agent} (${tail})` : agent,
-      sessionId:
-        asString(parsed.acpSessionId) ||
-        asString(parsed.sessionId) ||
-        asString(parsed.runtimeSessionName),
-    }];
+    return [
+      {
+        kind: "init",
+        ts,
+        model: tail ? `${agent} (${tail})` : agent,
+        sessionId:
+          asString(parsed.acpSessionId) ||
+          asString(parsed.sessionId) ||
+          asString(parsed.runtimeSessionName),
+      },
+    ];
   }
 
   if (type === "acpx.text_delta") {
     const text = asString(parsed.text);
     if (!text) return [];
     const channel = asString(parsed.channel) || asString(parsed.stream);
-    return [{
-      kind: channel === "thought" || channel === "thinking" ? "thinking" : "assistant",
-      ts,
-      text,
-      delta: true,
-    }];
+    return [
+      {
+        kind:
+          channel === "thought" || channel === "thinking"
+            ? "thinking"
+            : "assistant",
+        ts,
+        text,
+        delta: true,
+      },
+    ];
   }
 
   if (type === "acpx.tool_call") {
@@ -94,7 +106,9 @@ export function parseAcpxStdoutLine(line: string, ts: string): TranscriptEntry[]
     const parsedInput = parsed.input;
     const input = (() => {
       if (parsedInput === undefined) {
-        return text || status ? { ...(text ? { text } : {}), ...(status ? { status } : {}) } : {};
+        return text || status
+          ? { ...(text ? { text } : {}), ...(status ? { status } : {}) }
+          : {};
       }
       const inputRecord = asRecord(parsedInput);
       if (!inputRecord) return parsedInput;
@@ -113,7 +127,11 @@ export function parseAcpxStdoutLine(line: string, ts: string): TranscriptEntry[]
         input,
       },
     ];
-    if (status === "completed" || status === "failed" || status === "cancelled") {
+    if (
+      status === "completed" ||
+      status === "failed" ||
+      status === "cancelled"
+    ) {
       entries.push({
         kind: "tool_result",
         ts,
@@ -127,14 +145,16 @@ export function parseAcpxStdoutLine(line: string, ts: string): TranscriptEntry[]
   }
 
   if (type === "acpx.tool_result") {
-    return [{
-      kind: "tool_result",
-      ts,
-      toolUseId: pickToolUseId(parsed) || asString(parsed.name, "acp_tool"),
-      toolName: asString(parsed.name) || undefined,
-      content: stringify(parsed.content ?? parsed.output ?? parsed.error),
-      isError: parsed.isError === true || parsed.error !== undefined,
-    }];
+    return [
+      {
+        kind: "tool_result",
+        ts,
+        toolUseId: pickToolUseId(parsed) || asString(parsed.name, "acp_tool"),
+        toolName: asString(parsed.name) || undefined,
+        content: stringify(parsed.content ?? parsed.output ?? parsed.error),
+        isError: parsed.isError === true || parsed.error !== undefined,
+      },
+    ];
   }
 
   if (type === "acpx.status") {
@@ -142,20 +162,28 @@ export function parseAcpxStdoutLine(line: string, ts: string): TranscriptEntry[]
   }
 
   if (type === "acpx.result") {
-    return [{
-      kind: "result",
-      ts,
-      text: asString(parsed.summary, asString(parsed.stopReason, asString(parsed.text))),
-      inputTokens: asNumber(parsed.inputTokens),
-      outputTokens: asNumber(parsed.outputTokens),
-      cachedTokens: asNumber(parsed.cachedTokens),
-      costUsd: asNumber(parsed.costUsd),
-      subtype: asString(parsed.subtype, asString(parsed.stopReason, "acpx.result")),
-      isError: parsed.isError === true,
-      errors: Array.isArray(parsed.errors)
-        ? parsed.errors.map((error) => stringify(error)).filter(Boolean)
-        : [],
-    }];
+    return [
+      {
+        kind: "result",
+        ts,
+        text: asString(
+          parsed.summary,
+          asString(parsed.stopReason, asString(parsed.text)),
+        ),
+        inputTokens: asNumber(parsed.inputTokens),
+        outputTokens: asNumber(parsed.outputTokens),
+        cachedTokens: asNumber(parsed.cachedTokens),
+        costUsd: asNumber(parsed.costUsd),
+        subtype: asString(
+          parsed.subtype,
+          asString(parsed.stopReason, "acpx.result"),
+        ),
+        isError: parsed.isError === true,
+        errors: Array.isArray(parsed.errors)
+          ? parsed.errors.map((error) => stringify(error)).filter(Boolean)
+          : [],
+      },
+    ];
   }
 
   if (type === "acpx.error") {

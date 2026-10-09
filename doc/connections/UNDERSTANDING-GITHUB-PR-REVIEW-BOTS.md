@@ -42,12 +42,12 @@ whether anything has changed.
 
 Here are the notifications involved:
 
-| What happens on GitHub | Webhook received by Taskcore |
-| --- | --- |
-| Someone comments on an issue or in a PR's main conversation | `issue_comment` |
-| Someone comments in an inline PR review thread | `pull_request_review_comment` |
-| Someone opens a PR | `pull_request`, with action `opened` |
-| Someone pushes new commits to an existing PR | `pull_request`, with action `synchronize` |
+| What happens on GitHub                                      | Webhook received by Taskcore              |
+| ----------------------------------------------------------- | ----------------------------------------- |
+| Someone comments on an issue or in a PR's main conversation | `issue_comment`                           |
+| Someone comments in an inline PR review thread              | `pull_request_review_comment`             |
+| Someone opens a PR                                          | `pull_request`, with action `opened`      |
+| Someone pushes new commits to an existing PR                | `pull_request`, with action `synchronize` |
 
 For example, you write `@your-bot please review this PR`. GitHub sends the comment
 to the App's webhook, and Taskcore recognizes an authorized request in its
@@ -135,14 +135,14 @@ check on the PR. The comment explains the result to a person. The check gives
 GitHub a result its rules can use. The check is attached to the exact commit
 the agent reviewed.
 
-| Review situation | What the check reports |
-| --- | --- |
-| Waiting for the agent | Queued |
-| Agent is reviewing | In progress |
-| Complete assessment meets the threshold | Success |
-| Complete assessment falls below the threshold | Failure |
-| Incomplete assessment or execution that cannot finish | A non-passing result requiring attention |
-| Complete assessment in report-only mode | Neutral; a low score does not fail the check |
+| Review situation                                      | What the check reports                       |
+| ----------------------------------------------------- | -------------------------------------------- |
+| Waiting for the agent                                 | Queued                                       |
+| Agent is reviewing                                    | In progress                                  |
+| Complete assessment meets the threshold               | Success                                      |
+| Complete assessment falls below the threshold         | Failure                                      |
+| Incomplete assessment or execution that cannot finish | A non-passing result requiring attention     |
+| Complete assessment in report-only mode               | Neutral; a low score does not fail the check |
 
 The threshold defaults to 5/5 and can be set from 1–5. An incomplete assessment
 cannot pass. Report-only mode is useful for feedback without enforcing a score;
@@ -213,12 +213,12 @@ We can now put the two behavior choices next to each other. This is why
 “the bot reviews PRs” does not, by itself, tell you whether it runs automatically
 or whether its result is mandatory:
 
-| Review trigger | GitHub requires Taskcore Review? | What happens |
-| --- | --- | --- |
-| Mentions only | No | Optional review when someone asks. Its failing check alone does not block merging. |
-| Automatic | No | Automatic feedback. Its failing check alone does not block merging. |
-| Mentions only | Yes | Merging waits until someone requests a review and the required check passes. |
-| Automatic | Yes | Reviews run automatically. Merging waits for the required check to pass. |
+| Review trigger | GitHub requires Taskcore Review? | What happens                                                                       |
+| -------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| Mentions only  | No                               | Optional review when someone asks. Its failing check alone does not block merging. |
+| Automatic      | No                               | Automatic feedback. Its failing check alone does not block merging.                |
+| Mentions only  | Yes                              | Merging waits until someone requests a review and the required check passes.       |
+| Automatic      | Yes                              | Reviews run automatically. Merging waits for the required check to pass.           |
 
 Other repository rules, including formal review requirements, may independently
 block a merge in any of these scenarios.
@@ -265,11 +265,11 @@ review lets you express both expectations.
 
 Three things can therefore appear on the same PR:
 
-| Item | What it means |
-| --- | --- |
-| A summary comment saying “5/5” | The bot's explanation of its assessment. |
-| A successful **Taskcore Review** check | The validated assessment satisfied the configured rating policy for that commit. |
-| A formal **Approved** review | The bot explicitly performed GitHub's approval action under separately enabled permissions. |
+| Item                                   | What it means                                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| A summary comment saying “5/5”         | The bot's explanation of its assessment.                                                    |
+| A successful **Taskcore Review** check | The validated assessment satisfied the configured rating policy for that commit.            |
+| A formal **Approved** review           | The bot explicitly performed GitHub's approval action under separately enabled permissions. |
 
 A 5/5 does not automatically submit a formal approval. A formal approval does
 not turn a failing check green. Neither replaces other required checks or human

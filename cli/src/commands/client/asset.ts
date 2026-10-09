@@ -35,7 +35,12 @@ export function registerAssetCommands(program: Command): void {
       .action(async (opts: AssetOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const result = await uploadAsset(ctx.api.apiBase, ctx.api.apiKey, apiPath`/api/companies/${ctx.companyId}/assets/images`, opts);
+          const result = await uploadAsset(
+            ctx.api.apiBase,
+            ctx.api.apiKey,
+            apiPath`/api/companies/${ctx.companyId}/assets/images`,
+            opts,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -53,7 +58,12 @@ export function registerAssetCommands(program: Command): void {
       .action(async (opts: AssetOptions) => {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
-          const result = await uploadAsset(ctx.api.apiBase, ctx.api.apiKey, apiPath`/api/companies/${ctx.companyId}/logo`, opts);
+          const result = await uploadAsset(
+            ctx.api.apiBase,
+            ctx.api.apiKey,
+            apiPath`/api/companies/${ctx.companyId}/logo`,
+            opts,
+          );
           printOutput(result, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -71,10 +81,17 @@ export function registerAssetCommands(program: Command): void {
       .action(async (assetId: string, opts: AssetOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const bytes = await downloadAsset(ctx.api.apiBase, ctx.api.apiKey, assetId);
+          const bytes = await downloadAsset(
+            ctx.api.apiBase,
+            ctx.api.apiKey,
+            assetId,
+          );
           if (opts.out?.trim()) {
             await writeFile(opts.out, bytes);
-            printOutput({ ok: true, out: opts.out, bytes: bytes.length }, { json: ctx.json });
+            printOutput(
+              { ok: true, out: opts.out, bytes: bytes.length },
+              { json: ctx.json },
+            );
             return;
           }
           process.stdout.write(bytes);
@@ -96,7 +113,11 @@ async function uploadAsset(
   }
   const bytes = await readFile(opts.file);
   const form = new FormData();
-  form.set("file", new Blob([bytes], { type: inferContentTypeFromPath(opts.file) }), opts.file.split(/[\\/]/).pop() ?? "asset");
+  form.set(
+    "file",
+    new Blob([bytes], { type: inferContentTypeFromPath(opts.file) }),
+    opts.file.split(/[\\/]/).pop() ?? "asset",
+  );
   if (opts.namespace?.trim()) form.set("namespace", opts.namespace.trim());
   if (opts.alt?.trim()) form.set("alt", opts.alt.trim());
   if (opts.title?.trim()) form.set("title", opts.title.trim());
@@ -109,10 +130,17 @@ async function uploadAsset(
   return parseFetchResponse(response);
 }
 
-async function downloadAsset(apiBase: string, apiKey: string | undefined, assetId: string): Promise<Buffer> {
-  const response = await fetch(buildApiUrl(apiBase, apiPath`/api/assets/${assetId}/content`), {
-    headers: apiKey ? { authorization: `Bearer ${apiKey}` } : undefined,
-  });
+async function downloadAsset(
+  apiBase: string,
+  apiKey: string | undefined,
+  assetId: string,
+): Promise<Buffer> {
+  const response = await fetch(
+    buildApiUrl(apiBase, apiPath`/api/assets/${assetId}/content`),
+    {
+      headers: apiKey ? { authorization: `Bearer ${apiKey}` } : undefined,
+    },
+  );
   if (!response.ok) {
     await parseFetchResponse(response);
   }
@@ -124,7 +152,10 @@ async function parseFetchResponse(response: Response): Promise<unknown> {
   const parsed = text.trim() ? safeJson(text) : null;
   if (!response.ok) {
     const message =
-      typeof parsed === "object" && parsed !== null && "error" in parsed && typeof parsed.error === "string"
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "error" in parsed &&
+      typeof parsed.error === "string"
         ? parsed.error
         : `Request failed with status ${response.status}`;
     throw new ApiRequestError(response.status, message, undefined, parsed);

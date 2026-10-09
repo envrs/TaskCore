@@ -19,7 +19,9 @@ export async function createMcpIsolationRoot(prefix: string): Promise<string> {
 
 export async function commandVersion(command: string): Promise<string | null> {
   try {
-    const result = await runCommand(command, ["--version"], { timeoutMs: 5_000 });
+    const result = await runCommand(command, ["--version"], {
+      timeoutMs: 5_000,
+    });
     if (result.exitCode !== 0) return null;
     return `${result.stdout}${result.stderr}`.trim();
   } catch {
@@ -88,5 +90,9 @@ export async function writeCodexMcpConfig(
     "",
   ]);
   await fs.mkdir(codexHome, { recursive: true });
-  await fs.writeFile(path.join(codexHome, "config.toml"), sections.join("\n"), "utf8");
+  await fs.writeFile(
+    path.join(codexHome, "config.toml"),
+    sections.join("\n"),
+    "utf8",
+  );
 }

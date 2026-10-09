@@ -2,10 +2,18 @@ import { Command } from "commander";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import type { Agent, Company } from "@taskcore/shared";
-import { createAgentKeySchema, createBoardApiKeySchema } from "@taskcore/shared";
+import {
+  createAgentKeySchema,
+  createBoardApiKeySchema,
+} from "@taskcore/shared";
 import { loginBoardCli } from "../../client/board-auth.js";
 import { TaskcoreApiClient } from "../../client/http.js";
-import { resolveProfile, readContext, setCurrentProfile, upsertProfile } from "../../client/context.js";
+import {
+  resolveProfile,
+  readContext,
+  setCurrentProfile,
+  upsertProfile,
+} from "../../client/context.js";
 import {
   addCommonClientOptions,
   apiPath,
@@ -40,7 +48,11 @@ export function registerConnectCommand(program: Command): void {
       .command("connect")
       .description("Interactively connect the CLI as a board operator or agent")
       .option("--persona <persona>", "Persona to configure: board or agent")
-      .option("--api-key-env-var-name <name>", "Env var name to store in the profile", "TASKCORE_API_KEY")
+      .option(
+        "--api-key-env-var-name <name>",
+        "Env var name to store in the profile",
+        "TASKCORE_API_KEY",
+      )
       .option("--token-name <name>", "Token label to create")
       .action(async (opts: ConnectOptions) => {
         try {
@@ -55,7 +67,9 @@ export function registerConnectCommand(program: Command): void {
 
 async function connectWizard(opts: ConnectOptions) {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new Error("`taskcore connect` is interactive. For scripts, pass --api-base/--api-key or use context set/token commands.");
+    throw new Error(
+      "`taskcore connect` is interactive. For scripts, pass --api-base/--api-key or use context set/token commands.",
+    );
   }
 
   p.intro(pc.bgCyan(pc.black(" taskcore connect ")));
@@ -76,37 +90,51 @@ async function connectWizard(opts: ConnectOptions) {
   const boardLogin = await loginBoardCli({
     apiBase,
     requestedAccess: "board",
-    requestedCompanyId: opts.companyId ?? resolvedProfile.profile.companyId ?? null,
+    requestedCompanyId:
+      opts.companyId ?? resolvedProfile.profile.companyId ?? null,
     command: "taskcore connect",
   });
   const boardApi = new TaskcoreApiClient({ apiBase, apiKey: boardLogin.token });
   const companies = (await boardApi.get<Company[]>("/api/companies")) ?? [];
 
   const persona = await choosePersona(opts.persona);
-  const profileName = opts.profile?.trim() || await askProfileName(resolvedProfile.name);
+  const profileName =
+    opts.profile?.trim() || (await askProfileName(resolvedProfile.name));
   const apiKeyEnvVarName = opts.apiKeyEnvVarName?.trim() || "TASKCORE_API_KEY";
 
   if (persona === "board") {
-    const company = await chooseCompany(companies, opts.companyId ?? resolvedProfile.profile.companyId, {
-      optional: true,
-    });
-    const tokenName = opts.tokenName?.trim() || `cli-board-${new Date().toISOString()}`;
-    const key = await boardApi.post<CreatedBoardKey>("/api/board-api-keys", createBoardApiKeySchema.parse({
-      name: tokenName,
-      requestedCompanyId: company?.id ?? null,
-    }));
+    const company = await chooseCompany(
+      companies,
+      opts.companyId ?? resolvedProfile.profile.companyId,
+      {
+        optional: true,
+      },
+    );
+    const tokenName =
+      opts.tokenName?.trim() || `cli-board-${new Date().toISOString()}`;
+    const key = await boardApi.post<CreatedBoardKey>(
+      "/api/board-api-keys",
+      createBoardApiKeySchema.parse({
+        name: tokenName,
+        requestedCompanyId: company?.id ?? null,
+      }),
+    );
     if (!key) throw new Error("Failed to create board token");
-    upsertProfile(profileName, {
-      apiBase,
-      companyId: company?.id,
-      persona: "board",
-      agentId: "",
-      agentName: "",
-      apiKeyEnvVarName,
-      tokenName: key.name,
-      tokenId: key.id,
-      tokenCreatedAt: key.createdAt,
-    }, opts.context);
+    upsertProfile(
+      profileName,
+      {
+        apiBase,
+        companyId: company?.id,
+        persona: "board",
+        agentId: "",
+        agentName: "",
+        apiKeyEnvVarName,
+        tokenName: key.name,
+        tokenId: key.id,
+        tokenCreatedAt: key.createdAt,
+      },
+      opts.context,
+    );
     setCurrentProfile(profileName, opts.context);
     p.outro(pc.green(`Connected profile '${profileName}' as board.`));
     return {
@@ -116,31 +144,53 @@ async function connectWizard(opts: ConnectOptions) {
       apiBase,
       companyId: company?.id ?? null,
       key: publicKeyResult(key),
-      exports: buildExports({ apiBase, companyId: company?.id, agentId: undefined, envName: apiKeyEnvVarName, token: key.token }),
+      exports: buildExports({
+        apiBase,
+        companyId: company?.id,
+        agentId: undefined,
+        envName: apiKeyEnvVarName,
+        token: key.token,
+      }),
     };
   }
 
-  const company = await chooseCompany(companies, opts.companyId ?? resolvedProfile.profile.companyId, {
-    optional: false,
-  });
+  const company = await chooseCompany(
+    companies,
+    opts.companyId ?? resolvedProfile.profile.companyId,
+    {
+      optional: false,
+    },
+  );
   if (!company) throw new Error("Company is required for agent profiles");
-  const agents = (await boardApi.get<Agent[]>(apiPath`/api/companies/${company.id}/agents`)) ?? [];
-  if (agents.length === 0) throw new Error(`Company '${company.name}' has no agents to connect.`);
+  const agents =
+    (await boardApi.get<Agent[]>(
+      apiPath`/api/companies/${company.id}/agents`,
+    )) ?? [];
+  if (agents.length === 0)
+    throw new Error(`Company '${company.name}' has no agents to connect.`);
   const agent = await chooseAgent(agents, resolvedProfile.profile.agentId);
-  const tokenName = opts.tokenName?.trim() || `cli-agent-${new Date().toISOString()}`;
-  const key = await boardApi.post<CreatedAgentKey>(apiPath`/api/agents/${agent.id}/keys`, createAgentKeySchema.parse({ name: tokenName }));
+  const tokenName =
+    opts.tokenName?.trim() || `cli-agent-${new Date().toISOString()}`;
+  const key = await boardApi.post<CreatedAgentKey>(
+    apiPath`/api/agents/${agent.id}/keys`,
+    createAgentKeySchema.parse({ name: tokenName }),
+  );
   if (!key) throw new Error("Failed to create agent token");
-  upsertProfile(profileName, {
-    apiBase,
-    companyId: company.id,
-    persona: "agent",
-    agentId: agent.id,
-    agentName: agent.name,
-    apiKeyEnvVarName,
-    tokenName: key.name,
-    tokenId: key.id,
-    tokenCreatedAt: key.createdAt,
-  }, opts.context);
+  upsertProfile(
+    profileName,
+    {
+      apiBase,
+      companyId: company.id,
+      persona: "agent",
+      agentId: agent.id,
+      agentName: agent.name,
+      apiKeyEnvVarName,
+      tokenName: key.name,
+      tokenId: key.id,
+      tokenCreatedAt: key.createdAt,
+    },
+    opts.context,
+  );
   setCurrentProfile(profileName, opts.context);
   p.outro(pc.green(`Connected profile '${profileName}' as ${agent.name}.`));
   return {
@@ -152,7 +202,13 @@ async function connectWizard(opts: ConnectOptions) {
     agentId: agent.id,
     agentName: agent.name,
     key: publicKeyResult(key),
-    exports: buildExports({ apiBase, companyId: company.id, agentId: agent.id, envName: apiKeyEnvVarName, token: key.token }),
+    exports: buildExports({
+      apiBase,
+      companyId: company.id,
+      agentId: agent.id,
+      envName: apiKeyEnvVarName,
+      token: key.token,
+    }),
   };
 }
 
@@ -161,7 +217,9 @@ async function verifyHealth(apiBase: string): Promise<void> {
   await api.get("/api/health");
 }
 
-async function choosePersona(input: string | undefined): Promise<"board" | "agent"> {
+async function choosePersona(
+  input: string | undefined,
+): Promise<"board" | "agent"> {
   if (input === "board" || input === "agent") return input;
   const selected = await p.select({
     message: "Connect as",
@@ -194,10 +252,14 @@ async function chooseCompany(
     if (opts.optional) return null;
     throw new Error("No companies are accessible with this board credential.");
   }
-  const preferred = preferredCompanyId ? companies.find((company) => company.id === preferredCompanyId) : null;
+  const preferred = preferredCompanyId
+    ? companies.find((company) => company.id === preferredCompanyId)
+    : null;
   if (companies.length === 1 && !opts.optional) return companies[0] ?? null;
   const selected = await p.select({
-    message: opts.optional ? "Default company for this profile" : "Agent company",
+    message: opts.optional
+      ? "Default company for this profile"
+      : "Agent company",
     initialValue: preferred?.id ?? companies[0]?.id,
     options: [
       ...(opts.optional ? [{ value: "", label: "(none)" }] : []),
@@ -213,12 +275,16 @@ async function chooseCompany(
   return companies.find((company) => company.id === selected) ?? null;
 }
 
-async function chooseAgent(agents: Agent[], preferredAgentId: string | undefined): Promise<Agent> {
+async function chooseAgent(
+  agents: Agent[],
+  preferredAgentId: string | undefined,
+): Promise<Agent> {
   const selected = await p.select({
     message: "Agent",
-    initialValue: preferredAgentId && agents.some((agent) => agent.id === preferredAgentId)
-      ? preferredAgentId
-      : agents[0]?.id,
+    initialValue:
+      preferredAgentId && agents.some((agent) => agent.id === preferredAgentId)
+        ? preferredAgentId
+        : agents[0]?.id,
     options: agents.map((agent) => ({
       value: agent.id,
       label: agent.name,
@@ -241,10 +307,16 @@ function buildExports(input: {
   const escaped = (value: string) => value.replace(/'/g, "'\"'\"'");
   return [
     `export TASKCORE_API_URL='${escaped(input.apiBase)}'`,
-    input.companyId ? `export TASKCORE_COMPANY_ID='${escaped(input.companyId)}'` : null,
-    input.agentId ? `export TASKCORE_AGENT_ID='${escaped(input.agentId)}'` : null,
+    input.companyId
+      ? `export TASKCORE_COMPANY_ID='${escaped(input.companyId)}'`
+      : null,
+    input.agentId
+      ? `export TASKCORE_AGENT_ID='${escaped(input.agentId)}'`
+      : null,
     `export ${input.envName}='${escaped(input.token)}'`,
-  ].filter((line): line is string => Boolean(line)).join("\n");
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
 }
 
 function publicKeyResult(key: CreatedAgentKey | CreatedBoardKey) {

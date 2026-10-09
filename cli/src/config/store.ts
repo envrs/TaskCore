@@ -6,10 +6,7 @@ import {
   taskcoreConfigSchema,
   type TaskcoreConfig,
 } from "./schema.js";
-import {
-  resolveDefaultConfigPath,
-  resolveTaskcoreInstanceId,
-} from "./home.js";
+import { resolveDefaultConfigPath, resolveTaskcoreInstanceId } from "./home.js";
 
 const DEFAULT_CONFIG_BASENAME = "config.json";
 
@@ -18,7 +15,11 @@ function findConfigFileFromAncestors(startDir: string): string | null {
   let currentDir = absoluteStartDir;
 
   while (true) {
-    const candidate = path.resolve(currentDir, ".taskcore", DEFAULT_CONFIG_BASENAME);
+    const candidate = path.resolve(
+      currentDir,
+      ".taskcore",
+      DEFAULT_CONFIG_BASENAME,
+    );
     if (fs.existsSync(candidate)) {
       return candidate;
     }
@@ -33,15 +34,21 @@ function findConfigFileFromAncestors(startDir: string): string | null {
 
 export function resolveConfigPath(overridePath?: string): string {
   if (overridePath) return path.resolve(overridePath);
-  if (process.env.TASKCORE_CONFIG) return path.resolve(process.env.TASKCORE_CONFIG);
-  return findConfigFileFromAncestors(process.cwd()) ?? resolveDefaultConfigPath(resolveTaskcoreInstanceId());
+  if (process.env.TASKCORE_CONFIG)
+    return path.resolve(process.env.TASKCORE_CONFIG);
+  return (
+    findConfigFileFromAncestors(process.cwd()) ??
+    resolveDefaultConfigPath(resolveTaskcoreInstanceId())
+  );
 }
 
 function parseJson(filePath: string): unknown {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
   } catch (err) {
-    throw new Error(`Failed to parse JSON at ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(
+      `Failed to parse JSON at ${filePath}: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -49,7 +56,11 @@ function migrateLegacyConfig(raw: unknown): unknown {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return raw;
   const config = { ...(raw as Record<string, unknown>) };
   const databaseRaw = config.database;
-  if (typeof databaseRaw !== "object" || databaseRaw === null || Array.isArray(databaseRaw)) {
+  if (
+    typeof databaseRaw !== "object" ||
+    databaseRaw === null ||
+    Array.isArray(databaseRaw)
+  ) {
     return config;
   }
 
@@ -57,7 +68,10 @@ function migrateLegacyConfig(raw: unknown): unknown {
   if (database.mode === "pglite") {
     database.mode = "embedded-postgres";
 
-    if (typeof database.embeddedPostgresDataDir !== "string" && typeof database.pgliteDataDir === "string") {
+    if (
+      typeof database.embeddedPostgresDataDir !== "string" &&
+      typeof database.pgliteDataDir === "string"
+    ) {
       database.embeddedPostgresDataDir = database.pgliteDataDir;
     }
     if (
@@ -74,13 +88,18 @@ function migrateLegacyConfig(raw: unknown): unknown {
 }
 
 function formatValidationError(err: unknown): string {
-  const issues = (err as { issues?: Array<{ path?: unknown; message?: unknown }> })?.issues;
+  const issues = (
+    err as { issues?: Array<{ path?: unknown; message?: unknown }> }
+  )?.issues;
   if (Array.isArray(issues) && issues.length > 0) {
     return issues
       .map((issue) => {
-        const pathParts = Array.isArray(issue.path) ? issue.path.map(String) : [];
+        const pathParts = Array.isArray(issue.path)
+          ? issue.path.map(String)
+          : [];
         const issuePath = pathParts.length > 0 ? pathParts.join(".") : "config";
-        const message = typeof issue.message === "string" ? issue.message : "Invalid value";
+        const message =
+          typeof issue.message === "string" ? issue.message : "Invalid value";
         return `${issuePath}: ${message}`;
       })
       .join("; ");
@@ -95,7 +114,9 @@ export function readConfig(configPath?: string): TaskcoreConfig | null {
   const migrated = migrateLegacyConfig(raw);
   const parsed = taskcoreConfigSchema.safeParse(migrated);
   if (!parsed.success) {
-    throw new Error(`Invalid config at ${filePath}: ${formatValidationError(parsed.error)}`);
+    throw new Error(
+      `Invalid config at ${filePath}: ${formatValidationError(parsed.error)}`,
+    );
   }
   return parsed.data;
 }
@@ -117,7 +138,10 @@ function syncDirectory(directoryPath: string): void {
     fs.fsyncSync(directoryDescriptor);
   } catch (error) {
     const code = error instanceof Error && "code" in error ? error.code : null;
-    if (process.platform !== "win32" || !["EACCES", "EINVAL", "EISDIR", "ENOTSUP", "EPERM"].includes(String(code))) {
+    if (
+      process.platform !== "win32" ||
+      !["EACCES", "EINVAL", "EISDIR", "ENOTSUP", "EPERM"].includes(String(code))
+    ) {
       throw error;
     }
   } finally {
@@ -125,7 +149,11 @@ function syncDirectory(directoryPath: string): void {
   }
 }
 
-function durableCopyFile(sourcePath: string, destinationPath: string, flags = 0): void {
+function durableCopyFile(
+  sourcePath: string,
+  destinationPath: string,
+  flags = 0,
+): void {
   fs.copyFileSync(sourcePath, destinationPath, flags);
   fs.chmodSync(destinationPath, 0o600);
 
@@ -157,7 +185,8 @@ function atomicWriteFile(filePath: string, contents: string): void {
     } catch (error) {
       if (fileDescriptor !== null) fs.closeSync(fileDescriptor);
       fs.rmSync(temporaryPath, { force: true });
-      const code = error instanceof Error && "code" in error ? error.code : null;
+      const code =
+        error instanceof Error && "code" in error ? error.code : null;
       if (code === "EEXIST") continue;
       throw error;
     }
@@ -176,7 +205,8 @@ export function backupInvalidConfig(configPath?: string): string {
       durableCopyFile(filePath, backupPath, fs.constants.COPYFILE_EXCL);
       return backupPath;
     } catch (error) {
-      const code = error instanceof Error && "code" in error ? error.code : null;
+      const code =
+        error instanceof Error && "code" in error ? error.code : null;
       if (code === "EEXIST") continue;
       throw error;
     }
@@ -195,9 +225,15 @@ export function writeConfig(
   let nextConfig = taskcoreConfigSchema.parse(config);
   if (fs.existsSync(filePath)) {
     try {
-      const source = taskcoreConfigSchema.parse(migrateLegacyConfig(parseJson(filePath)));
-      nextConfig = taskcoreConfigSchema.parse(mergeTaskcoreConfig(source, nextConfig));
-      if (isDeepStrictEqual(effectiveConfig(source), effectiveConfig(nextConfig))) {
+      const source = taskcoreConfigSchema.parse(
+        migrateLegacyConfig(parseJson(filePath)),
+      );
+      nextConfig = taskcoreConfigSchema.parse(
+        mergeTaskcoreConfig(source, nextConfig),
+      );
+      if (
+        isDeepStrictEqual(effectiveConfig(source), effectiveConfig(nextConfig))
+      ) {
         return false;
       }
     } catch (error) {

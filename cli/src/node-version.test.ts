@@ -36,10 +36,14 @@ describe("isSupportedNodeVersion", () => {
   it("emits at most one warning when CLI and server boot in the same process", () => {
     const warnings: string[] = [];
     expect(
-      warnIfUnsupportedNodeVersion("22.23.0", (message) => warnings.push(message)),
+      warnIfUnsupportedNodeVersion("22.23.0", (message) =>
+        warnings.push(message),
+      ),
     ).toBe(true);
     expect(
-      warnIfUnsupportedNodeVersion("22.23.0", (message) => warnings.push(message)),
+      warnIfUnsupportedNodeVersion("22.23.0", (message) =>
+        warnings.push(message),
+      ),
     ).toBe(false);
     expect(warnings).toHaveLength(1);
   });

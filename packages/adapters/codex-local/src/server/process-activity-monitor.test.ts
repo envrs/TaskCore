@@ -24,7 +24,11 @@ class PollHarness {
   }
 }
 
-function snapshot(cpuTicks: number, ioBytes: number, processIds = "100"): CodexProcessActivitySnapshot {
+function snapshot(
+  cpuTicks: number,
+  ioBytes: number,
+  processIds = "100",
+): CodexProcessActivitySnapshot {
   return { cpuTicks, ioBytes, processIds };
 }
 
@@ -72,7 +76,12 @@ describe("createCodexProcessActivityMonitor", () => {
   });
 
   it("resets its comparison baseline after an unavailable sample", async () => {
-    const samples = [snapshot(100, 1_000), null, snapshot(200, 2_000), snapshot(215, 2_000)];
+    const samples = [
+      snapshot(100, 1_000),
+      null,
+      snapshot(200, 2_000),
+      snapshot(215, 2_000),
+    ];
     const harness = new PollHarness();
     const onActivity = vi.fn();
     const monitor = createCodexProcessActivityMonitor({

@@ -36,11 +36,11 @@ pnpm test:e2e:runner -- --list --suite native-instruction-consolidation
 
 Each source variant declares these original tasks on the same local native profiles:
 
-| Profile | Model | Tasks |
-| --- | --- | --- |
-| Codex | `gpt-5.6-sol` | assigned-skill document completion; whole-task blocker |
-| ACPX Claude | `claude-sonnet-5` | assigned-skill document completion; whole-task blocker |
-| OpenCode | `openrouter/deepseek/deepseek-v4-flash-0731` | assigned-skill document completion; whole-task blocker |
+| Profile     | Model                                        | Tasks                                                  |
+| ----------- | -------------------------------------------- | ------------------------------------------------------ |
+| Codex       | `gpt-5.6-sol`                                | assigned-skill document completion; whole-task blocker |
+| ACPX Claude | `claude-sonnet-5`                            | assigned-skill document completion; whole-task blocker |
+| OpenCode    | `openrouter/deepseek/deepseek-v4-flash-0731` | assigned-skill document completion; whole-task blocker |
 
 Six cells per variant means twelve actual runs for the pair, each with one attempt. Use exact IDs with parallelism one and no automatic retry. Each cell uses the original task deadline and 1,000-cent company and agent hard stops. These budgets bound recorded Taskcore spend; they do not guarantee final provider invoice amounts. Do not run providers until the human authorizes the live scope. Stop to inspect a usable behavior failure; do not reroll it to obtain a pass.
 

@@ -63,9 +63,13 @@ export function classifyThrownErrorClass(err: unknown): string | null {
 
 // Keep only identifier characters and bound the length. The result cannot carry
 // untrusted probe text.
-function sanitizeErrorClassName(name: string | null | undefined): string | null {
+function sanitizeErrorClassName(
+  name: string | null | undefined,
+): string | null {
   if (typeof name !== "string") return null;
-  const safe = name.replace(/[^A-Za-z0-9_$]/g, "").slice(0, MAX_ERROR_CLASS_NAME_CHARS);
+  const safe = name
+    .replace(/[^A-Za-z0-9_$]/g, "")
+    .slice(0, MAX_ERROR_CLASS_NAME_CHARS);
   return safe.length > 0 ? safe : null;
 }
 
@@ -100,7 +104,10 @@ export function logSandboxProbeDiagnostic(
     exitCode?: number;
     errorClass?: string;
   } = { classification };
-  if (typeof fields?.exitCode === "number" && Number.isFinite(fields.exitCode)) {
+  if (
+    typeof fields?.exitCode === "number" &&
+    Number.isFinite(fields.exitCode)
+  ) {
     detail.exitCode = fields.exitCode;
   }
   const errorClass = sanitizeErrorClassName(fields?.errorClass);
@@ -122,7 +129,9 @@ export function logSandboxProbeDiagnostic(
  * fails. The caller shows a fixed `claude login` hint when the function returns
  * `null`.
  */
-export function normalizeClaudeLoginUrl(raw: string | null | undefined): string | null {
+export function normalizeClaudeLoginUrl(
+  raw: string | null | undefined,
+): string | null {
   if (!raw) return null;
   let url: URL;
   try {
@@ -146,7 +155,9 @@ export function normalizeClaudeLoginUrl(raw: string | null | undefined): string 
  * normalizes to a safe value, the hint names it. Otherwise the hint tells the
  * operator to run `claude login`.
  */
-export function buildClaudeLoginRequiredHint(loginUrl: string | null | undefined): string {
+export function buildClaudeLoginRequiredHint(
+  loginUrl: string | null | undefined,
+): string {
   const safeUrl = normalizeClaudeLoginUrl(loginUrl);
   return safeUrl
     ? `Run \`claude login\` and complete sign-in at ${safeUrl}, then retry.`
@@ -165,7 +176,10 @@ export function resolveAdapterTestTargetLabel(input: {
   environmentName: string | null | undefined;
 }): string {
   if (!input.targetIsRemote) return ADAPTER_TEST_HOST_TARGET_LABEL;
-  const name = typeof input.environmentName === "string" ? input.environmentName.trim() : "";
+  const name =
+    typeof input.environmentName === "string"
+      ? input.environmentName.trim()
+      : "";
   return name.length > 0 ? name : "the selected environment";
 }
 

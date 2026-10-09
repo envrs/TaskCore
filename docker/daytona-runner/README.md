@@ -51,7 +51,6 @@ isolated home, starts no paid model request, and retires its process group.
 Set `TASKCORE_TEST_OPENCODE_BINARY` to the materialized Linux executable when
 qualifying an assembled provider pack.
 
-
 The fleet image is currently amd64-only because the pinned Cursor and GitHub CLI
 checksums cover amd64.
 

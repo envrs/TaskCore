@@ -49,7 +49,9 @@ export interface LoginPtySession {
  * Opens a pseudo-terminal session for `command`. A provider binds this to its
  * sandbox. The transport calls it one time, on start.
  */
-export type LoginPtySessionOpener = (command: string) => Promise<LoginPtySession>;
+export type LoginPtySessionOpener = (
+  command: string,
+) => Promise<LoginPtySession>;
 
 /**
  * The child side of the setup-token run, in the shape the login runner needs.
@@ -66,7 +68,10 @@ export interface LoginPtyTransport {
    * output to `onData` in order. Resolves with the child exit code when the
    * command ends. The transport calls this one time.
    */
-  start(command: string, onData: (chunk: string) => void): Promise<{ exitCode: number | null }>;
+  start(
+    command: string,
+    onData: (chunk: string) => void,
+  ): Promise<{ exitCode: number | null }>;
   /**
    * Writes `input` to the pseudo-terminal. The runner writes the browser code
    * plus the Enter byte one time, after it matches the prompt. An input that

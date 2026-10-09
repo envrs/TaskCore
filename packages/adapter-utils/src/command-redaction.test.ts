@@ -3,10 +3,15 @@ import { describe, expect, it } from "vitest";
 describe("explicit diagnostic credential forms", () => {
   it("masks suffixed CLI options and encoded JSON headers with whitespace", () => {
     const jwt = `${Buffer.from(' {"alg":"HS256","typ":"JWT"}').toString("base64url")}.abcdefghijk.abcdefghijkl`;
-    expect(redactCommandText("tool --api-key-prod sensitivevalue --token-policy readable"))
-      .not.toContain("sensitivevalue");
+    expect(
+      redactCommandText(
+        "tool --api-key-prod sensitivevalue --token-policy readable",
+      ),
+    ).not.toContain("sensitivevalue");
     expect(redactCommandText(`provider ${jwt}`)).not.toContain(jwt);
-    expect(redactCommandText("plan.security.credentials.md")).toBe("plan.security.credentials.md");
+    expect(redactCommandText("plan.security.credentials.md")).toBe(
+      "plan.security.credentials.md",
+    );
   });
 });
 import {
@@ -23,7 +28,8 @@ describe("redactDiagnosticText", () => {
       "executor.customTools.integrations.list deployment.credentials.example.md api.openai.com",
       "Use a private key and secret manager with credential handling.",
       "Use bearer tokens and bearer authentication.",
-    ]) expect(redactDiagnosticText(text)).toBe(text);
+    ])
+      expect(redactDiagnosticText(text)).toBe(text);
   });
 
   it("redacts a JSON secret field value", () => {

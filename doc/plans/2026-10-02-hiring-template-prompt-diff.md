@@ -4,22 +4,22 @@ New default CEO hires receive one short `AGENTS.md`. Ad-hoc hires and imported t
 
 Baseline: `d6d88b9de2fc766637422cc43f985c747455a1b0`. Word counts below measure role instruction bodies, excluding reference introductions, recommended configuration, and catalog frontmatter. The default CEO count includes all four previously selected files. These counts describe context size, not outcome quality, billed tokens, or savings.
 
-| Prompt | Before words | After words |
-| --- | ---: | ---: |
-| [Default CEO bundle](../../server/src/onboarding-assets/ceo/AGENTS.md) | 1897 | 20 |
-| [Coder](../../skills/taskcore-create-agent/references/agents/coder.md) | 652 | 18 |
-| [QA](../../skills/taskcore-create-agent/references/agents/qa.md) | 619 | 21 |
-| [UX Designer](../../skills/taskcore-create-agent/references/agents/uxdesigner.md) | 1325 | 20 |
-| [Security Engineer](../../skills/taskcore-create-agent/references/agents/securityengineer.md) | 1724 | 28 |
-| [Chief of staff](../../server/src/onboarding-assets/first-task/chief-of-staff/AGENTS.md) | 164 | 25 |
-| [Catalog ceo](../../packages/teams-catalog/catalog/bundled/company-defaults/core-exec-team/agents/ceo/AGENTS.md) | 377 | 20 |
-| [Catalog cto](../../packages/teams-catalog/catalog/bundled/company-defaults/core-exec-team/agents/cto/AGENTS.md) | 205 | 17 |
-| [Catalog qa](../../packages/teams-catalog/catalog/bundled/company-defaults/core-exec-team/agents/qa/AGENTS.md) | 183 | 17 |
-| [Catalog ux-designer](../../packages/teams-catalog/catalog/bundled/product/product-design/agents/ux-designer/AGENTS.md) | 305 | 17 |
-| [Catalog cto](../../packages/teams-catalog/catalog/bundled/software-development/product-engineering/agents/cto/AGENTS.md) | 212 | 22 |
-| [Catalog qa](../../packages/teams-catalog/catalog/bundled/software-development/product-engineering/agents/qa/AGENTS.md) | 171 | 22 |
-| [Catalog senior-coder](../../packages/teams-catalog/catalog/bundled/software-development/product-engineering/agents/senior-coder/AGENTS.md) | 201 | 20 |
-| [Catalog content-lead](../../packages/teams-catalog/catalog/optional/content/content-machine/agents/content-lead/AGENTS.md) | 16 | 16 |
+| Prompt                                                                                                                                      | Before words | After words |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | -----------: | ----------: |
+| [Default CEO bundle](../../server/src/onboarding-assets/ceo/AGENTS.md)                                                                      |         1897 |          20 |
+| [Coder](../../skills/taskcore-create-agent/references/agents/coder.md)                                                                      |          652 |          18 |
+| [QA](../../skills/taskcore-create-agent/references/agents/qa.md)                                                                            |          619 |          21 |
+| [UX Designer](../../skills/taskcore-create-agent/references/agents/uxdesigner.md)                                                           |         1325 |          20 |
+| [Security Engineer](../../skills/taskcore-create-agent/references/agents/securityengineer.md)                                               |         1724 |          28 |
+| [Chief of staff](../../server/src/onboarding-assets/first-task/chief-of-staff/AGENTS.md)                                                    |          164 |          25 |
+| [Catalog ceo](../../packages/teams-catalog/catalog/bundled/company-defaults/core-exec-team/agents/ceo/AGENTS.md)                            |          377 |          20 |
+| [Catalog cto](../../packages/teams-catalog/catalog/bundled/company-defaults/core-exec-team/agents/cto/AGENTS.md)                            |          205 |          17 |
+| [Catalog qa](../../packages/teams-catalog/catalog/bundled/company-defaults/core-exec-team/agents/qa/AGENTS.md)                              |          183 |          17 |
+| [Catalog ux-designer](../../packages/teams-catalog/catalog/bundled/product/product-design/agents/ux-designer/AGENTS.md)                     |          305 |          17 |
+| [Catalog cto](../../packages/teams-catalog/catalog/bundled/software-development/product-engineering/agents/cto/AGENTS.md)                   |          212 |          22 |
+| [Catalog qa](../../packages/teams-catalog/catalog/bundled/software-development/product-engineering/agents/qa/AGENTS.md)                     |          171 |          22 |
+| [Catalog senior-coder](../../packages/teams-catalog/catalog/bundled/software-development/product-engineering/agents/senior-coder/AGENTS.md) |          201 |          20 |
+| [Catalog content-lead](../../packages/teams-catalog/catalog/optional/content/content-machine/agents/content-lead/AGENTS.md)                 |           16 |          16 |
 
 ## Scope and compatibility
 
@@ -31,13 +31,13 @@ Baseline: `d6d88b9de2fc766637422cc43f985c747455a1b0`. Word counts below measure 
 
 ## How hires are drafted
 
-| Before | After |
-| --- | --- |
-| Role-specific templates were the default drafting path. | Templates are optional role examples. |
-| Unknown roles required a 60–150-line manual with eight sections. | Start with a short identity and responsibility paragraph. |
-| Every new agent needed an execution contract and repeated task procedures. | Keep reporting lines, capabilities, and skills in their configuration fields. |
+| Before                                                                           | After                                                                                                                  |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Role-specific templates were the default drafting path.                          | Templates are optional role examples.                                                                                  |
+| Unknown roles required a 60–150-line manual with eight sections.                 | Start with a short identity and responsibility paragraph.                                                              |
+| Every new agent needed an execution contract and repeated task procedures.       | Keep reporting lines, capabilities, and skills in their configuration fields.                                          |
 | Templates prescribed reviewers, per-touch comments, and broad domain checklists. | Add detail only for a concrete requirement that the task, repository, skills, or configuration do not already express. |
-| The generated baseline could crowd out company instructions. | Preserve explicit requester instructions. |
+| The generated baseline could crowd out company instructions.                     | Preserve explicit requester instructions.                                                                              |
 
 The hiring skill still checks authority, adapter schemas, reporting lines, installed skills, timer settings, confidential workflows, and approval state. Its native-tool and legacy-API transport guidance stays separate.
 

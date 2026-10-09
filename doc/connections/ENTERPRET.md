@@ -180,7 +180,7 @@ dashboard has a Revoke control, but an immediate post-revocation read still
 succeeded on 2026-09-30. Whether generating another token invalidates an
 earlier one is untested.
 
-An `introspection_endpoint` *is* advertised, and Taskcore calls neither. That
+An `introspection_endpoint` _is_ advertised, and Taskcore calls neither. That
 is worth separating: introspection tells you what a token can do, which is how
 the scope mismatch above was found, but it cannot take a token away.
 
@@ -262,23 +262,23 @@ above also carried `mcp:write`.
 - docsUrl: `https://enterpret.support.site/article/enterpret-mcp-server`
 - Methods:
 
-| | `mcp-api-key` (primary) | `mcp-oauth` (OAuth) |
-| --- | --- | --- |
-| label | Use an auth token | Sign in with Enterpret |
-| transport | `mcp_remote` | `mcp_remote` |
-| auth | `api_key` | `oauth` |
-| ownershipModes | `["customer"]` | `["dcr"]` |
-| grantKinds | `["organization"]` | `["user"]` |
-| defaults | `serverUrl` | `serverUrl`, `scopesHint: ["mcp:read"]` |
-| credentialFields | `authorization`, password, required, secret | — |
-| keyPlacement | header `Authorization`, prefix `Bearer ` | — |
-| riskTier | S3 | S3 |
-| release role | Primary / store-ready | Personal browser sign-in; fresh release QA pending |
+|                  | `mcp-api-key` (primary)                     | `mcp-oauth` (OAuth)                                |
+| ---------------- | ------------------------------------------- | -------------------------------------------------- |
+| label            | Use an auth token                           | Sign in with Enterpret                             |
+| transport        | `mcp_remote`                                | `mcp_remote`                                       |
+| auth             | `api_key`                                   | `oauth`                                            |
+| ownershipModes   | `["customer"]`                              | `["dcr"]`                                          |
+| grantKinds       | `["organization"]`                          | `["user"]`                                         |
+| defaults         | `serverUrl`                                 | `serverUrl`, `scopesHint: ["mcp:read"]`            |
+| credentialFields | `authorization`, password, required, secret | —                                                  |
+| keyPlacement     | header `Authorization`, prefix `Bearer `    | —                                                  |
+| riskTier         | S3                                          | S3                                                 |
+| release role     | Primary / store-ready                       | Personal browser sign-in; fresh release QA pending |
 
-  `ownershipModes` omits `customer` on the OAuth method on purpose: Enterpret
-  documents no way for a customer to register their own OAuth application, and
-  `ownershipModes` must reflect what the provider advertises rather than the
-  `method()` helper's `["customer", "dcr"]` default.
+`ownershipModes` omits `customer` on the OAuth method on purpose: Enterpret
+documents no way for a customer to register their own OAuth application, and
+`ownershipModes` must reflect what the provider advertises rather than the
+`method()` helper's `["customer", "dcr"]` default.
 
 - oauthStrategy and connectorProfile: not used. This is not a Taskcore-managed
   OAuth provider.
@@ -326,15 +326,15 @@ Allowed reads. The live-run `deny` below was applied by hand and is stronger
 than Ask first; operators who want Off can still set that after connect. See
 [Governance Defaults](#governance-defaults).
 
-| Tool | Risk | Status in validation | Filters | Approval in validation | Audit fields | Negative case |
-| --- | --- | --- | --- | --- | --- | --- |
-| `get_organization_details` | read | active | credential org | allow | actor, run, connection, tool, outcome | ungranted actor is denied before dispatch |
-| `get_graph_schema` | read | active | credential org | allow | same | same |
-| `get_query_examples` | read | active | credential org | allow | same | same |
-| `search_graph_fields` | read | active | credential org | allow | same | same |
-| `search_graph_values` | read | active | credential org | allow | same | same |
-| `run_graph_query` | **write** (Taskcore override) | **deny — set by hand; ships Ask first** | credential org | deny (set by hand) | same, plus redacted query shape | same |
-| `find_user_quote` | read | active | credential org | allow | same, plus quote redaction | same |
+| Tool                       | Risk                          | Status in validation                    | Filters        | Approval in validation | Audit fields                          | Negative case                             |
+| -------------------------- | ----------------------------- | --------------------------------------- | -------------- | ---------------------- | ------------------------------------- | ----------------------------------------- |
+| `get_organization_details` | read                          | active                                  | credential org | allow                  | actor, run, connection, tool, outcome | ungranted actor is denied before dispatch |
+| `get_graph_schema`         | read                          | active                                  | credential org | allow                  | same                                  | same                                      |
+| `get_query_examples`       | read                          | active                                  | credential org | allow                  | same                                  | same                                      |
+| `search_graph_fields`      | read                          | active                                  | credential org | allow                  | same                                  | same                                      |
+| `search_graph_values`      | read                          | active                                  | credential org | allow                  | same                                  | same                                      |
+| `run_graph_query`          | **write** (Taskcore override) | **deny — set by hand; ships Ask first** | credential org | deny (set by hand)     | same, plus redacted query shape       | same                                      |
+| `find_user_quote`          | read                          | active                                  | credential org | allow                  | same, plus quote redaction            | same                                      |
 
 Legacy aliases `get_schema` and `search_knowledge_graph` remain served for the
 lifetime of an existing session and are dropped when the host refreshes its tool
@@ -368,7 +368,7 @@ decision, and outcome without copying the payload.
 - Configuration steps: none beyond credentials. There is no tenant field to
   fill.
 - Error states: expired auth token (check the dashboard expiry); an account with no
-  access to the organization's feedback. A scope *rejection* turned out not to
+  access to the organization's feedback. A scope _rejection_ turned out not to
   be one of them — Enterpret accepts the `mcp:read` request and reports broader scopes
   (see [Scope decision](#scope-decision)), so the flow completes and the failure
   is silent rather than visible in the wizard.
@@ -394,7 +394,7 @@ decision, and outcome without copying the payload.
   `app:<connectionId>` profile. Restricting the install to named agents rewrites
   the install and adds an agent binding but leaves the company binding in place,
   which keeps authorizing every agent in the company. Installs gate runtime
-  materialization; the *profile binding* is what authorizes. Containment becomes
+  materialization; the _profile binding_ is what authorizes. Containment becomes
   real only when the company binding is also removed. Verified on the live
   connection: both agents still resolved 7 allowed tools after the install was
   narrowed, and the ungranted control agent dropped to 0 of 8 only after the
@@ -421,16 +421,16 @@ showed **Expires in 3 months**, so setup copy must not promise six months.
 The token value, feedback content, and full provider responses are excluded
 from this record.
 
-| Check | Observed result |
-| --- | --- |
-| Connect and discover | `mcp-api-key` connected as an organization grant; health was `ok`; authenticated catalog refresh found 8 tools. |
-| Safe allowed read | `get_organization_details` returned success for the intended Enterpret organization. The same bounded read succeeded again after reconnect. No quote or graph-query tool was invoked. |
-| Agent policy preview | The selected test agent's access summary changed the read action to `off` and back to `allowed` when its profile was toggled. The Test panel showed “No call will be made” while Off. |
-| Refresh and reconnect | Catalog refresh retained 8 actions. Reconnecting with the same valid token preserved the connection and catalog quarantine setting. An intentionally invalid replacement failed, then reconnecting with the valid token restored `active`/`ok`. This is **not** evidence that an expired token was renewed or that rotating a token revokes its predecessor. |
-| Activity | The safe call produced an explicit-grant decision and completed-call event. Connection activity remained queryable. |
-| Local disable and removal | Disabling the QA connection exposed zero actions in the agent access summary. Archiving it cleared the local secret, grant, install, and catalog entries. |
-| Provider-side revocation | After the Enterpret dashboard said the QA token was revoked, the same token immediately connected again and completed the same bounded organization read. Immediate provider-side invalidation **failed**. Vivek later explained invalidated tokens remain cached for 24 hours and committed to reducing the window. The new delay and deployment are unverified. Both QA connections were removed. |
-| Actual agent execution | Not exercised on this token path. An earlier OAuth QA run proved agent-session denies through the real gateway, but it does not substitute for a token-path agent process. |
+| Check                     | Observed result                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connect and discover      | `mcp-api-key` connected as an organization grant; health was `ok`; authenticated catalog refresh found 8 tools.                                                                                                                                                                                                                                                                                     |
+| Safe allowed read         | `get_organization_details` returned success for the intended Enterpret organization. The same bounded read succeeded again after reconnect. No quote or graph-query tool was invoked.                                                                                                                                                                                                               |
+| Agent policy preview      | The selected test agent's access summary changed the read action to `off` and back to `allowed` when its profile was toggled. The Test panel showed “No call will be made” while Off.                                                                                                                                                                                                               |
+| Refresh and reconnect     | Catalog refresh retained 8 actions. Reconnecting with the same valid token preserved the connection and catalog quarantine setting. An intentionally invalid replacement failed, then reconnecting with the valid token restored `active`/`ok`. This is **not** evidence that an expired token was renewed or that rotating a token revokes its predecessor.                                        |
+| Activity                  | The safe call produced an explicit-grant decision and completed-call event. Connection activity remained queryable.                                                                                                                                                                                                                                                                                 |
+| Local disable and removal | Disabling the QA connection exposed zero actions in the agent access summary. Archiving it cleared the local secret, grant, install, and catalog entries.                                                                                                                                                                                                                                           |
+| Provider-side revocation  | After the Enterpret dashboard said the QA token was revoked, the same token immediately connected again and completed the same bounded organization read. Immediate provider-side invalidation **failed**. Vivek later explained invalidated tokens remain cached for 24 hours and committed to reducing the window. The new delay and deployment are unverified. Both QA connections were removed. |
+| Actual agent execution    | Not exercised on this token path. An earlier OAuth QA run proved agent-session denies through the real gateway, but it does not substitute for a token-path agent process.                                                                                                                                                                                                                          |
 
 The board's `POST /tool-connections/:id/test-calls` is **not** an agent-policy
 denial probe. With the agent's action Off, that endpoint still returned
@@ -507,18 +507,18 @@ API key, open a gateway session, and call with the session token.
 Per deployment, self-hosted first. Cloud has no evidence of any kind and is
 never inferred from a self-hosted result.
 
-| Scenario | Self-hosted, same machine | Self-hosted, server/VPS | Cloud |
-| --- | --- | --- | --- |
-| Setup and consent | **pass** — account holder signed in; connection reached `active`, health `ok` | not run | not run — no Cloud instance |
-| Authentication | **pass** — DCR public client registered against the live provider; token exchange succeeded | not run | not run |
-| Catalog and configuration | **pass** — authenticated `tools/list` returned 8 tools; `execute_cypher_query` absent | not run | not run |
-| Allowed execution | **pass** — `get_organization_details` resolved to the intended organization; one further bounded metadata read also succeeded | not run | not run |
-| Denied execution | **pass** — ungranted agent got HTTP 403 `deny_default` and saw 0 tools; `run_graph_query` stayed 403 for the *granted* agent | not run | not run |
-| Runtime delivery | **not proven** — gateway and policy were exercised by a real agent-authenticated session, but no agent process ever ran; see below | not run | not run |
-| Refresh and recovery | **not run** — refresh deliberately not exercised once the scope mismatch was found | not run | not run |
-| Revoke and reconnect | **cannot pass** — no `revocation_endpoint` exists to call. Local disable verified: the connection was disabled and the gateway decision flips to deny | cannot pass — structural, not deployment-dependent | cannot pass |
-| Activity and secret handling | **pass** — invocations audited with correct decisions and actor attribution; tokens AES-256-GCM at rest with no plaintext in secret storage; API returns `secretId` references only | not run | not run |
-| **Granted scope (OAuth)** | **scope mismatch observed** — reported scopes differed from the request; write capability was not established; fresh OAuth QA pending | fails identically for OAuth — provider-side | fails identically for OAuth |
+| Scenario                     | Self-hosted, same machine                                                                                                                                                           | Self-hosted, server/VPS                            | Cloud                       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------- |
+| Setup and consent            | **pass** — account holder signed in; connection reached `active`, health `ok`                                                                                                       | not run                                            | not run — no Cloud instance |
+| Authentication               | **pass** — DCR public client registered against the live provider; token exchange succeeded                                                                                         | not run                                            | not run                     |
+| Catalog and configuration    | **pass** — authenticated `tools/list` returned 8 tools; `execute_cypher_query` absent                                                                                               | not run                                            | not run                     |
+| Allowed execution            | **pass** — `get_organization_details` resolved to the intended organization; one further bounded metadata read also succeeded                                                       | not run                                            | not run                     |
+| Denied execution             | **pass** — ungranted agent got HTTP 403 `deny_default` and saw 0 tools; `run_graph_query` stayed 403 for the _granted_ agent                                                        | not run                                            | not run                     |
+| Runtime delivery             | **not proven** — gateway and policy were exercised by a real agent-authenticated session, but no agent process ever ran; see below                                                  | not run                                            | not run                     |
+| Refresh and recovery         | **not run** — refresh deliberately not exercised once the scope mismatch was found                                                                                                  | not run                                            | not run                     |
+| Revoke and reconnect         | **cannot pass** — no `revocation_endpoint` exists to call. Local disable verified: the connection was disabled and the gateway decision flips to deny                               | cannot pass — structural, not deployment-dependent | cannot pass                 |
+| Activity and secret handling | **pass** — invocations audited with correct decisions and actor attribution; tokens AES-256-GCM at rest with no plaintext in secret storage; API returns `secretId` references only | not run                                            | not run                     |
+| **Granted scope (OAuth)**    | **scope mismatch observed** — reported scopes differed from the request; write capability was not established; fresh OAuth QA pending                                               | fails identically for OAuth — provider-side        | fails identically for OAuth |
 
 Self-hosted VPS and Cloud are `not run`, not "probably fine". Nothing in the
 same-machine column is carried across, and nothing here is carried over from the
@@ -527,13 +527,13 @@ PAP-18519 loopback mirror either.
 **Why runtime delivery is `not proven`, precisely.** Every allowed and denied
 result above was produced through the real gateway path — an agent-minted
 session, `actor_type: agent` on the invocation row, decided by the real policy
-service. What did **not** happen is an agent *process*. Minting that session
+service. What did **not** happen is an agent _process_. Minting that session
 requires a `heartbeat_runs` row, and the two rows used here were inserted by
 hand for that precondition alone. Both show `started_at` NULL, no pid, no
 transcript and no run events other than the reaper's, and the instance later
 marked them `failed` / `process_lost` — which is the reaper correctly noticing
 there was never a process behind them, not a product defect. So this connector
-is proven to work under Taskcore's *authorization and transport* layer, and is
+is proven to work under Taskcore's _authorization and transport_ layer, and is
 untested under an actual agent runtime driving it through a heartbeat. Scenario
 6 needs a genuine woken agent run before it can be called a pass.
 
@@ -558,21 +558,21 @@ operator should read this connector rather than what it does:
 
 Labels as defined in the connector skills' shared matrix.
 
-| Capability | Self-hosted, same machine | Self-hosted, server/VPS | Cloud |
-| --- | --- | --- | --- |
-| Definition generates, validates and typechecks | `verified` | `verified` | `verified` — the checks are deployment-independent |
-| Official branding passes the artwork checks | `verified` | `verified` | `verified` |
-| Provider metadata discovery resolves (RFC 9728 → 8414) | `verified` against the provider, from this runtime | `verified` — same request, no deployment dependency | `untested` |
-| Taskcore's discovery ladder resolves this shape | `verified` against the live provider | `untested` | `untested` |
-| DCR client registration | `verified` — public client registered at connect time, nothing pre-registered | `untested` | `untested` |
-| OAuth consent and token exchange | `verified` | `untested` | `untested` |
-| Auth-token (header) connection | `verified` — connected, discovered 8 tools, and completed a safe read on 2026-09-30 | `untested` | `untested` |
-| Authenticated `tools/list` | `verified` — 8 tools on OAuth and the organization-token path | `untested` | `untested` |
-| Agent execution through the gateway | `verified` on OAuth — allowed and denied paths through an agent-authenticated session; token path used the board Test panel only | `untested` | `untested` |
-| Execution driven by an actual agent runtime | `untested` — the sessions above were minted against hand-inserted run rows; no agent process ran | `untested` | `untested` |
-| Granted scope matches the requested scope (OAuth) | `scope mismatch observed` — fresh OAuth QA pending; scope names do not establish write capability | `failed` for OAuth — provider-side | `failed` for OAuth — provider-side |
-| Provider-side revocation | OAuth has no advertised `revocation_endpoint`; the organization token's dashboard Revoke control failed an immediate denial check on 2026-09-30 | `untested` | `untested` |
-| Store visibility (token path) | `ready` — organization auth token is primary; both auth methods target the official read-only MCP | `ready` — same definition | `ready` — same definition |
+| Capability                                             | Self-hosted, same machine                                                                                                                       | Self-hosted, server/VPS                             | Cloud                                              |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------- |
+| Definition generates, validates and typechecks         | `verified`                                                                                                                                      | `verified`                                          | `verified` — the checks are deployment-independent |
+| Official branding passes the artwork checks            | `verified`                                                                                                                                      | `verified`                                          | `verified`                                         |
+| Provider metadata discovery resolves (RFC 9728 → 8414) | `verified` against the provider, from this runtime                                                                                              | `verified` — same request, no deployment dependency | `untested`                                         |
+| Taskcore's discovery ladder resolves this shape        | `verified` against the live provider                                                                                                            | `untested`                                          | `untested`                                         |
+| DCR client registration                                | `verified` — public client registered at connect time, nothing pre-registered                                                                   | `untested`                                          | `untested`                                         |
+| OAuth consent and token exchange                       | `verified`                                                                                                                                      | `untested`                                          | `untested`                                         |
+| Auth-token (header) connection                         | `verified` — connected, discovered 8 tools, and completed a safe read on 2026-09-30                                                             | `untested`                                          | `untested`                                         |
+| Authenticated `tools/list`                             | `verified` — 8 tools on OAuth and the organization-token path                                                                                   | `untested`                                          | `untested`                                         |
+| Agent execution through the gateway                    | `verified` on OAuth — allowed and denied paths through an agent-authenticated session; token path used the board Test panel only                | `untested`                                          | `untested`                                         |
+| Execution driven by an actual agent runtime            | `untested` — the sessions above were minted against hand-inserted run rows; no agent process ran                                                | `untested`                                          | `untested`                                         |
+| Granted scope matches the requested scope (OAuth)      | `scope mismatch observed` — fresh OAuth QA pending; scope names do not establish write capability                                               | `failed` for OAuth — provider-side                  | `failed` for OAuth — provider-side                 |
+| Provider-side revocation                               | OAuth has no advertised `revocation_endpoint`; the organization token's dashboard Revoke control failed an immediate denial check on 2026-09-30 | `untested`                                          | `untested`                                         |
+| Store visibility (token path)                          | `ready` — organization auth token is primary; both auth methods target the official read-only MCP                                               | `ready` — same definition                           | `ready` — same definition                          |
 
 ### What must happen before this is store-visible
 

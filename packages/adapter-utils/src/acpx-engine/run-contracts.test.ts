@@ -18,13 +18,18 @@ import type {
 // A type-level equality check. `Equal<A, B>` is true only when A and B are the
 // same type.
 type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
+    ? true
+    : false;
 type Expect<T extends true> = T;
 
 describe("run contracts", () => {
   it("test_a_turn_cause_is_not_assignable_where_pre_turn_failed_cause_is_required", () => {
     function requiresPreTurn(_cause: PreTurnFailedCause): void {}
-    const turnCause: TurnCause = { kind: "turn_failed", error: new Error("boom") };
+    const turnCause: TurnCause = {
+      kind: "turn_failed",
+      error: new Error("boom"),
+    };
 
     // A turn cause has a different `kind` and no `phase`, so it is not
     // assignable where a `PreTurnFailedCause` is required.

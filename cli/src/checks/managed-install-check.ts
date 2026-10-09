@@ -7,7 +7,10 @@ import {
   type InstallStorePaths,
 } from "../install-store.js";
 import type { CheckResult } from "./index.js";
-import { isSupportedNodeVersion, MINIMUM_NODE_VERSION } from "@taskcore/shared/node-version";
+import {
+  isSupportedNodeVersion,
+  MINIMUM_NODE_VERSION,
+} from "@taskcore/shared/node-version";
 
 function pathContains(directory: string): boolean {
   const normalized = path.resolve(directory);
@@ -35,7 +38,11 @@ function hasManagedArtifacts(paths: InstallStorePaths): boolean {
 
 export function nodeRuntimeCheck(): CheckResult {
   return isSupportedNodeVersion(process.versions.node)
-    ? { name: "Node.js runtime", status: "pass", message: `Node.js ${process.versions.node}` }
+    ? {
+        name: "Node.js runtime",
+        status: "pass",
+        message: `Node.js ${process.versions.node}`,
+      }
     : {
         name: "Node.js runtime",
         status: "fail",
@@ -52,7 +59,8 @@ export function managedInstallChecks(
       {
         name: "Managed install",
         status: "pass",
-        message: "Not present (optional for npx, global npm, and source-checkout usage)",
+        message:
+          "Not present (optional for npx, global npm, and source-checkout usage)",
       },
     ];
   }
@@ -66,7 +74,8 @@ export function managedInstallChecks(
         name: "Managed install manifest",
         status: "fail",
         message: error instanceof Error ? error.message : String(error),
-        repairHint: "Re-run `taskcore install` to rebuild the managed install metadata",
+        repairHint:
+          "Re-run `taskcore install` to rebuild the managed install metadata",
       },
     ];
   }
@@ -85,12 +94,19 @@ export function managedInstallChecks(
   const results: CheckResult[] = [];
   const payloadPath = path.resolve(manifest.payloadPath);
   const relativePayload = path.relative(paths.installsRoot, payloadPath);
-  const payloadInStore = Boolean(relativePayload) && !relativePayload.startsWith("..") && !path.isAbsolute(relativePayload);
-  const payloadExists = payloadInStore && fs.existsSync(payloadPath) && fs.statSync(payloadPath).isDirectory();
+  const payloadInStore =
+    Boolean(relativePayload) &&
+    !relativePayload.startsWith("..") &&
+    !path.isAbsolute(relativePayload);
+  const payloadExists =
+    payloadInStore &&
+    fs.existsSync(payloadPath) &&
+    fs.statSync(payloadPath).isDirectory();
   let currentMatches = false;
   try {
-    currentMatches = fs.lstatSync(paths.currentPath).isSymbolicLink()
-      && fs.realpathSync(paths.currentPath) === fs.realpathSync(payloadPath);
+    currentMatches =
+      fs.lstatSync(paths.currentPath).isSymbolicLink() &&
+      fs.realpathSync(paths.currentPath) === fs.realpathSync(payloadPath);
   } catch {
     currentMatches = false;
   }
@@ -108,19 +124,26 @@ export function managedInstallChecks(
           message: !payloadExists
             ? `Manifest payload is missing or outside the install store: ${manifest.payloadPath}`
             : `Current link does not point to ${manifest.payloadPath}`,
-          repairHint: "Re-run `taskcore install` or roll back to a retained payload",
+          repairHint:
+            "Re-run `taskcore install` or roll back to a retained payload",
         },
   );
 
   let shimValid = false;
   try {
-    shimValid = fs.readFileSync(paths.shimPath, "utf8").includes(MANAGED_SHIM_MARKER);
+    shimValid = fs
+      .readFileSync(paths.shimPath, "utf8")
+      .includes(MANAGED_SHIM_MARKER);
   } catch {
     shimValid = false;
   }
   results.push(
     shimValid
-      ? { name: "Managed install shim", status: "pass", message: paths.shimPath }
+      ? {
+          name: "Managed install shim",
+          status: "pass",
+          message: paths.shimPath,
+        }
       : {
           name: "Managed install shim",
           status: "fail",
@@ -132,17 +155,24 @@ export function managedInstallChecks(
   const shimDirectory = path.dirname(paths.shimPath);
   results.push(
     pathContains(shimDirectory)
-      ? { name: "Managed install PATH", status: "pass", message: `${shimDirectory} is on PATH` }
+      ? {
+          name: "Managed install PATH",
+          status: "pass",
+          message: `${shimDirectory} is on PATH`,
+        }
       : {
           name: "Managed install PATH",
           status: "warn",
           message: `${shimDirectory} is not on PATH`,
-          repairHint: 'Run `export PATH="$HOME/.local/bin:$PATH"` and add it to your shell startup file',
+          repairHint:
+            'Run `export PATH="$HOME/.local/bin:$PATH"` and add it to your shell startup file',
         },
   );
 
   const retained = new Set(
-    [manifest, ...manifest.previous].map((record) => path.resolve(record.payloadPath)),
+    [manifest, ...manifest.previous].map((record) =>
+      path.resolve(record.payloadPath),
+    ),
   );
   const orphaned: string[] = [];
   for (const source of ["npm", "git"] as const) {
@@ -150,17 +180,23 @@ export function managedInstallChecks(
     if (!fs.existsSync(sourceRoot)) continue;
     for (const entry of fs.readdirSync(sourceRoot)) {
       const candidate = path.join(sourceRoot, entry);
-      if (!entry.startsWith(".") && !retained.has(path.resolve(candidate))) orphaned.push(candidate);
+      if (!entry.startsWith(".") && !retained.has(path.resolve(candidate)))
+        orphaned.push(candidate);
     }
   }
   results.push(
     orphaned.length === 0
-      ? { name: "Managed install retention", status: "pass", message: "No orphaned payloads" }
+      ? {
+          name: "Managed install retention",
+          status: "pass",
+          message: "No orphaned payloads",
+        }
       : {
           name: "Managed install retention",
           status: "warn",
           message: `${orphaned.length} orphaned payload${orphaned.length === 1 ? "" : "s"} found`,
-          repairHint: "A successful `taskcore update` prunes unretained payloads",
+          repairHint:
+            "A successful `taskcore update` prunes unretained payloads",
         },
   );
 

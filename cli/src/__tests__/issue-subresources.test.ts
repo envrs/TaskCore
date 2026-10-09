@@ -28,11 +28,16 @@ function createProgram(): Command {
 }
 
 async function run(args: string[]): Promise<void> {
-  await createProgram().parseAsync([
-    ...args,
-    "--api-base", "http://localhost:3100",
-    "--api-key", "board-token",
-  ], { from: "user" });
+  await createProgram().parseAsync(
+    [
+      ...args,
+      "--api-base",
+      "http://localhost:3100",
+      "--api-key",
+      "board-token",
+    ],
+    { from: "user" },
+  );
 }
 
 describe("issue subresource commands", () => {
@@ -48,14 +53,18 @@ describe("issue subresource commands", () => {
   });
 
   it("wraps core issue get, update, and delete endpoints", async () => {
-    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(jsonResponse()));
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse()));
     vi.stubGlobal("fetch", fetchMock);
 
     await run(["issue", "get", ISSUE_ID]);
     await run(["issue", "update", ISSUE_ID, "--title", "New title"]);
     await run(["issue", "delete", ISSUE_ID, "--yes"]);
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}`],
       ["PATCH", `http://localhost:3100/api/issues/${ISSUE_ID}`],
       ["DELETE", `http://localhost:3100/api/issues/${ISSUE_ID}`],
@@ -63,17 +72,26 @@ describe("issue subresource commands", () => {
   });
 
   it("binds explicit uploaded attachments when adding a comment", async () => {
-    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(jsonResponse()));
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse()));
     vi.stubGlobal("fetch", fetchMock);
 
     await run([
-      "issue", "comment", ISSUE_ID,
-      "--body", "The requested files are ready.",
-      "--attachment-id", ATTACHMENT_ID, SECOND_ATTACHMENT_ID,
+      "issue",
+      "comment",
+      ISSUE_ID,
+      "--body",
+      "The requested files are ready.",
+      "--attachment-id",
+      ATTACHMENT_ID,
+      SECOND_ATTACHMENT_ID,
     ]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(`http://localhost:3100/api/issues/${ISSUE_ID}/comments`);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      `http://localhost:3100/api/issues/${ISSUE_ID}/comments`,
+    );
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
       body: "The requested files are ready.",
       attachmentIds: [ATTACHMENT_ID, SECOND_ATTACHMENT_ID],
@@ -98,25 +116,44 @@ describe("issue subresource commands", () => {
     await run(["issue", "unarchive", ISSUE_ID]);
     await run(["issue", "recovery-actions", ISSUE_ID]);
     await run([
-      "issue", "recovery:resolve", ISSUE_ID,
-      "--outcome", "restored",
-      "--source-issue-status", "todo",
-      "--action-id", APPROVAL_ID,
+      "issue",
+      "recovery:resolve",
+      ISSUE_ID,
+      "--outcome",
+      "restored",
+      "--source-issue-status",
+      "todo",
+      "--action-id",
+      APPROVAL_ID,
     ]);
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/comments?limit=10`],
-      ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/comments/${COMMENT_ID}`],
-      ["DELETE", `http://localhost:3100/api/issues/${ISSUE_ID}/comments/${COMMENT_ID}`],
+      [
+        "GET",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/comments/${COMMENT_ID}`,
+      ],
+      [
+        "DELETE",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/comments/${COMMENT_ID}`,
+      ],
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/approvals`],
       ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/approvals`],
-      ["DELETE", `http://localhost:3100/api/issues/${ISSUE_ID}/approvals/${APPROVAL_ID}`],
+      [
+        "DELETE",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/approvals/${APPROVAL_ID}`,
+      ],
       ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/read`],
       ["DELETE", `http://localhost:3100/api/issues/${ISSUE_ID}/read`],
       ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/inbox-archive`],
       ["DELETE", `http://localhost:3100/api/issues/${ISSUE_ID}/inbox-archive`],
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/recovery-actions`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/recovery-actions/resolve`],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/recovery-actions/resolve`,
+      ],
     ]);
   });
 
@@ -128,7 +165,16 @@ describe("issue subresource commands", () => {
 
     await run(["issue", "documents", ISSUE_ID, "--include-system"]);
     await run(["issue", "document:get", ISSUE_ID, "plan"]);
-    await run(["issue", "document:put", ISSUE_ID, "plan", "--body", "# Plan", "--title", "Plan"]);
+    await run([
+      "issue",
+      "document:put",
+      ISSUE_ID,
+      "plan",
+      "--body",
+      "# Plan",
+      "--title",
+      "Plan",
+    ]);
     await run(["issue", "document:lock", ISSUE_ID, "plan"]);
     await run(["issue", "document:unlock", ISSUE_ID, "plan"]);
     await run(["issue", "document:revisions", ISSUE_ID, "plan"]);
@@ -136,23 +182,51 @@ describe("issue subresource commands", () => {
     await run(["issue", "document:delete", ISSUE_ID, "plan"]);
     await run(["issue", "work-products", ISSUE_ID]);
     await run([
-      "issue", "work-product:create", ISSUE_ID,
-      "--payload-json", JSON.stringify({ type: "pull_request", provider: "github", title: "PR", url: "https://example.com/pr/1" }),
+      "issue",
+      "work-product:create",
+      ISSUE_ID,
+      "--payload-json",
+      JSON.stringify({
+        type: "pull_request",
+        provider: "github",
+        title: "PR",
+        url: "https://example.com/pr/1",
+      }),
     ]);
     await run([
-      "issue", "work-product:update", PRODUCT_ID,
-      "--payload-json", JSON.stringify({ title: "Updated PR" }),
+      "issue",
+      "work-product:update",
+      PRODUCT_ID,
+      "--payload-json",
+      JSON.stringify({ title: "Updated PR" }),
     ]);
     await run(["issue", "work-product:delete", PRODUCT_ID]);
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
-      ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/documents?includeSystem=true`],
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
+      [
+        "GET",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/documents?includeSystem=true`,
+      ],
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan`],
       ["PUT", `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan/lock`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan/unlock`],
-      ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan/revisions`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan/revisions/${APPROVAL_ID}/restore`],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan/lock`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan/unlock`,
+      ],
+      [
+        "GET",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan/revisions`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan/revisions/${APPROVAL_ID}/restore`,
+      ],
       ["DELETE", `http://localhost:3100/api/issues/${ISSUE_ID}/documents/plan`],
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/work-products`],
       ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/work-products`],
@@ -174,60 +248,176 @@ describe("issue subresource commands", () => {
     try {
       await run(["issue", "interactions", ISSUE_ID]);
       await run([
-        "issue", "interaction:create", ISSUE_ID,
-        "--payload-json", JSON.stringify({
+        "issue",
+        "interaction:create",
+        ISSUE_ID,
+        "--payload-json",
+        JSON.stringify({
           kind: "request_confirmation",
           payload: { version: 1, prompt: "Continue?" },
         }),
       ]);
       await run(["issue", "interaction:accept", ISSUE_ID, INTERACTION_ID]);
-      await run(["issue", "interaction:accept", ISSUE_ID, INTERACTION_ID, "--selected-client-keys", "yes"]);
-      await run(["issue", "interaction:accept", ISSUE_ID, INTERACTION_ID, "--selected-option-ids", "file-a,file-b"]);
-      await run(["issue", "interaction:reject", ISSUE_ID, INTERACTION_ID, "--reason", "no"]);
-      await run(["issue", "interaction:cancel", ISSUE_ID, INTERACTION_ID, "--reason", "stale"]);
       await run([
-        "issue", "interaction:respond", ISSUE_ID, INTERACTION_ID,
-        "--answers-json", JSON.stringify([{ questionId: "q1", optionIds: ["a1"] }]),
+        "issue",
+        "interaction:accept",
+        ISSUE_ID,
+        INTERACTION_ID,
+        "--selected-client-keys",
+        "yes",
+      ]);
+      await run([
+        "issue",
+        "interaction:accept",
+        ISSUE_ID,
+        INTERACTION_ID,
+        "--selected-option-ids",
+        "file-a,file-b",
+      ]);
+      await run([
+        "issue",
+        "interaction:reject",
+        ISSUE_ID,
+        INTERACTION_ID,
+        "--reason",
+        "no",
+      ]);
+      await run([
+        "issue",
+        "interaction:cancel",
+        ISSUE_ID,
+        INTERACTION_ID,
+        "--reason",
+        "stale",
+      ]);
+      await run([
+        "issue",
+        "interaction:respond",
+        ISSUE_ID,
+        INTERACTION_ID,
+        "--answers-json",
+        JSON.stringify([{ questionId: "q1", optionIds: ["a1"] }]),
       ]);
       await run(["issue", "tree-state", ISSUE_ID]);
-      await run(["issue", "tree-preview", ISSUE_ID, "--payload-json", JSON.stringify({ mode: "pause" })]);
-      await run(["issue", "tree-holds", ISSUE_ID, "--status", "active", "--include-members"]);
-      await run(["issue", "tree-hold:create", ISSUE_ID, "--payload-json", JSON.stringify({ mode: "pause", reason: "test" })]);
+      await run([
+        "issue",
+        "tree-preview",
+        ISSUE_ID,
+        "--payload-json",
+        JSON.stringify({ mode: "pause" }),
+      ]);
+      await run([
+        "issue",
+        "tree-holds",
+        ISSUE_ID,
+        "--status",
+        "active",
+        "--include-members",
+      ]);
+      await run([
+        "issue",
+        "tree-hold:create",
+        ISSUE_ID,
+        "--payload-json",
+        JSON.stringify({ mode: "pause", reason: "test" }),
+      ]);
       await run(["issue", "tree-hold:get", ISSUE_ID, HOLD_ID]);
       await run(["issue", "tree-hold:release", ISSUE_ID, HOLD_ID]);
       await run(["issue", "attachments", ISSUE_ID]);
-      await run(["issue", "attachment:upload", ISSUE_ID, "--company-id", COMPANY_ID, "--file", filePath]);
+      await run([
+        "issue",
+        "attachment:upload",
+        ISSUE_ID,
+        "--company-id",
+        COMPANY_ID,
+        "--file",
+        filePath,
+      ]);
       await run(["issue", "attachment:download", ATTACHMENT_ID]);
       await run(["issue", "attachment:delete", ATTACHMENT_ID]);
       await run(["issue", "label:list", "--company-id", COMPANY_ID]);
-      await run(["issue", "label:create", "--company-id", COMPANY_ID, "--name", "bug", "--color", "#ff0000"]);
+      await run([
+        "issue",
+        "label:create",
+        "--company-id",
+        COMPANY_ID,
+        "--name",
+        "bug",
+        "--color",
+        "#ff0000",
+      ]);
       await run(["issue", "label:delete", LABEL_ID]);
       await run(["issue", "feedback:votes", ISSUE_ID]);
       await run([
-        "issue", "feedback:vote", ISSUE_ID,
-        "--payload-json", JSON.stringify({ targetType: "issue_comment", targetId: COMMENT_ID, vote: "up" }),
+        "issue",
+        "feedback:vote",
+        ISSUE_ID,
+        "--payload-json",
+        JSON.stringify({
+          targetType: "issue_comment",
+          targetId: COMMENT_ID,
+          vote: "up",
+        }),
       ]);
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
 
-    expect(fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]])).toEqual([
+    expect(
+      fetchMock.mock.calls.map((call) => [call[1]?.method ?? "GET", call[0]]),
+    ).toEqual([
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/interactions`],
       ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/interactions`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/accept`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/accept`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/accept`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/reject`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/cancel`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/respond`],
-      ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/tree-control/state`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/tree-control/preview`],
-      ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/tree-holds?status=active&includeMembers=true`],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/accept`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/accept`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/accept`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/reject`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/cancel`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/interactions/${INTERACTION_ID}/respond`,
+      ],
+      [
+        "GET",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/tree-control/state`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/tree-control/preview`,
+      ],
+      [
+        "GET",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/tree-holds?status=active&includeMembers=true`,
+      ],
       ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/tree-holds`],
-      ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/tree-holds/${HOLD_ID}`],
-      ["POST", `http://localhost:3100/api/issues/${ISSUE_ID}/tree-holds/${HOLD_ID}/release`],
+      [
+        "GET",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/tree-holds/${HOLD_ID}`,
+      ],
+      [
+        "POST",
+        `http://localhost:3100/api/issues/${ISSUE_ID}/tree-holds/${HOLD_ID}/release`,
+      ],
       ["GET", `http://localhost:3100/api/issues/${ISSUE_ID}/attachments`],
-      ["POST", `http://localhost:3100/api/companies/${COMPANY_ID}/issues/${ISSUE_ID}/attachments`],
+      [
+        "POST",
+        `http://localhost:3100/api/companies/${COMPANY_ID}/issues/${ISSUE_ID}/attachments`,
+      ],
       ["GET", `http://localhost:3100/api/attachments/${ATTACHMENT_ID}/content`],
       ["DELETE", `http://localhost:3100/api/attachments/${ATTACHMENT_ID}`],
       ["GET", `http://localhost:3100/api/companies/${COMPANY_ID}/labels`],
@@ -249,16 +439,23 @@ describe("issue subresource commands", () => {
     const tmp = await mkdtemp(join(tmpdir(), "taskcore-cli-test-"));
     const filePath = join(tmp, "deliverable.html");
     await writeFile(filePath, "<html><body>hi</body></html>", "utf8");
-    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(jsonResponse()));
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse()));
     vi.stubGlobal("fetch", fetchMock);
     vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
     try {
       await run([
-        "issue", "attachment:upload", ISSUE_ID,
-        "--company-id", COMPANY_ID,
-        "--file", filePath,
-        "--run-id", RUN_ID,
+        "issue",
+        "attachment:upload",
+        ISSUE_ID,
+        "--company-id",
+        COMPANY_ID,
+        "--file",
+        filePath,
+        "--run-id",
+        RUN_ID,
       ]);
     } finally {
       await rm(tmp, { recursive: true, force: true });
@@ -266,7 +463,9 @@ describe("issue subresource commands", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(`http://localhost:3100/api/companies/${COMPANY_ID}/issues/${ISSUE_ID}/attachments`);
+    expect(url).toBe(
+      `http://localhost:3100/api/companies/${COMPANY_ID}/issues/${ISSUE_ID}/attachments`,
+    );
     expect(init.method).toBe("POST");
     const headers = init.headers as Record<string, string>;
     expect(headers["x-taskcore-run-id"]).toBe(RUN_ID);
@@ -276,6 +475,9 @@ describe("issue subresource commands", () => {
   });
 });
 
-function jsonResponse(body: unknown = { ok: true }, init: ResponseInit = { status: 200 }): Response {
+function jsonResponse(
+  body: unknown = { ok: true },
+  init: ResponseInit = { status: 200 },
+): Response {
   return new Response(JSON.stringify(body), init);
 }

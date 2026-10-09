@@ -13,12 +13,12 @@ The original baseline remains **0 PASS / 15 FAIL**. It did not exercise the inte
 - One attempt per cell, 15 actual run records: 14 succeeded and one failed. No harness retries. All 15 cleanup and budget readbacks passed. A succeeded run record is not a passing behavioral grade.
 - Recorded LLM cost subtotal: $0.01824843. Positive costs were reported only by the five OpenCode cells. Twelve of 15 runs had token coverage. Zero or missing Codex/Claude billing is unknown, not free; actual charges and local/hosted runtime cost are unknown.
 
-| Cells | Observed failure | Supported diagnosis |
-| --- | --- | --- |
-| 10 | Browser could not find the creation-time title; renamed title and pending interaction were visible | Stale-title harness assertion, before any intended user decision |
-| 2 Codex provider-choice cells | Native `request_human_input` schema denial before Taskcore execution | Rejected input; retained diagnostics omit the invalid field. Four rejections in the positive cell are calls within one run, not four paid harness attempts |
-| 2 OpenCode provider-choice cells | Used the preinstalled HubSpot tool once without a choice card | Fixture had already granted real tool access. This does not prove a consent violation or disregard of a decline; no decline was sent |
-| 1 Claude provider-decline cell | `native_finalization_missing: session returned no semantic result` | Native session failed before choice; retained evidence does not establish the underlying cause |
+| Cells                            | Observed failure                                                                                   | Supported diagnosis                                                                                                                                        |
+| -------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10                               | Browser could not find the creation-time title; renamed title and pending interaction were visible | Stale-title harness assertion, before any intended user decision                                                                                           |
+| 2 Codex provider-choice cells    | Native `request_human_input` schema denial before Taskcore execution                               | Rejected input; retained diagnostics omit the invalid field. Four rejections in the positive cell are calls within one run, not four paid harness attempts |
+| 2 OpenCode provider-choice cells | Used the preinstalled HubSpot tool once without a choice card                                      | Fixture had already granted real tool access. This does not prove a consent violation or disregard of a decline; no decline was sent                       |
+| 1 Claude provider-decline cell   | `native_finalization_missing: session returned no semantic result`                                 | Native session failed before choice; retained evidence does not establish the underlying cause                                                             |
 
 The schema accepts both canonical and legacy question forms. Conflicting native/legacy guidance is observable, but is not proven to have caused the old Codex denials. Do not infer that a corrected run explains the old Claude failure.
 
@@ -44,7 +44,6 @@ The corrected Codex provider-choice canary passed before the other 14 distinct c
 
 The initial stable-ID check assumed whitespace around the identifier. The real breadcrumb uses adjacent title/identifier spans. A regression reproduces the failure with `Renamed taskRUN-1`; the corrected check targets the visible identifier element under the current breadcrumb and matches its text exactly. All five browser checks now pass, including wrong route, wrong/partial identifier and an identifier present only in the mutable title or elsewhere on the page. Seven focused suite checks and eval typecheck pass. This review correction changes only browser support and this report; production logic is unchanged.
 
-
 ## Continuation failures exposed by the corrected baseline
 
 Frozen measured source: `162cc90fdabe7f505b88ae095044531b82784c92`; trusted workflow: `99a9de9940bf5974352d9dbfbb2f21e62e89689f`. These results do not retroactively change the original baseline.
@@ -56,11 +55,11 @@ Frozen measured source: `162cc90fdabe7f505b88ae095044531b82784c92`; trusted work
 
 The corrected fifteen-cell result is:
 
-| Profile | Connection decline | Provider decline | Provider second | Service approve | Service decline |
-| --- | --- | --- | --- | --- | --- |
-| Codex | PASS | PASS | PASS (separate canary) | FAIL | PASS |
-| ACPX Claude | PASS | FAIL | FAIL | FAIL | PASS |
-| OpenCode | PASS | PASS | FAIL | PASS | PASS |
+| Profile     | Connection decline | Provider decline | Provider second        | Service approve | Service decline |
+| ----------- | ------------------ | ---------------- | ---------------------- | --------------- | --------------- |
+| Codex       | PASS               | PASS             | PASS (separate canary) | FAIL            | PASS            |
+| ACPX Claude | PASS               | FAIL             | FAIL                   | FAIL            | PASS            |
+| OpenCode    | PASS               | PASS             | FAIL                   | PASS            | PASS            |
 
 OpenCode provider-second saved both the Arcade choice and the exact access grant. Gateway discovery occurred twice, but the fixture observed zero HubSpot calls. The third run reached the existing deadline without a final answer. The facade was dropping canonical tool events, so retained outer logs cannot establish the exact tool-rejection cause. This is a real incomplete workflow; do not infer its cause from the model's self-diagnosis or treat a larger timeout as a fix.
 
@@ -77,7 +76,6 @@ Provider-free regression evidence: the original Claude reattachment error and du
 The OpenCode repair forwards bounded tool start/progress/completion events through the existing provider facade, retaining the actual execution-part identity, tool name, status and provider-visible result. It does not invent a host-call-ID join, expose tool arguments, or change the model prompt, permissions, tool catalog, timeouts or grading. A real bundled-proxy regression emits an invalid-tool failure: the old forwarding path drops all three events, and the repaired path retains all three. Runnerd normalizes builtin tool activity and preserves the error while redacting secret patterns. The output digest describes the bounded forwarded result, not an unretained full provider payload. This closes an evidence gap; it does not establish the old OpenCode failure's cause or claim its behavior fixed.
 
 New local verification also passes repository typecheck and build, nine continuation deadline tests, 59 OpenCode driver/proxy checks and the focused Rust tool-error/redaction check. The earlier interrupted full repository suite remains incomplete; current-source full CI and live canaries remain required. The next paid selection is bounded to Claude provider-decline (restart repair), Codex service-approve (duplicate approval repair), and OpenCode provider-second (one diagnostic attempt with repaired evidence). Other failed cells wait for usable canary evidence. Preserve all old outcomes, frozen aliases and costs.
-
 
 ## Bounded continuation canaries and retained-evidence correction
 

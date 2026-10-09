@@ -127,7 +127,6 @@ in the same isolation. The verification user provisions Grok inside the disposab
 test directory without privilege elevation or host `/opt` changes. Only the
 positive probe mounts that binary read-only at the canonical sandbox path.
 
-
 The Cloud application image also carries the controller-owned provider pack and
 sets `TASKCORE_RUNNER_REMOTE_PROVIDER_PACK_PATH`. Remote ACPX execution verifies
 the sandbox against that pack before using it, or stages the matching pack when

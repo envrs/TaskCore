@@ -2,7 +2,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Agent, Company, InstanceExperimentalSettings } from "@taskcore/shared";
+import type {
+  Agent,
+  Company,
+  InstanceExperimentalSettings,
+} from "@taskcore/shared";
 import {
   assertTestDriveDatabaseIsolation,
   bootstrapTestDrive,
@@ -38,7 +42,9 @@ function agent(overrides: Partial<Agent> = {}): Agent {
   } as Agent;
 }
 
-function settings(overrides: Partial<InstanceExperimentalSettings> = {}): InstanceExperimentalSettings {
+function settings(
+  overrides: Partial<InstanceExperimentalSettings> = {},
+): InstanceExperimentalSettings {
   return {
     enableWorktreeRunExecution: false,
     worktreeRunExecutionActivatedAt: null,
@@ -59,7 +65,11 @@ function freshBootstrapApi(input?: { failAgent?: boolean }) {
       if (requestPath === "/api/companies") return company() as T;
       if (requestPath.endsWith("/agents")) {
         if (input?.failAgent) throw new Error("agent setup failed");
-        const payload = body as { name: string; adapterType: Agent["adapterType"]; adapterConfig: Record<string, unknown> };
+        const payload = body as {
+          name: string;
+          adapterType: Agent["adapterType"];
+          adapterConfig: Record<string, unknown>;
+        };
         return agent({
           name: payload.name,
           adapterType: payload.adapterType,
@@ -99,7 +109,9 @@ describe("test-drive data isolation", () => {
   });
 
   it("resolves an explicit reusable directory without resetting it", () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-test-drive-explicit-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-test-drive-explicit-"),
+    );
     cleanupDirectories.push(root);
     const marker = path.join(root, "keep.txt");
     fs.writeFileSync(marker, "keep");
@@ -109,7 +121,9 @@ describe("test-drive data isolation", () => {
   });
 
   it("discards inherited Taskcore routing while preserving a custom key source", async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-test-drive-env-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-test-drive-env-"),
+    );
     cleanupDirectories.push(root);
     process.env.TASKCORE_HOME = "/normal/home";
     process.env.TASKCORE_CONFIG = "/normal/config.json";
@@ -143,11 +157,13 @@ describe("test-drive data isolation", () => {
     "rejects %s loaded from the isolated directory",
     (variable) => {
       const readConfigFile = vi.fn(() => null);
-      expect(() => assertTestDriveDatabaseIsolation(
-        undefined,
-        { [variable]: "postgres://external-database" },
-        readConfigFile,
-      )).toThrow(/requires its isolated embedded database/);
+      expect(() =>
+        assertTestDriveDatabaseIsolation(
+          undefined,
+          { [variable]: "postgres://external-database" },
+          readConfigFile,
+        ),
+      ).toThrow(/requires its isolated embedded database/);
       expect(readConfigFile).not.toHaveBeenCalled();
     },
   );
@@ -156,28 +172,35 @@ describe("test-drive data isolation", () => {
     const externalConfig = {
       database: { mode: "postgres" },
     } as TaskcoreConfig;
-    expect(() => assertTestDriveDatabaseIsolation(
-      "/tmp/reused/config.json",
-      {},
-      () => externalConfig,
-    )).toThrow(/cannot reuse.*external PostgreSQL database/);
+    expect(() =>
+      assertTestDriveDatabaseIsolation(
+        "/tmp/reused/config.json",
+        {},
+        () => externalConfig,
+      ),
+    ).toThrow(/cannot reuse.*external PostgreSQL database/);
   });
 
   it("accepts an embedded configuration", () => {
     const embeddedConfig = {
       database: { mode: "embedded-postgres" },
     } as TaskcoreConfig;
-    expect(() => assertTestDriveDatabaseIsolation(
-      "/tmp/reused/config.json",
-      {},
-      () => embeddedConfig,
-    )).not.toThrow();
+    expect(() =>
+      assertTestDriveDatabaseIsolation(
+        "/tmp/reused/config.json",
+        {},
+        () => embeddedConfig,
+      ),
+    ).not.toThrow();
   });
 });
 
 describe("test-drive bootstrap validation", () => {
   it("uses Claude defaults and the canonical environment credential", () => {
-    const resolved = resolveTestDriveBootstrap({}, { ANTHROPIC_API_KEY: "anthropic-secret" });
+    const resolved = resolveTestDriveBootstrap(
+      {},
+      { ANTHROPIC_API_KEY: "anthropic-secret" },
+    );
     expect(resolved).toMatchObject({
       companyName: "Test Company",
       agentName: "CEO",
@@ -198,7 +221,9 @@ describe("test-drive bootstrap validation", () => {
       const resolved = resolveTestDriveBootstrap(
         {
           harness,
-          ...(harness === "opencode" ? { model: "openrouter/anthropic/claude-sonnet-4.5" } : {}),
+          ...(harness === "opencode"
+            ? { model: "openrouter/anthropic/claude-sonnet-4.5" }
+            : {}),
         },
         { [credentialTarget]: "provider-secret" },
       );
@@ -208,22 +233,33 @@ describe("test-drive bootstrap validation", () => {
   });
 
   it("requires an OpenRouter OpenCode model and preserves every model path segment", () => {
-    expect(() => resolveTestDriveBootstrap(
-      { harness: "opencode" },
-      { OPENROUTER_API_KEY: "secret" },
-    )).toThrow(/require --model openrouter/);
-    for (const model of ["anthropic/claude", "openrouter/", "openrouter//claude", "openrouter/a/"]) {
-      expect(() => resolveTestDriveBootstrap(
-        { harness: "opencode", model },
+    expect(() =>
+      resolveTestDriveBootstrap(
+        { harness: "opencode" },
         { OPENROUTER_API_KEY: "secret" },
-      )).toThrow(/require --model openrouter/);
+      ),
+    ).toThrow(/require --model openrouter/);
+    for (const model of [
+      "anthropic/claude",
+      "openrouter/",
+      "openrouter//claude",
+      "openrouter/a/",
+    ]) {
+      expect(() =>
+        resolveTestDriveBootstrap(
+          { harness: "opencode", model },
+          { OPENROUTER_API_KEY: "secret" },
+        ),
+      ).toThrow(/require --model openrouter/);
     }
 
     const model = "openrouter/publisher/family/model";
-    expect(resolveTestDriveBootstrap(
-      { harness: "opencode", model },
-      { OPENROUTER_API_KEY: "secret" },
-    ).model).toBe(model);
+    expect(
+      resolveTestDriveBootstrap(
+        { harness: "opencode", model },
+        { OPENROUTER_API_KEY: "secret" },
+      ).model,
+    ).toBe(model);
   });
 
   it("supports custom source variables while retaining the canonical target", () => {
@@ -250,31 +286,65 @@ describe("test-drive bootstrap validation", () => {
   });
 
   it("rejects mutually exclusive key inputs", () => {
-    expect(() => resolveTestDriveBootstrap({
-      apiKey: "literal-secret",
-      apiKeyEnv: "ANTHROPIC_API_KEY",
-    }, { ANTHROPIC_API_KEY: "environment-secret" })).toThrow(/mutually exclusive/);
+    expect(() =>
+      resolveTestDriveBootstrap(
+        {
+          apiKey: "literal-secret",
+          apiKeyEnv: "ANTHROPIC_API_KEY",
+        },
+        { ANTHROPIC_API_KEY: "environment-secret" },
+      ),
+    ).toThrow(/mutually exclusive/);
   });
 
   it("rejects invalid key variable names and redacts credentials", () => {
-    expect(() => resolveTestDriveBootstrap({
-      apiKeyEnv: "NOT-A-VALID-NAME",
-    }, { ANTHROPIC_API_KEY: "env-secret" })).toThrow(/valid environment variable/);
-    expect(redactTestDriveText(
-      "literal-secret, custom-secret, and env-secret must never appear",
-      ["literal-secret", "custom-secret", "env-secret"],
-    )).toBe("[REDACTED], [REDACTED], and [REDACTED] must never appear");
+    expect(() =>
+      resolveTestDriveBootstrap(
+        {
+          apiKeyEnv: "NOT-A-VALID-NAME",
+        },
+        { ANTHROPIC_API_KEY: "env-secret" },
+      ),
+    ).toThrow(/valid environment variable/);
+    expect(
+      redactTestDriveText(
+        "literal-secret, custom-secret, and env-secret must never appear",
+        ["literal-secret", "custom-secret", "env-secret"],
+      ),
+    ).toBe("[REDACTED], [REDACTED], and [REDACTED] must never appear");
   });
 
   it("removes literal keys from the JavaScript argv view", () => {
-    const splitArgv = ["node", "taskcore", "test-drive", "--api-key", "literal-secret"];
-    const joinedArgv = ["node", "taskcore", "test-drive", "--api-key=literal-secret"];
+    const splitArgv = [
+      "node",
+      "taskcore",
+      "test-drive",
+      "--api-key",
+      "literal-secret",
+    ];
+    const joinedArgv = [
+      "node",
+      "taskcore",
+      "test-drive",
+      "--api-key=literal-secret",
+    ];
 
     redactTestDriveArgv("literal-secret", splitArgv);
     redactTestDriveArgv("literal-secret", joinedArgv);
 
-    expect(splitArgv).toEqual(["node", "taskcore", "test-drive", "--api-key", "[REDACTED]"]);
-    expect(joinedArgv).toEqual(["node", "taskcore", "test-drive", "--api-key=[REDACTED]"]);
+    expect(splitArgv).toEqual([
+      "node",
+      "taskcore",
+      "test-drive",
+      "--api-key",
+      "[REDACTED]",
+    ]);
+    expect(joinedArgv).toEqual([
+      "node",
+      "taskcore",
+      "test-drive",
+      "--api-key=[REDACTED]",
+    ]);
   });
 });
 
@@ -282,68 +352,83 @@ describe("test-drive API bootstrap", () => {
   it.each([
     ["claude", "claude_local", "ANTHROPIC_API_KEY", undefined],
     ["codex", "codex_local", "OPENAI_API_KEY", undefined],
-    ["opencode", "opencode_local", "OPENROUTER_API_KEY", "openrouter/anthropic/claude-sonnet-4.5"],
-  ] as const)("creates exactly one company and one CEO for %s", async (
-    harness,
-    adapterType,
-    credentialTarget,
-    model,
-  ) => {
-    const { api, calls } = freshBootstrapApi();
-    const result = await bootstrapTestDrive({
-      api,
-      options: { harness, ...(model ? { model } : {}) },
-      linkedWorktree: false,
-      instanceId: "default",
-      env: { [credentialTarget]: "secret" },
-    });
+    [
+      "opencode",
+      "opencode_local",
+      "OPENROUTER_API_KEY",
+      "openrouter/anthropic/claude-sonnet-4.5",
+    ],
+  ] as const)(
+    "creates exactly one company and one CEO for %s",
+    async (harness, adapterType, credentialTarget, model) => {
+      const { api, calls } = freshBootstrapApi();
+      const result = await bootstrapTestDrive({
+        api,
+        options: { harness, ...(model ? { model } : {}) },
+        linkedWorktree: false,
+        instanceId: "default",
+        env: { [credentialTarget]: "secret" },
+      });
 
-    expect(result.reused).toBe(false);
-    expect(result.agent?.role).toBe("ceo");
-    expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual([
-      "GET /api/companies",
-      "POST /api/companies",
-      "POST /api/companies/company-1/user-secret-definitions",
-      "POST /api/companies/company-1/me/user-secrets",
-      "POST /api/companies/company-1/agents",
-    ]);
-    const secretValueCall = calls.find((call) => call.path.endsWith("/me/user-secrets"));
-    expect(secretValueCall?.body).toEqual({ definitionKey: credentialTarget, value: "secret" });
-    const agentCall = calls.find((call) => call.path.endsWith("/agents"));
-    expect(agentCall?.body).toEqual({
-      name: "CEO",
-      role: "ceo",
-      adapterType,
-      adapterConfig: {
-        ...(model ? { model } : {}),
-        env: {
-          [credentialTarget]: {
-            type: "user_secret_ref",
-            key: credentialTarget,
-            version: "latest",
-            required: true,
+      expect(result.reused).toBe(false);
+      expect(result.agent?.role).toBe("ceo");
+      expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual([
+        "GET /api/companies",
+        "POST /api/companies",
+        "POST /api/companies/company-1/user-secret-definitions",
+        "POST /api/companies/company-1/me/user-secrets",
+        "POST /api/companies/company-1/agents",
+      ]);
+      const secretValueCall = calls.find((call) =>
+        call.path.endsWith("/me/user-secrets"),
+      );
+      expect(secretValueCall?.body).toEqual({
+        definitionKey: credentialTarget,
+        value: "secret",
+      });
+      const agentCall = calls.find((call) => call.path.endsWith("/agents"));
+      expect(agentCall?.body).toEqual({
+        name: "CEO",
+        role: "ceo",
+        adapterType,
+        adapterConfig: {
+          ...(model ? { model } : {}),
+          env: {
+            [credentialTarget]: {
+              type: "user_secret_ref",
+              key: credentialTarget,
+              version: "latest",
+              required: true,
+            },
           },
         },
-      },
-    });
-    expect(calls.some((call) => /issues|projects|goals|tasks|heartbeat/.test(call.path))).toBe(false);
-  });
+      });
+      expect(
+        calls.some((call) =>
+          /issues|projects|goals|tasks|heartbeat/.test(call.path),
+        ),
+      ).toBe(false);
+    },
+  );
 
   it("rejects invalid OpenCode configuration before creating a company", async () => {
     const { api, calls } = freshBootstrapApi();
-    await expect(bootstrapTestDrive({
-      api,
-      options: { harness: "opencode" },
-      linkedWorktree: false,
-      instanceId: "default",
-      env: { OPENROUTER_API_KEY: "secret" },
-    })).rejects.toThrow(/require --model openrouter/);
+    await expect(
+      bootstrapTestDrive({
+        api,
+        options: { harness: "opencode" },
+        linkedWorktree: false,
+        instanceId: "default",
+        env: { OPENROUTER_API_KEY: "secret" },
+      }),
+    ).rejects.toThrow(/require --model openrouter/);
     expect(calls).toEqual([{ method: "GET", path: "/api/companies" }]);
   });
 
   it("preserves seeded data and ignores every bootstrap flag", async () => {
     const get = vi.fn(async <T>(requestPath: string) => {
-      if (requestPath === "/api/companies") return [company("existing", "Existing Company")] as T;
+      if (requestPath === "/api/companies")
+        return [company("existing", "Existing Company")] as T;
       throw new Error(`Unexpected GET ${requestPath}`);
     });
     const api = {
@@ -361,7 +446,11 @@ describe("test-drive API bootstrap", () => {
       env: {},
     });
 
-    expect(result).toMatchObject({ reused: true, company: { id: "existing" }, agent: null });
+    expect(result).toMatchObject({
+      reused: true,
+      company: { id: "existing" },
+      agent: null,
+    });
     expect(api.post).not.toHaveBeenCalled();
     expect(api.patch).not.toHaveBeenCalled();
     expect(api.delete).not.toHaveBeenCalled();
@@ -369,30 +458,41 @@ describe("test-drive API bootstrap", () => {
 
   it("deletes only the newly-created company when fresh bootstrap fails", async () => {
     const { api, calls } = freshBootstrapApi({ failAgent: true });
-    await expect(bootstrapTestDrive({
-      api,
-      options: {},
-      linkedWorktree: false,
-      instanceId: "default",
-      env: { ANTHROPIC_API_KEY: "secret" },
-    })).rejects.toThrow("agent setup failed");
-    expect(calls.at(-1)).toEqual({ method: "DELETE", path: "/api/companies/company-1" });
+    await expect(
+      bootstrapTestDrive({
+        api,
+        options: {},
+        linkedWorktree: false,
+        instanceId: "default",
+        env: { ANTHROPIC_API_KEY: "secret" },
+      }),
+    ).rejects.toThrow("agent setup failed");
+    expect(calls.at(-1)).toEqual({
+      method: "DELETE",
+      path: "/api/companies/company-1",
+    });
   });
 });
 
 describe("test-drive worktree setting reconciliation", () => {
-  function worktreeApi(initial: InstanceExperimentalSettings, instanceId = "test-instance") {
+  function worktreeApi(
+    initial: InstanceExperimentalSettings,
+    instanceId = "test-instance",
+  ) {
     let current = initial;
     const patchBodies: unknown[] = [];
     const api = {
       get: vi.fn(async <T>() => current as T),
       patch: vi.fn(async <T>(_path: string, body?: unknown) => {
         patchBodies.push(body);
-        const enabled = (body as { enableWorktreeRunExecution: boolean }).enableWorktreeRunExecution;
+        const enabled = (body as { enableWorktreeRunExecution: boolean })
+          .enableWorktreeRunExecution;
         current = settings({
           ...current,
           enableWorktreeRunExecution: enabled,
-          worktreeRunExecutionActivatedAt: enabled ? "2026-09-05T12:00:00.000Z" : null,
+          worktreeRunExecutionActivatedAt: enabled
+            ? "2026-09-05T12:00:00.000Z"
+            : null,
           worktreeRunExecutionActivationInstanceId: enabled ? instanceId : null,
         });
         return current as T;
@@ -410,11 +510,13 @@ describe("test-drive worktree setting reconciliation", () => {
   });
 
   it("leaves a correctly armed setting unchanged", async () => {
-    const { api, patchBodies } = worktreeApi(settings({
-      enableWorktreeRunExecution: true,
-      worktreeRunExecutionActivatedAt: "2026-09-05T11:00:00.000Z",
-      worktreeRunExecutionActivationInstanceId: "test-instance",
-    }));
+    const { api, patchBodies } = worktreeApi(
+      settings({
+        enableWorktreeRunExecution: true,
+        worktreeRunExecutionActivatedAt: "2026-09-05T11:00:00.000Z",
+        worktreeRunExecutionActivationInstanceId: "test-instance",
+      }),
+    );
     await reconcileTestDriveWorktreeExecution(api, "test-instance");
     expect(patchBodies).toEqual([]);
   });
@@ -442,8 +544,9 @@ describe("test-drive worktree setting reconciliation", () => {
       post: vi.fn(),
       delete: vi.fn(),
     } as unknown as TestDriveApi;
-    await expect(reconcileTestDriveWorktreeExecution(api, "test-instance"))
-      .rejects.toThrow(/Could not arm/);
+    await expect(
+      reconcileTestDriveWorktreeExecution(api, "test-instance"),
+    ).rejects.toThrow(/Could not arm/);
   });
 });
 
@@ -472,18 +575,21 @@ describe("test-drive foreground lifecycle", () => {
       delete: vi.fn(),
     } as unknown as TestDriveApi;
 
-    await testDriveCommand({}, {
-      run: async (options) => {
-        runOptions = options;
-        events.push("listening");
-        await options.afterStart?.(server);
+    await testDriveCommand(
+      {},
+      {
+        run: async (options) => {
+          runOptions = options;
+          events.push("listening");
+          await options.afterStart?.(server);
+        },
+        createApi: () => api,
+        openBrowser: async () => {
+          events.push("browser");
+          return true;
+        },
       },
-      createApi: () => api,
-      openBrowser: async () => {
-        events.push("browser");
-        return true;
-      },
-    });
+    );
 
     expect(runOptions).toMatchObject({
       yes: true,
@@ -507,20 +613,25 @@ describe("test-drive foreground lifecycle", () => {
       delete: vi.fn(),
     } as unknown as TestDriveApi;
 
-    await testDriveCommand({ dataDir: "/tmp/test-drive-reused", browser: false }, {
-      run: async (options) => {
-        runOptions = options;
-        await options.afterStart?.(server);
+    await testDriveCommand(
+      { dataDir: "/tmp/test-drive-reused", browser: false },
+      {
+        run: async (options) => {
+          runOptions = options;
+          await options.afterStart?.(server);
+        },
+        createApi: () => api,
+        openBrowser: vi.fn(async () => true),
       },
-      createApi: () => api,
-      openBrowser: vi.fn(async () => true),
-    });
+    );
 
     expect(runOptions?.skipServiceManagerCheck).toBe(false);
   });
 
   it("uses the credential snapshot captured before downstream server initialization", async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "taskcore-test-drive-credential-"));
+    const root = fs.mkdtempSync(
+      path.join(os.tmpdir(), "taskcore-test-drive-credential-"),
+    );
     cleanupDirectories.push(root);
     process.env.TASKCORE_HOME = root;
     process.env.TASKCORE_INSTANCE_ID = "default";
@@ -528,16 +639,21 @@ describe("test-drive foreground lifecycle", () => {
     process.env.ANTHROPIC_API_KEY = "upstream-secret";
     const { api, calls } = freshBootstrapApi();
 
-    await testDriveCommand({ browser: false }, {
-      run: async (options) => {
-        delete process.env.ANTHROPIC_API_KEY;
-        await options.afterStart?.(server);
+    await testDriveCommand(
+      { browser: false },
+      {
+        run: async (options) => {
+          delete process.env.ANTHROPIC_API_KEY;
+          await options.afterStart?.(server);
+        },
+        createApi: () => api,
+        openBrowser: vi.fn(async () => true),
       },
-      createApi: () => api,
-      openBrowser: vi.fn(async () => true),
-    });
+    );
 
-    const secretValueCall = calls.find((call) => call.path.endsWith("/me/user-secrets"));
+    const secretValueCall = calls.find((call) =>
+      call.path.endsWith("/me/user-secrets"),
+    );
     expect(secretValueCall?.body).toEqual({
       definitionKey: "ANTHROPIC_API_KEY",
       value: "upstream-secret",
@@ -549,16 +665,21 @@ describe("test-drive foreground lifecycle", () => {
     process.env.TASKCORE_INSTANCE_ID = "default";
     process.env.TASKCORE_IN_WORKTREE = "false";
 
-    await expect(testDriveCommand({
-      apiKey: "literal-secret",
-      browser: false,
-    }, {
-      run: async () => {
-        throw new Error("downstream rejected literal-secret");
-      },
-      createApi: () => freshBootstrapApi().api,
-      openBrowser: vi.fn(async () => true),
-    })).rejects.toThrow("downstream rejected [REDACTED]");
+    await expect(
+      testDriveCommand(
+        {
+          apiKey: "literal-secret",
+          browser: false,
+        },
+        {
+          run: async () => {
+            throw new Error("downstream rejected literal-secret");
+          },
+          createApi: () => freshBootstrapApi().api,
+          openBrowser: vi.fn(async () => true),
+        },
+      ),
+    ).rejects.toThrow("downstream rejected [REDACTED]");
   });
 
   it("redacts a custom environment key when its option name has whitespace", async () => {
@@ -567,16 +688,21 @@ describe("test-drive foreground lifecycle", () => {
     process.env.TASKCORE_IN_WORKTREE = "false";
     process.env.CUSTOM_TEST_DRIVE_KEY = "custom-secret";
 
-    await expect(testDriveCommand({
-      apiKeyEnv: " CUSTOM_TEST_DRIVE_KEY ",
-      browser: false,
-    }, {
-      run: async () => {
-        throw new Error("downstream rejected custom-secret");
-      },
-      createApi: () => freshBootstrapApi().api,
-      openBrowser: vi.fn(async () => true),
-    })).rejects.toThrow("downstream rejected [REDACTED]");
+    await expect(
+      testDriveCommand(
+        {
+          apiKeyEnv: " CUSTOM_TEST_DRIVE_KEY ",
+          browser: false,
+        },
+        {
+          run: async () => {
+            throw new Error("downstream rejected custom-secret");
+          },
+          createApi: () => freshBootstrapApi().api,
+          openBrowser: vi.fn(async () => true),
+        },
+      ),
+    ).rejects.toThrow("downstream rejected [REDACTED]");
   });
 
   it("honors --no-browser after successful initialization", async () => {
@@ -591,11 +717,14 @@ describe("test-drive foreground lifecycle", () => {
     } as unknown as TestDriveApi;
     const openBrowser = vi.fn(async () => true);
 
-    await testDriveCommand({ browser: false }, {
-      run: async (options) => options.afterStart?.(server),
-      createApi: () => api,
-      openBrowser,
-    });
+    await testDriveCommand(
+      { browser: false },
+      {
+        run: async (options) => options.afterStart?.(server),
+        createApi: () => api,
+        openBrowser,
+      },
+    );
 
     expect(openBrowser).not.toHaveBeenCalled();
   });

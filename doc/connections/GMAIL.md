@@ -22,11 +22,11 @@ the durable owner of the encrypted access and refresh tokens.
 
 Use a separate Google Cloud project and OAuth web client for each environment:
 
-| Environment | Suggested project id | OAuth client name | Authorized redirect URI |
-| --- | --- | --- | --- |
-| Development | `taskcore-gmail-dev` | `Taskcore Gmail Connection Dev` | Local Taskcore Cloud origin + `/v1/connector/oauth/google/callback` |
-| Staging | `taskcore-gmail-staging` | `Taskcore Gmail Connection Staging` | `https://my-staging.taskcore.app/v1/connector/oauth/google/callback` |
-| Production | `taskcore-gmail-prod` | `Taskcore Gmail Connection Production` | `https://my.taskcore.app/v1/connector/oauth/google/callback` |
+| Environment | Suggested project id     | OAuth client name                      | Authorized redirect URI                                              |
+| ----------- | ------------------------ | -------------------------------------- | -------------------------------------------------------------------- |
+| Development | `taskcore-gmail-dev`     | `Taskcore Gmail Connection Dev`        | Local Taskcore Cloud origin + `/v1/connector/oauth/google/callback`  |
+| Staging     | `taskcore-gmail-staging` | `Taskcore Gmail Connection Staging`    | `https://my-staging.taskcore.app/v1/connector/oauth/google/callback` |
+| Production  | `taskcore-gmail-prod`    | `Taskcore Gmail Connection Production` | `https://my.taskcore.app/v1/connector/oauth/google/callback`         |
 
 Replace the development port if the local Taskcore Cloud application uses another
 port. Do not register Tailscale, customer, or other self-hosted Taskcore
@@ -145,13 +145,13 @@ the broker half of the configuration; the originating Taskcore instance is
 configured separately under [Configure each originating Taskcore
 instance](#configure-each-originating-taskcore-instance).
 
-| Variable | Development | Staging | Production |
-| --- | --- | --- | --- |
-| `CLOUD_HARNESS_CONNECTOR_GOOGLE_GMAIL_CLIENT_ID` | Dev client id | Staging client id | Production client id |
-| `CLOUD_HARNESS_CONNECTOR_GOOGLE_GMAIL_CLIENT_SECRET_REF` | Dev secret-manager ref | Staging secret-manager ref | Production secret-manager ref |
-| Fixed callback | Local Cloud origin + `/v1/connector/oauth/google/callback` | `https://my-staging.taskcore.app/v1/connector/oauth/google/callback` | `https://my.taskcore.app/v1/connector/oauth/google/callback` |
-| `CLOUD_HARNESS_CONNECTOR_GOOGLE_ENABLED_PROFILES` | `gmail.read` during the first test | Add reviewed staging profiles | Add only approved production profiles |
-| `CLOUD_HARNESS_CONNECTOR_ENVIRONMENT` | `development` | `staging` | `production` |
+| Variable                                                 | Development                                                | Staging                                                              | Production                                                   |
+| -------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `CLOUD_HARNESS_CONNECTOR_GOOGLE_GMAIL_CLIENT_ID`         | Dev client id                                              | Staging client id                                                    | Production client id                                         |
+| `CLOUD_HARNESS_CONNECTOR_GOOGLE_GMAIL_CLIENT_SECRET_REF` | Dev secret-manager ref                                     | Staging secret-manager ref                                           | Production secret-manager ref                                |
+| Fixed callback                                           | Local Cloud origin + `/v1/connector/oauth/google/callback` | `https://my-staging.taskcore.app/v1/connector/oauth/google/callback` | `https://my.taskcore.app/v1/connector/oauth/google/callback` |
+| `CLOUD_HARNESS_CONNECTOR_GOOGLE_ENABLED_PROFILES`        | `gmail.read` during the first test                         | Add reviewed staging profiles                                        | Add only approved production profiles                        |
+| `CLOUD_HARNESS_CONNECTOR_ENVIRONMENT`                    | `development`                                              | `staging`                                                            | `production`                                                 |
 
 The client id and secret reference must both be present before a profile can be
 used. The callback is derived from Taskcore Cloud's configured customer origin
@@ -271,13 +271,13 @@ files with Taskcore Cloud, together with the instance id, the matching environme
 and every exact browser return origin. Then configure the originating Taskcore
 deployment:
 
-| Variable | Development | Staging | Production |
-| --- | --- | --- | --- |
-| `TASKCORE_CLOUD_CONNECTOR_BASE_URL` | Local Taskcore Cloud URL | `https://my-staging.taskcore.app` | `https://my.taskcore.app` |
-| `TASKCORE_CLOUD_CONNECTOR_ENVIRONMENT` | `development` | `staging` | `production` |
-| `TASKCORE_CLOUD_CONNECTOR_INSTANCE_ID` | Enrolled development instance id | Enrolled staging instance id | Enrolled production instance id |
-| `TASKCORE_CLOUD_CONNECTOR_SIGN_PRIVATE_KEY` | Development Ed25519 private key | Staging Ed25519 private key | Production Ed25519 private key |
-| `TASKCORE_CLOUD_CONNECTOR_SEAL_PRIVATE_KEY` | Development X25519 private key | Staging X25519 private key | Production X25519 private key |
+| Variable                                    | Development                      | Staging                           | Production                      |
+| ------------------------------------------- | -------------------------------- | --------------------------------- | ------------------------------- |
+| `TASKCORE_CLOUD_CONNECTOR_BASE_URL`         | Local Taskcore Cloud URL         | `https://my-staging.taskcore.app` | `https://my.taskcore.app`       |
+| `TASKCORE_CLOUD_CONNECTOR_ENVIRONMENT`      | `development`                    | `staging`                         | `production`                    |
+| `TASKCORE_CLOUD_CONNECTOR_INSTANCE_ID`      | Enrolled development instance id | Enrolled staging instance id      | Enrolled production instance id |
+| `TASKCORE_CLOUD_CONNECTOR_SIGN_PRIVATE_KEY` | Development Ed25519 private key  | Staging Ed25519 private key       | Production Ed25519 private key  |
+| `TASKCORE_CLOUD_CONNECTOR_SEAL_PRIVATE_KEY` | Development X25519 private key   | Staging X25519 private key        | Production X25519 private key   |
 
 Use separate keypairs and instance enrollments across environments. The
 connector is unavailable unless all four identity/key variables are present.
@@ -375,17 +375,17 @@ seven-day testing-token expiry.
 
 ## Troubleshooting
 
-| Symptom | Check |
-| --- | --- |
-| `redirect_uri_mismatch` | The client contains the exact environment callback, including scheme, host, port, path, and no extra slash. |
-| Test user cannot consent | The account is listed under the environment project's Audience test users and is enrolled in Workspace Developer Preview. |
-| Refresh fails after seven days | The external app is still in Testing. Reauthorize the test user; do not treat this as token-rotation failure. |
-| One required capability is missing | Inspect the returned granted scope set. Keep the grant inactive if either exact required scope is absent. |
-| Local or Tailscale return is rejected | Enroll the exact origin on Taskcore Cloud. Only loopback HTTP is allowed; Tailscale must use HTTPS. |
-| Every signed request fails on environment | `CLOUD_HARNESS_CONNECTOR_ENVIRONMENT`, the enrollment record, and `TASKCORE_CLOUD_CONNECTOR_ENVIRONMENT` must agree. |
-| The managed method is unavailable | Confirm the exact profile is in `CLOUD_HARNESS_CONNECTOR_GOOGLE_ENABLED_PROFILES` and its client id and secret reference are configured. |
-| Login starts asking for Gmail | Stop the rollout. The login and Gmail clients or route namespaces have been mixed. |
-| Connector is unavailable | Keep the grant in `needs_reauthorization` or an actionable unavailable state. Never use a login token or another environment's client. |
+| Symptom                                   | Check                                                                                                                                    |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `redirect_uri_mismatch`                   | The client contains the exact environment callback, including scheme, host, port, path, and no extra slash.                              |
+| Test user cannot consent                  | The account is listed under the environment project's Audience test users and is enrolled in Workspace Developer Preview.                |
+| Refresh fails after seven days            | The external app is still in Testing. Reauthorize the test user; do not treat this as token-rotation failure.                            |
+| One required capability is missing        | Inspect the returned granted scope set. Keep the grant inactive if either exact required scope is absent.                                |
+| Local or Tailscale return is rejected     | Enroll the exact origin on Taskcore Cloud. Only loopback HTTP is allowed; Tailscale must use HTTPS.                                      |
+| Every signed request fails on environment | `CLOUD_HARNESS_CONNECTOR_ENVIRONMENT`, the enrollment record, and `TASKCORE_CLOUD_CONNECTOR_ENVIRONMENT` must agree.                     |
+| The managed method is unavailable         | Confirm the exact profile is in `CLOUD_HARNESS_CONNECTOR_GOOGLE_ENABLED_PROFILES` and its client id and secret reference are configured. |
+| Login starts asking for Gmail             | Stop the rollout. The login and Gmail clients or route namespaces have been mixed.                                                       |
+| Connector is unavailable                  | Keep the grant in `needs_reauthorization` or an actionable unavailable state. Never use a login token or another environment's client.   |
 
 ## References
 

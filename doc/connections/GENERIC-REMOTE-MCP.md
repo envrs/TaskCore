@@ -13,10 +13,10 @@ implemented in [PAP-17087](/PAP/issues/PAP-17087).
 
 ## The two routes
 
-| Route | Where | Use it when |
-| --- | --- | --- |
-| Guided URL | **Apps → Connect an app → Connect your own MCP server** | You have the server's address. Taskcore probes it and walks you through whatever it needs. |
-| Paste a config | **Advanced → Paste a config** | A README gave you an `mcpServers` snippet, or the server needs headers with names Taskcore could not guess. |
+| Route          | Where                                                   | Use it when                                                                                                 |
+| -------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Guided URL     | **Apps → Connect an app → Connect your own MCP server** | You have the server's address. Taskcore probes it and walks you through whatever it needs.                  |
+| Paste a config | **Advanced → Paste a config**                           | A README gave you an `mcpServers` snippet, or the server needs headers with names Taskcore could not guess. |
 
 Both routes normalize through the same backend contract, so auth discovery,
 secret handling, catalog refresh and review cannot diverge between them.
@@ -27,7 +27,7 @@ commands and is deliberately not covered here.
 Don't know the address or the headers? The question-mark control beside
 **Paste a config** gives you a request you can hand to an agent: it asks the
 agent to consult the vendor's current documentation and reply with one
-paste-ready `mcpServers` JSON object using credential *placeholders*, plus notes
+paste-ready `mcpServers` JSON object using credential _placeholders_, plus notes
 on how to obtain each credential. Paste only the JSON block back into Taskcore;
 Taskcore reads the header names from it and asks you for the values, which it
 stores as Taskcore secrets.
@@ -37,13 +37,13 @@ stores as Taskcore secrets.
 After you paste an address and press **Check link**, Taskcore probes the
 endpoint and branches:
 
-| Endpoint says | You get |
-| --- | --- |
-| Nothing needed | Discovered actions, straight to review. |
-| Needs authorization, and publishes discoverable OAuth metadata | **Sign in to continue** — a browser sign-in at the provider. |
-| Needs authorization, but no discoverable sign-in | A prompt to add the key or headers its docs list, under **Advanced authentication**. |
-| Needs a client you registered yourself | A prompt for a client ID and secret. The draft connection is kept — you don't start over. |
-| Not a valid address / private network / unreachable | The specific problem and which field to change. |
+| Endpoint says                                                  | You get                                                                                   |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Nothing needed                                                 | Discovered actions, straight to review.                                                   |
+| Needs authorization, and publishes discoverable OAuth metadata | **Sign in to continue** — a browser sign-in at the provider.                              |
+| Needs authorization, but no discoverable sign-in               | A prompt to add the key or headers its docs list, under **Advanced authentication**.      |
+| Needs a client you registered yourself                         | A prompt for a client ID and secret. The draft connection is kept — you don't start over. |
+| Not a valid address / private network / unreachable            | The specific problem and which field to change.                                           |
 
 An unknown server is labelled **Unverified server** with its host shown, at every
 step through review, access and install. Reads are enabled for review;
@@ -99,7 +99,7 @@ Collapsed by default. Open it when the server's docs are specific:
 
 Every value you enter becomes a Taskcore secret. Values are write-only: they
 never appear in stored config JSON, logs, activity details, API responses after
-write, or UI readback. Only header *names* are shown in review and diagnostics.
+write, or UI readback. Only header _names_ are shown in review and diagnostics.
 
 Taskcore refuses to send header names it manages or that belong to the
 transport — `Host`, `Cookie`, `Content-Length`, `Transfer-Encoding`,

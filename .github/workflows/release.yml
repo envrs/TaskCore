@@ -285,7 +285,14 @@ jobs:
 
   result_preview:
     name: Verify preview artifacts
-    needs: [plan_preview, image_preview, publish_image_preview, package_preview, publish_preview]
+    needs:
+      [
+        plan_preview,
+        image_preview,
+        publish_image_preview,
+        package_preview,
+        publish_preview,
+      ]
     if: >-
       always() && inputs.channel == 'preview' && needs.plan_preview.result == 'success' &&
       (needs.publish_image_preview.result == 'success' || needs.plan_preview.outputs.image == 'false') &&

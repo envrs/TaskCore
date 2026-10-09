@@ -6,10 +6,10 @@
 
 Code revision: `e4077ade1818d98b9862ae79ee1d49a007dcf9c1`. Hiring grader: `taskcore.hiring-templates.v3`; turn accounting: `taskcore.hiring-template-turn-accounting.v2`. The separately versioned [v2 JSON receipt](2026-10-02-hiring-executable-accounting-replay.v2.json) pins exact source hashes and unchanged original inputs.
 
-| Profile | Original machine grades | Limited sidecar v1 / initial executable v2 | Stricter executable accounting | Source-read coverage |
-| --- | --- | --- | --- | --- |
-| Codex | Fail → Fail | Pass → Pass | Verified / both new guards pass in each variant | Uncomparable both |
-| ACPX Claude | Fail → Fail | Pass → Pass | Unresolved/uncomparable action attribution in each variant; guards fail closed | Uncomparable both; historical six-backtick exact-template mismatch remains |
+| Profile     | Original machine grades | Limited sidecar v1 / initial executable v2 | Stricter executable accounting                                                 | Source-read coverage                                                       |
+| ----------- | ----------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Codex       | Fail → Fail             | Pass → Pass                                | Verified / both new guards pass in each variant                                | Uncomparable both                                                          |
+| ACPX Claude | Fail → Fail             | Pass → Pass                                | Unresolved/uncomparable action attribution in each variant; guards fail closed | Uncomparable both; historical six-backtick exact-template mismatch remains |
 
 The limited sidecar and initial executable check rejected notification-created tasks but could miss an unrelated document write during a notification. Their original results and hashes are preserved; they do not prove every notification was harmless. The stricter helper adds a twelfth predicate and an independent action-coverage check. It requires complete contiguous event streams, an accepted control-plane result and succeeded/completed terminal, exact canonical/native action IDs, successful known GET API receipts or verified reads/discovery, and attributed native chat finish. Document/task/agent mutations, failed mutation attempts, incomplete streams and unknown or unmatched actions cannot pass. A readonly hint alone cannot qualify a generic API call.
 
@@ -41,10 +41,10 @@ The immutable [original and bounded sidecar report](https://github.com/khulnasof
 
 The executable code revision is `eef64009dc144b91b245a731ea9a1c3c07406a19`; report-only commits do not change its grader bytes. The [JSON receipt](2026-10-02-hiring-executable-accounting-replay.json) pins all five grader/flow/helper source hashes, v2 definition digest and original result/hiring/API input hashes.
 
-| Profile | Original executable result | Corrected retained workflow outcome | Both new count guards | Source coverage |
-| --- | --- | --- | --- | --- |
-| Codex | Fail → Fail | Pass → Pass | Pass in both variants | Uncomparable both |
-| ACPX Claude | Fail → Fail | Pass → Pass | Pass in both variants | Uncomparable both; historical exact coder body still fails |
+| Profile     | Original executable result | Corrected retained workflow outcome | Both new count guards | Source coverage                                            |
+| ----------- | -------------------------- | ----------------------------------- | --------------------- | ---------------------------------------------------------- |
+| Codex       | Fail → Fail                | Pass → Pass                         | Pass in both variants | Uncomparable both                                          |
+| ACPX Claude | Fail → Fail                | Pass → Pass                         | Pass in both variants | Uncomparable both; historical exact coder body still fails |
 
 All six other outcome checks and every coverage check are byte-identical in the replay's check projection. Original input files and failed grades remain unchanged. All 28 actual model runs remain counted. The new helper has 11 lifecycle predicates, factoring the sidecar's lifecycle rule without requiring an already-computed original result.
 

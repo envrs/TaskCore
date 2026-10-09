@@ -19,8 +19,16 @@ const decisionModule = createRequire(import.meta.url)(
   fileURLToPath(new URL("./codex-auth-merge-decision.cjs", import.meta.url)),
 ) as {
   decide: (
-    source: { kind: "subscription" | "apikey" | "unusable"; accountId?: string; lastRefresh: number | null },
-    destination: { kind: "subscription" | "apikey" | "unusable"; accountId?: string; lastRefresh: number | null },
+    source: {
+      kind: "subscription" | "apikey" | "unusable";
+      accountId?: string;
+      lastRefresh: number | null;
+    },
+    destination: {
+      kind: "subscription" | "apikey" | "unusable";
+      accountId?: string;
+      lastRefresh: number | null;
+    },
     nowMs: number,
     seedIfDestAbsent?: boolean,
   ) => number;
@@ -29,7 +37,8 @@ const decisionModule = createRequire(import.meta.url)(
   IMPLAUSIBLE_LAST_REFRESH: number;
   MAX_FUTURE_LAST_REFRESH_SKEW_MS: number;
 };
-const { decide, IMPLAUSIBLE_LAST_REFRESH, MAX_FUTURE_LAST_REFRESH_SKEW_MS } = decisionModule;
+const { decide, IMPLAUSIBLE_LAST_REFRESH, MAX_FUTURE_LAST_REFRESH_SKEW_MS } =
+  decisionModule;
 
 // This suite pins the opt-in seed mode of the single decision predicate. The
 // default (no-flag) call keeps the fail-closed host-default contract unchanged.
@@ -57,7 +66,11 @@ describe("codex-auth-merge-decision predicate seed mode", () => {
   const NEWER = "2026-07-09T02:00:00Z";
   const OLDER = "2026-07-09T01:00:00Z";
 
-  function subscriptionAuth(input: { accountId: string; lastRefresh?: string; marker?: string }): string {
+  function subscriptionAuth(input: {
+    accountId: string;
+    lastRefresh?: string;
+    marker?: string;
+  }): string {
     const suffix = input.marker ?? input.accountId;
     return JSON.stringify({
       tokens: {
@@ -81,7 +94,9 @@ describe("codex-auth-merge-decision predicate seed mode", () => {
     sourceAuth: string;
     destinationAuth: string | typeof ABSENT;
   }): Promise<number> {
-    const dir = await mkdtemp(path.join(os.tmpdir(), "taskcore-codex-seed-decision-"));
+    const dir = await mkdtemp(
+      path.join(os.tmpdir(), "taskcore-codex-seed-decision-"),
+    );
     cleanupDirs.push(dir);
     const sourcePath = path.join(dir, "source-auth.json");
     const destinationPath = path.join(dir, "destination-auth.json");
@@ -92,7 +107,12 @@ describe("codex-auth-merge-decision predicate seed mode", () => {
     // The flag, when present, is the leading positional argument, parsed before
     // the two path arguments.
     const args = input.seed
-      ? [decisionScriptPath, "--seed-if-dest-absent", sourcePath, destinationPath]
+      ? [
+          decisionScriptPath,
+          "--seed-if-dest-absent",
+          sourcePath,
+          destinationPath,
+        ]
       : [decisionScriptPath, sourcePath, destinationPath];
     try {
       await execFile("node", args);
@@ -150,7 +170,10 @@ describe("codex-auth-merge-decision predicate seed mode", () => {
     const code = await runDecision({
       seed: true,
       sourceAuth: subscriptionAuth({ accountId: "acct-x", lastRefresh: NEWER }),
-      destinationAuth: subscriptionAuth({ accountId: "acct-y", lastRefresh: OLDER }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct-y",
+        lastRefresh: OLDER,
+      }),
     });
     expect(code).toBe(KEEP_DESTINATION);
   });
@@ -158,15 +181,31 @@ describe("codex-auth-merge-decision predicate seed mode", () => {
   it("seed mode keeps the same-identity strictly-newer contract for a present destination", async () => {
     const newerCode = await runDecision({
       seed: true,
-      sourceAuth: subscriptionAuth({ accountId: "acct", lastRefresh: NEWER, marker: "src" }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: OLDER, marker: "dst" }),
+      sourceAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: NEWER,
+        marker: "src",
+      }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: OLDER,
+        marker: "dst",
+      }),
     });
     expect(newerCode).toBe(USE_SOURCE);
 
     const tieCode = await runDecision({
       seed: true,
-      sourceAuth: subscriptionAuth({ accountId: "acct", lastRefresh: NEWER, marker: "src" }),
-      destinationAuth: subscriptionAuth({ accountId: "acct", lastRefresh: NEWER, marker: "dst" }),
+      sourceAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: NEWER,
+        marker: "src",
+      }),
+      destinationAuth: subscriptionAuth({
+        accountId: "acct",
+        lastRefresh: NEWER,
+        marker: "dst",
+      }),
     });
     expect(tieCode).toBe(KEEP_DESTINATION);
   });
@@ -208,14 +247,22 @@ describe("codex-auth-merge-decision predicate: host-clock bound on last_refresh"
 
   it("keeps the destination when the source last_refresh sits one millisecond beyond the bound", () => {
     const nowMs = Date.now();
-    const source = subscription("acct", nowMs + MAX_FUTURE_LAST_REFRESH_SKEW_MS + 1);
+    const source = subscription(
+      "acct",
+      nowMs + MAX_FUTURE_LAST_REFRESH_SKEW_MS + 1,
+    );
     const destination = subscription("acct", nowMs - 60_000);
-    expect(decide(source, destination, nowMs, false)).toBe(IMPLAUSIBLE_LAST_REFRESH);
+    expect(decide(source, destination, nowMs, false)).toBe(
+      IMPLAUSIBLE_LAST_REFRESH,
+    );
   });
 
   it("uses the source when the source last_refresh sits exactly at the bound", () => {
     const nowMs = Date.now();
-    const source = subscription("acct", nowMs + MAX_FUTURE_LAST_REFRESH_SKEW_MS);
+    const source = subscription(
+      "acct",
+      nowMs + MAX_FUTURE_LAST_REFRESH_SKEW_MS,
+    );
     const destination = subscription("acct", nowMs - 60_000);
     expect(decide(source, destination, nowMs, false)).toBe(USE_SOURCE);
   });
@@ -236,10 +283,22 @@ describe("codex-auth-merge-decision predicate: host-clock bound on last_refresh"
     const source = subscription("acct", sourceLastRefresh);
     const destination = subscription("acct", destinationLastRefresh);
 
-    expect(decide(source, destination, sourceLastRefresh - MAX_FUTURE_LAST_REFRESH_SKEW_MS, false)).toBe(USE_SOURCE);
-    expect(decide(source, destination, sourceLastRefresh - MAX_FUTURE_LAST_REFRESH_SKEW_MS - 1, false)).toBe(
-      IMPLAUSIBLE_LAST_REFRESH,
-    );
+    expect(
+      decide(
+        source,
+        destination,
+        sourceLastRefresh - MAX_FUTURE_LAST_REFRESH_SKEW_MS,
+        false,
+      ),
+    ).toBe(USE_SOURCE);
+    expect(
+      decide(
+        source,
+        destination,
+        sourceLastRefresh - MAX_FUTURE_LAST_REFRESH_SKEW_MS - 1,
+        false,
+      ),
+    ).toBe(IMPLAUSIBLE_LAST_REFRESH);
   });
 
   it("keeps the destination for a same-identity source whose kind or account guard would otherwise fire, regardless of the bound", () => {
@@ -267,14 +326,22 @@ describe("codex-auth-merge-decision predicate: host-clock bound on last_refresh"
   // same untrusted input the write-back guard defends against.
   it("seed mode keeps an absent destination slot absent when the source last_refresh is implausibly far in the future", () => {
     const nowMs = Date.now();
-    const source = subscription("acct", nowMs + MAX_FUTURE_LAST_REFRESH_SKEW_MS + 1);
+    const source = subscription(
+      "acct",
+      nowMs + MAX_FUTURE_LAST_REFRESH_SKEW_MS + 1,
+    );
     const destination = { kind: "unusable" as const, lastRefresh: null };
-    expect(decide(source, destination, nowMs, true)).toBe(IMPLAUSIBLE_LAST_REFRESH);
+    expect(decide(source, destination, nowMs, true)).toBe(
+      IMPLAUSIBLE_LAST_REFRESH,
+    );
   });
 
   it("seed mode still fills an absent destination slot when the source last_refresh sits at or before the bound", () => {
     const nowMs = Date.now();
-    const source = subscription("acct", nowMs + MAX_FUTURE_LAST_REFRESH_SKEW_MS);
+    const source = subscription(
+      "acct",
+      nowMs + MAX_FUTURE_LAST_REFRESH_SKEW_MS,
+    );
     const destination = { kind: "unusable" as const, lastRefresh: null };
     expect(decide(source, destination, nowMs, true)).toBe(USE_SOURCE);
   });

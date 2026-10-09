@@ -7,15 +7,27 @@ export function cancellableSandboxStartup(ctx: AdapterExecutionContext) {
   const target = ctx.executionTarget;
   const signal = ctx.signal;
   const stop = ctx.stopRemoteStartup;
-  if (!signal || !stop || target?.kind !== "remote" || target.transport !== "sandbox" || !target.runner) {
-    return { context: ctx, stopAcknowledged: () => false, finish: async () => {} };
+  if (
+    !signal ||
+    !stop ||
+    target?.kind !== "remote" ||
+    target.transport !== "sandbox" ||
+    !target.runner
+  ) {
+    return {
+      context: ctx,
+      stopAcknowledged: () => false,
+      finish: async () => {},
+    };
   }
   let armed = true;
   let stopping: Promise<void> | undefined;
   let stopAcknowledged = false;
   const inFlight = new Set<Promise<unknown>>();
   let rejectStopped!: (error: unknown) => void;
-  const stopped = new Promise<never>((_, reject) => { rejectStopped = reject; });
+  const stopped = new Promise<never>((_, reject) => {
+    rejectStopped = reject;
+  });
   // Cancellation can arrive between RPCs, when nobody is awaiting this yet.
   void stopped.catch(() => {});
   const onAbort = () => {
@@ -54,7 +66,10 @@ export function cancellableSandboxStartup(ctx: AdapterExecutionContext) {
       return call();
     });
     inFlight.add(operation);
-    void operation.then(() => inFlight.delete(operation), () => inFlight.delete(operation));
+    void operation.then(
+      () => inFlight.delete(operation),
+      () => inFlight.delete(operation),
+    );
     try {
       return await Promise.race([operation, stopped]);
     } finally {
@@ -67,18 +82,36 @@ export function cancellableSandboxStartup(ctx: AdapterExecutionContext) {
   const original = target.runner;
   const runner: CommandManagedRuntimeRunner = {
     ...original,
-    execute: input => guard(() => original.execute(input)),
-    ...(original.syncIn ? { syncIn: (input: Parameters<NonNullable<typeof original.syncIn>>[0]) => guard(() => original.syncIn!(input)) } : {}),
-    ...(original.syncOut ? { syncOut: (input: Parameters<NonNullable<typeof original.syncOut>>[0]) => guard(() => original.syncOut!(input)) } : {}),
-    ...(original.openDuplexChannel ? {
-      openDuplexChannel: (input: Parameters<NonNullable<typeof original.openDuplexChannel>>[0]) => guard(async () => {
-        const channel = await original.openDuplexChannel!(input);
-        // An open RPC can return after confirmed termination. Its host route
-        // must not survive just because the caller already abandoned the RPC.
-        if (stopping) await channel.close();
-        return channel;
-      }),
-    } : {}),
+    execute: (input) => guard(() => original.execute(input)),
+    ...(original.syncIn
+      ? {
+          syncIn: (input: Parameters<NonNullable<typeof original.syncIn>>[0]) =>
+            guard(() => original.syncIn!(input)),
+        }
+      : {}),
+    ...(original.syncOut
+      ? {
+          syncOut: (
+            input: Parameters<NonNullable<typeof original.syncOut>>[0],
+          ) => guard(() => original.syncOut!(input)),
+        }
+      : {}),
+    ...(original.openDuplexChannel
+      ? {
+          openDuplexChannel: (
+            input: Parameters<
+              NonNullable<typeof original.openDuplexChannel>
+            >[0],
+          ) =>
+            guard(async () => {
+              const channel = await original.openDuplexChannel!(input);
+              // An open RPC can return after confirmed termination. Its host route
+              // must not survive just because the caller already abandoned the RPC.
+              if (stopping) await channel.close();
+              return channel;
+            }),
+        }
+      : {}),
   };
   return {
     context: { ...ctx, executionTarget: { ...target, runner } },

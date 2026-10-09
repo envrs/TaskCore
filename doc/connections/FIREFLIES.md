@@ -171,14 +171,14 @@ Open **PR reviews → Fireflies and app webhooks** (`fireflies-pr.stories.tsx`).
 The 27 stories use production components and simulated data; they do not authorize
 accounts or send provider requests.
 
-| Changed surface | Story coverage |
-| --- | --- |
-| Catalog definition and branded artwork | Fireflies catalog; artwork in dark/light themes; Access, OAuth, API-key, and retry screens |
-| Preserved action restrictions | Permissions with Allowed, Ask first, and Off examples |
-| `TriggerWizard.tsx` | Shared app choice, HTTPS warning, signing secret/bearer copy, four verification states, save/resume, hidden-secret rotation, legacy drafts, mobile and light theme |
-| `RoutineTriggers.tsx` | Saved app-webhook settings, rotated secret/agent instructions, rejected delivery |
-| `RoutineTriggerCard.tsx` | Advanced card with `app_webhook` and no timestamp replay window |
-| `editable-sections.production.tsx` | Advanced creation with shared signing-mode description |
+| Changed surface                        | Story coverage                                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Catalog definition and branded artwork | Fireflies catalog; artwork in dark/light themes; Access, OAuth, API-key, and retry screens                                                                         |
+| Preserved action restrictions          | Permissions with Allowed, Ask first, and Off examples                                                                                                              |
+| `TriggerWizard.tsx`                    | Shared app choice, HTTPS warning, signing secret/bearer copy, four verification states, save/resume, hidden-secret rotation, legacy drafts, mobile and light theme |
+| `RoutineTriggers.tsx`                  | Saved app-webhook settings, rotated secret/agent instructions, rejected delivery                                                                                   |
+| `RoutineTriggerCard.tsx`               | Advanced card with `app_webhook` and no timestamp replay window                                                                                                    |
+| `editable-sections.production.tsx`     | Advanced creation with shared signing-mode description                                                                                                             |
 
 ```sh
 pnpm storybook
